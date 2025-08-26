@@ -1,8 +1,0 @@
-/target
-/.cpcache
-/.lsp
-/.calva
-/.clj-kondo
-/.nrepl-port
-/.shadow-cljs 
-/resources/public/js
