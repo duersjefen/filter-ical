@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # Nginx reverse proxy - handles all domain routing
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-domains.conf:/etc/nginx/nginx.conf:ro
+      - nginx-logs:/var/log/nginx
+      - nginx-ssl:/etc/nginx/ssl
+      - letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - ical-viewer-backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - web-network
+
+  # iCal Viewer - filter-ical.de
+  ical-viewer-backend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:latest
+    container_name: ical-viewer-backend
+    expose:
+      - "3000"
+    environment:
+      - ENV=production
+      - PORT=3000
+      - DOMAIN=filter-ical.de
+    volumes:
+      - ical-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - web-network
+    labels:
+      - "com.docker.service=ical-viewer"
+      - "com.docker.domain=filter-ical.de"
+
+  # Massage Website - gabs-massage.de (future)
+  # gabs-massage-backend:
+  #   image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/gabs-massage:latest
+  #   container_name: gabs-massage-backend
+  #   expose:
+  #     - "4000"
+  #   environment:
+  #     - ENV=production
+  #     - PORT=4000
+  #     - DOMAIN=gabs-massage.de
+  #   volumes:
+  #     - massage-data:/app/data
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - web-network
+  #   labels:
+  #     - "com.docker.service=gabs-massage"
+  #     - "com.docker.domain=gabs-massage.de"
+
+  # SSL Certificate Manager (Certbot)
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - web-network
+
+networks:
+  web-network:
+    driver: bridge
+    name: multi-domain-network
+
+volumes:
+  ical-data:
+    name: ical-viewer-data
+    driver: local
+  # massage-data:
+  #   name: gabs-massage-data
+  #   driver: local
+  nginx-logs:
+    name: nginx-logs
+    driver: local
+  nginx-ssl:
+    name: nginx-ssl
+    driver: local
+  letsencrypt:
+    name: letsencrypt-certs
+    driver: local
+  certbot-www:
+    name: certbot-webroot
+    driver: local
