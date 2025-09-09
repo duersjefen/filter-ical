@@ -4,8 +4,9 @@
 (ns app.ui.components
   (:require [hiccup.page :refer [html5]]
             [hiccup.form :refer [form-to label text-field submit-button hidden-field check-box]]
-            [app.core.types :refer [calendar-id calendar-name calendar-url]]
-            [app.core.filtering :refer [group-by-summary group-by-year]]))
+            [app.core.types :refer [calendar-id calendar-name calendar-url event-start event-end]]
+            [app.core.filtering :refer [group-by-summary group-by-year]]
+            [app.ics :refer [format-date-range]]))
 
 ;; === SMART FILTER BUILDER ===
 
@@ -25,7 +26,7 @@
            [:span.type-count (count events) " events"]
            [:div.type-preview
             (for [event sample-events]
-              [:small.sample-date (or (:dtstart event) "No date")])]]]]))]])
+              [:small.sample-date (format-date-range (event-start event) (event-end event))])]]]]))]])
 
 (defn smart-filter-builder [events calendar-id & [selected-summaries]]
   "Complete smart filter builder interface"
@@ -68,7 +69,7 @@
          [:td (count events)]
          [:td (->> events
                   (take 3)
-                  (map #(or (:dtstart %) "No date"))
+                  (map #(format-date-range (event-start %) (event-end %)))
                   (clojure.string/join ", "))]])]]
     
     "cards"
@@ -80,7 +81,7 @@
         [:div.event-samples
          (for [event (take 3 events)]
            [:div.sample-event
-            [:span.event-date (or (:dtstart event) "No date")]
+            [:span.event-date (format-date-range (event-start event) (event-end event))]
             (when (:location event)
               [:span.event-location (:location event)])])]])]
     
@@ -124,6 +125,30 @@
   "
   /* Smart Filter Builder */
   .smart-filter-builder { margin: 20px 0; }
+  
+  /* Search and Filter Controls */
+  .search-filter-controls { 
+    background: white; border: 1px solid #dee2e6; border-radius: 8px; 
+    padding: 20px; margin-bottom: 20px; 
+  }
+  .search-controls { display: flex; flex-direction: column; gap: 15px; }
+  .search-input-group { display: flex; gap: 10px; align-items: center; }
+  .search-input-group input[type='text'] { 
+    flex: 1; padding: 8px 12px; border: 1px solid #ced4da; 
+    border-radius: 4px; font-size: 14px; 
+  }
+  .date-filters { display: flex; gap: 15px; flex-wrap: wrap; }
+  .date-input-group { display: flex; align-items: center; gap: 8px; }
+  .date-input-group label { font-weight: 500; min-width: 40px; }
+  .date-input-group input[type='date'] { 
+    padding: 6px 8px; border: 1px solid #ced4da; border-radius: 4px; 
+  }
+  .quick-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-outline { 
+    background: white; border: 1px solid #007bff; color: #007bff;
+    padding: 6px 12px; border-radius: 4px; font-size: 12px;
+  }
+  .btn-outline:hover { background: #007bff; color: white; }
   
   .event-type-selector .type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
   .type-card { border: 2px solid #dee2e6; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; }
@@ -174,12 +199,115 @@
   .view-modes { margin: 20px 0; }
   .view-mode-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
   .event-view { margin-top: 15px; }
+  
+  /* Enhanced Action Panel */
+  .action-panel { 
+    background: white; border: 1px solid #dee2e6; border-radius: 8px; 
+    padding: 25px; margin: 30px 0; 
+  }
+  .action-panel h4 { margin-top: 0; color: #495057; }
+  .action-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .action-card { 
+    border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; 
+    display: flex; align-items: flex-start; gap: 15px; 
+    transition: all 0.2s; 
+  }
+  .action-card:hover { border-color: #007bff; background: #f8f9ff; }
+  .action-icon { 
+    font-size: 2em; min-width: 50px; text-align: center; 
+    background: #f8f9fa; padding: 10px; border-radius: 50%; 
+  }
+  .action-content { flex: 1; }
+  .action-content h5 { margin: 0 0 8px 0; color: #495057; }
+  .action-content p { margin: 0 0 15px 0; color: #6c757d; font-size: 0.9em; }
+  .input-group { display: flex; gap: 10px; align-items: center; }
+  .filter-name-input { 
+    flex: 1; padding: 8px 12px; border: 1px solid #ced4da; 
+    border-radius: 4px; font-size: 14px; 
+  }
   ")
 
 ;; === JAVASCRIPT HELPERS ===
 
 (def filter-javascript
   "
+  // Advanced filtering functions
+  function filterEvents() {
+    const searchText = document.getElementById('search-text').value.toLowerCase();
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
+    
+    // Filter type cards
+    document.querySelectorAll('.type-card').forEach(card => {
+      const summary = card.querySelector('.type-name').textContent.toLowerCase();
+      const dates = card.querySelector('.type-preview').textContent;
+      
+      let showCard = true;
+      
+      // Text search
+      if (searchText && !summary.includes(searchText)) {
+        showCard = false;
+      }
+      
+      // Date filtering (simplified for now)
+      // TODO: Implement proper date range filtering
+      
+      card.style.display = showCard ? 'block' : 'none';
+    });
+    
+    // Filter table rows
+    document.querySelectorAll('.events-table tbody tr').forEach(row => {
+      const summary = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+      let showRow = true;
+      
+      if (searchText && !summary.includes(searchText)) {
+        showRow = false;
+      }
+      
+      row.style.display = showRow ? '' : 'none';
+    });
+  }
+  
+  function clearSearch() {
+    document.getElementById('search-text').value = '';
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
+    filterEvents();
+  }
+  
+  function filterThisMonth() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    document.getElementById('date-from').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('date-to').value = lastDay.toISOString().split('T')[0];
+    filterEvents();
+  }
+  
+  function filterThisYear() {
+    const now = new Date();
+    document.getElementById('date-from').value = now.getFullYear() + '-01-01';
+    document.getElementById('date-to').value = now.getFullYear() + '-12-31';
+    filterEvents();
+  }
+  
+  function filterUpcoming() {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    
+    document.getElementById('date-from').value = now.toISOString().split('T')[0];
+    document.getElementById('date-to').value = nextMonth.toISOString().split('T')[0];
+    filterEvents();
+  }
+  
+  function clearFilters() {
+    clearSearch();
+    document.querySelectorAll('.type-card, .events-table tbody tr').forEach(el => {
+      el.style.display = el.classList.contains('type-card') ? 'block' : '';
+    });
+  }
+  
   function selectMeetings() {
     document.querySelectorAll('input[name=\"selected-summaries\"]').forEach(cb => {
       const row = cb.closest('.type-card') || cb.closest('tr');

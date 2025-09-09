@@ -12,7 +12,8 @@
             [clojure.string :as str]
             [app.core.types :refer [calendar-id calendar-name calendar-url]]
             [app.core.filtering :refer [group-by-summary by-summary any-filter compose-filters]]
-            [app.ui.components :as ui]))
+            [app.ui.components :as ui]
+            [app.auth.multi-strategy :as auth]))
 
 (defn layout [title & body]
   (html5
@@ -173,12 +174,25 @@
                          [:div#view-compact.event-view {:style "display: none;"}
                           (ui/event-list-view grouped-events "compact")]]
 
-                        [:div.filter-actions
-                         [:div.form-row
-                          (label "filter-name" "Save this filter as:")
-                          (text-field {:placeholder "My Custom Filter"} "filter-name")]
-                         [:input {:type "submit" :value "💾 Save Filter" :class "btn btn-success"}]
-                         [:input {:type "submit" :name "action" :value "📥 Download .ics" :class "btn btn-primary"}]])]
+                        ;; Enhanced save and download section
+                        [:div.action-panel
+                         [:h4 "💾 Save & Export"]
+                         [:div.action-cards
+                          [:div.action-card.save-filter
+                           [:div.action-icon "💾"]
+                           [:div.action-content
+                            [:h5 "Save Filter"]
+                            [:p "Save this selection for quick access later"]
+                            [:div.input-group
+                             (text-field {:placeholder "My Custom Filter" :class "filter-name-input"} "filter-name")
+                             [:input {:type "submit" :value "Save" :class "btn btn-success"}]]]]
+                          
+                          [:div.action-card.download
+                           [:div.action-icon "📥"]
+                           [:div.action-content
+                            [:h5 "Download .ics"]
+                            [:p "Download selected events as calendar file"]
+                            [:input {:type "submit" :name "action" :value "📥 Download .ics" :class "btn btn-primary"}]]]]])]
               [:div.form-section
                [:h3 "⚠️ No Events Found"]
                [:p "This calendar appears to be empty or the URL might be invalid."]])
@@ -349,6 +363,10 @@
          :body (ics/build-calendar filtered-events)})
       {:status 404
        :body "Filter not found"}))
+
+  ;; Authentication routes
+  (GET "/auth/login" request (auth/login-page-handler request))
+  (GET "/auth/logout" request (auth/logout-handler request))
 
   (route/not-found "Page not found"))
 
