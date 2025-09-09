@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: 310829530903.dkr.ecr.eu-north-1.amazonaws.com/ical-viewer-backend:latest
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:latest
     ports:
       - "3000:3000"
     environment:
@@ -20,7 +20,7 @@ services:
       - ical-network
   
   frontend:
-    image: 310829530903.dkr.ecr.eu-north-1.amazonaws.com/ical-viewer-frontend:latest
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-frontend:latest
     ports:
       - "80:80"
       - "443:443"

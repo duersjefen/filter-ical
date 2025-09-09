@@ -4,7 +4,7 @@
 set -e
 
 # Configuration
-REGION="us-east-1"
+REGION="eu-north-1"
 BACKEND_REPO="ical-viewer-backend"
 FRONTEND_REPO="ical-viewer-frontend"
 
