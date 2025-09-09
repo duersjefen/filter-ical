@@ -11,5 +11,8 @@
   "devDependencies": {
     "shadow-cljs": "^2.25.10"
   },
-  "dependencies": {}
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
 }
