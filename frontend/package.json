@@ -1,0 +1,15 @@
+{
+  "name": "ical-viewer-frontend",
+  "version": "1.0.0",
+  "description": "iCal Viewer Frontend - ClojureScript SPA",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx shadow-cljs watch app",
+    "build": "npx shadow-cljs release app",
+    "serve": "npx shadow-cljs server"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^2.25.10"
+  },
+  "dependencies": {}
+}

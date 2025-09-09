@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    image: YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ical-viewer-backend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - ENV=production
+      - PORT=3000
+    volumes:
+      - /opt/ical-viewer/data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ical-network
+  
+  frontend:
+    image: YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ical-viewer-frontend:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ical-network
+
+networks:
+  ical-network:
+    driver: bridge
+
+# Optional: Add volumes for SSL certificates
+volumes:
+  ssl-certs:
+    driver: local

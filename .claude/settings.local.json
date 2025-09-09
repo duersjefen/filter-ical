@@ -7,7 +7,12 @@
       "Bash(curl:*)",
       "mcp__ide__getDiagnostics",
       "Bash(npm install)",
-      "Bash(npx shadow-cljs compile:*)"
+      "Bash(npx shadow-cljs compile:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(clojure:*)",
+      "Bash(docker-compose:*)",
+      "Bash(netstat:*)"
     ],
     "deny": [],
     "ask": []
