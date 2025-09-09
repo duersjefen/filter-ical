@@ -102,7 +102,7 @@ services:
     command: >
       sh -c "
       while :; do 
-        sleep 6h & wait $${!}; 
+        sleep 6h & wait \$\${!}; 
         certbot renew --quiet --webroot --webroot-path=/var/www/certbot;
       done
       "
