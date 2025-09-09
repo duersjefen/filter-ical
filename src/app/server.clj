@@ -9,7 +9,9 @@
             [hiccup.form :refer [form-to label text-field submit-button hidden-field check-box]]
             [app.storage :as storage]
             [app.ics :as ics]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [app.core.types :refer [calendar-id calendar-name calendar-url]]
+            [app.core.filtering :refer [group-by-summary by-summary any-filter compose-filters]]))
 
 (defn layout [title & body]
   (html5
@@ -101,18 +103,18 @@
                
                [:div.calendar-list
                 (for [entry entries]
-                  (let [calendar-filters (storage/filters-for-calendar (:id entry))]
+                  (let [calendar-filters (storage/filters-for-calendar (calendar-id entry))]
                     [:div.calendar-card
-                     [:h3 (:name entry)]
-                     [:p.calendar-url (:url entry)]
+                     [:h3 (calendar-name entry)]
+                     [:p.calendar-url (calendar-url entry)]
                      [:div.stats
                       (when (seq calendar-filters)
                         [:div.stat
                          [:div.stat-number (count calendar-filters)]
                          [:div.stat-label "Saved Filters"]])]
                      [:div
-                      [:a {:href (str "/view/" (:id entry)) :class "btn btn-primary"} "📊 Filter Events"]
-                      (form-to [:post (str "/delete/" (:id entry))]
+                      [:a {:href (str "/view/" (calendar-id entry)) :class "btn btn-primary"} "📊 Filter Events"]
+                      (form-to [:post (str "/delete/" (calendar-id entry))]
                                [:input {:type "submit" :value "🗑️ Delete" :class "btn btn-danger"
                                         :onclick "return confirm('Delete this calendar and all its filters?')"}])]]))]]
               [:div.form-section
@@ -121,17 +123,17 @@
                [:p "You can filter by event types, save your filters, and get a subscription URL to use in any calendar app."]]))))
 
 (defn group-events-by-summary [events]
-  (group-by :summary events))
+  (group-by-summary events))
 
 (defn view-page [entry events & [selected-filter-id]]
   (let [grouped-events (group-events-by-summary events)
-        saved-filters (storage/filters-for-calendar (:id entry))
+        saved-filters (storage/filters-for-calendar (calendar-id entry))
         selected-filter (when selected-filter-id (storage/get-filter selected-filter-id))]
-    (layout (str "Filter: " (:name entry))
+    (layout (str "Filter: " (calendar-name entry))
             [:div
              [:a {:href "/" :class "btn btn-secondary"} "← Back to Home"]
-             [:h2 "📊 " (:name entry)]
-             [:p.calendar-url (:url entry)]]
+             [:h2 "📊 " (calendar-name entry)]
+             [:p.calendar-url (calendar-url entry)]]
 
             (if (seq events)
               [:div.events-section
@@ -151,14 +153,14 @@
                        [:strong (:name filter)]
                        [:small " (" (count (:selected-summaries filter)) " event types)"]]
                       [:div
-                       [:a {:href (str "/view/" (:id entry) "?filter=" (:id filter)) :class "btn btn-primary"} "📊 Apply"]
+                       [:a {:href (str "/view/" (calendar-id entry) "?filter=" (:id filter)) :class "btn btn-primary"} "📊 Apply"]
                        [:a {:href (str "/filter/info/" (:id filter)) :class "btn btn-success"} "🔗 Subscribe"]
                        (form-to [:post (str "/filter/delete/" (:id filter))]
                                 [:input {:type "submit" :value "🗑️" :class "btn btn-danger"
                                          :onclick "return confirm('Delete this saved filter?')"}])]])])]
                
                (form-to [:post "/filter/save"]
-                        (hidden-field "entry-id" (:id entry))
+                        (hidden-field "entry-id" (calendar-id entry))
                         
                         [:div.stats
                          [:div.stat
@@ -179,7 +181,7 @@
                          [:tbody
                           (for [[summary group-events] (sort-by first grouped-events)]
                             (let [is-selected (if selected-filter
-                                              (contains? (set (:selected-summaries selected-filter)) summary)
+                                              (contains? (set (storage/filter-selected-summaries selected-filter)) summary)
                                               false)]
                               [:tr.group-header
                                [:td (check-box "selected-summaries" summary is-selected)]
@@ -264,7 +266,11 @@
              [:p "3. Paste the subscription URL"]])))
 
 (defn filter-events-by-summaries [events selected-summaries]
-  (filter #(contains? (set selected-summaries) (:summary %)) events))
+  "Filter events using the new composable filtering system"
+  (if (seq selected-summaries)
+    (let [summary-filter (apply any-filter (map by-summary selected-summaries))]
+      (filter summary-filter events))
+    []))
 
 (defroutes routes
   (GET "/" [] (home-page))
@@ -284,7 +290,7 @@
 
   (GET "/view/:id" [id & {filter-id :filter}]
     (if-let [entry (storage/get-entry id)]
-      (let [events (ics/events-for-url (:url entry))]
+      (let [events (ics/events-for-url (calendar-url entry))]
         (view-page entry events filter-id))
       (response/redirect "/")))
 
@@ -309,12 +315,12 @@
         ;; Download action
         (= action "📥 Download .ics")
         (if (and entry (seq selected-summaries))
-          (let [all-events (ics/events-for-url (:url entry))
+          (let [all-events (ics/events-for-url (calendar-url entry))
                 selected-events (filter-events-by-summaries all-events selected-summaries)]
             (if (seq selected-events)
               {:status 200
                :headers {"Content-Type" "text/calendar"
-                         "Content-Disposition" (str "attachment; filename=\"filtered-" (:name entry) ".ics\"")}
+                         "Content-Disposition" (str "attachment; filename=\"filtered-" (calendar-name entry) ".ics\"")}
                :body (ics/build-calendar selected-events)}
               (response/redirect (str "/view/" entry-id))))
           (response/redirect (str "/view/" entry-id)))
@@ -334,8 +340,8 @@
   (GET "/subscribe/:filter-id" [filter-id]
     (if-let [filter (storage/get-filter filter-id)]
       (let [entry (storage/get-entry (:calendar-id filter))
-            all-events (ics/events-for-url (:url entry))
-            filtered-events (filter-events-by-summaries all-events (:selected-summaries filter))]
+            all-events (ics/events-for-url (calendar-url entry))
+            filtered-events (filter-events-by-summaries all-events (storage/filter-selected-summaries filter))]
         {:status 200
          :headers {"Content-Type" "text/calendar"}
          :body (ics/build-calendar filtered-events)})

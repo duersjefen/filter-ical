@@ -1,10 +1,13 @@
 (ns app.ics
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [app.core.types :refer [make-event event-uid event-summary event-start event-end]]
+            [app.core.sync :refer [smart-fetch-calendar]]))
 
 (defn fetch-ics [url]
+  "Fetch iCal with smart caching"
   (try
     (when (and url (not (str/blank? url)))
-      (slurp url))
+      (smart-fetch-calendar url))
     (catch Exception e
       (println "Error fetching iCal:" (.getMessage e))
       "")))
@@ -21,13 +24,13 @@
       (str/trim (second match)))))
 
 (defn parse-vevent [vevent-text]
-  {:uid (extract-property vevent-text "UID")
-   :summary (extract-property vevent-text "SUMMARY")
-   :dtstart (extract-property vevent-text "DTSTART")
-   :dtend (extract-property vevent-text "DTEND")
-   :description (extract-property vevent-text "DESCRIPTION")
-   :location (extract-property vevent-text "LOCATION")
-   :raw vevent-text})
+  (make-event (extract-property vevent-text "UID")
+             (extract-property vevent-text "SUMMARY")
+             (extract-property vevent-text "DTSTART")
+             (extract-property vevent-text "DTEND")
+             (extract-property vevent-text "LOCATION")
+             (extract-property vevent-text "DESCRIPTION")
+             vevent-text))
 
 (defn events-for-url [url]
   (try
@@ -35,7 +38,7 @@
       (->> ics-content
            extract-vevents
            (map parse-vevent)
-           (filter #(not (str/blank? (:uid %))))))
+           (filter #(not (str/blank? (event-uid %))))))
     (catch Exception e
       (println "Error parsing events:" (.getMessage e))
       [])))

@@ -1,7 +1,9 @@
 (ns app.storage
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [app.core.types :refer [make-calendar calendar-id calendar-name calendar-url
+                                   make-filter]]))
 
 (def data-file "data/entries.edn")
 (def filters-file "data/filters.edn")
@@ -40,21 +42,22 @@
   (inc (apply max (cons 0 (map :id @entries)))))
 
 (defn add-entry! [name url]
-  (let [entry {:id (next-id)
-               :name (str/trim name)
-               :url (str/trim url)}]
+  (let [entry (make-calendar (next-id)
+                            (str/trim name)
+                            (str/trim url)
+                            {})]
     (swap! entries conj entry)
     (save!)
     entry))
 
 (defn delete-entry! [id]
   (let [id (if (string? id) (Integer/parseInt id) id)]
-    (swap! entries #(vec (remove (fn [e] (= (:id e) id)) %)))
+    (swap! entries #(vec (remove (fn [e] (= (calendar-id e) id)) %)))
     (save!)))
 
 (defn get-entry [id]
   (let [id (if (string? id) (Integer/parseInt id) id)]
-    (first (filter #(= (:id %) id) @entries))))
+    (first (filter #(= (calendar-id %) id) @entries))))
 
 (defn all-entries []
   @entries)
@@ -64,11 +67,13 @@
   (inc (apply max (cons 0 (map :id @filters)))))
 
 (defn add-filter! [name calendar-id selected-summaries]
-  (let [filter-entry {:id (next-filter-id)
-                     :name (str/trim name)
-                     :calendar-id calendar-id
-                     :selected-summaries (vec selected-summaries)
-                     :created-at (System/currentTimeMillis)}]
+  (let [filter-entry (make-filter (next-filter-id)
+                                 (str/trim name)
+                                 calendar-id
+                                 selected-summaries  ; For now, keep as legacy until we refactor
+                                 []                  ; transformers - empty for now
+                                 {:created-at (System/currentTimeMillis)
+                                  :legacy-summaries (vec selected-summaries)})]
     (swap! filters conj filter-entry)
     (save-filters!)
     filter-entry))
@@ -87,3 +92,15 @@
 
 (defn filters-for-calendar [calendar-id]
   (filter #(= (:calendar-id %) calendar-id) @filters))
+
+;; Backward compatibility accessors for filters
+(defn filter-selected-summaries [filter]
+  "Get selected summaries from filter, handling both old and new format"
+  (or (:selected-summaries filter)
+      (get-in filter [:metadata :legacy-summaries])
+      []))
+
+;; Utility to get calendar URL - needed for caching integration
+(defn get-calendar-url [calendar-id]
+  (when-let [calendar (get-entry calendar-id)]
+    (calendar-url calendar)))
