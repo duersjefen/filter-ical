@@ -1,101 +1,73 @@
 # iCal Viewer
 
-A web application for viewing and filtering iCal events, built with Clojure.
+A professional web application for filtering and subscribing to iCal events, built with Clojure.
 
-## Features
+## 🌐 Live Site
+**Production:** https://filter-ical.de _(after domain setup)_
 
-✅ **Implemented Features:**
+## ✨ Features
+- Filter iCal events by type and keywords
+- Create custom filtered subscriptions
+- Save and manage multiple calendars
+- Professional domain hosting with free SSL
+- Responsive modern web interface
 
-- Add multiple iCal calendars by name and URL
-- View all saved calendars in a clean interface
-- Parse iCal events from remote URLs
-- Group events by summary/title
-- Select specific events with checkboxes
-- Generate filtered .ics files for download
-- Clean modular code structure with proper error handling
+## 🚀 Quick Start
 
-## Architecture
+**Local Development:**
+```bash
+clj -M -m app.server
+# Visit http://localhost:3000
+```
 
-The application is split into focused modules:
+**Production Deployment:**
+1. Buy domain at Namecheap (~5€)
+2. Run: `./scripts/complete-domain-automation.sh`
+3. Your site is live with SSL!
 
-- **`app.storage`** - Calendar entry persistence (EDN file storage)
-- **`app.ics`** - iCal fetching, parsing, and generation
-- **`app.server`** - Web interface with Hiccup templates and Compojure routes
+## 🏗️ Architecture
 
-## Running the Application
+- **Backend:** Clojure with Ring + Jetty
+- **Storage:** EDN file persistence
+- **Hosting:** AWS EC2 with Docker
+- **SSL:** Free Let's Encrypt certificates
+- **Proxy:** Nginx with domain routing
+
+### Core Modules
+- **`app.storage`** - Calendar and filter persistence
+- **`app.ics`** - iCal parsing and generation  
+- **`app.server`** - Web interface and API
+
+## 📁 Project Structure
+
+```
+├── src/app/           # Clojure source code
+├── scripts/           # Domain automation scripts  
+├── infrastructure/    # AWS deployment configs
+├── archive/           # Old documentation
+└── docs/             # Current documentation
+```
+
+## 🔧 Development Commands
 
 ```bash
-# Start the server
+# Run application
 clj -M -m app.server
 
-# Server starts on http://localhost:3000
+# Run tests  
+clj -M -e "(require 'app.ical-viewer-test) (app.ical-viewer-test/test-runner)"
 ```
 
-## Usage
+See `CLAUDE.md` for detailed development instructions.
 
-1. **Add Calendar**: Enter a name and iCal URL on the home page
-2. **View Events**: Click "View Events" on any calendar card
-3. **Filter Events**: Events are grouped by summary - use checkboxes to select desired events
-4. **Download**: Click "Generate Filtered .ics" to download selected events
+## 💰 SSL Certificate - FREE!
 
-## Code Structure
+**❌ DON'T buy SSL from Namecheap** - it's expensive (~20€/year)
 
-```
-src/
-├── app/
-│   ├── storage.clj    # Data persistence layer
-│   ├── ics.clj        # iCal parsing and generation
-│   └── server.clj     # Web server and UI
-test/
-└── app/
-    └── ical_viewer_test.clj    # Unit tests
-```
+**✅ USE Let's Encrypt** - completely free and automated:
+- Certificates auto-install during domain setup
+- Auto-renewal every 3 months  
+- Industry-standard security
+- Zero ongoing costs
 
-## Key Functions
-
-### Storage Layer (`app.storage`)
-
-- `add-entry!` - Add new calendar entry
-- `get-entry` - Retrieve calendar by ID
-- `delete-entry!` - Remove calendar entry
-- `all-entries` - Get all stored calendars
-
-### iCal Processing (`app.ics`)
-
-- `fetch-ics` - Download iCal from URL with error handling
-- `extract-vevents` - Parse VEVENT blocks from iCal text
-- `parse-vevent` - Extract properties (UID, summary, dates, etc.)
-- `events-for-url` - Complete parsing pipeline
-- `build-calendar` - Generate valid iCal from selected events
-
-### Web Interface (`app.server`)
-
-- `home-page` - Main interface with calendar list and add form
-- `view-page` - Event display with grouping and selection
-- `group-events-by-summary` - Group events for better UX
-- Routes for CRUD operations and filtered export
-
-## Data Flow
-
-1. User adds calendar URL → Stored in `data/entries.edn`
-2. User views calendar → Fetch and parse iCal events
-3. Events grouped by summary → Display with checkboxes
-4. User selects events → Generate filtered .ics file
-5. Download provided as attachment
-
-## Error Handling
-
-- Invalid URLs return empty event lists with logged errors
-- Missing calendar entries redirect to home page
-- File I/O wrapped in try-catch blocks
-- Graceful degradation for malformed iCal data
-
-## Dependencies
-
-- **Clojure 1.11.1** - Core language
-- **Ring + Jetty** - Web server
-- **Compojure** - Routing
-- **Hiccup** - HTML generation
-- **EDN** - Data persistence
-
-The application successfully implements all requested features with clean, modular Clojure code!
+The automation scripts handle everything!

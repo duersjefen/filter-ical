@@ -29,7 +29,13 @@
       "Read(//home/martijn/**)",
       "Bash(git push:*)",
       "Bash(ssh:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "WebSearch",
+      "Bash(./scripts/setup-domain-manual-dns.sh:*)",
+      "Bash(dig +short:*)",
+      "Bash(dig:*)",
+      "Bash(tree:*)",
+      "Bash(npx shadow-cljs release:*)"
     ],
     "deny": [],
     "ask": []

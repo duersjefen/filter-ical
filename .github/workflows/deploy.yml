@@ -76,102 +76,106 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Build Docker image for backend (Clojure app)
+        cd backend
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG .
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
     
-    # Future: Build frontend when needed
-    # - name: Build and push frontend image
-    #   if: hashFiles('frontend/**') != ''
-    #   env:
-    #     IMAGE_TAG: ${{ github.sha }}
-    #   run: |
-    #     cd frontend
-    #     docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG .
-    #     docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
-    #     docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
-    #     docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
+    - name: Build and push frontend image
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build Docker image for frontend (ClojureScript + nginx)
+        cd frontend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
 
-    - name: Deploy to EC2 with Multi-App Setup
+    - name: Deploy to Clean Production Environment
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Create multi-app directory structure
-          sudo mkdir -p /opt/multi-apps/{nginx,ical-viewer,shared}
-          sudo chown -R ec2-user:ec2-user /opt/multi-apps
+          # Ensure clean production directory exists
+          sudo mkdir -p /opt/websites/{nginx,scripts,apps/ical-viewer,backups}
+          sudo chown -R ec2-user:ec2-user /opt/websites
           
-          # Stop existing single-app deployment
-          cd /opt/ical-viewer 2>/dev/null && docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+          # Clean up old deployment directories
+          cd /opt/ical-viewer 2>/dev/null && docker-compose down 2>/dev/null || true
+          cd /opt/multi-apps 2>/dev/null && docker-compose down 2>/dev/null || true
           
-          # Copy infrastructure files (nginx config will be uploaded separately)
-          cd /opt/multi-apps
+          # Work in clean production directory
+          cd /opt/websites
           
-          # Create environment file for docker-compose
+          # Create/update environment file
           cat > .env << 'EOF'
           AWS_ACCOUNT_ID=310829530903
           AWS_REGION=eu-north-1
           EOF
           
-          # Login to ECR using EC2 instance role
+          # Login to ECR and pull latest images
           aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 310829530903.dkr.ecr.eu-north-1.amazonaws.com
-          
-          # Pull latest images
           docker pull 310829530903.dkr.ecr.eu-north-1.amazonaws.com/ical-viewer-backend:latest
+          docker pull 310829530903.dkr.ecr.eu-north-1.amazonaws.com/ical-viewer-frontend:latest
           
-          echo "✅ Images pulled successfully"
+          echo "✅ Clean production environment ready"
     
-    - name: Copy configuration files to EC2
+    - name: Copy production configuration files to EC2
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "infrastructure/nginx.conf,infrastructure/docker-compose.multi-app.yml"
-        target: "/opt/multi-apps/"
+        source: "infrastructure/production-nginx.conf,infrastructure/production-docker-compose.yml"
+        target: "/opt/websites/"
         strip_components: 1
     
-    - name: Start multi-app infrastructure
+    - name: Deploy Production Website Infrastructure
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          cd /opt/multi-apps
+          cd /opt/websites
           
-          # Start the multi-app infrastructure
-          docker-compose -f docker-compose.multi-app.yml up -d --remove-orphans
+          # Rename uploaded files to correct names
+          mv production-docker-compose.yml docker-compose.yml 2>/dev/null || true
+          mv production-nginx.conf nginx/nginx.conf 2>/dev/null || true
           
-          # Wait for services to start
-          sleep 15
+          # Rolling update - update images without downtime
+          docker-compose pull ical-viewer ical-viewer-frontend
+          docker-compose up -d --no-deps ical-viewer ical-viewer-frontend
+          
+          # Wait for new container to be healthy
+          echo "⏳ Waiting for service health check..."
+          sleep 30
           
           # Health checks
-          echo "🔍 Checking service health..."
-          docker-compose -f docker-compose.multi-app.yml ps
+          echo "🔍 Checking service status..."
+          docker-compose ps
           
-          # Test the endpoints
-          echo "🧪 Testing endpoints..."
-          curl -f http://localhost/health || echo "⚠️ Health endpoint not ready"
-          curl -f http://localhost/ical/ || echo "⚠️ iCal app not ready yet"
+          # Test the domain
+          echo "🧪 Testing production website..."
+          curl -f http://filter-ical.de/ || echo "⚠️ Website not ready yet (normal during first deployment)"
           
-          # Clean up old images
+          # Clean up old images to save space
           docker image prune -af --filter "until=24h"
           
-          echo "✅ Multi-app deployment completed!"
-          echo "📱 Your apps are available at:"
-          echo "  - Main: http://${{ secrets.EC2_HOST }}/"
-          echo "  - iCal Viewer: http://${{ secrets.EC2_HOST }}/ical/"
+          echo "✅ Production deployment completed!"
+          echo "🌐 Your website is live at: http://filter-ical.de"
     
     - name: Notify deployment status
       if: always()
       run: |
         if [ "${{ job.status }}" == "success" ]; then
-          echo "✅ Multi-app infrastructure deployment successful!"
-          echo "🌐 Website: http://${{ secrets.EC2_HOST }}/ical/"
+          echo "✅ Production website deployment successful!"
+          echo "🌐 Live website: http://filter-ical.de"
+          echo "🏗️ Clean production architecture implemented"
         else
           echo "❌ Deployment failed!"
           exit 1
