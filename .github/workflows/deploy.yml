@@ -44,6 +44,7 @@ jobs:
     
     - name: Run tests
       run: |
+        cd backend
         clj -M -e "(require 'app.ical-viewer-test) (app.ical-viewer-test/test-runner)"
 
   deploy:
