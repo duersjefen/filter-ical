@@ -1,8 +1,7 @@
 ;; === INTELLIGENT ICAL SYNCHRONIZATION ===
 (ns app.core.sync
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str])
-  (:import [java.time Instant Duration]
+  (:require [clojure.java.io :as io])
+  (:import [java.time Instant]
            [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]))
 
 ;; Cache with TTL and conditional updates

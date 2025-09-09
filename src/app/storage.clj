@@ -2,7 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
             [clojure.string :as str]
-            [app.core.types :refer [make-calendar calendar-id calendar-name calendar-url
+            [app.core.types :refer [make-calendar calendar-id calendar-url
                                    make-filter]]))
 
 (def data-file "data/entries.edn")
@@ -94,8 +94,9 @@
   (filter #(= (:calendar-id %) calendar-id) @filters))
 
 ;; Backward compatibility accessors for filters
-(defn filter-selected-summaries [filter]
+(defn filter-selected-summaries 
   "Get selected summaries from filter, handling both old and new format"
+  [filter]
   (or (:selected-summaries filter)
       (get-in filter [:metadata :legacy-summaries])
       []))

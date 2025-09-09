@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(clj:*)"
+      "Bash(clj:*)",
+      "Bash(pkill:*)",
+      "Bash(git add:*)",
+      "Bash(curl:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm install)",
+      "Bash(npx shadow-cljs compile:*)"
     ],
     "deny": [],
     "ask": []

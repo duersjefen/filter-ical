@@ -1,8 +1,8 @@
 (ns app.ics
   (:require [clojure.string :as str]
-            [app.core.types :refer [make-event event-uid event-summary event-start event-end]]
+            [app.core.types :refer [make-event event-uid]]
             [app.core.sync :refer [smart-fetch-calendar]])
-  (:import [java.time LocalDate LocalDateTime ZonedDateTime]
+  (:import [java.time LocalDate LocalDateTime]
            [java.time.format DateTimeFormatter DateTimeParseException]))
 
 ;; Date formatting utilities
@@ -11,8 +11,9 @@
 (def display-date-formatter (DateTimeFormatter/ofPattern "MMM d, yyyy"))
 (def display-datetime-formatter (DateTimeFormatter/ofPattern "MMM d, yyyy 'at' h:mm a"))
 
-(defn parse-ical-date [date-str]
+(defn parse-ical-date 
   "Parse iCal date string (YYYYMMDD or YYYYMMDDTHHMMSS) into LocalDate/LocalDateTime"
+  [date-str]
   (when (and date-str (not (str/blank? date-str)))
     (try
       (cond
@@ -29,8 +30,9 @@
         (println "Error parsing date:" date-str (.getMessage e))
         nil))))
 
-(defn format-date-for-display [parsed-date]
+(defn format-date-for-display 
   "Format parsed date for user-friendly display"
+  [parsed-date]
   (when parsed-date
     (cond
       (instance? LocalDate parsed-date)
@@ -41,8 +43,9 @@
       
       :else (str parsed-date))))
 
-(defn format-date-range [start-date end-date]
+(defn format-date-range 
   "Format date range for display, handling single-day and multi-day events"
+  [start-date end-date]
   (let [start-parsed (parse-ical-date start-date)
         end-parsed (parse-ical-date end-date)]
     (cond
@@ -64,8 +67,9 @@
       :else
       "Date not specified")))
 
-(defn fetch-ics [url]
+(defn fetch-ics 
   "Fetch iCal with smart caching"
+  [url]
   (try
     (when (and url (not (str/blank? url)))
       (smart-fetch-calendar url))
@@ -79,8 +83,9 @@
     (let [pattern #"(?s)BEGIN:VEVENT.*?END:VEVENT"]
       (re-seq pattern ics-content))))
 
-(defn extract-property [vevent property]
+(defn extract-property 
   "Extract property from vevent, handling parameters like VALUE=DATE"
+  [vevent property]
   (let [pattern (re-pattern (str "(?m)^" property "(?:;[^:]*)?:(.*)$"))]
     (when-let [match (re-find pattern vevent)]
       (str/trim (second match)))))

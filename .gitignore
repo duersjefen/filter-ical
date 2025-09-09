@@ -1,5 +1,27 @@
+# Editor / IDE
+.vscode/
+.idea/
+*.iml
+/.claude
+
+# Clojure tooling / caches
+/.shadow-cljs
+.clj-kondo/
 .clj-kondo
 .cpcache
-.lsp
-.calva
-output.calva-repl
+.repl-history
+/.calva
+/.lsp
+
+# Node / npm / yarn
+node_modules/
+package-lock.json
+
+# Environment files
+.env
+
+# Build outputs
+/resources
+/.cpcache
+/output.calva-repl
+/.cpcache

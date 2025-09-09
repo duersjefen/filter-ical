@@ -2,7 +2,7 @@
 ;; Following SICP higher-order function principles
 
 (ns app.core.filtering
-  (:require [app.core.types :refer [event-summary event-start event-uid]]))
+  (:require [app.core.types :refer [event-summary event-start]]))
 
 ;; Composable filter predicates
 (defn by-summary [pattern]
@@ -54,7 +54,7 @@
    :filter-repo filter-repo
    :ical-service ical-service})
 
-(defn apply-filter [engine filter-spec events]
+(defn apply-filter [_engine filter-spec events]
   (let [{:keys [predicates transformers]} filter-spec
         filtered-events (->> events
                              (filter (apply compose-filters predicates))
