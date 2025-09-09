@@ -11,7 +11,8 @@
             [app.ics :as ics]
             [clojure.string :as str]
             [app.core.types :refer [calendar-id calendar-name calendar-url]]
-            [app.core.filtering :refer [group-by-summary by-summary any-filter compose-filters]]))
+            [app.core.filtering :refer [group-by-summary by-summary any-filter compose-filters]]
+            [app.ui.components :as ui]))
 
 (defn layout [title & body]
   (html5
@@ -19,7 +20,7 @@
     [:meta {:charset "utf-8"}]
     [:meta {:name "viewport" :content "width=device-width,initial-scale=1"}]
     [:title title]
-    [:style "
+    [:style (str "
       body { font-family: system-ui, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
       .header { text-align: center; margin-bottom: 30px; }
       .header h1 { color: #2c3e50; margin-bottom: 10px; }
@@ -66,7 +67,7 @@
       .stat { text-align: center; }
       .stat-number { font-size: 1.5em; font-weight: bold; color: #007bff; }
       .stat-label { font-size: 0.9em; color: #6c757d; }
-    "]]
+      " ui/enhanced-styles)]]
    [:body body]))
 
 (defn home-page []
@@ -137,60 +138,40 @@
 
             (if (seq events)
               [:div.events-section
-               [:div.filter-controls
-                [:h3 "Quick Actions"]
-                [:div.filter-actions
-                 [:button {:onclick "selectAll()" :class "btn"} "✅ Select All"]
-                 [:button {:onclick "selectNone()" :class "btn"} "❌ Select None"]
-                 [:button {:onclick "selectByKeyword()" :class "btn"} "🔍 Select by Keyword"]]
-                
-                (when (seq saved-filters)
-                  [:div.saved-filters
-                   [:h4 "📋 Saved Filters (" (count saved-filters) ")"]
-                   (for [filter saved-filters]
-                     [:div.filter-item
-                      [:div
-                       [:strong (:name filter)]
-                       [:small " (" (count (:selected-summaries filter)) " event types)"]]
-                      [:div
-                       [:a {:href (str "/view/" (calendar-id entry) "?filter=" (:id filter)) :class "btn btn-primary"} "📊 Apply"]
-                       [:a {:href (str "/filter/info/" (:id filter)) :class "btn btn-success"} "🔗 Subscribe"]
-                       (form-to [:post (str "/filter/delete/" (:id filter))]
-                                [:input {:type "submit" :value "🗑️" :class "btn btn-danger"
-                                         :onclick "return confirm('Delete this saved filter?')"}])]])])]
+               ;; Enhanced statistics panel
+               (ui/event-statistics events grouped-events)
                
+               ;; Saved filters with enhanced cards
+               (when (seq saved-filters)
+                 [:div.saved-filters
+                  [:h3 "📋 Saved Filters (" (count saved-filters) ")"]
+                  (for [filter saved-filters]
+                    (ui/filter-card filter (calendar-name entry)))])
+               
+               ;; Main filter form with smart components
                (form-to [:post "/filter/save"]
                         (hidden-field "entry-id" (calendar-id entry))
                         
-                        [:div.stats
-                         [:div.stat
-                          [:div.stat-number (count events)]
-                          [:div.stat-label "Total Events"]]
-                         [:div.stat
-                          [:div.stat-number (count grouped-events)]
-                          [:div.stat-label "Event Types"]]]
-
-                        [:h3 "📅 Events by Type"]
-                        [:table.events-table
-                         [:thead
-                          [:tr
-                           [:th "Select"]
-                           [:th "Event Type"]
-                           [:th "Count"]
-                           [:th "Sample Dates"]]]
-                         [:tbody
-                          (for [[summary group-events] (sort-by first grouped-events)]
-                            (let [is-selected (if selected-filter
-                                              (contains? (set (storage/filter-selected-summaries selected-filter)) summary)
-                                              false)]
-                              [:tr.group-header
-                               [:td (check-box "selected-summaries" summary is-selected)]
-                               [:td [:strong summary]]
-                               [:td (count group-events) " events"]
-                               [:td (->> group-events
-                                        (take 3)
-                                        (map #(or (:dtstart %) "No date"))
-                                        (str/join ", "))]]))]]
+                        ;; Smart filter builder
+                        (ui/smart-filter-builder events 
+                                               (calendar-id entry)
+                                               (when selected-filter 
+                                                 (storage/filter-selected-summaries selected-filter)))
+                        
+                        ;; Multiple view modes for events
+                        [:div.view-modes
+                         [:h3 "📊 Event Views"]
+                         [:div.view-mode-buttons
+                          [:button.btn {:onclick "showView('table')" :id "btn-table"} "📋 Table View"]
+                          [:button.btn {:onclick "showView('cards')" :id "btn-cards"} "🃏 Card View"]
+                          [:button.btn {:onclick "showView('compact')" :id "btn-compact"} "📄 Compact View"]]
+                         
+                         [:div#view-table.event-view
+                          (ui/event-list-view grouped-events "table")]
+                         [:div#view-cards.event-view {:style "display: none;"}
+                          (ui/event-list-view grouped-events "cards")]
+                         [:div#view-compact.event-view {:style "display: none;"}
+                          (ui/event-list-view grouped-events "compact")]]
 
                         [:div.filter-actions
                          [:div.form-row
@@ -202,7 +183,8 @@
                [:h3 "⚠️ No Events Found"]
                [:p "This calendar appears to be empty or the URL might be invalid."]])
             
-            [:script "
+            [:script (str "
+              // Enhanced selection functions for new UI
               function selectAll() {
                 document.querySelectorAll('input[name=\"selected-summaries\"]').forEach(cb => cb.checked = true);
               }
@@ -213,13 +195,33 @@
                 const keyword = prompt('Enter keyword to select (case insensitive):');
                 if (keyword) {
                   document.querySelectorAll('input[name=\"selected-summaries\"]').forEach(cb => {
-                    const row = cb.closest('tr');
-                    const summary = row.querySelector('td:nth-child(2)').textContent;
-                    cb.checked = summary.toLowerCase().includes(keyword.toLowerCase());
+                    const row = cb.closest('tr') || cb.closest('.type-card');
+                    const summaryEl = row ? (row.querySelector('td:nth-child(2)') || row.querySelector('.type-name')) : null;
+                    if (summaryEl) {
+                      const summary = summaryEl.textContent;
+                      cb.checked = summary.toLowerCase().includes(keyword.toLowerCase());
+                    }
                   });
                 }
               }
-            "])))
+              
+              // View mode switching
+              function showView(viewType) {
+                // Hide all views
+                document.querySelectorAll('.event-view').forEach(view => view.style.display = 'none');
+                // Show selected view
+                document.getElementById('view-' + viewType).style.display = 'block';
+                // Update button states
+                document.querySelectorAll('.view-mode-buttons .btn').forEach(btn => btn.classList.remove('btn-primary'));
+                document.getElementById('btn-' + viewType).classList.add('btn-primary');
+              }
+              
+              // Initialize view
+              document.addEventListener('DOMContentLoaded', function() {
+                showView('table');
+              });
+              
+              " ui/filter-javascript)])))
 
 (defn subscription-info-page [filter]
   (let [entry (storage/get-entry (:calendar-id filter))
