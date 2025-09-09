@@ -3,7 +3,8 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Install shadow-cljs globally
+# Install Java (required by shadow-cljs) and shadow-cljs
+RUN apk add --no-cache openjdk17-jre
 RUN npm install -g shadow-cljs
 
 # Copy project files
