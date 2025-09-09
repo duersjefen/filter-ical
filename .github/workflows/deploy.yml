@@ -1,4 +1,4 @@
-name: Deploy iCal Viewer to AWS
+name: Deploy Multi-App Infrastructure to AWS
 
 on:
   push:
@@ -11,6 +11,7 @@ env:
   AWS_REGION: eu-north-1
   ECR_REGISTRY: 310829530903.dkr.ecr.eu-north-1.amazonaws.com
   ECR_REPOSITORY_BACKEND: ical-viewer-backend
+  ECR_REPOSITORY_FRONTEND: ical-viewer-frontend
 
 permissions:
   id-token: write   # Required for requesting the JWT
@@ -47,7 +48,7 @@ jobs:
         cd backend
         clj -M:test 2>/dev/null || clj -X:test 2>/dev/null || clj -A:test 2>/dev/null || echo "✅ Tests skipped - no test alias configured"
 
-  deploy:
+  build-and-deploy:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -80,41 +81,97 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
     
-    - name: Deploy to EC2
+    # Future: Build frontend when needed
+    # - name: Build and push frontend image
+    #   if: hashFiles('frontend/**') != ''
+    #   env:
+    #     IMAGE_TAG: ${{ github.sha }}
+    #   run: |
+    #     cd frontend
+    #     docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG .
+    #     docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
+    #     docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+    #     docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
+
+    - name: Deploy to EC2 with Multi-App Setup
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          cd /opt/ical-viewer
+          # Create multi-app directory structure
+          sudo mkdir -p /opt/multi-apps/{nginx,ical-viewer,shared}
+          sudo chown -R ec2-user:ec2-user /opt/multi-apps
           
-          # Create data directory if it doesn't exist
-          sudo mkdir -p /opt/ical-viewer/data
-          sudo chown ec2-user:ec2-user /opt/ical-viewer/data
+          # Stop existing single-app deployment
+          cd /opt/ical-viewer 2>/dev/null && docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+          
+          # Copy infrastructure files (nginx config will be uploaded separately)
+          cd /opt/multi-apps
+          
+          # Create environment file for docker-compose
+          cat > .env << 'EOF'
+          AWS_ACCOUNT_ID=310829530903
+          AWS_REGION=eu-north-1
+          EOF
           
           # Login to ECR using EC2 instance role
           aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 310829530903.dkr.ecr.eu-north-1.amazonaws.com
           
           # Pull latest images
-          docker-compose -f docker-compose.prod.yml pull
+          docker pull 310829530903.dkr.ecr.eu-north-1.amazonaws.com/ical-viewer-backend:latest
           
-          # Restart services with zero downtime
-          docker-compose -f docker-compose.prod.yml up -d --remove-orphans
+          echo "✅ Images pulled successfully"
+    
+    - name: Copy configuration files to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "infrastructure/nginx.conf,infrastructure/docker-compose.multi-app.yml"
+        target: "/opt/multi-apps/"
+        strip_components: 1
+    
+    - name: Start multi-app infrastructure
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /opt/multi-apps
           
-          # Clean up old images to save space
+          # Start the multi-app infrastructure
+          docker-compose -f docker-compose.multi-app.yml up -d --remove-orphans
+          
+          # Wait for services to start
+          sleep 15
+          
+          # Health checks
+          echo "🔍 Checking service health..."
+          docker-compose -f docker-compose.multi-app.yml ps
+          
+          # Test the endpoints
+          echo "🧪 Testing endpoints..."
+          curl -f http://localhost/health || echo "⚠️ Health endpoint not ready"
+          curl -f http://localhost/ical/ || echo "⚠️ iCal app not ready yet"
+          
+          # Clean up old images
           docker image prune -af --filter "until=24h"
           
-          # Health check
-          sleep 15
-          curl -f http://localhost:3000/health || curl -f http://localhost:3000/ || echo "Health check failed but container might still be starting"
-          echo "Deployment completed!"
+          echo "✅ Multi-app deployment completed!"
+          echo "📱 Your apps are available at:"
+          echo "  - Main: http://${{ secrets.EC2_HOST }}/"
+          echo "  - iCal Viewer: http://${{ secrets.EC2_HOST }}/ical/"
     
     - name: Notify deployment status
       if: always()
       run: |
         if [ "${{ job.status }}" == "success" ]; then
-          echo "✅ Deployment successful!"
+          echo "✅ Multi-app infrastructure deployment successful!"
+          echo "🌐 Website: http://${{ secrets.EC2_HOST }}/ical/"
         else
           echo "❌ Deployment failed!"
           exit 1
