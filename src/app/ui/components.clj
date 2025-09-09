@@ -25,7 +25,7 @@
            [:span.type-count (count events) " events"]
            [:div.type-preview
             (for [event sample-events]
-              [:small.sample-date (or (:dtstart event) "No date")])]]]]))])
+              [:small.sample-date (or (:dtstart event) "No date")])]]]]))]])
 
 (defn smart-filter-builder [events calendar-id & [selected-summaries]]
   "Complete smart filter builder interface"
