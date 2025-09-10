@@ -1,5 +1,5 @@
 (ns app.server-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [app.server :as server]
             [app.storage :as storage]
             [ring.mock.request :as mock]
@@ -7,8 +7,9 @@
 
 ;; Test the API endpoints of our clean backend
 
-(defn parse-json-response [response]
+(defn parse-json-response
   "Parse JSON response body if it's a string, otherwise return as-is"
+  [response]
   (let [body (:body response)]
     (if (string? body)
       (json/parse-string body true)

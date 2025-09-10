@@ -105,7 +105,7 @@
       (wrap-json-body {:keywords? true})
       wrap-params))
 
-(defn -main [& args]
+(defn -main [& _args]
   (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
     (println (str "🚀 iCal Viewer API server starting on port " port))
     (run-jetty app {:port port :join? false})

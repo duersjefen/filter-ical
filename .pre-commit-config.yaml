@@ -1,0 +1,46 @@
+# =============================================================================
+# Pre-commit Configuration - Industry Standard Automated Testing
+# =============================================================================
+# This automatically runs tests and quality checks BEFORE every commit.
+# Install: pip install pre-commit && pre-commit install
+# Usage: Automatic on git commit, or manually: pre-commit run --all-files
+
+repos:
+  # Clojure/ClojureScript linting
+  - repo: https://github.com/clj-kondo/clj-kondo
+    rev: v2024.02.12
+    hooks:
+      - id: clj-kondo
+        args: [--lint, backend/src, backend/test, frontend/src]
+
+  # Backend tests
+  - repo: local
+    hooks:
+      - id: backend-tests
+        name: Backend Tests
+        entry: bash -c 'cd backend && clj -M:test-runner'
+        language: system
+        files: '^backend/.*\.(clj|cljc|cljs)$'
+        pass_filenames: false
+
+  # Frontend compilation check
+  - repo: local  
+    hooks:
+      - id: frontend-build
+        name: Frontend Build Check
+        entry: bash -c 'cd frontend && npm ci && npm run build'
+        language: system
+        files: '^frontend/.*\.(cljs|js|json|edn)$'
+        pass_filenames: false
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+        exclude: 'package-lock\.json'
+      - id: check-merge-conflict
+      - id: check-case-conflict

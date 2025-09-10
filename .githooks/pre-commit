@@ -1,0 +1,43 @@
+#!/bin/bash
+# =============================================================================  
+# Git Pre-commit Hook - Automated Quality Gate
+# =============================================================================
+# This runs automatically before every git commit to ensure code quality.
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+echo "🔍 Running pre-commit quality checks..."
+
+# 1. Backend Tests (if backend files changed)
+if git diff --cached --name-only | grep -q "^backend/"; then
+    echo "📊 Backend files changed - running tests..."
+    cd backend
+    if ! clj -M:test-runner >/dev/null 2>&1; then
+        echo "❌ Backend tests failed! Commit aborted."
+        exit 1
+    fi
+    echo "✅ Backend tests passed"
+    cd ..
+fi
+
+# 2. Frontend Build Check (if frontend files changed)  
+if git diff --cached --name-only | grep -q "^frontend/"; then
+    echo "🎨 Frontend files changed - checking build..."
+    cd frontend
+    if ! npm run build >/dev/null 2>&1; then
+        echo "❌ Frontend build failed! Commit aborted."
+        exit 1
+    fi
+    echo "✅ Frontend build successful"
+    cd ..
+fi
+
+# 3. Linting (optional - only if clj-kondo available)
+if command -v clj-kondo >/dev/null 2>&1; then
+    if ! clj-kondo --lint backend/src backend/test frontend/src --parallel >/dev/null 2>&1; then
+        echo "⚠️  Linting warnings found (not blocking commit)"
+    fi
+fi
+
+echo "✅ All quality checks passed - commit proceeding"
