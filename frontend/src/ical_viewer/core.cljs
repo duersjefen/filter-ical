@@ -2,6 +2,7 @@
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
             [re-frame.core :as rf]
+            [day8.re-frame.http-fx]  ; Register http-xhrio effect handler
             [ical-viewer.events]
             [ical-viewer.subs]
             [ical-viewer.views :as views]
@@ -22,6 +23,8 @@
 (defn init! []
   (println "Initializing iCal Viewer ClojureScript app...")
   (rf/dispatch-sync [:initialize-db])
-  ;; Don't fetch calendars on startup - user needs to login first
+  ;; If user was logged in from localStorage, fetch their calendars
+  (when @(rf/subscribe [:logged-in?])
+    (rf/dispatch [:fetch-calendars]))
   (dev-setup)
   (mount-root))

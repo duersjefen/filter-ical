@@ -4,11 +4,36 @@
             [clojure.string :as str]
             [ical-viewer.db :as db]))
 
+;; -- Local Storage Helpers --
+(defn save-user-to-storage! [user]
+  (when (and js/localStorage (:logged-in? user))
+    (.setItem js/localStorage "ical-viewer-user" (js/JSON.stringify (clj->js user)))))
+
+(defn load-user-from-storage []
+  (when js/localStorage
+    (if-let [stored-user (.getItem js/localStorage "ical-viewer-user")]
+      (try
+        (js->clj (js/JSON.parse stored-user) :keywordize-keys true)
+        (catch js/Error e
+          (.removeItem js/localStorage "ical-viewer-user")
+          nil))
+      nil)))
+
+(defn clear-user-from-storage! []
+  (when js/localStorage
+    (.removeItem js/localStorage "ical-viewer-user")))
+
 ;; -- Initialize Database --
 (rf/reg-event-db
  :initialize-db
  (fn [_ _]
-   db/default-db))
+   (let [stored-user (load-user-from-storage)
+         initial-db (if (and stored-user (:logged-in? stored-user))
+                     (-> db/default-db
+                         (assoc :user stored-user)
+                         (assoc :current-view :home))
+                     db/default-db)]
+     initial-db)))
 
 ;; -- User Management Events --
 (rf/reg-event-db
@@ -21,17 +46,19 @@
  (fn [{:keys [db]} _]
    (let [username (get-in db [:login-form :username])]
      (if (not-empty (str/trim username))
-       {:db (-> db
-                (assoc-in [:user :username] (str/trim username))
-                (assoc-in [:user :logged-in?] true)
-                (assoc :current-view :home)
-                (dissoc :login-form))
-        :dispatch [:fetch-calendars]}
+       (let [user {:username (str/trim username) :logged-in? true}]
+         (save-user-to-storage! user)
+         {:db (-> db
+                  (assoc :user user)
+                  (assoc :current-view :home)
+                  (dissoc :login-form))
+          :dispatch [:fetch-calendars]})
        {:db (assoc db :error "Please enter a username")}))))
 
 (rf/reg-event-fx
  :logout
  (fn [{:keys [db]} _]
+   (clear-user-from-storage!)
    {:db (assoc db
                :current-view :login
                :user {:username nil :logged-in? false}
