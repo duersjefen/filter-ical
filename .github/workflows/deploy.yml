@@ -71,13 +71,39 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
+    - name: Detect changed components
+      id: changes
+      run: |
+        # Check what changed since last deployment
+        echo "Detecting changes to optimize deployment..."
+        
+        # Check if frontend files changed
+        if git diff --name-only HEAD~1 HEAD | grep -E '^frontend/|^infrastructure/production-nginx.conf' >/dev/null; then
+          echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          echo "Frontend changes detected"
+        else
+          echo "frontend_changed=false" >> $GITHUB_OUTPUT
+          echo "No frontend changes"
+        fi
+        
+        # Check if backend files changed
+        if git diff --name-only HEAD~1 HEAD | grep -E '^backend/' >/dev/null; then
+          echo "backend_changed=true" >> $GITHUB_OUTPUT
+          echo "Backend changes detected"
+        else
+          echo "backend_changed=false" >> $GITHUB_OUTPUT
+          echo "No backend changes"
+        fi
+    
     - name: Build frontend locally (faster than in Docker)
+      if: steps.changes.outputs.frontend_changed == 'true'
       run: |
         cd frontend
         npm ci  # Faster than npm install
         npm run build
     
     - name: Build and push backend image with caching
+      if: steps.changes.outputs.backend_changed == 'true'
       env:
         IMAGE_TAG: ${{ github.sha }}
       run: |
@@ -91,6 +117,7 @@ jobs:
           --push .
     
     - name: Build and push frontend image with caching  
+      if: steps.changes.outputs.frontend_changed == 'true'
       env:
         IMAGE_TAG: ${{ github.sha }}
       run: |
@@ -157,9 +184,27 @@ jobs:
           mv production-docker-compose.yml docker-compose.yml 2>/dev/null || true
           mv production-nginx.conf nginx/nginx.conf 2>/dev/null || true
           
-          # Rolling update - update images without downtime
-          docker-compose pull ical-viewer ical-viewer-frontend
-          docker-compose up -d --no-deps ical-viewer ical-viewer-frontend
+          # Smart rolling update - only update changed containers
+          CONTAINERS_TO_UPDATE=""
+          
+          # Determine which containers to update based on changes
+          if [[ "${{ steps.changes.outputs.backend_changed }}" == "true" ]]; then
+            CONTAINERS_TO_UPDATE="$CONTAINERS_TO_UPDATE ical-viewer"
+            echo "Backend changed - will update ical-viewer container"
+          fi
+          
+          if [[ "${{ steps.changes.outputs.frontend_changed }}" == "true" ]]; then
+            CONTAINERS_TO_UPDATE="$CONTAINERS_TO_UPDATE ical-viewer-frontend" 
+            echo "Frontend changed - will update ical-viewer-frontend container"
+          fi
+          
+          if [[ -z "$CONTAINERS_TO_UPDATE" ]]; then
+            echo "No application containers need updating"
+          else
+            echo "Updating containers:$CONTAINERS_TO_UPDATE"
+            docker-compose pull$CONTAINERS_TO_UPDATE
+            docker-compose up -d --no-deps$CONTAINERS_TO_UPDATE
+          fi
           
           # Wait for new container to be healthy
           echo "⏳ Waiting for service health check..."
