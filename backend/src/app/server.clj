@@ -5,6 +5,7 @@
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
+            [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.response :as response]
             [app.storage :as storage]
             [app.ics :as ics]
@@ -34,7 +35,7 @@
 
   ;; ClojureScript SPA
   (GET "/app" [] 
-    (slurp "resources/public/index.html"))
+    (slurp "resources/index.html"))
 
   ;; iCal subscription endpoints (still needed for calendar apps)
   (GET "/subscribe/:filter-id" [filter-id]
@@ -108,8 +109,19 @@
           {:status 200 :body {:message "Filter deleted successfully"}})
         {:status 404 :body {:error "Filter not found"}})))
 
-  ;; Static file serving for ClojureScript assets
-  (route/resources "/")
+  ;; Static file serving for all ClojureScript assets
+  (GET "/js/*" {uri :uri}
+    (let [file-path (str "resources" uri)]
+      (if (.exists (java.io.File. file-path))
+        (response/file-response file-path)
+        {:status 404})))
+
+  ;; Static file serving for CSS assets from frontend
+  (GET "/css/*" {uri :uri}
+    (let [file-path (str "../frontend/resources/public" uri)]
+      (if (.exists (java.io.File. file-path))
+        (response/file-response file-path)
+        {:status 404})))
 
   (route/not-found "Page not found"))
 

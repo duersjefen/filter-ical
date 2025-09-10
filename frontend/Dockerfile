@@ -20,8 +20,8 @@ RUN if [ -f package.json ]; then npm install; fi
 COPY src/ src/
 COPY resources/ resources/
 
-# Build ClojureScript for production
-RUN shadow-cljs release app
+# Build CSS and ClojureScript for production
+RUN npm run build
 
 # Production stage - serve built files with nginx
 FROM nginx:alpine

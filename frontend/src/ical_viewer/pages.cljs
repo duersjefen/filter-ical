@@ -10,19 +10,19 @@
 
 (defn login-page []
   [:div
-   [common/page-header 
-    "🗓️ iCal Filter & Subscribe" 
+   [common/page-header
+    "🗓️ iCal Filter & Subscribe"
     "Please log in to access your calendars"]
-   
+
    [auth/login-form]])
 
 (defn home-page []
   [:div
-   [common/page-header 
-    "🗓️ iCal Filter & Subscribe" 
+   [common/page-header
+    "🗓️ iCal Filter & Subscribe"
     "Easily filter your iCal feeds and create custom subscriptions"
     [auth/user-info]]
-   
+
    [calendar/add-calendar-form]
    [calendar/calendar-list]])
 
@@ -32,12 +32,12 @@
     [:div
      [:div.page-header-with-user
       [auth/user-info]]
-     
+
      [common/page-header
       (str "Filter: " (:name selected-calendar "Loading..."))
       "Select event types to filter and create custom subscriptions"
       [common/back-button "Back to Calendars" #(rf/dispatch [:navigate-home])]]
-     
+
      (if loading?
        [common/loading-state "Loading events..."]
        [:div
@@ -46,6 +46,6 @@
         [filters/saved-filters]])]))
 
 (defn not-found-page []
-  [common/empty-state 
-   "Page Not Found" 
+  [common/empty-state
+   "Page Not Found"
    "The page you're looking for doesn't exist."])
