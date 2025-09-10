@@ -658,23 +658,16 @@ jobs:
             VALIDATION_FAILED=1
           fi
           
-          # Validate CSS configuration (ensures local Tailwind is used, not CDN)
-          if echo "$PAGE_CONTENT" | grep -q "css/app.css" 2>/dev/null; then
-            echo "   ✅ Local CSS configuration detected"
-            # Verify local CSS is actually accessible
-            if curl -f --connect-timeout 10 --max-time 30 https://filter-ical.de/css/app.css > /dev/null 2>&1; then
-              echo "   ✅ Local CSS file accessible"
+          # Validate critical resources are accessible (catches deployment issues)
+          CRITICAL_RESOURCES=("/js/main.js" "/css/app.css" "/api/calendars")
+          for resource in "${CRITICAL_RESOURCES[@]}"; do
+            if curl -f --connect-timeout 5 --max-time 15 "https://filter-ical.de$resource" > /dev/null 2>&1; then
+              echo "   ✅ $resource accessible"
             else
-              echo "   ❌ Local CSS file not accessible"
+              echo "   ❌ $resource not accessible - deployment may be incomplete"
               VALIDATION_FAILED=1
             fi
-          elif echo "$PAGE_CONTENT" | grep -q "cdn.tailwindcss.com" 2>/dev/null; then
-            echo "   ❌ CDN CSS detected - deployment may have failed to update HTML"
-            VALIDATION_FAILED=1
-          else
-            echo "   ⚠️  Unknown CSS configuration detected"
-            VALIDATION_FAILED=1
-          fi
+          done
           
           # Test 5: Application Initialization Check
           echo "⚡ Test 5/6: Application initialization..."
