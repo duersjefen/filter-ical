@@ -120,9 +120,9 @@ jobs:
           echo "⚠️  No frontend test script found in package.json"
           echo "💡 Consider adding frontend tests for comprehensive coverage"
           
-          # Basic validation: ensure ClojureScript compiles
+          # Basic validation: ensure ClojureScript compiles (fast compile, no optimization)
           echo "🔍 Performing basic frontend validation..."
-          if npm run build; then
+          if npx shadow-cljs compile app; then
             echo "✅ Frontend compilation successful"
           else
             echo "❌ Frontend compilation failed"
