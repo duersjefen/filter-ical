@@ -302,6 +302,11 @@
                        "An error occurred")]
      (assoc db :error error-msg :loading? false))))
 
+(rf/reg-event-db
+ :clear-error
+ (fn [db _]
+   (dissoc db :error)))
+
 ;; -- View Mode --
 (rf/reg-event-db
  :set-view-mode

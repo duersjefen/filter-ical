@@ -28,7 +28,8 @@
 
 (defn calendar-detail-page []
   (let [selected-calendar @(rf/subscribe [:selected-calendar])
-        loading? @(rf/subscribe [:loading?])]
+        loading? @(rf/subscribe [:loading?])
+        error @(rf/subscribe [:error])]
     [:div
      [:div.page-header-with-user
       [auth/user-info]]
@@ -38,12 +39,13 @@
       "Select event types to filter and create custom subscriptions"
       [common/back-button "Back to Calendars" #(rf/dispatch [:navigate-home])]]
 
-     (if loading?
-       [common/loading-state "Loading events..."]
-       [:div
-        [calendar/calendar-stats]
-        [events/events-table]
-        [filters/saved-filters]])]))
+     (cond
+       loading? [common/loading-state "Loading events..."]
+       error [common/error-message]
+       :else [:div
+              [calendar/calendar-stats]
+              [events/events-table]
+              [filters/saved-filters]])]))
 
 (defn not-found-page []
   [common/empty-state
