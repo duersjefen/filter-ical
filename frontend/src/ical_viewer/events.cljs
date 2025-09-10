@@ -23,6 +23,15 @@
   (when js/localStorage
     (.removeItem js/localStorage "ical-viewer-user")))
 
+;; -- HTTP Request Helpers --
+(defn user-headers
+  "Get headers with user context for API requests"
+  [db]
+  (let [username (get-in db [:user :username])]
+    (if username
+      {"X-User-ID" username}
+      {"X-User-ID" "anonymous"})))
+
 ;; -- Initialize Database --
 (rf/reg-event-db
  :initialize-db
@@ -127,6 +136,7 @@
         :http-xhrio {:method :post
                      :uri "/api/calendars"
                      :params {:name name :url url}
+                     :headers (user-headers db)
                      :format (ajax/json-request-format)
                      :response-format (ajax/json-response-format {:keywords? true})
                      :on-success [:calendar-added]
@@ -147,6 +157,7 @@
    {:db (assoc db :loading? true :error nil)
     :http-xhrio {:method :delete
                  :uri (str "/api/calendars/" calendar-id)
+                 :headers (user-headers db)
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:calendar-deleted]
                  :on-failure [:api-error]}}))
@@ -164,6 +175,7 @@
    {:db (assoc db :loading? true :error nil)
     :http-xhrio {:method :get
                  :uri "/api/calendars"
+                 :headers (user-headers db)
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:calendars-loaded]
                  :on-failure [:api-error]}}))
@@ -182,6 +194,7 @@
    {:db (assoc db :loading? true :error nil)
     :http-xhrio {:method :get
                  :uri (str "/api/calendar/" calendar-id "/events")
+                 :headers (user-headers db)
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:events-loaded]
                  :on-failure [:api-error]}}))
@@ -232,6 +245,7 @@
                    :params {:calendar-id calendar-id
                             :name filter-name
                             :types (vec selected-types)}
+                   :headers (user-headers db)
                    :format (ajax/json-request-format)
                    :response-format (ajax/json-response-format {:keywords? true})
                    :on-success [:filter-saved]
@@ -248,6 +262,7 @@
  (fn [{:keys [db]} _]
    {:http-xhrio {:method :get
                  :uri "/api/filters"
+                 :headers (user-headers db)
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:filters-loaded]
                  :on-failure [:api-error]}}))
@@ -262,6 +277,7 @@
  (fn [{:keys [db]} [_ filter-id]]
    {:http-xhrio {:method :delete
                  :uri (str "/api/filters/" filter-id)
+                 :headers (user-headers db)
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:filter-deleted]
                  :on-failure [:api-error]}}))

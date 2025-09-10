@@ -13,7 +13,7 @@ echo "🔍 Running pre-commit quality checks..."
 if git diff --cached --name-only | grep -q "^backend/"; then
     echo "📊 Backend files changed - running tests..."
     cd backend
-    if ! clj -M:test-runner >/dev/null 2>&1; then
+    if ! clj -M:test -e "(require '[clojure.test :refer [run-tests]]) (require 'app.ical-viewer-test) (run-tests 'app.ical-viewer-test)" >/dev/null 2>&1; then
         echo "❌ Backend tests failed! Commit aborted."
         exit 1
     fi

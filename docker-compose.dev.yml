@@ -1,0 +1,29 @@
+# Development environment with production parity
+# Use: make docker-dev
+
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: ical-viewer-dev-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      # Live reload: mount source code
+      - ./backend/src:/app/src:cached
+      - ./backend/data:/app/data:cached
+      # Mount frontend static files
+      - ./frontend/resources/public:/app/resources/public:cached
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  default:
+    name: ical-viewer-dev

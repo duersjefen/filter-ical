@@ -9,7 +9,9 @@
             [app.storage :as storage]
             [app.ics :as ics]
             [app.core.types :refer [calendar-url]]
-            [app.core.filtering :refer [by-summary any-filter]]))
+            [app.core.filtering :refer [by-summary any-filter]]
+            [app.core.user-storage :as user-storage]
+            [app.core.auth :as auth]))
 
 (defn filter-events-by-summaries 
   "Filter events using the filtering system"
@@ -46,53 +48,65 @@
       {:status 404
        :body "Filter not found"}))
 
-  ;; API Routes for ClojureScript SPA
-  (GET "/api/calendars" []
-    (response/response {:calendars (storage/all-entries)}))
+  ;; API Routes for ClojureScript SPA - Now with user-specific storage
+  (GET "/api/calendars" request
+    (let [username (auth/get-current-user request)]
+      (response/response {:calendars (user-storage/get-calendars-for-user username)})))
 
-  (POST "/api/calendars" {body :body}
-    (let [name (:name body)
+  (POST "/api/calendars" request
+    (let [username (auth/get-current-user request)
+          body (:body request)
+          name (:name body)
           url (:url body)]
       (if (and (not-empty name) (not-empty url))
-        (let [new-entry (storage/add-entry! name url)]
+        (let [new-entry (user-storage/add-calendar-for-user! username name url)]
           {:status 201
            :body {:message "Calendar added successfully" :id (:id new-entry)}})
         {:status 400
          :body {:error "Name and URL are required"}})))
 
-  (DELETE "/api/calendars/:id" [id]
-    (if (storage/get-entry id)
-      (do 
-        (storage/delete-entry! id)
-        {:status 200 :body {:message "Calendar deleted successfully"}})
-      {:status 404 :body {:error "Calendar not found"}}))
+  (DELETE "/api/calendars/:id" [id :as request]
+    (let [username (auth/get-current-user request)
+          calendar-id (Integer/parseInt id)]
+      (if (user-storage/get-calendar-for-user username calendar-id)
+        (do 
+          (user-storage/delete-calendar-for-user! username calendar-id)
+          {:status 200 :body {:message "Calendar deleted successfully"}})
+        {:status 404 :body {:error "Calendar not found"}})))
 
-  (GET "/api/calendar/:id/events" [id]
-    (if-let [entry (storage/get-entry id)]
-      (let [events (ics/events-for-url (calendar-url entry))]
-        (response/response {:events events}))
-      {:status 404 :body {:error "Calendar not found"}}))
+  (GET "/api/calendar/:id/events" [id :as request]
+    (let [username (auth/get-current-user request)
+          calendar-id (Integer/parseInt id)]
+      (if-let [entry (user-storage/get-calendar-for-user username calendar-id)]
+        (let [events (ics/events-for-url (:url entry))]
+          (response/response {:events events}))
+        {:status 404 :body {:error "Calendar not found"}})))
 
-  (GET "/api/filters" []
-    (response/response {:filters (storage/all-filters)}))
+  (GET "/api/filters" request
+    (let [username (auth/get-current-user request)]
+      (response/response {:filters (user-storage/get-filters-for-user username)})))
 
-  (POST "/api/filters" {body :body}
-    (let [calendar-id (:calendar-id body)
+  (POST "/api/filters" request
+    (let [username (auth/get-current-user request)
+          body (:body request)
+          calendar-id (:calendar-id body)
           filter-name (:name body)
           types (:types body)]
       (if (and calendar-id filter-name (seq types))
-        (let [new-filter (storage/add-filter! filter-name calendar-id types)]
+        (let [new-filter (user-storage/add-filter-for-user! username filter-name calendar-id types)]
           {:status 201
            :body {:message "Filter saved successfully" :id (:id new-filter)}})
         {:status 400
          :body {:error "Calendar ID, name, and types are required"}})))
 
-  (DELETE "/api/filters/:id" [id]
-    (if (storage/get-filter id)
-      (do
-        (storage/delete-filter! id)
-        {:status 200 :body {:message "Filter deleted successfully"}})
-      {:status 404 :body {:error "Filter not found"}}))
+  (DELETE "/api/filters/:id" [id :as request]
+    (let [username (auth/get-current-user request)
+          filter-id (Integer/parseInt id)]
+      (if (user-storage/get-filter-for-user username filter-id)
+        (do
+          (user-storage/delete-filter-for-user! username filter-id)
+          {:status 200 :body {:message "Filter deleted successfully"}})
+        {:status 404 :body {:error "Filter not found"}})))
 
   ;; Static file serving for ClojureScript assets
   (route/resources "/")
@@ -103,7 +117,8 @@
   (-> routes
       wrap-json-response
       (wrap-json-body {:keywords? true})
-      wrap-params))
+      wrap-params
+      auth/wrap-user-context))
 
 (defn -main [& _args]
   (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]

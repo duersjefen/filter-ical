@@ -70,3 +70,8 @@ Thumbs.db
 # Docker
 .dockerignore
 docker-compose.override.yml
+
+# Local development
+backend/resources/public
+backend/data/user-calendars.edn
+backend/data/user-filters.edn

@@ -222,6 +222,32 @@ jobs:
         echo "   Backend:  $([ "$(grep -o 'backend_changed=true' <<<"$(cat $GITHUB_OUTPUT)")" ] && echo 'UPDATE REQUIRED' || echo 'No changes')"
         echo ""
     
+    # ===========================================================================
+    # PARALLEL BUILD OPTIMIZATION
+    # ===========================================================================
+    # Build frontend application and Docker containers concurrently for maximum speed
+    
+    - name: 🎨 Setup Node.js for frontend build
+      if: steps.changes.outputs.frontend_changed == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'frontend/package-lock.json'
+    
+    - name: 💾 Cache ClojureScript compilation
+      if: steps.changes.outputs.frontend_changed == 'true'
+      uses: actions/cache@v3
+      with:
+        path: |
+          frontend/.shadow-cljs
+          frontend/resources/public/js
+          ~/.m2/repository
+          ~/.gitlibs
+        key: frontend-cljs-${{ runner.os }}-${{ hashFiles('frontend/shadow-cljs.edn', 'frontend/src/**/*.cljs') }}
+        restore-keys: |
+          frontend-cljs-${{ runner.os }}-
+    
     - name: 🎨 Build frontend application
       if: steps.changes.outputs.frontend_changed == 'true'
       run: |
@@ -237,8 +263,8 @@ jobs:
           exit 1
         fi
         
-        # Build production frontend
-        echo "⚙️  Compiling ClojureScript for production..."
+        # Build production frontend with compilation caching
+        echo "⚙️  Compiling ClojureScript for production (with caching)..."
         if npm run build; then
           echo "✅ Frontend build completed successfully"
           echo "📊 Build artifact size:"
@@ -248,74 +274,127 @@ jobs:
           exit 1
         fi
     
-    - name: 🐳 Build and push backend container
-      if: steps.changes.outputs.backend_changed == 'true'
+    - name: 🐳🌍 Build and push containers (parallel)
+      if: steps.changes.outputs.backend_changed == 'true' || steps.changes.outputs.frontend_changed == 'true'
       env:
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        echo "📦 Building backend container with advanced caching..."
-        cd backend
+        echo "🚀 Starting parallel container builds for maximum speed..."
         
-        # Build with comprehensive caching and multi-platform support
-        echo "⚙️  Container build configuration:"
-        echo "   Registry: $ECR_REGISTRY"
-        echo "   Repository: $ECR_REPOSITORY_BACKEND"
-        echo "   Tags: $IMAGE_TAG, latest"
-        echo "   Platform: linux/amd64"
-        echo "   Cache: GitHub Actions (GHA)"
+        # Function to build backend container
+        build_backend() {
+          if [ "${{ steps.changes.outputs.backend_changed }}" == "true" ]; then
+            echo "📦 Building backend container with advanced caching..."
+            cd backend
+            
+            echo "⚙️  Backend container build configuration:"
+            echo "   Registry: $ECR_REGISTRY"
+            echo "   Repository: $ECR_REPOSITORY_BACKEND"
+            echo "   Tags: $IMAGE_TAG, latest"
+            echo "   Platform: linux/amd64"
+            echo "   Cache: GitHub Actions (GHA)"
+            
+            if docker buildx build \
+              --cache-from type=gha,scope=backend \
+              --cache-to type=gha,scope=backend,mode=max \
+              --platform linux/amd64 \
+              --build-arg BUILDKIT_INLINE_CACHE=1 \
+              --label "version=$IMAGE_TAG" \
+              --label "build-date=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+              --label "commit=$GITHUB_SHA" \
+              -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG \
+              -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest \
+              --push .; then
+              echo "✅ Backend container built and pushed successfully"
+              return 0
+            else
+              echo "❌ Backend container build failed"
+              return 1
+            fi
+          else
+            echo "⏭️  Backend unchanged, skipping container build"
+            return 0
+          fi
+        }
         
-        if docker buildx build \
-          --cache-from type=gha \
-          --cache-to type=gha,mode=max \
-          --platform linux/amd64 \
-          --build-arg BUILDKIT_INLINE_CACHE=1 \
-          --label "version=$IMAGE_TAG" \
-          --label "build-date=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
-          --label "commit=$GITHUB_SHA" \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest \
-          --push .; then
-          echo "✅ Backend container built and pushed successfully"
+        # Function to build frontend container
+        build_frontend() {
+          if [ "${{ steps.changes.outputs.frontend_changed }}" == "true" ]; then
+            echo "🎨 Building frontend container with nginx configuration..."
+            cd frontend
+            
+            # Verify build artifacts exist before containerization
+            if [ ! -d "resources/public/js" ]; then
+              echo "⚠️  Frontend build artifacts not found, building now..."
+              npm run build
+            fi
+            
+            echo "⚙️  Frontend container build configuration:"
+            echo "   Registry: $ECR_REGISTRY"
+            echo "   Repository: $ECR_REPOSITORY_FRONTEND"
+            echo "   Tags: $IMAGE_TAG, latest"
+            echo "   Platform: linux/amd64"
+            echo "   Cache: GitHub Actions (GHA)"
+            
+            if docker buildx build \
+              --cache-from type=gha,scope=frontend \
+              --cache-to type=gha,scope=frontend,mode=max \
+              --platform linux/amd64 \
+              --build-arg BUILDKIT_INLINE_CACHE=1 \
+              --label "version=$IMAGE_TAG" \
+              --label "build-date=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+              --label "commit=$GITHUB_SHA" \
+              -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG \
+              -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest \
+              --push .; then
+              echo "✅ Frontend container built and pushed successfully"
+              return 0
+            else
+              echo "❌ Frontend container build failed"
+              return 1
+            fi
+          else
+            echo "⏭️  Frontend unchanged, skipping container build"
+            return 0
+          fi
+        }
+        
+        # Execute builds in parallel background jobs
+        echo "🔄 Starting parallel build execution..."
+        build_backend &
+        BACKEND_PID=$!
+        
+        build_frontend &
+        FRONTEND_PID=$!
+        
+        # Wait for both builds to complete
+        echo "⏳ Waiting for parallel builds to complete..."
+        
+        BACKEND_EXIT=0
+        FRONTEND_EXIT=0
+        
+        # Wait for backend build
+        if wait $BACKEND_PID; then
+          echo "✅ Backend build completed successfully"
         else
-          echo "❌ Backend container build failed"
-          exit 1
-        fi
-    
-    - name: 🌍 Build and push frontend container
-      if: steps.changes.outputs.frontend_changed == 'true'
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        echo "🎨 Building frontend container with nginx configuration..."
-        cd frontend
-        
-        # Verify build artifacts exist before containerization
-        if [ ! -d "resources/public/js" ]; then
-          echo "⚠️  Frontend build artifacts not found, building now..."
-          npm run build
+          BACKEND_EXIT=$?
+          echo "❌ Backend build failed with exit code $BACKEND_EXIT"
         fi
         
-        echo "⚙️  Container build configuration:"
-        echo "   Registry: $ECR_REGISTRY"
-        echo "   Repository: $ECR_REPOSITORY_FRONTEND"
-        echo "   Tags: $IMAGE_TAG, latest"
-        echo "   Platform: linux/amd64"
-        echo "   Cache: GitHub Actions (GHA)"
-        
-        if docker buildx build \
-          --cache-from type=gha \
-          --cache-to type=gha,mode=max \
-          --platform linux/amd64 \
-          --build-arg BUILDKIT_INLINE_CACHE=1 \
-          --label "version=$IMAGE_TAG" \
-          --label "build-date=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
-          --label "commit=$GITHUB_SHA" \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest \
-          --push .; then
-          echo "✅ Frontend container built and pushed successfully"
+        # Wait for frontend build
+        if wait $FRONTEND_PID; then
+          echo "✅ Frontend build completed successfully"
         else
-          echo "❌ Frontend container build failed"
+          FRONTEND_EXIT=$?
+          echo "❌ Frontend build failed with exit code $FRONTEND_EXIT"
+        fi
+        
+        # Check overall success
+        if [ $BACKEND_EXIT -eq 0 ] && [ $FRONTEND_EXIT -eq 0 ]; then
+          echo "🎉 All parallel builds completed successfully!"
+          echo "⚡ Build time saved through parallelization"
+        else
+          echo "💥 Parallel build failed - Backend: $BACKEND_EXIT, Frontend: $FRONTEND_EXIT"
           exit 1
         fi
 
@@ -497,6 +576,11 @@ jobs:
             else
               echo "✅ All containers started successfully"
             fi
+            
+            # Restart nginx to ensure it picks up new container configurations
+            echo "🔄 Restarting nginx to refresh configuration..."
+            docker-compose restart nginx
+            sleep 5
           fi
           
           # =============================================================================
@@ -507,9 +591,30 @@ jobs:
           
           echo "🧪 Running comprehensive production validation..."
           
-          # Allow containers time to fully initialize
+          # Smart wait for backend initialization with health checks
           echo "⏳ Waiting for backend initialization (ClojureScript compilation, etc.)..."
-          sleep 60
+          
+          # Wait up to 3 minutes for backend to be fully ready
+          MAX_WAIT=180
+          WAIT_COUNT=0
+          
+          while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+            if curl -f --connect-timeout 5 --max-time 10 http://localhost:3000/health > /dev/null 2>&1; then
+              echo "   ✅ Backend is ready after ${WAIT_COUNT}s"
+              break
+            fi
+            
+            if [ $((WAIT_COUNT % 15)) -eq 0 ]; then
+              echo "   ⏳ Still waiting for backend (${WAIT_COUNT}s elapsed)..."
+            fi
+            
+            sleep 5
+            WAIT_COUNT=$((WAIT_COUNT + 5))
+          done
+          
+          if [ $WAIT_COUNT -ge $MAX_WAIT ]; then
+            echo "   ⚠️  Backend took longer than expected to start, proceeding with validation"
+          fi
           
           # Initialize validation tracking
           VALIDATION_FAILED=0

@@ -1,20 +1,22 @@
-# Build stage for ClojureScript
+# Build stage for ClojureScript with optimized layer caching
 FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Install Java (required by shadow-cljs) and shadow-cljs
+# Install system dependencies (cached independently)
 RUN apk add --no-cache openjdk17-jre
+
+# Install shadow-cljs globally (cached independently)
 RUN npm install -g shadow-cljs
 
-# Copy project files
-COPY shadow-cljs.edn .
+# Copy dependency files first for better caching
 COPY package.json* ./
+COPY shadow-cljs.edn .
 
-# Install npm dependencies if package.json exists
+# Install npm dependencies (cached when package.json unchanged)
 RUN if [ -f package.json ]; then npm install; fi
 
-# Copy source code
+# Copy source code (changes more frequently, separate layer)
 COPY src/ src/
 COPY resources/ resources/
 
