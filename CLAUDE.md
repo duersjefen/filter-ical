@@ -1,100 +1,85 @@
-# CLAUDE.md - Professional Full-Stack CI/CD Template
+# CLAUDE.md - Professional CI/CD Template with Full Automation
 
-This file provides Claude Code (claude.ai/code) with a **reusable template** for professional full-stack web applications with automated CI/CD.
-
----
-
-## 🎯 REUSABLE CI/CD ARCHITECTURE
-
-This project demonstrates a **production-ready template** that can be replicated for any new website on the same AWS infrastructure.
-
-### Core Architecture Pattern
-- **Backend**: Clojure/Ring server (port 3000)
-- **Frontend**: ClojureScript SPA or static site
-- **Deployment**: Multi-container Docker on AWS EC2
-- **Domain**: Custom domain with SSL via Let's Encrypt
-- **CI/CD**: GitHub Actions with intelligent change detection
+This file instructs Claude Code on how to **automatically set up** professional full-stack web applications with zero-downtime CI/CD pipelines.
 
 ---
 
-## 🚀 QUICK REPLICATION GUIDE
+## 🎯 CLAUDE CODE AUTOMATION INSTRUCTIONS
 
-### For New Projects on Same Server
+When the user asks Claude Code to "set up a new website" or "replicate this architecture", Claude should **automatically execute** the following steps without asking for confirmation:
 
-1. **Copy Essential Files**:
-   ```
-   .github/workflows/deploy.yml    # CI/CD pipeline
-   .githooks/pre-commit           # Automated testing
-   .pre-commit-config.yaml        # Code quality
-   .gitignore                     # Clean workspace
-   infrastructure/                # Nginx + Docker configs
-   DEVELOPMENT.md                 # Developer workflow
-   ```
+### 1. AUTOMATIC PROJECT SETUP
 
-2. **Update Configuration**:
-   - Change ECR repository names in `deploy.yml`
-   - Update domain name in nginx config
-   - Modify container names in docker-compose
+**Copy Essential Template Files:**
+```bash
+# Claude should automatically run these commands:
+cp .github/workflows/deploy.yml NEW_PROJECT/.github/workflows/
+cp .githooks/pre-commit NEW_PROJECT/.githooks/
+cp .pre-commit-config.yaml NEW_PROJECT/
+cp .gitignore NEW_PROJECT/
+cp -r docs/ NEW_PROJECT/
+cp -r infrastructure/ NEW_PROJECT/
+chmod +x NEW_PROJECT/.githooks/pre-commit
+cd NEW_PROJECT && git config core.hooksPath .githooks
+```
 
-3. **Deploy**: Push to main branch → Automated deployment
+### 2. AUTOMATIC CONFIGURATION UPDATES
+
+**Claude should automatically update these files with new project details:**
+
+**In `deploy.yml`:**
+- Replace `ical-viewer-backend` → `NEW_PROJECT-backend`
+- Replace `ical-viewer-frontend` → `NEW_PROJECT-frontend` 
+- Replace `filter-ical.de` → `NEW_DOMAIN.com`
+
+**In `production-nginx.conf`:**
+- Replace all instances of `filter-ical.de` → `NEW_DOMAIN.com`
+- Update SSL certificate paths to use new domain
+
+**In `production-docker-compose.yml`:**
+- Replace container names to use new project name
+
+### 3. AUTOMATIC AWS SETUP
+
+**Claude should provide these exact commands for the user to run:**
+```bash
+# Create ECR repositories
+aws ecr create-repository --repository-name NEW_PROJECT-backend --region eu-north-1
+aws ecr create-repository --repository-name NEW_PROJECT-frontend --region eu-north-1
+
+# Test deployment (after DNS is configured)
+git add . && git commit -m "Initial deployment" && git push origin main
+```
+
+### 4. USER REQUIREMENTS (Claude should ask for these only)
+
+Claude should ask the user for ONLY these 3 inputs:
+1. **Project name** (for container/repository names)
+2. **Domain name** (for nginx and SSL config)
+3. **Project type** (Clojure/ClojureScript, Node.js, Python, etc.)
+
+Everything else should be automated.
 
 ---
 
-## 🔧 CURRENT PROJECT - iCal Viewer
+## 📁 PROJECT ARCHITECTURE
+
+### Current Project - iCal Viewer
+- **Type**: Full-stack Clojure/ClojureScript
+- **Backend**: Ring server (port 3000)
+- **Frontend**: ClojureScript SPA with shadow-cljs
+- **Domain**: https://filter-ical.de
+- **Status**: ✅ Production-ready template
 
 ### Quick Start Commands
 ```bash
-# Backend Development
-cd backend && clj -M:run                # Start server (port 3000)  
+# Development
+cd backend && clj -M:run                # Backend server
+cd frontend && npm run dev              # Frontend development
 cd backend && clj -M:test-runner        # Run tests
 
-# Frontend Development  
-cd frontend && npm install              # Install dependencies
-cd frontend && npm run dev              # Development with hot reload
-cd frontend && npm run build            # Production build
-
-# Full Stack (2 terminals)
-cd backend && clj -M:run               # Terminal 1: Backend
-cd frontend && npm run dev             # Terminal 2: Frontend
-```
-
-### Testing Workflow (Industry Standard)
-- **Automated**: Pre-commit hooks run tests before every commit
-- **Manual**: Use commands above or run `.githooks/pre-commit`
-- **CI**: GitHub Actions runs full test suite on push
-- **Deployment**: Only proceeds if ALL tests pass
-
----
-
-## 🏗️ PROJECT STRUCTURE
-
-```
-ical-viewer/                           # Root project
-├── .github/workflows/deploy.yml       # 🚀 CI/CD Pipeline
-├── .githooks/pre-commit               # 🧪 Automated Testing  
-├── .pre-commit-config.yaml           # 🔍 Code Quality
-├── .gitignore                        # 🧹 Clean Workspace
-├── DEVELOPMENT.md                    # 📋 Developer Guide
-│
-├── backend/                          # Clojure Backend
-│   ├── src/app/                     # Source code
-│   ├── test/app/                    # Tests
-│   ├── data/                        # EDN data files
-│   ├── deps.edn                     # Dependencies + test config
-│   └── Dockerfile                   # Container config
-│
-├── frontend/                         # ClojureScript Frontend
-│   ├── src/ical_viewer/             # ClojureScript source
-│   ├── resources/public/            # Static assets
-│   ├── package.json                 # Node dependencies
-│   ├── shadow-cljs.edn             # Build config
-│   ├── nginx.conf                   # Container nginx
-│   └── Dockerfile                   # Container config
-│
-└── infrastructure/                   # Production Deployment
-    ├── production-nginx.conf         # Main reverse proxy
-    ├── production-docker-compose.yml # Container orchestration
-    └── aws-setup/                   # AWS resource configs
+# Production
+git push origin main                    # Triggers automatic deployment
 ```
 
 ---
@@ -104,142 +89,182 @@ ical-viewer/                           # Root project
 ### AWS Resources (eu-north-1)
 - **Account**: 310829530903
 - **EC2**: i-01647c3d9af4fe9fc (56.228.25.95)
-- **ECR**: ical-viewer-backend, ical-viewer-frontend
-- **Domain**: filter-ical.de → SSL via Let's Encrypt
+- **ECR**: Container registries for each project
+- **SSL**: Let's Encrypt with auto-renewal
 
-### Container Architecture
+### Multi-Project Architecture
 ```
-nginx (reverse proxy) - Port 80/443
-├── ical-viewer (backend) - Port 3000
-├── ical-viewer-frontend - Port 80  
-└── certbot (SSL management)
+EC2 Instance (56.228.25.95)
+├── nginx (reverse proxy) - Ports 80/443
+│   ├── filter-ical.de → ical-viewer containers
+│   ├── NEW_DOMAIN.com → NEW_PROJECT containers
+│   └── [future domains] → [future projects]
+├── certbot (SSL management)
+└── /opt/websites/ (deployment directory)
 ```
 
-### Deployment Directory: `/opt/websites/`
+### Deployment Directory Structure
 ```
 /opt/websites/
-├── docker-compose.yml              # Container orchestration
+├── docker-compose.yml              # Multi-project orchestration
 ├── .env                           # Environment variables
-├── nginx/nginx.conf               # Reverse proxy config
-└── apps/ical-viewer/              # Application data
+├── nginx/nginx.conf               # Multi-domain reverse proxy
+└── apps/
+    ├── ical-viewer/               # Current project data
+    └── NEW_PROJECT/               # Future project data
 ```
 
 ---
 
-## 🔄 CI/CD PIPELINE FEATURES
+## 🔄 AUTOMATED CI/CD FEATURES
 
-### Intelligent Change Detection
-- Only builds changed components (backend/frontend)
-- Robust fallback strategies for Git edge cases
-- Fail-safe approach: forces updates when uncertain
+### Zero-Configuration Deployment
+- **Smart change detection**: Only rebuilds changed components
+- **Automated testing**: Pre-commit hooks + CI validation
+- **Zero-downtime updates**: Rolling container deployments
+- **Health validation**: 6-point verification system
+- **SSL management**: Automatic certificate generation/renewal
 
-### Automated Testing
-- **Pre-commit hooks**: Block broken commits locally
-- **CI testing**: Backend tests + frontend compilation
-- **Deployment validation**: 6-point health check system
-
-### Zero-Downtime Deployment
-- Rolling container updates
-- Health validation before declaring success
-- Automatic rollback on failure
-
-### Professional Logging
-- Structured output with emojis for readability
-- Comprehensive error reporting
-- Clear troubleshooting guidance
+### Professional Development Workflow
+- **Pre-commit hooks**: Block broken commits automatically
+- **Code quality**: Automated linting and formatting
+- **Test automation**: Backend + frontend validation
+- **Deployment validation**: Health checks before going live
 
 ---
 
-## 📋 REPLICATION CHECKLIST
+## 📋 AUTOMATION CHECKLIST FOR CLAUDE
 
-### For New Project Setup
+When setting up a new project, Claude should automatically:
 
-**1. Repository Setup**
-- [ ] Copy `.github/workflows/deploy.yml`
-- [ ] Copy `.githooks/pre-commit` + `chmod +x`
-- [ ] Copy `.pre-commit-config.yaml`
-- [ ] Copy `.gitignore`
-- [ ] Run `git config core.hooksPath .githooks`
+**✅ File Operations:**
+- [ ] Copy all template files to new project directory
+- [ ] Update project-specific configuration (names, domains)
+- [ ] Set executable permissions on git hooks
+- [ ] Configure git hooks path
 
-**2. AWS Configuration**
-- [ ] Create ECR repositories for new project
-- [ ] Update ECR names in `deploy.yml`
-- [ ] Configure GitHub secrets (EC2_HOST, EC2_USER, EC2_SSH_KEY)
-- [ ] Verify OIDC role permissions
+**✅ Documentation:**
+- [ ] Create project-specific README
+- [ ] Update CLAUDE.md for the new project
+- [ ] Generate deployment documentation
 
-**3. Infrastructure Updates**
-- [ ] Update domain name in nginx config
-- [ ] Update container names in docker-compose
-- [ ] Configure SSL certificates for new domain
-- [ ] Test nginx configuration syntax
+**✅ Testing:**
+- [ ] Verify configuration file syntax
+- [ ] Test git hook functionality
+- [ ] Validate CI/CD pipeline configuration
 
-**4. Application Customization**
-- [ ] Update project-specific code
-- [ ] Configure database/storage as needed
-- [ ] Set up monitoring and logging
-- [ ] Test deployment pipeline
+**✅ User Instructions:**
+- [ ] Provide AWS commands to run
+- [ ] List DNS configuration requirements
+- [ ] Show deployment verification steps
 
 ---
 
-## 🛠️ MAINTENANCE COMMANDS
+## 🛠️ MAINTENANCE & MONITORING
 
-### On Production Server (EC2)
+### Health Check Endpoints
+- **Any Project**: `https://DOMAIN/health`
+- **Nginx Status**: `http://localhost:8080/nginx-health`
+
+### Production Server Commands
 ```bash
 ssh ec2-user@56.228.25.95
 
-# Container Management
+# Container management
 cd /opt/websites
-docker-compose ps                    # Check status
-docker-compose logs --tail 50       # View logs
-docker-compose restart nginx        # Restart reverse proxy
+docker-compose ps                    # Status
+docker-compose logs PROJECT --tail 50  # Logs
+docker-compose restart nginx        # Restart proxy
 
-# SSL Certificate Renewal
+# SSL certificates
 docker exec websites-certbot certbot renew
 
 # Cleanup
 docker image prune -af --filter "until=24h"
 ```
 
-### Health Check Endpoints
-- **Frontend**: https://filter-ical.de/
-- **Backend Health**: https://filter-ical.de/health
-- **Nginx Health**: http://localhost:8080/nginx-health (internal)
+---
+
+## 🎯 SUCCESS CRITERIA
+
+**A successful automated setup includes:**
+1. ✅ All template files copied and configured
+2. ✅ Project builds without errors
+3. ✅ Pre-commit hooks preventing broken commits
+4. ✅ CI/CD pipeline configured and validated
+5. ✅ Documentation generated for new project
+6. ✅ Clear next steps provided to user
+
+**After DNS configuration and first deployment:**
+1. ✅ HTTPS website accessible
+2. ✅ SSL certificate valid
+3. ✅ Health endpoints responding
+4. ✅ Zero-downtime updates working
 
 ---
 
-## 🎯 KEY SUCCESS PRINCIPLES
+## 📚 DOCUMENTATION STRUCTURE
 
-### 1. Fail-Fast Philosophy
-- Tests run automatically before commits
-- Deployment blocks on any test failure
-- Comprehensive health validation
-
-### 2. Zero-Downtime Operations
-- Rolling updates with health checks
-- Automatic rollback on failure
-- Previous version remains active during failures
-
-### 3. Professional Development Standards
-- Code quality enforced through automation
-- Comprehensive documentation
-- Reusable, maintainable architecture
-
-### 4. Monitoring & Observability
-- Structured logging throughout pipeline
-- Clear error messages and troubleshooting guides
-- Health endpoints for monitoring integration
+```
+docs/
+├── DEVELOPMENT.md              # Developer workflow guide
+├── DEPLOYMENT_TEMPLATE.md      # Step-by-step replication guide
+├── ARCHITECTURE.md            # Technical architecture details
+└── TROUBLESHOOTING.md         # Common issues and solutions
+```
 
 ---
 
-## 🚀 PROVEN DEPLOYMENT RECORD
+## 🚀 CLAUDE CODE SCRIPT TEMPLATE
 
-**Status**: ✅ Production-ready template
-- ✅ Zero-downtime deployments working
-- ✅ Automated testing preventing broken deployments  
-- ✅ SSL certificates auto-renewing
-- ✅ Multi-container architecture stable
-- ✅ Change detection optimizing deployment speed
-- ✅ Professional development workflow established
+When user says "set up new website", Claude should execute:
 
-**Last Updated**: September 10, 2025
-**Next Maintenance**: Review SSL certificate renewal (auto-managed)
+```bash
+#!/bin/bash
+# Claude Code Automation Script
+
+# Get user inputs
+read -p "Project name (e.g., 'my-blog'): " PROJECT_NAME
+read -p "Domain name (e.g., 'myblog.com'): " DOMAIN_NAME
+read -p "Project type (clojure/node/python): " PROJECT_TYPE
+
+# Automated setup
+echo "🚀 Setting up $PROJECT_NAME with Claude Code automation..."
+
+# Create project structure
+mkdir -p $PROJECT_NAME/{.github/workflows,.githooks,docs,infrastructure}
+
+# Copy and configure template files
+cp .github/workflows/deploy.yml $PROJECT_NAME/.github/workflows/
+sed -i "s/ical-viewer/$PROJECT_NAME/g" $PROJECT_NAME/.github/workflows/deploy.yml
+sed -i "s/filter-ical.de/$DOMAIN_NAME/g" $PROJECT_NAME/.github/workflows/deploy.yml
+
+cp .githooks/pre-commit $PROJECT_NAME/.githooks/
+chmod +x $PROJECT_NAME/.githooks/pre-commit
+
+cp .gitignore $PROJECT_NAME/
+cp -r docs/* $PROJECT_NAME/docs/
+cp -r infrastructure/* $PROJECT_NAME/infrastructure/
+
+# Configure git hooks
+cd $PROJECT_NAME
+git init
+git config core.hooksPath .githooks
+
+# Generate project-specific documentation
+echo "# $PROJECT_NAME - Professional Web Application" > README.md
+echo "Deployed at: https://$DOMAIN_NAME" >> README.md
+
+echo "✅ Setup complete! Next steps:"
+echo "1. Configure DNS: $DOMAIN_NAME → 56.228.25.95"
+echo "2. Run: aws ecr create-repository --repository-name $PROJECT_NAME-backend --region eu-north-1"
+echo "3. Run: aws ecr create-repository --repository-name $PROJECT_NAME-frontend --region eu-north-1"
+echo "4. Deploy: git add . && git commit -m 'Initial deployment' && git push origin main"
+```
+
+**This automation eliminates all manual configuration and ensures perfect replication every time.**
+
+---
+
+*Last Updated: September 10, 2025*  
+*Status: Production-ready automation template*
