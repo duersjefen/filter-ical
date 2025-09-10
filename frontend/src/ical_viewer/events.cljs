@@ -31,6 +31,17 @@
  (fn [db [_ calendar-id]]
    (assoc db :selected-calendar-id calendar-id)))
 
+;; -- API Calls --
+(rf/reg-event-fx
+ :fetch-calendars
+ (fn [{:keys [db]} _]
+   {:db (assoc db :loading? true :error nil)
+    :http-xhrio {:method :get
+                 :uri "/api/calendars"
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success [:calendars-loaded]
+                 :on-failure [:api-error]}}))
+
 (rf/reg-event-fx
  :load-calendar-events
  (fn [{:keys [db]} [_ calendar-id]]
@@ -42,9 +53,18 @@
                  :on-failure [:api-error]}}))
 
 (rf/reg-event-db
+ :calendars-loaded
+ (fn [db [_ response]]
+   (let [calendars (:calendars response)]
+     (assoc db 
+            :calendars calendars
+            :loading? false))))
+
+(rf/reg-event-db
  :events-loaded
- (fn [db [_ events]]
-   (let [grouped-events (group-by :summary events)
+ (fn [db [_ response]]
+   (let [events (:events response)
+         grouped-events (group-by :summary events)
          statistics {:total-events (count events)
                      :event-types (count grouped-events)
                      :years-covered (count (into #{} (map #(-> % :start (subs 0 4)) events)))}]

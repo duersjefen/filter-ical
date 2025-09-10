@@ -27,6 +27,31 @@
        [:div.stat-number (:years-covered stats)]
        [:div.stat-label "Years Covered"]]]]))
 
+;; -- Calendar Selector --
+(defn calendar-selector []
+  (let [calendars @(rf/subscribe [:calendars])
+        selected-calendar-id @(rf/subscribe [:selected-calendar-id])]
+    [:div.calendar-selector
+     [:h4 "📅 Select Calendar"]
+     (if (seq calendars)
+       [:div.calendar-list
+        (for [calendar calendars]
+          (let [calendar-id (:id calendar)
+                is-selected? (= calendar-id selected-calendar-id)]
+            ^{:key calendar-id}
+            [:div.calendar-item
+             {:class (when is-selected? "selected")}
+             [:h5 (:name calendar)]
+             [:p.calendar-url (:url calendar)]
+             [:button.btn 
+              {:class (if is-selected? "btn-secondary" "btn-primary")
+               :onClick #(do
+                          (rf/dispatch [:select-calendar calendar-id])
+                          (rf/dispatch [:load-calendar-events calendar-id]))}
+              (if is-selected? "Selected" "Load Events")]]))]
+       [:div.empty-state
+        [:p "No calendars found. Add calendars using the backend interface."]])]))
+
 ;; -- Filter Controls --
 (defn search-controls []
   (let [search-text @(rf/subscribe [:search-text])
@@ -194,6 +219,7 @@
      (if loading?
        [loading-spinner]
        [:div.app-content
+        [calendar-selector]
         [search-controls]
         [statistics-panel]
         [event-type-selector]
