@@ -292,6 +292,12 @@
 
 (defroutes routes
   (GET "/" [] (home-page))
+  
+  ;; Health check endpoint for deployment validation
+  (GET "/health" [] 
+    {:status 200 
+     :headers {"Content-Type" "application/json"}
+     :body "{\"status\":\"healthy\",\"service\":\"ical-viewer\"}"})
 
   (POST "/add" {params :params}
     (let [name (get params "name")

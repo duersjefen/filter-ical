@@ -71,27 +71,37 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: Build and push backend image
-      env:
-        IMAGE_TAG: ${{ github.sha }}
+    - name: Build frontend locally (faster than in Docker)
       run: |
-        # Build Docker image for backend (Clojure app)
-        cd backend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
-    
-    - name: Build and push frontend image
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        # Build Docker image for frontend (ClojureScript + nginx)
         cd frontend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
+        npm ci  # Faster than npm install
+        npm run build
+    
+    - name: Build and push backend image with caching
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd backend
+        docker buildx build \
+          --cache-from type=gha \
+          --cache-to type=gha,mode=max \
+          --platform linux/amd64 \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest \
+          --push .
+    
+    - name: Build and push frontend image with caching  
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd frontend
+        docker buildx build \
+          --cache-from type=gha \
+          --cache-to type=gha,mode=max \
+          --platform linux/amd64 \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest \
+          --push .
 
     - name: Deploy to Clean Production Environment
       uses: appleboy/ssh-action@v1.0.3
@@ -159,9 +169,42 @@ jobs:
           echo "🔍 Checking service status..."
           docker-compose ps
           
-          # Test the domain
-          echo "🧪 Testing production website..."
-          curl -f http://filter-ical.de/ || echo "⚠️ Website not ready yet (normal during first deployment)"
+          # CRITICAL: Health validation that FAILS deployment if broken
+          echo "🧪 Validating production deployment..."
+          
+          # Wait for containers to be fully ready
+          sleep 15
+          
+          # Test 1: Site loads (FAIL if not)
+          echo "Testing site response..."
+          if ! curl -f https://filter-ical.de/ > /dev/null 2>&1; then
+            echo "❌ DEPLOYMENT FAILED: Site not responding"
+            exit 1
+          fi
+          
+          # Test 2: JavaScript loads (FAIL if not)
+          echo "Testing JavaScript delivery..."  
+          if ! curl -f https://filter-ical.de/js/main.js > /dev/null 2>&1; then
+            echo "❌ DEPLOYMENT FAILED: JavaScript not loading"
+            exit 1
+          fi
+          
+          # Test 3: Backend responds (FAIL if not)
+          echo "Testing backend connection..."
+          if ! curl -f https://filter-ical.de/ > /dev/null 2>&1; then
+            echo "❌ DEPLOYMENT FAILED: Backend not responding"
+            exit 1
+          fi
+          
+          # Test 4: Full integration works (FAIL if not)
+          echo "Testing full page load..."
+          PAGE_SIZE=$(curl -s https://filter-ical.de/ | wc -c)
+          if [ "$PAGE_SIZE" -lt 1000 ]; then
+            echo "❌ DEPLOYMENT FAILED: Page broken (only $PAGE_SIZE bytes)"
+            exit 1
+          fi
+          
+          echo "✅ All health checks passed - deployment successful"
           
           # Clean up old images to save space
           docker image prune -af --filter "until=24h"

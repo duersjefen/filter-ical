@@ -35,7 +35,10 @@
       "Bash(dig +short:*)",
       "Bash(dig:*)",
       "Bash(tree:*)",
-      "Bash(npx shadow-cljs release:*)"
+      "Bash(npx shadow-cljs release:*)",
+      "Bash(git revert:*)",
+      "Bash(npm run build:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
