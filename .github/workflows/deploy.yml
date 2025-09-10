@@ -77,22 +77,36 @@ jobs:
         # Check what changed since last deployment
         echo "Detecting changes to optimize deployment..."
         
-        # Check if frontend files changed
-        if git diff --name-only HEAD~1 HEAD | grep -E '^frontend/|^infrastructure/production-nginx.conf' >/dev/null; then
+        # Check if frontend files changed - with fallback for shallow clones
+        if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E '^frontend/|^infrastructure/production-nginx.conf' >/dev/null 2>&1; then
           echo "frontend_changed=true" >> $GITHUB_OUTPUT
           echo "Frontend changes detected"
+        elif git diff --name-only origin/master HEAD 2>/dev/null | grep -E '^frontend/|^infrastructure/production-nginx.conf' >/dev/null 2>&1; then
+          echo "frontend_changed=true" >> $GITHUB_OUTPUT  
+          echo "Frontend changes detected (using origin/master)"
+        elif git show --name-only HEAD | grep -E '^frontend/|^infrastructure/production-nginx.conf' >/dev/null 2>&1; then
+          echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          echo "Frontend changes detected (using HEAD commit)"
         else
-          echo "frontend_changed=false" >> $GITHUB_OUTPUT
-          echo "No frontend changes"
+          # FORCE UPDATE if change detection fails - better safe than sorry
+          echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          echo "⚠️  Change detection failed - FORCING frontend update for safety"
         fi
         
-        # Check if backend files changed
-        if git diff --name-only HEAD~1 HEAD | grep -E '^backend/' >/dev/null; then
+        # Check if backend files changed - with fallback for shallow clones  
+        if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E '^backend/' >/dev/null 2>&1; then
           echo "backend_changed=true" >> $GITHUB_OUTPUT
           echo "Backend changes detected"
+        elif git diff --name-only origin/master HEAD 2>/dev/null | grep -E '^backend/' >/dev/null 2>&1; then
+          echo "backend_changed=true" >> $GITHUB_OUTPUT
+          echo "Backend changes detected (using origin/master)"  
+        elif git show --name-only HEAD | grep -E '^backend/' >/dev/null 2>&1; then
+          echo "backend_changed=true" >> $GITHUB_OUTPUT
+          echo "Backend changes detected (using HEAD commit)"
         else
-          echo "backend_changed=false" >> $GITHUB_OUTPUT
-          echo "No backend changes"
+          # FORCE UPDATE if change detection fails - better safe than sorry
+          echo "backend_changed=true" >> $GITHUB_OUTPUT  
+          echo "⚠️  Change detection failed - FORCING backend update for safety"
         fi
     
     - name: Build frontend locally (faster than in Docker)
