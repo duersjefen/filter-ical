@@ -212,8 +212,8 @@
   (let [loading? @(rf/subscribe [:loading?])]
     [:div
      [:header.header
-      [:h1 "🗓️ iCal Filter & Subscribe"]
-      [:p.subtitle "Easily filter your iCal feeds and create custom subscriptions"]]
+      [:h1 "🗓️ iCal Filter & Subscribe"] 
+      [:p.subtitle "Easily filter your iCal feeds and create custom subscriptions • Optimized deployment pipeline"]]
      
      [error-message]
      
