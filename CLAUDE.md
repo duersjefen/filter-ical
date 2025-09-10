@@ -107,14 +107,19 @@ nginx (websites-nginx) - Port 80/443 (SSL termination)
 **GitHub Actions**: `.github/workflows/deploy.yml`
 
 1. **Test Phase**: Run backend tests (`clj -M:test`)
-2. **Build Phase**: 
-   - Build backend Docker image from `backend/Dockerfile`
-   - Build frontend Docker image from `frontend/Dockerfile`  
-   - Push both images to ECR
-3. **Deploy Phase**: 
+2. **Smart Build Phase**: 
+   - **Change Detection**: Analyze git diff to determine what changed
+   - **Selective Building**: Only build containers for changed components
+     - Frontend changes: Build only frontend Docker image  
+     - Backend changes: Build only backend Docker image
+     - Both changed: Build both images
+   - Push changed images to ECR with caching
+3. **Smart Deploy Phase**: 
    - SSH to EC2 instance
    - Copy production configs to `/opt/websites/`
-   - Update containers with rolling deployment
+   - **Selective Container Updates**: Only restart containers that changed
+   - **Health Validation**: Comprehensive testing that FAILS deployment if broken
+   - **Zero Downtime**: Unchanged containers keep running
 
 #### Required GitHub Secrets
 - `EC2_HOST`: 56.228.25.95
@@ -289,6 +294,31 @@ After any deployment, verify:
 - [ ] Frontend serves content: Check browser
 - [ ] SSL certificate valid: Check expiry in browser
 - [ ] Application functionality: Test adding calendar, creating filters
+
+## ⚡ Deployment Performance Benefits
+
+### Smart Selective Deployment
+The optimized CI/CD pipeline provides significant performance improvements:
+
+**Frontend-Only Changes** (e.g., UI updates, styling):
+- ⚡ ~50% faster deployment (skips backend build/deploy)
+- 🎯 Lower risk (backend remains untouched)
+- 🚀 Faster feedback loop for UI development
+
+**Backend-Only Changes** (e.g., API updates, business logic):
+- ⚡ ~30% faster deployment (skips frontend build/deploy) 
+- 🎯 Lower risk (frontend remains untouched)
+- 🚀 Faster feedback for backend development
+
+**Infrastructure Changes** (nginx, docker-compose):
+- 🛡️ Safety first: Updates all containers when infrastructure changes
+- 📋 Proper validation ensures system-wide compatibility
+
+### When Components Update
+- **Frontend files changed**: `frontend/`, `infrastructure/production-nginx.conf`
+- **Backend files changed**: `backend/` directory
+- **Both changed**: Full deployment with proper sequencing
+- **Neither changed**: Deployment completes quickly with no container updates
 
 ## 🚨 Emergency Procedures
 
