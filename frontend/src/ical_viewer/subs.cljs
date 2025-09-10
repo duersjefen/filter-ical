@@ -39,6 +39,27 @@
  (fn [db _]
    [(:date-from db) (:date-to db)]))
 
+;; -- User Subscriptions --
+(rf/reg-sub
+ :user
+ (fn [db _]
+   (:user db)))
+
+(rf/reg-sub
+ :logged-in?
+ (fn [db _]
+   (get-in db [:user :logged-in?])))
+
+(rf/reg-sub
+ :username
+ (fn [db _]
+   (get-in db [:user :username])))
+
+(rf/reg-sub
+ :login-form
+ (fn [db _]
+   (:login-form db)))
+
 ;; -- View Subscriptions --
 (rf/reg-sub
  :current-view

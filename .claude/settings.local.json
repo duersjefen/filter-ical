@@ -39,7 +39,9 @@
       "Bash(git revert:*)",
       "Bash(npm run build:*)",
       "Bash(git rm:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(sudo lsof:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

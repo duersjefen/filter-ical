@@ -1,3 +1,4 @@
+/** @const {ShadowJS} */ var confirm;
 /** @const {ShadowJS} */ var module;
 ShadowJS.prototype.$$typeof;
 ShadowJS.prototype.Alt;

@@ -1,6 +1,7 @@
 (ns ical-viewer.events
   (:require [re-frame.core :as rf]
             [ajax.core :as ajax]
+            [clojure.string :as str]
             [ical-viewer.db :as db]))
 
 ;; -- Initialize Database --
@@ -8,6 +9,36 @@
  :initialize-db
  (fn [_ _]
    db/default-db))
+
+;; -- User Management Events --
+(rf/reg-event-db
+ :set-login-username
+ (fn [db [_ username]]
+   (assoc-in db [:login-form :username] username)))
+
+(rf/reg-event-fx
+ :login
+ (fn [{:keys [db]} _]
+   (let [username (get-in db [:login-form :username])]
+     (if (not-empty (str/trim username))
+       {:db (-> db
+                (assoc-in [:user :username] (str/trim username))
+                (assoc-in [:user :logged-in?] true)
+                (assoc :current-view :home)
+                (dissoc :login-form))
+        :dispatch [:fetch-calendars]}
+       {:db (assoc db :error "Please enter a username")}))))
+
+(rf/reg-event-fx
+ :logout
+ (fn [{:keys [db]} _]
+   {:db (assoc db
+               :current-view :login
+               :user {:username nil :logged-in? false}
+               :calendars []
+               :filters []
+               :events []
+               :login-form {:username ""})}))
 
 ;; -- Navigation Events --
 (rf/reg-event-db
@@ -156,6 +187,11 @@
  :clear-filters
  (fn [db _]
    (assoc db :selected-event-types #{})))
+
+(rf/reg-event-db
+ :set-quick-filter
+ (fn [db [_ selected-types]]
+   (assoc db :selected-event-types (set selected-types))))
 
 (rf/reg-event-fx
  :save-filter

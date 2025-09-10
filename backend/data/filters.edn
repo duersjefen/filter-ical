@@ -1,1 +1,1 @@
-[{:id 1, :name "Younsterband", :calendar-id "3", :selected-summaries ["on"], :created-at 1757340230217}]
+[{:id 1, :name "Test Filter", :calendar-id 1, :predicates ["Meeting" "Event"], :transformers [], :metadata {:created-at 1757491820666, :legacy-summaries ["Meeting" "Event"]}} {:id 2, :name "Test Filter", :calendar-id 3, :predicates ["Meeting" "Event"], :transformers [], :metadata {:created-at 1757491944177, :legacy-summaries ["Meeting" "Event"]}}]

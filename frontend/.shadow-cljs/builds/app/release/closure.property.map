@@ -23,7 +23,6 @@ caught:uc
 cb:Mc
 chunk:P
 chunk_next:Yb
-ci:Zb
 cljs$core$APersistentVector$:vc
 cljs$core$Fn$:jd
 cljs$core$IAssociative$:kd
@@ -36,8 +35,6 @@ cljs$core$IChunkedSeq$_chunked_first$arity$1:Gb
 cljs$core$IChunkedSeq$_chunked_rest$arity$1:Qa
 cljs$core$ICollection$:Vd
 cljs$core$ICollection$_conj$arity$2:ba
-cljs$core$IComparable$:ub
-cljs$core$IComparable$_compare$arity$2:Xa
 cljs$core$ICounted$:Nc
 cljs$core$ICounted$_count$arity$1:V
 cljs$core$IDeref$:Oc
@@ -108,8 +105,6 @@ cljs$core$IReduce$:xd
 cljs$core$IReduce$_reduce$arity$2:ja
 cljs$core$IReduce$_reduce$arity$3:ka
 cljs$core$IReset$_reset_BANG_$arity$2:va
-cljs$core$IReversible$:ce
-cljs$core$IReversible$_rseq$arity$1:Ib
 cljs$core$ISeq$:yb
 cljs$core$ISeq$_first$arity$1:ga
 cljs$core$ISeq$_rest$arity$1:ha

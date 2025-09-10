@@ -17,4 +17,6 @@
                         :main-class "app.server"
                         :sync-pom true}}
   :test {:extra-paths ["test"]
-         :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}}}}}
+         :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+                      ring/ring-mock {:mvn/version "0.4.0"}
+                      cheshire/cheshire {:mvn/version "5.11.0"}}}}}

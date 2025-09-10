@@ -1,8 +1,7 @@
 (ns app.ical-viewer-test
   (:require [clojure.test :refer [deftest is run-tests testing]]
             [app.storage :as storage]
-            [app.ics :as ics]
-            [app.server :as server]))
+            [app.ics :as ics]))
 
 (deftest storage-tests
   (testing "Storage functionality"
@@ -55,21 +54,7 @@
         (is (re-find #"Event 1" calendar))
         (is (re-find #"Event 2" calendar))))))
 
-(deftest server-tests
-  (testing "Server functionality"
-
-    (testing "group-events-by-summary groups correctly"
-      (let [events [{:summary "Meeting" :uid "1"}
-                    {:summary "Meeting" :uid "2"}
-                    {:summary "Lunch" :uid "3"}]
-            grouped (server/group-events-by-summary events)]
-        (is (= 2 (count (get grouped "Meeting"))))
-        (is (= 1 (count (get grouped "Lunch"))))))
-
-    (testing "layout generates HTML"
-      (let [html (server/layout "Test Title" [:h1 "Hello"])]
-        (is (re-find #"Test Title" html))
-        (is (re-find #"<h1>Hello</h1>" html))))))
+; Server functionality tests removed - now covered by app.server-test API tests
 
 (deftest integration-tests
   (testing "Full workflow integration"

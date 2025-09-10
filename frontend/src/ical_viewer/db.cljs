@@ -1,7 +1,8 @@
 (ns ical-viewer.db)
 
 (def default-db
-  {:current-view :home
+  {:current-view :login
+   :user {:username nil :logged-in? false}
    :events []
    :grouped-events {}
    :calendars []
@@ -14,6 +15,7 @@
    :date-from nil
    :date-to nil
    :new-calendar {:name "" :url ""}
+   :login-form {:username ""}
    :loading? false
    :error nil
    :statistics {:total-events 0
