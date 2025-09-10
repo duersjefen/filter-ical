@@ -14,16 +14,16 @@
 ;; -- Statistics Component --
 (defn statistics-panel []
   (let [stats @(rf/subscribe [:statistics])]
-    [:div.event-stats
+    [:div.form-section
      [:h4 "📊 Statistics"]
-     [:div.stats-grid
-      [:div.stat-card
+     [:div.stats
+      [:div.stat
        [:div.stat-number (:total-events stats)]
        [:div.stat-label "Total Events"]]
-      [:div.stat-card
+      [:div.stat
        [:div.stat-number (:event-types stats)]
        [:div.stat-label "Event Types"]]
-      [:div.stat-card
+      [:div.stat
        [:div.stat-number (:years-covered stats)]
        [:div.stat-label "Years Covered"]]]]))
 
@@ -43,12 +43,13 @@
              {:class (when is-selected? "selected")}
              [:h5 (:name calendar)]
              [:p.calendar-url (:url calendar)]
-             [:button.btn 
-              {:class (if is-selected? "btn-secondary" "btn-primary")
-               :onClick #(do
-                          (rf/dispatch [:select-calendar calendar-id])
-                          (rf/dispatch [:load-calendar-events calendar-id]))}
-              (if is-selected? "Selected" "Load Events")]]))]
+             [:div.filter-actions
+              [:button.btn 
+               {:class (if is-selected? "btn-secondary" "btn-primary")
+                :onClick #(do
+                           (rf/dispatch [:select-calendar calendar-id])
+                           (rf/dispatch [:load-calendar-events calendar-id]))}
+               (if is-selected? "✅ Selected" "📊 Load Events")]]]))]
        [:div.empty-state
         [:p "No calendars found. Add calendars using the backend interface."]])]))
 
@@ -209,10 +210,10 @@
 ;; -- Main Panel --
 (defn main-panel []
   (let [loading? @(rf/subscribe [:loading?])]
-    [:div.app
-     [:header.app-header
-      [:h1 "📅 iCal Viewer"]
-      [:p "Modern interactive calendar filtering"]]
+    [:div
+     [:header.header
+      [:h1 "🗓️ iCal Filter & Subscribe"]
+      [:p.subtitle "Easily filter your iCal feeds and create custom subscriptions"]]
      
      [error-message]
      
