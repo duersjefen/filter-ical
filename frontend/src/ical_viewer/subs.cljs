@@ -1,5 +1,6 @@
 (ns ical-viewer.subs
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [clojure.string :as str]))
 
 ;; -- Basic Data Subscriptions --
 (rf/reg-sub
@@ -40,6 +41,21 @@
 
 ;; -- View Subscriptions --
 (rf/reg-sub
+ :current-view
+ (fn [db _]
+   (:current-view db)))
+
+(rf/reg-sub
+ :selected-calendar
+ (fn [db _]
+   (:selected-calendar db)))
+
+(rf/reg-sub
+ :filters
+ (fn [db _]
+   (:filters db)))
+
+(rf/reg-sub
  :view-mode
  (fn [db _]
    (:view-mode db)))
@@ -67,14 +83,14 @@
  :<- [:selected-event-types]
  :<- [:search-text]
  (fn [[grouped-events selected-types search-text] _]
-   (let [search-lower (clojure.string/lower-case (or search-text ""))
+   (let [search-lower (str/lower-case (or search-text ""))
          filtered-groups (if (empty? selected-types)
                           grouped-events
                           (select-keys grouped-events selected-types))]
      (if (empty? search-text)
        filtered-groups
        (into {} (filter (fn [[summary _]]
-                         (clojure.string/includes? 
-                          (clojure.string/lower-case summary) 
+                         (str/includes? 
+                          (str/lower-case summary) 
                           search-lower))
                        filtered-groups))))))
