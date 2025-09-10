@@ -22,6 +22,6 @@
 (defn init! []
   (println "Initializing iCal Viewer ClojureScript app...")
   (rf/dispatch-sync [:initialize-db])
-  (rf/dispatch [:fetch-calendars])  ; Load calendars on app start
+  ;; Don't fetch calendars on startup - user needs to login first
   (dev-setup)
   (mount-root))
