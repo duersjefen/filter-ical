@@ -172,8 +172,9 @@ jobs:
           # CRITICAL: Health validation that FAILS deployment if broken
           echo "🧪 Validating production deployment..."
           
-          # Wait for containers to be fully ready
-          sleep 15
+          # Wait for containers to be fully ready (backend needs more time)
+          echo "⏳ Waiting for backend to be fully healthy..."
+          sleep 60
           
           # Test 1: Site loads (FAIL if not)
           echo "Testing site response..."

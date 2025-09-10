@@ -38,7 +38,8 @@
       "Bash(npx shadow-cljs release:*)",
       "Bash(git revert:*)",
       "Bash(npm run build:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
