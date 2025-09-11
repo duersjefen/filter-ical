@@ -96,7 +96,9 @@
       "Bash(.githooks/pre-commit:*)",
       "Bash(./backend/venv/bin/python -m pytest backend/tests/test_persistence.py -v)",
       "Bash(git restore:*)",
-      "Bash(./venv/bin/python -c \"import app.main; print(''✅ No syntax errors'')\")"
+      "Bash(./venv/bin/python -c \"import app.main; print(''✅ No syntax errors'')\")",
+      "Bash(./venv/bin/python -m pytest tests/test_new_functionality.py -v)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

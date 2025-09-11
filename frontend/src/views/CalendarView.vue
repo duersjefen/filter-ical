@@ -29,7 +29,7 @@
     </div>
 
     <template v-else-if="appStore.events.length > 0">
-      <!-- Statistics -->
+      <!-- Enhanced Statistics -->
       <div class="statistics">
         <div class="stat-card">
           <h3>{{ appStore.statistics.totalEvents }}</h3>
@@ -39,15 +39,25 @@
           <h3>{{ appStore.categories.length }}</h3>
           <p>Categories</p>
         </div>
+        <div class="stat-card">
+          <h3>{{ mainCategories.length }}</h3>
+          <p>Multi-Event</p>
+        </div>
+        <div class="stat-card">
+          <h3>{{ singleEventCategories.length }}</h3>
+          <p>Unique Events</p>
+        </div>
       </div>
 
       <!-- Category Cards Selection -->
       <div v-if="appStore.categories.length > 0" class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <h3 style="margin: 0;">📂 Select Event Categories</h3>
-          <div style="display: flex; gap: 12px;">
-            <button @click="clearAllCategories" class="btn btn-secondary">Clear All</button>
-            <button @click="selectAllCategories" class="btn">Select All</button>
+          <div class="category-actions">
+            <div class="basic-actions">
+              <button @click="clearAllCategories" class="btn btn-secondary">Clear All</button>
+              <button @click="selectAllCategories" class="btn">Select All</button>
+            </div>
           </div>
         </div>
 
@@ -77,6 +87,9 @@
                 <span class="event-count">{{ category.count }} events</span>
               </div>
               <div class="category-actions">
+                <div class="selected-check">
+                  <span v-if="selectedCategories.includes(category.name)">✓</span>
+                </div>
                 <button 
                   @click.stop="toggleCategoryExpansion(category.name)"
                   class="expand-btn"
@@ -84,9 +97,6 @@
                 >
                   {{ expandedCategories.includes(category.name) ? '▼' : '▶' }}
                 </button>
-                <div class="selection-indicator">
-                  {{ selectedCategories.includes(category.name) ? '✓' : '' }}
-                </div>
               </div>
             </div>
             
@@ -99,7 +109,7 @@
                   class="event-item"
                 >
                   <div class="event-summary">{{ event.summary }}</div>
-                  <div class="event-date">{{ formatDate(event.dtstart) }}</div>
+                  <div class="event-date">📅 {{ formatDateTime(event.dtstart) }}</div>
                   <div v-if="event.location" class="event-location">📍 {{ event.location }}</div>
                 </div>
                 <div v-if="category.events.length > 5" class="more-events">
@@ -112,14 +122,24 @@
 
         <!-- Single Event Categories (Collapsible) -->
         <div v-if="singleEventCategories.length > 0" class="single-events-section">
-          <div class="single-events-header" @click="showSingleEvents = !showSingleEvents">
-            <div class="section-info">
-              <strong>📄 Individual Events</strong>
-              <span class="section-count">{{ singleEventCategories.length }} unique events</span>
+          <div class="single-events-header">
+            <div class="section-left" @click="showSingleEvents = !showSingleEvents">
+              <div class="section-info">
+                <strong>📄 Individual Events</strong>
+                <span class="section-count">{{ singleEventCategories.length }} unique events</span>
+              </div>
+              <button class="section-toggle" :class="{ 'expanded': showSingleEvents }">
+                {{ showSingleEvents ? '▼' : '▶' }}
+              </button>
             </div>
-            <button class="section-toggle" :class="{ 'expanded': showSingleEvents }">
-              {{ showSingleEvents ? '▼' : '▶' }}
-            </button>
+            <div class="singles-actions">
+              <button @click.stop="selectAllSingleEvents" class="btn-small" title="Select all individual events">
+                ✓ All
+              </button>
+              <button @click.stop="clearAllSingleEvents" class="btn-small btn-secondary" title="Deselect all individual events">
+                ✗ None
+              </button>
+            </div>
           </div>
           
           <div v-if="showSingleEvents" class="single-events-grid">
@@ -132,11 +152,11 @@
             >
               <div class="single-event-content">
                 <div class="single-event-title">{{ category.name }}</div>
-                <div class="single-event-date">{{ formatDate(category.events[0].dtstart) }}</div>
+                <div class="single-event-datetime">{{ formatDateTime(category.events[0].dtstart) }}</div>
                 <div v-if="category.events[0].location" class="single-event-location">📍 {{ category.events[0].location }}</div>
               </div>
-              <div class="single-event-indicator">
-                {{ selectedCategories.includes(category.name) ? '✓' : '' }}
+              <div class="selected-check">
+                <span v-if="selectedCategories.includes(category.name)">✓</span>
               </div>
             </div>
           </div>
@@ -243,7 +263,7 @@
               <div class="event-main">
                 <div class="event-title">{{ event.summary }}</div>
                 <div class="event-meta">
-                  <span class="event-date">📅 {{ formatDate(event.dtstart) }}</span>
+                  <span class="event-date">📅 {{ formatDateTime(event.dtstart) }}</span>
                   <span class="event-category">📂 {{ getCategoryForEvent(event) }}</span>
                   <span v-if="event.location" class="event-location">📍 {{ event.location }}</span>
                 </div>
@@ -271,7 +291,7 @@
                   <div class="event-main">
                     <div class="event-title">{{ event.summary }}</div>
                     <div class="event-meta">
-                      <span class="event-date">📅 {{ formatDate(event.dtstart) }}</span>
+                      <span class="event-date">📅 {{ formatDateTime(event.dtstart) }}</span>
                       <span v-if="previewGroup !== 'category'" class="event-category">📂 {{ getCategoryForEvent(event) }}</span>
                       <span v-if="event.location" class="event-location">📍 {{ event.location }}</span>
                     </div>
@@ -333,7 +353,9 @@ const previewSort = ref('date')
 const previewOrder = ref('asc')
 const previewGroup = ref('none')
 const previewLimit = ref(10)
+const maxCategoriesShown = ref(50) // Performance: limit initial category display
 const showSingleEvents = ref(false)
+const isGeneratingIcal = ref(false)
 
 const props = defineProps(['id'])
 
@@ -409,6 +431,21 @@ const selectAllCategories = () => {
 const clearAllCategories = () => {
   selectedCategories.value = []
   showPreview.value = false
+}
+
+// Singles selection functions
+const selectAllSingleEvents = () => {
+  const singleEventNames = singleEventCategories.value.map(cat => cat.name)
+  singleEventNames.forEach(name => {
+    if (!selectedCategories.value.includes(name)) {
+      selectedCategories.value.push(name)
+    }
+  })
+}
+
+const clearAllSingleEvents = () => {
+  const singleEventNames = singleEventCategories.value.map(cat => cat.name)
+  selectedCategories.value = selectedCategories.value.filter(name => !singleEventNames.includes(name))
 }
 
 // Card interaction methods
@@ -568,30 +605,78 @@ const getCategoryForEvent = (event) => {
 }
 
 const generateIcalFile = async () => {
+  // Validation
   if (selectedCategories.value.length === 0) {
-    alert('Please select at least one category.')
+    appStore.setError('Please select at least one category to generate the calendar file.')
     return
   }
   
+  // Set loading state
+  appStore.setLoading(true)
+  appStore.clearError()
+  
   try {
-    // Download the .ical file directly
+    // First, validate that the download URL will work by testing it
     const categories = selectedCategories.value.join(',')
-    const downloadUrl = `/api/calendar/${appStore.selectedCalendar.id}/filtered.ical?categories=${encodeURIComponent(categories)}`
+    const downloadUrl = `/api/calendar/${appStore.selectedCalendar.id}/filtered.ical?categories=${encodeURIComponent(categories)}&mode=${filterMode.value}`
+    
+    // Test the URL with a HEAD request to ensure it's valid
+    const testResponse = await fetch(downloadUrl, { method: 'HEAD', headers: appStore.getUserHeaders() })
+    if (!testResponse.ok) {
+      throw new Error(`Server returned ${testResponse.status}: ${testResponse.statusText}`)
+    }
     
     // Create download link
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = `filtered_${appStore.selectedCalendar.name}.ical`
+    link.download = `${filterMode.value}_filtered_${appStore.selectedCalendar.name}.ical`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     
-    // Show success message
-    alert(`✅ Downloaded filtered calendar with ${selectedCategoriesCount.value} events!\n\nYou can now import this .ical file into your calendar app.`)
+    // Show appropriate success message based on mode
+    const modeText = filterMode.value === 'include' ? 'including only' : 'excluding'
+    const categoryText = selectedCategories.value.length === 1 ? 'category' : 'categories'
+    const successMessage = `✅ Downloaded filtered calendar (${modeText} ${selectedCategories.value.length} ${categoryText})!\n\n${selectedCategoriesCount.value} events total. You can now import this .ical file into your calendar app.`
+    
+    // Use a toast-like notification instead of alert for better UX
+    const notification = document.createElement('div')
+    notification.innerHTML = successMessage.replace('\n\n', '<br><br>')
+    notification.style.cssText = `
+      position: fixed; top: 20px; right: 20px; z-index: 10000;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white; padding: 16px 20px; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+      max-width: 350px; font-size: 14px; line-height: 1.4;
+      animation: slideIn 0.3s ease-out;
+    `
+    document.body.appendChild(notification)
+    
+    // Auto-remove notification after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.animation = 'slideOut 0.3s ease-in'
+        setTimeout(() => notification.remove(), 300)
+      }
+    }, 5000)
     
   } catch (error) {
     console.error('Error generating iCal:', error)
-    alert('Error generating calendar file. Please try again.')
+    
+    // Provide more specific error messages
+    let errorMessage = 'Error generating calendar file. Please try again.'
+    
+    if (error.message.includes('404')) {
+      errorMessage = 'Calendar not found. Please refresh the page and try again.'
+    } else if (error.message.includes('500')) {
+      errorMessage = 'Server error while generating calendar. Please try again in a moment.'
+    } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+      errorMessage = 'Network connection error. Please check your internet connection and try again.'
+    }
+    
+    appStore.setError(errorMessage)
+  } finally {
+    appStore.setLoading(false)
   }
 }
 
@@ -617,6 +702,72 @@ const formatDate = (dateStr) => {
   }
   
   return dateStr
+}
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return dateStr
+  
+  // Convert to string if it's not already
+  const str = String(dateStr).trim()
+  
+  if (str.length < 8) return str
+  
+  try {
+    // Handle iCal YYYYMMDDTHHMMSSZ format (with time)
+    if (str.match(/^\d{8}T\d{6}Z?$/)) {
+      const year = str.substring(0, 4)
+      const month = str.substring(4, 6)
+      const day = str.substring(6, 8)
+      const hour = str.substring(9, 11)
+      const minute = str.substring(11, 13)
+      return `${day}/${month}/${year} at ${hour}:${minute}`
+    }
+    
+    // Handle iCal YYYYMMDD format (date only) - most common case
+    if (str.match(/^\d{8}$/) && !str.includes('T')) {
+      const year = str.substring(0, 4)
+      const month = str.substring(4, 6)
+      const day = str.substring(6, 8)
+      return `${day}/${month}/${year}`
+    }
+    
+    // Handle other time formats that might exist
+    if (str.includes('T') && str.length > 8) {
+      const datePart = str.split('T')[0]
+      const timePart = str.split('T')[1].replace('Z', '')
+      
+      if (datePart.length === 8 && timePart.length >= 6) {
+        const year = datePart.substring(0, 4)
+        const month = datePart.substring(4, 6)
+        const day = datePart.substring(6, 8)
+        const hour = timePart.substring(0, 2)
+        const minute = timePart.substring(2, 4)
+        return `${day}/${month}/${year} at ${hour}:${minute}`
+      }
+    }
+    
+    // Try standard JavaScript date parsing as fallback
+    const dateObj = new Date(str)
+    if (!isNaN(dateObj.getTime())) {
+      const hasTime = str.includes('T') || str.includes(':') || str.includes(' ')
+      const day = String(dateObj.getDate()).padStart(2, '0')
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+      const year = dateObj.getFullYear()
+      
+      if (hasTime) {
+        const hour = String(dateObj.getHours()).padStart(2, '0')
+        const minute = String(dateObj.getMinutes()).padStart(2, '0')
+        return `${day}/${month}/${year} at ${hour}:${minute}`
+      } else {
+        return `${day}/${month}/${year}`
+      }
+    }
+  } catch (e) {
+    // Silent fallback
+  }
+  
+  // Fallback: return original string
+  return str
 }
 
 // Reset pagination when filters change
@@ -742,37 +893,13 @@ watch(() => appStore.selectedEventTypes.size, () => {
   background: linear-gradient(135deg, #0056b3, #004085);
 }
 
-.selection-indicator {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.category-card:not(.selected) .selection-indicator {
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border: 2px solid #dee2e6;
-  color: #adb5bd;
-}
-
-.category-card.selected .selection-indicator {
-  background: linear-gradient(135deg, #28a745, #1e7e34);
-  border: 2px solid #1e7e34;
-  color: white;
-  transform: scale(1.1);
-}
+/* Removed old round selection-indicator - now using selected-check */
 
 .category-events {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #e0e0e0;
-  max-height: 280px;
+  max-height: 350px;
   overflow-y: auto;
   background: linear-gradient(to bottom, rgba(248, 249, 250, 0.3), rgba(255, 255, 255, 0.1));
   border-radius: 8px;
@@ -1026,6 +1153,55 @@ watch(() => appStore.selectedEventTypes.size, () => {
   }
 }
 
+/* Category Actions Styles */
+.category-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.basic-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(23, 162, 184, 0.2);
+}
+
+.btn-info:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+  background: linear-gradient(135deg, #138496, #117a8b);
+}
+
+@media (max-width: 767px) {
+  .category-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .quick-actions, .basic-actions {
+    justify-content: center;
+  }
+}
+
 /* Single Events Section Styles */
 .single-events-section {
   margin-top: 20px;
@@ -1037,15 +1213,26 @@ watch(() => appStore.selectedEventTypes.size, () => {
 .single-events-header {
   background: linear-gradient(135deg, #f8f9fa, #e9ecef);
   padding: 16px 20px;
-  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: background 0.2s;
+  gap: 16px;
 }
 
-.single-events-header:hover {
+.section-left {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+}
+
+.section-left:hover {
   background: linear-gradient(135deg, #e9ecef, #dee2e6);
+  border-radius: 6px;
+  margin: -4px;
+  padding: 4px;
 }
 
 .section-info {
@@ -1088,12 +1275,49 @@ watch(() => appStore.selectedEventTypes.size, () => {
   transform: rotate(90deg);
 }
 
+.singles-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 120px;
+  justify-content: flex-end;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid #007bff;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn-small:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+.btn-small.btn-secondary {
+  border-color: #6c757d;
+  background: linear-gradient(135deg, #6c757d, #545b62);
+}
+
+.btn-small.btn-secondary:hover {
+  background: linear-gradient(135deg, #545b62, #464c54);
+}
+
 .single-events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 8px;
-  padding: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+  padding: 24px;
   background: #ffffff;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .single-event-item {
@@ -1133,30 +1357,37 @@ watch(() => appStore.selectedEventTypes.size, () => {
   line-height: 1.3;
 }
 
-.single-event-date, .single-event-location {
+.single-event-datetime, .single-event-location {
   font-size: 12px;
   color: #6c757d;
 }
 
-.single-event-indicator {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+.single-event-datetime {
+  font-weight: 500;
+}
+
+.selected-check {
+  font-size: 16px;
+  font-weight: bold;
+  color: #28a745;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-  transition: all 0.2s ease;
-  border: 2px solid #dee2e6;
-  background: #f8f9fa;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  animation: checkIn 0.2s ease-out;
 }
 
-.single-event-item.selected .single-event-indicator {
-  background: linear-gradient(135deg, #28a745, #20c997);
-  border-color: #28a745;
-  color: white;
-  transform: scale(1.1);
+@keyframes checkIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 767px) {
@@ -1437,6 +1668,29 @@ watch(() => appStore.selectedEventTypes.size, () => {
   .preview-header {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* Toast notification animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
   }
 }
 </style>

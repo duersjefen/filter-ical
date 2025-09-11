@@ -41,14 +41,11 @@ import { watch } from 'vue'
 const appStore = useAppStore()
 const router = useRouter()
 
-// Watch for login success
-watch(() => appStore.currentView, (newView) => {
-  if (newView === 'home') {
-    router.push('/home')
-  }
-})
-
 const handleLogin = async () => {
   await appStore.login()
+  // Explicitly redirect after successful login
+  if (appStore.isLoggedIn) {
+    router.push('/home')
+  }
 }
 </script>

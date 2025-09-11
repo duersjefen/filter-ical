@@ -5,7 +5,7 @@ Functional programming style with Datomic-inspired immutable database
 
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from pathlib import Path
@@ -48,15 +48,21 @@ class Filter:
 
 # Pure functions for data transformation
 def parse_date_to_string(dt: Any) -> str:
-    """Pure function: Convert various date formats to YYYYMMDD string"""
+    """Pure function: Convert various date formats to iCal string format, preserving time info"""
     if isinstance(dt, datetime):
-        return dt.strftime("%Y%m%d")
+        # Preserve time information: YYYYMMDDTHHMMSSZ
+        return dt.strftime("%Y%m%dT%H%M%SZ")
     elif isinstance(dt, date):
+        # Date only: YYYYMMDD  
         return dt.strftime("%Y%m%d")
     elif hasattr(dt, 'dt'):
         return parse_date_to_string(dt.dt)
     else:
-        return str(dt)[:8] if str(dt) else ""
+        # Try to preserve original format if it looks like it has time info
+        dt_str = str(dt) if dt else ""
+        if 'T' in dt_str and len(dt_str) >= 13:
+            return dt_str  # Keep original time format
+        return dt_str[:8] if dt_str else ""
 
 def ical_component_to_event(component) -> Event:
     """Pure function: Transform iCal component to Event dataclass"""
@@ -71,10 +77,11 @@ def ical_component_to_event(component) -> Event:
     )
 
 def parse_ical_content(content: str) -> List[Event]:
-    """Pure function: Parse iCal content into events"""
+    """Pure function: Parse iCal content into events, preserving multi-day events"""
     try:
         calendar = Calendar.from_ical(content)
         events = []
+        seen_events = set()  # Track unique events to avoid duplicates
         
         # Get recurring events for next 2 years
         start_date = date.today()
@@ -83,12 +90,80 @@ def parse_ical_content(content: str) -> List[Event]:
         recurring_events = recurring_ical_events.of(calendar).between(start_date, end_date)
         
         for event in recurring_events:
-            events.append(ical_component_to_event(event))
+            # Convert the recurring event back to proper Event object while preserving time info
+            processed_event = ical_component_to_event_with_fallback(event)
             
+            # For multi-day events, deduplicate based on UID and summary
+            event_key = (processed_event.uid, processed_event.summary)
+            if event_key not in seen_events:
+                events.append(processed_event)
+                seen_events.add(event_key)
+            else:
+                # For duplicates, check if this is a better representation (has end date)
+                existing_idx = next((i for i, e in enumerate(events) 
+                                   if e.uid == processed_event.uid and e.summary == processed_event.summary), None)
+                if existing_idx is not None and not events[existing_idx].dtend and processed_event.dtend:
+                    # Replace with version that has end date
+                    events[existing_idx] = processed_event
+                    
         return events
     except Exception as e:
         print(f"Error parsing iCal: {e}")
         return []
+
+def ical_component_to_event_with_fallback(component) -> Event:
+    """Enhanced event conversion that preserves time information from recurring events"""
+    try:
+        # Try to get the actual datetime objects from the recurring event
+        dtstart_raw = component.get('DTSTART')
+        dtend_raw = component.get('DTEND')
+        
+        # For recurring events, we need to handle both the original format and processed format
+        dtstart_str = parse_date_to_string_enhanced(dtstart_raw)
+        dtend_str = parse_date_to_string_enhanced(dtend_raw)
+        
+        return Event(
+            uid=str(component.get('UID', '')),
+            summary=str(component.get('SUMMARY', '')),
+            dtstart=dtstart_str,
+            dtend=dtend_str,
+            location=str(component.get('LOCATION', '')) if component.get('LOCATION') else None,
+            description=str(component.get('DESCRIPTION', '')) if component.get('DESCRIPTION') else None,
+            raw=component.to_ical().decode('utf-8', errors='ignore')
+        )
+    except Exception as e:
+        print(f"Error processing event component: {e}")
+        return ical_component_to_event(component)  # Fallback to original method
+
+def parse_date_to_string_enhanced(dt: Any) -> str:
+    """Enhanced date parser that handles recurring events library output"""
+    if dt is None:
+        return ""
+    
+    # Handle datetime objects (preserve time)
+    if isinstance(dt, datetime):
+        return dt.strftime("%Y%m%dT%H%M%SZ")
+    
+    # Handle date objects (date only)
+    if isinstance(dt, date):
+        return dt.strftime("%Y%m%d")
+    
+    # Handle icalendar datetime property
+    if hasattr(dt, 'dt'):
+        return parse_date_to_string_enhanced(dt.dt)
+    
+    # Handle string formats
+    dt_str = str(dt).strip()
+    
+    # If it's already in correct format with time, keep it
+    if 'T' in dt_str and len(dt_str) >= 13:
+        return dt_str
+    
+    # If it's date-only format, keep it as date
+    if len(dt_str) == 8 and dt_str.isdigit():
+        return dt_str
+        
+    return dt_str
 
 async def fetch_ical_events(url: str) -> List[Event]:
     """Pure function: Fetch and parse iCal from URL"""
@@ -359,6 +434,7 @@ async def get_calendar_categories(
 async def download_filtered_ical(
     calendar_id: str,
     categories: str = "",
+    mode: str = "include",  # "include" or "exclude"
     x_user_id: str = Header("anonymous")
 ):
     """Download filtered .ical file - CLEAN IMPLEMENTATION"""
@@ -376,15 +452,26 @@ async def download_filtered_ical(
     if not cached_events:
         raise HTTPException(status_code=404, detail="No events found")
     
-    # Filter by selected categories
+    # Filter by selected categories with include/exclude mode
     selected_categories = set(cat.strip() for cat in categories.split(',') if cat.strip())
     filtered_events = []
     
     if selected_categories:
         for event in cached_events:
             event_category = extract_category_from_event(event)
-            if event_category in selected_categories:
-                filtered_events.append(event)
+            
+            if mode == "include":
+                # Include only events from selected categories
+                if event_category in selected_categories:
+                    filtered_events.append(event)
+            elif mode == "exclude":
+                # Include all events EXCEPT those from selected categories
+                if event_category not in selected_categories:
+                    filtered_events.append(event)
+            else:
+                # Default to include mode for invalid mode parameter
+                if event_category in selected_categories:
+                    filtered_events.append(event)
     else:
         filtered_events = cached_events
     
@@ -445,4 +532,5 @@ if frontend_path.exists():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    # Use direct app object when running from script, module string when reloading
+    uvicorn.run(app, host="0.0.0.0", port=3000, reload=False)
