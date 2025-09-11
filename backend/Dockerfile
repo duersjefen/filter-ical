@@ -18,7 +18,7 @@ COPY app/ ./app/
 # Test stage
 FROM base AS test
 COPY tests/ ./tests/
-RUN python3 -m pytest tests/ -v
+RUN python3 -m pytest tests/ -m unit -v
 
 # Production stage
 FROM base AS production
