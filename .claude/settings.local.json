@@ -10,7 +10,9 @@
       "Bash(python:*)",
       "Bash(npm create:*)",
       "Bash(npm init:*)",
-      "Bash(.githooks/pre-commit:*)"
+      "Bash(.githooks/pre-commit:*)",
+      "Bash(curl:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
