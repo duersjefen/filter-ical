@@ -18,7 +18,8 @@
       "Bash(timeout:*)",
       "Bash(chmod:*)",
       "Bash(. venv/bin/activate)",
-      "Bash(gh run watch:*)"
+      "Bash(gh run watch:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
