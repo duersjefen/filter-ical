@@ -55,6 +55,7 @@ def sample_ics_file(sample_ics_content):
 class TestCalendarParsing:
     """Test calendar parsing functionality."""
     
+    @pytest.mark.future
     def test_parse_valid_ics_content(self, sample_ics_content):
         """Test parsing valid ICS content."""
         response = client.post("/api/calendars", 

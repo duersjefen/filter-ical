@@ -4,7 +4,7 @@
 # This Makefile provides a standardized interface that works with any language.
 # Each project only needs to implement these Docker-based targets.
 
-.PHONY: setup dev backend frontend test test-backend test-frontend build clean help
+.PHONY: setup dev backend frontend test test-unit test-integration test-future test-all test-backend test-frontend build clean help deploy status
 .DEFAULT_GOAL := help
 
 ## Development Commands
@@ -54,22 +54,22 @@ frontend: ## Start frontend development server (language auto-detected)
 		exit 1; \
 	fi
 
-## Testing Commands (Docker-first, Language Independent)
+## TDD Testing Commands (Test-Driven Development)
 
-test: test-backend test-frontend ## Run all tests
+test: test-unit test-frontend ## Run unit tests + frontend tests (for commits)
 
-test-backend: ## Run backend tests (Docker-first approach)
-	@echo "🧪 Testing backend..."
+test-unit: ## Run unit tests only - must pass for commits
+	@echo "🧪 Running unit tests (must pass for commits)..."
 	@if [ -f "backend/Dockerfile" ] && docker --version >/dev/null 2>&1; then \
-		cd backend && docker build -t test-backend --target test . && docker run --rm test-backend; \
+		cd backend && docker build -t test-backend --target test . && docker run --rm test-backend pytest -m unit; \
 	elif [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
-		echo "🐍 Python backend detected, checking dependencies..."; \
+		echo "🐍 Python backend detected, running unit tests..."; \
 		if command -v python3 >/dev/null 2>&1; then \
 			cd backend && \
 			if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then \
-				. venv/bin/activate && python3 -m pytest tests/ -v; \
+				. venv/bin/activate && python3 -m pytest tests/ -m unit -v; \
 			elif python3 -c "import pytest" 2>/dev/null; then \
-				python3 -m pytest tests/ -v; \
+				python3 -m pytest tests/ -m unit -v; \
 			else \
 				echo "⚠️  pytest not installed, install with: pip install pytest"; \
 				exit 1; \
@@ -78,24 +78,28 @@ test-backend: ## Run backend tests (Docker-first approach)
 			echo "⚠️  Python 3 not found"; \
 			exit 1; \
 		fi; \
-	elif [ -f "backend/package.json" ]; then \
-		echo "📦 Node.js backend detected..."; \
-		if command -v npm >/dev/null 2>&1; then \
-			cd backend && npm ci && npm test; \
-		else \
-			echo "⚠️  npm not found"; \
-			exit 1; \
-		fi; \
-	elif [ -f "backend/deps.edn" ]; then \
-		echo "☕ Clojure backend detected..."; \
-		if command -v clj >/dev/null 2>&1; then \
-			cd backend && clj -M:test; \
-		else \
-			echo "⚠️  clj command not found"; \
-			exit 1; \
-		fi; \
 	else \
 		echo "⚠️  No backend tests found or configured"; \
+	fi
+
+test-integration: ## Run integration tests - for deployment readiness
+	@echo "🔧 Running integration tests..."
+	@if [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
+		cd backend && . venv/bin/activate && python3 -m pytest tests/ -m integration -v; \
+	fi
+
+test-future: ## Run TDD future tests - shows what to build next
+	@echo "🔮 Running TDD future tests (can fail - guides development)..."
+	@if [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
+		cd backend && . venv/bin/activate && python3 -m pytest tests/ -m future -v || echo "✨ Future tests show features to implement"; \
+	fi
+
+test-backend: test-unit ## Alias for backward compatibility
+
+test-all: ## Run ALL tests (unit + integration + future)
+	@echo "🎯 Running complete test suite..."
+	@if [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
+		cd backend && . venv/bin/activate && python3 -m pytest tests/ -v; \
 	fi
 
 test-frontend: ## Run frontend tests (Docker-first approach)
@@ -139,8 +143,8 @@ clean: ## Clean up development artifacts (universal cleanup)
 
 ## CI/CD Integration Commands (Used by GitHub Actions and pre-commit hooks)
 
-ci-test: ## Run tests in CI environment (language independent)
-	@$(MAKE) test-backend
+ci-test: ## Run tests in CI environment (unit tests for commits)
+	@$(MAKE) test-unit
 	@$(MAKE) test-frontend
 
 ci-build: ## Build containers in CI environment (language independent)

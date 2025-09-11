@@ -11,6 +11,7 @@ client = TestClient(app)
 class TestHealthEndpoint:
     """Test health check endpoint."""
     
+    @pytest.mark.unit
     def test_health_check_success(self):
         """Test health endpoint returns success."""
         response = client.get("/health")
