@@ -57,58 +57,12 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
     
-    - name: 🧪 Execute backend tests (Dockerized)
+    - name: 🧪 Execute all tests (Language Independent)
       run: |
-        echo "🚀 Running backend tests using Docker..."
-        cd backend
+        echo "🚀 Running language-independent test suite..."
         
-        # Build a test image and run tests inside container
-        # This ensures consistent environment regardless of language
-        if docker build -t test-backend --target test . 2>/dev/null; then
-          echo "✅ Running tests in Docker container..."
-          docker run --rm test-backend
-        else
-          echo "📋 Fallback to local testing..."
-          # Language detection and testing
-          if [ -f "requirements.txt" ]; then
-            echo "🐍 Python project detected..."
-            python3 -m pip install -r requirements.txt
-            python3 -m pytest tests/ -v
-          elif [ -f "package.json" ] && npm run test --dry-run >/dev/null 2>&1; then
-            echo "📦 Node.js project detected..."
-            npm ci && npm run test
-          elif [ -f "deps.edn" ]; then
-            echo "☕ Clojure project detected..."
-            clj -M:test
-          else
-            echo "⚠️  No recognized test configuration found, skipping tests"
-          fi
-        fi
-    
-    - name: 🎨 Setup Node.js for frontend testing
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: 'frontend/package-lock.json'
-    
-    - name: 🧪 Execute frontend tests
-      run: |
-        echo "🎨 Running frontend test suite..."
-        cd frontend
-        
-        # Install dependencies for testing
-        echo "📦 Installing frontend dependencies..."
-        npm ci
-        
-        # Build frontend to validate compilation
-        echo "🚀 Running frontend build test..."
-        if npm run build; then
-          echo "✅ Frontend build test completed successfully"
-        else
-          echo "❌ Frontend build test failed"
-          exit 1
-        fi
+        # Use universal make targets that work with any language
+        make ci-test
 
   # ===========================================================================
   # BUILD AND DEPLOYMENT PHASE
@@ -207,39 +161,13 @@ jobs:
     # ===========================================================================
     # Build frontend application and Docker containers concurrently for maximum speed
     
-    - name: 🎨 Setup Node.js for frontend build
-      if: steps.changes.outputs.frontend_changed == 'true'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: 'frontend/package-lock.json'
-    
-    - name: 🎨 Build frontend application
-      if: steps.changes.outputs.frontend_changed == 'true'
+    - name: 🏗️ Build applications (Language Independent)
+      if: steps.changes.outputs.frontend_changed == 'true' || steps.changes.outputs.backend_changed == 'true'
       run: |
-        echo "🚀 Building frontend application locally (optimized for speed)..."
-        cd frontend
+        echo "🚀 Building applications using language-independent interface..."
         
-        # Use npm ci for faster, deterministic installs
-        echo "📦 Installing frontend dependencies..."
-        if npm ci; then
-          echo "✅ Frontend dependencies installed successfully"
-        else
-          echo "❌ Frontend dependency installation failed"
-          exit 1
-        fi
-        
-        # Build production frontend with Vite
-        echo "⚙️  Building Vue 3 application with Vite..."
-        if npm run build; then
-          echo "✅ Frontend build completed successfully"
-          echo "📊 Build artifact size:"
-          du -sh dist/ || echo "   No dist artifacts found"
-        else
-          echo "❌ Frontend build failed"
-          exit 1
-        fi
+        # Use universal make targets that work with any language
+        make ci-build
     
     - name: 🐳🌍 Build and push containers (parallel)
       if: steps.changes.outputs.backend_changed == 'true' || steps.changes.outputs.frontend_changed == 'true'

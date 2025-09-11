@@ -1,43 +1,32 @@
 #!/bin/bash
 # =============================================================================  
-# Git Pre-commit Hook - Automated Quality Gate (Python + Vue 3)
+# Git Pre-commit Hook - Universal Quality Gate (Language Independent)
 # =============================================================================
 # This runs automatically before every git commit to ensure code quality.
+# Works with any language through standardized Docker containers and Make targets.
 # Install: git config core.hooksPath .githooks
 
 set -e
 
-echo "🔍 Running pre-commit quality checks..."
+echo "🔍 Running universal pre-commit quality checks..."
 
-# 1. Backend Tests (if backend files changed)
-if git diff --cached --name-only | grep -q "^backend/"; then
-    echo "📊 Backend files changed - running Python tests..."
-    cd backend
-    if ! source venv/bin/activate && python3 -m pytest tests/ -v >/dev/null 2>&1; then
-        echo "❌ Backend tests failed! Commit aborted."
+# Check if there are any changes staged for commit
+if ! git diff --cached --quiet; then
+    echo "📋 Changes detected, running validation..."
+    
+    # Use the universal Makefile interface for testing
+    # This works with Python, Node.js, Clojure, or any Docker-based project
+    echo "🧪 Running language-independent test suite..."
+    
+    if make ci-test >/dev/null 2>&1; then
+        echo "✅ All tests passed"
+    else
+        echo "❌ Tests failed! Commit aborted."
+        echo "💡 Run 'make test' locally to see detailed error output"
         exit 1
     fi
-    echo "✅ Backend tests passed"
-    cd ..
-fi
-
-# 2. Frontend Build Check (if frontend files changed)  
-if git diff --cached --name-only | grep -q "^frontend/"; then
-    echo "🎨 Frontend files changed - checking Vue 3 build..."
-    cd frontend
-    if ! npm run build >/dev/null 2>&1; then
-        echo "❌ Frontend build failed! Commit aborted."
-        exit 1
-    fi
-    echo "✅ Frontend build successful"
-    cd ..
-fi
-
-# 3. Python linting (optional - only if available)
-if command -v flake8 >/dev/null 2>&1; then
-    if ! flake8 backend/app backend/tests >/dev/null 2>&1; then
-        echo "⚠️  Python linting warnings found (not blocking commit)"
-    fi
+else
+    echo "📋 No changes staged for commit"
 fi
 
 echo "✅ All quality checks passed - commit proceeding"
