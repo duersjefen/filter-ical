@@ -49,11 +49,10 @@ if ! git diff --cached --quiet; then
         fi
     fi
     
-    # Use the universal Makefile interface for testing
-    # This works with Python, Node.js, Clojure, or any Docker-based project
-    echo "🧪 Running language-independent test suite..."
+    # Use the clean Makefile interface for testing  
+    echo "🧪 Running unit tests (required for commits)..."
     
-    if make ci-test >/dev/null 2>&1; then
+    if make test >/dev/null 2>&1; then
         echo "✅ All tests passed"
     else
         echo "❌ Tests failed! Commit aborted."

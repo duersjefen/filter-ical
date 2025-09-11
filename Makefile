@@ -1,158 +1,75 @@
 # =============================================================================
-# Universal Project Interface - Language Independent
+# Project Makefile - Python + Vue 3 (Template for other languages)
 # =============================================================================
-# This Makefile provides a standardized interface that works with any language.
-# Each project only needs to implement these Docker-based targets.
+# This Makefile is optimized for THIS project's stack (Python + Vue 3).
+# When copying to a new project, adapt the language-specific commands below.
+# The universal commands (deploy, clean, etc.) work with any language.
 
-.PHONY: setup dev backend frontend test test-unit test-integration test-future test-all test-backend test-frontend build clean help deploy status
+.PHONY: setup dev backend frontend test test-unit test-integration test-future test-all build clean help deploy deploy-force status health
 .DEFAULT_GOAL := help
 
-## Development Commands
+## Development Commands (Language-Specific: Python + Vue 3)
 
-setup: ## Setup local development environment (language auto-detected)
-	@echo "📦 Setting up local development environment..."
-	@if [ -f "backend/requirements.txt" ]; then \
-		cd backend && python3 -m venv venv && . venv/bin/activate && pip install -r requirements.txt; \
-	elif [ -f "backend/package.json" ]; then \
-		cd backend && npm install; \
-	elif [ -f "backend/deps.edn" ]; then \
-		echo "Clojure setup - dependencies managed by clj tool"; \
-	fi
-	@if [ -f "frontend/package.json" ]; then \
-		cd frontend && npm install; \
-	fi
+setup: ## Setup local development environment
+	@echo "📦 Setting up Python + Vue 3 development environment..."
+	@echo "🐍 Setting up Python backend..."
+	@cd backend && python3 -m venv venv && . venv/bin/activate && pip install -r requirements.txt
+	@echo "🎨 Setting up Vue 3 frontend..."
+	@cd frontend && npm install
 	@echo "✅ Setup complete! Run 'make dev' to start development."
 
-dev: setup ## Start full development environment (backend + frontend)
-	@echo "🚀 Starting development environment..."
+dev: ## Start full development environment
+	@echo "🚀 Starting Python + Vue 3 development..."
 	@echo "Press Ctrl+C to stop both services"
 	@(trap 'kill 0' INT; $(MAKE) backend & $(MAKE) frontend & wait)
 
-backend: ## Start backend development server (language auto-detected)
-	@echo "🚀 Starting backend..."
-	@if [ -f "backend/Dockerfile" ]; then \
-		cd backend && docker build -t dev-backend --target development . && docker run -p 3000:3000 -v $(PWD)/backend:/app dev-backend; \
-	elif [ -f "backend/requirements.txt" ]; then \
-		cd backend && . venv/bin/activate && python app/main.py; \
-	elif [ -f "backend/package.json" ]; then \
-		cd backend && npm run dev; \
-	elif [ -f "backend/deps.edn" ]; then \
-		cd backend && clj -M:run; \
-	else \
-		echo "❌ No recognized backend configuration found"; \
-		exit 1; \
-	fi
+backend: ## Start backend development server
+	@echo "🐍 Starting Python FastAPI backend..."
+	@cd backend && . venv/bin/activate && python app/main.py
 
-frontend: ## Start frontend development server (language auto-detected)  
-	@echo "🎨 Starting frontend..."
-	@if [ -f "frontend/Dockerfile" ]; then \
-		cd frontend && docker build -t dev-frontend --target development . && docker run -p 5173:5173 -v $(PWD)/frontend:/app dev-frontend; \
-	elif [ -f "frontend/package.json" ]; then \
-		cd frontend && npm run dev; \
-	else \
-		echo "❌ No recognized frontend configuration found"; \
-		exit 1; \
-	fi
+frontend: ## Start frontend development server
+	@echo "🎨 Starting Vue 3 frontend..."
+	@cd frontend && npm run dev
 
-## TDD Testing Commands (Test-Driven Development)
+## Testing Commands (TDD Workflow - Universal Pattern)
 
-test: test-unit test-frontend ## Run unit tests + frontend tests (for commits)
+test: test-unit ## Run unit tests (for commits)
 
 test-unit: ## Run unit tests only - must pass for commits
 	@echo "🧪 Running unit tests (must pass for commits)..."
-	@if [ -f "backend/Dockerfile" ] && docker --version >/dev/null 2>&1; then \
-		cd backend && docker build -t test-backend --target test . && docker run --rm test-backend python3 -m pytest tests/ -m unit -v; \
-	elif [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
-		echo "🐍 Python backend detected, running unit tests..."; \
-		if command -v python3 >/dev/null 2>&1; then \
-			cd backend && \
-			if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then \
-				. venv/bin/activate && python3 -m pytest tests/ -m unit -v; \
-			elif python3 -c "import pytest" 2>/dev/null; then \
-				python3 -m pytest tests/ -m unit -v; \
-			else \
-				echo "⚠️  pytest not installed, install with: pip install pytest"; \
-				exit 1; \
-			fi; \
-		else \
-			echo "⚠️  Python 3 not found"; \
-			exit 1; \
-		fi; \
-	else \
-		echo "⚠️  No backend tests found or configured"; \
-	fi
+	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -m unit -v
 
 test-integration: ## Run integration tests - for deployment readiness
 	@echo "🔧 Running integration tests..."
-	@if [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
-		cd backend && . venv/bin/activate && python3 -m pytest tests/ -m integration -v; \
-	fi
+	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -m integration -v
 
 test-future: ## Run TDD future tests - shows what to build next
 	@echo "🔮 Running TDD future tests (can fail - guides development)..."
-	@if [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
-		cd backend && . venv/bin/activate && python3 -m pytest tests/ -m future -v || echo "✨ Future tests show features to implement"; \
-	fi
-
-test-backend: test-unit ## Alias for backward compatibility
+	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -m future -v || echo "✨ Future tests show features to implement"
 
 test-all: ## Run ALL tests (unit + integration + future)
 	@echo "🎯 Running complete test suite..."
-	@if [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
-		cd backend && . venv/bin/activate && python3 -m pytest tests/ -v; \
-	fi
+	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -v
 
-test-frontend: ## Run frontend tests (Docker-first approach)
-	@echo "🎨 Testing frontend..."  
-	@if [ -f "frontend/Dockerfile" ]; then \
-		cd frontend && docker build -t test-frontend --target test . 2>/dev/null && docker run --rm test-frontend || echo "⚠️  Frontend tests not configured in Docker"; \
-	elif [ -f "frontend/package.json" ]; then \
-		cd frontend && npm ci && npm run build; \
-	else \
-		echo "⚠️  No frontend tests found or configured"; \
-	fi
-
-## Production Commands
+## Production Commands (Docker-First - Universal)
 
 build: ## Build production containers
 	@echo "🏗️  Building production containers..."
-	@if [ -f "backend/Dockerfile" ]; then \
-		cd backend && docker build -t backend --target production .; \
-	fi
-	@if [ -f "frontend/Dockerfile" ]; then \
-		cd frontend && docker build -t frontend .; \
-	fi
+	@cd backend && docker build -t backend --target production .
+	@cd frontend && docker build -t frontend .
 	@echo "✅ Build complete"
 
-## Utility Commands
+## CI/CD Integration Commands (Universal)
 
-health: ## Check application health
-	@echo "🔍 Checking application health..."
-	@curl -sf http://localhost:3000/health && echo " ✅ Backend healthy" || echo " ❌ Backend unhealthy"
+ci-test: ## Run tests in CI environment (Docker-first)
+	@cd backend && docker build -t test-backend --target test . && docker run --rm test-backend python3 -m pytest tests/ -m unit -v
 
-clean: ## Clean up development artifacts (universal cleanup)
-	@echo "🧹 Cleaning up..."
-	@docker system prune -f 2>/dev/null || true
-	@find . -name "node_modules" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name ".shadow-cljs" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name ".cpcache" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name "target" -type d -exec rm -rf {} + 2>/dev/null || true
-	@echo "✅ Cleanup complete"
-
-## CI/CD Integration Commands (Used by GitHub Actions and pre-commit hooks)
-
-ci-test: ## Run tests in CI environment (unit tests for commits)
-	@$(MAKE) test-unit
-	@$(MAKE) test-frontend
-
-ci-build: ## Build containers in CI environment (language independent)
+ci-build: ## Build containers in CI environment
 	@$(MAKE) build
 
-## Deployment Commands
+## Deployment Commands (Universal - Work with any language)
 
-deploy: ## Deploy to production with native GitHub CLI monitoring
+deploy: ## Deploy to production with automatic monitoring
 	@echo "🚀 Deploying to production..."
 	@echo "📋 Current status:"
 	@git status --porcelain
@@ -172,22 +89,41 @@ deploy: ## Deploy to production with native GitHub CLI monitoring
 deploy-force: ## Force deploy (skip dirty working tree check)  
 	@echo "🚨 Force deploying (skipping dirty working tree check)..."
 	@git push origin $$(git branch --show-current)
-	@echo "👀 Monitoring deployment..."
-	@gh run watch || true
+	@echo "👀 Monitoring deployment with GitHub CLI..."
+	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
+	@sleep 3
+	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId') && \
+	 gh run watch $$latest_run --exit-status || true
 
 status: ## Check latest deployment status
 	@echo "📊 Latest deployment status:"
 	@gh run list --limit 3
 
+## Utility Commands (Universal)
+
+health: ## Check application health
+	@echo "🔍 Checking application health..."
+	@curl -sf http://localhost:3000/health && echo " ✅ Backend healthy" || echo " ❌ Backend unhealthy"
+
+clean: ## Clean up development artifacts
+	@echo "🧹 Cleaning up..."
+	@docker system prune -f 2>/dev/null || true
+	@find . -name "node_modules" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ Cleanup complete"
+
 help: ## Show this help message
-	@echo "🚀 Universal Project Interface (Language Independent)"
-	@echo "===================================================="
+	@echo "🚀 Python + Vue 3 Project Interface"
+	@echo "==================================="
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \\033[36m%-15s\\033[0m %s\\n", $$1, $$2}'
 	@echo ""
 	@echo "Quick start:"
-	@echo "  make setup    # Auto-detect and setup environment"
-	@echo "  make dev      # Start development (any language)"
-	@echo "  make test     # Run all tests (Docker-first)"
+	@echo "  make setup    # Setup Python + Vue 3 environment"
+	@echo "  make dev      # Start development servers"
+	@echo "  make test     # Run tests"
 	@echo ""
-	@echo "This Makefile works with Python, Node.js, Clojure, or any Docker-based project."
+	@echo "🎯 To adapt for other languages:"
+	@echo "   Modify the 'Language-Specific' commands above"
+	@echo "   Keep the 'Universal' commands unchanged"

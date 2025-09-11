@@ -19,7 +19,9 @@
       "Bash(chmod:*)",
       "Bash(. venv/bin/activate)",
       "Bash(gh run watch:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(latest_run=17638334062)",
+      "Bash(npm install)"
     ],
     "deny": [],
     "ask": []
