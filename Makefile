@@ -8,14 +8,14 @@
 setup: ## Setup local development environment
 	@echo "📦 Setting up local development environment..."
 	@cd frontend && npm install
-	@cd backend && mkdir -p resources data && ln -sf ../../frontend/resources/public resources/public
+	@cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 	@echo "✅ Setup complete! Run 'make dev' to start development."
 
 dev: setup ## Start full development environment (backend + frontend)
 	@echo "🚀 Starting iCal Viewer development environment..."
 	@echo ""
-	@echo "Starting backend (port 3000) and frontend (port 8001) in parallel..."
-	@echo "Access your app at: http://localhost:3000/app"
+	@echo "Starting backend (port 3000) and frontend (port 8000) in parallel..."
+	@echo "Access your app at: http://localhost:8000"
 	@echo ""
 	@echo "Press Ctrl+C to stop both services"
 	@echo ""
@@ -23,10 +23,10 @@ dev: setup ## Start full development environment (backend + frontend)
 
 backend: ## Start backend server only
 	@echo "🚀 Starting backend server on http://localhost:3000"
-	@cd backend && clj -M:run
+	@cd backend && source venv/bin/activate && python app/main.py
 
 frontend: ## Start frontend development server only
-	@echo "🚀 Starting frontend development server on http://localhost:8001"
+	@echo "🚀 Starting frontend development server on http://localhost:8000"
 	@cd frontend && npm run dev
 
 ## Docker Development (Production Parity)

@@ -56,7 +56,7 @@ git add . && git commit -m "Initial deployment" && git push origin main
 Claude should ask the user for ONLY these 3 inputs:
 1. **Project name** (for container/repository names)
 2. **Domain name** (for nginx and SSL config)
-3. **Project type** (Clojure/ClojureScript, Node.js, Python, etc.)
+3. **Project type** (Python + Vue 3, Node.js, Python + React, etc.)
 
 Everything else should be automated.
 
@@ -65,21 +65,24 @@ Everything else should be automated.
 ## 📁 PROJECT ARCHITECTURE
 
 ### Current Project - iCal Viewer
-- **Type**: Full-stack Clojure/ClojureScript
-- **Backend**: Ring server (port 3000)
-- **Frontend**: ClojureScript SPA with shadow-cljs
+- **Type**: Full-stack Python + Vue 3 with TypeScript
+- **Backend**: Python FastAPI + Uvicorn (port 3000)
+- **Frontend**: Vue 3 SPA with Vite + TypeScript
 - **Domain**: https://filter-ical.de
 - **Status**: ✅ Production-ready template
 
 ### Quick Start Commands
 ```bash
 # Development
-cd backend && clj -M:run                # Backend server
-cd frontend && npm run dev              # Frontend development
-cd backend && clj -M:test-runner        # Run tests
+make dev                                # Start both backend and frontend
+make backend                           # Backend server only
+make frontend                          # Frontend development server only
+
+# Testing
+cd backend && python3 -m pytest       # Backend tests
 
 # Production
-git push origin main                    # Triggers automatic deployment
+git push origin main                   # Triggers automatic deployment
 ```
 
 ---
@@ -226,7 +229,7 @@ When user says "set up new website", Claude should execute:
 # Get user inputs
 read -p "Project name (e.g., 'my-blog'): " PROJECT_NAME
 read -p "Domain name (e.g., 'myblog.com'): " DOMAIN_NAME
-read -p "Project type (clojure/node/python): " PROJECT_TYPE
+read -p "Project type (python-vue/node/python-react): " PROJECT_TYPE
 
 # Automated setup
 echo "🚀 Setting up $PROJECT_NAME with Claude Code automation..."

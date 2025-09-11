@@ -4,7 +4,13 @@
       "Bash(npm run dev:*)",
       "Bash(time curl:*)",
       "Bash(sed:*)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(npm create:*)",
+      "Bash(npm init:*)",
+      "Bash(.githooks/pre-commit:*)"
     ],
     "deny": [],
     "ask": []

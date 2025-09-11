@@ -1,5 +1,5 @@
 # =============================================================================
-# .gitignore - Professional Full-Stack Clojure/ClojureScript Project
+# .gitignore - Professional Full-Stack Python + Vue 3 Project  
 # =============================================================================
 
 # Editor / IDE
@@ -70,6 +70,23 @@ Thumbs.db
 # Docker
 .dockerignore
 docker-compose.override.yml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/env/
+.venv/
+venv/
+env/
+
+# Vue.js / Vite
+frontend/dist/
+frontend/node_modules/
+.vite/
 
 # Local development
 backend/resources/public

@@ -1,5 +1,5 @@
 # =============================================================================
-# iCal Viewer - Production Deployment Pipeline
+# iCal Viewer - Production Deployment Pipeline (Python + Vue 3)
 # =============================================================================
 # 
 # This workflow provides robust, zero-downtime deployment of the iCal Viewer
@@ -14,7 +14,7 @@
 # Architecture:
 #   Domain: https://filter-ical.de
 #   Infrastructure: AWS EC2 + ECR + Let's Encrypt SSL
-#   Containers: nginx (reverse proxy) + backend (Clojure) + frontend (ClojureScript)
+#   Containers: nginx (reverse proxy) + backend (Python/FastAPI) + frontend (Vue 3/Vite)
 #
 # Security: Uses OIDC for AWS authentication (no hardcoded credentials)
 # =============================================================================
@@ -57,42 +57,32 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
     
-    - name: ☕ Setup Java 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-    
-    - name: 💾 Cache Clojure dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.m2/repository
-          ~/.gitlibs
-        key: ${{ runner.os }}-clojure-${{ hashFiles('**/deps.edn') }}
-        restore-keys: |
-          ${{ runner.os }}-clojure-
-    
-    - name: 🔧 Install Clojure CLI tools
-      uses: DeLaGuardo/setup-clojure@12.1
-      with:
-        cli: latest
-    
-    - name: 🧪 Execute backend tests
+    - name: 🧪 Execute backend tests (Dockerized)
       run: |
-        echo "🚀 Running backend test suite..."
+        echo "🚀 Running backend tests using Docker..."
         cd backend
         
-        # Try multiple test alias formats for compatibility
-        if clj -M:test 2>/dev/null; then
-          echo "✅ Backend tests completed via -M:test alias"
-        elif clj -X:test 2>/dev/null; then
-          echo "✅ Backend tests completed via -X:test alias"
-        elif clj -A:test 2>/dev/null; then
-          echo "✅ Backend tests completed via -A:test alias"
+        # Build a test image and run tests inside container
+        # This ensures consistent environment regardless of language
+        if docker build -t test-backend --target test . 2>/dev/null; then
+          echo "✅ Running tests in Docker container..."
+          docker run --rm test-backend
         else
-          echo "⚠️  No backend test configuration found - tests skipped"
-          echo "💡 Consider adding a test alias to deps.edn for automated testing"
+          echo "📋 Fallback to local testing..."
+          # Language detection and testing
+          if [ -f "requirements.txt" ]; then
+            echo "🐍 Python project detected..."
+            python3 -m pip install -r requirements.txt
+            python3 -m pytest tests/ -v
+          elif [ -f "package.json" ] && npm run test --dry-run >/dev/null 2>&1; then
+            echo "📦 Node.js project detected..."
+            npm ci && npm run test
+          elif [ -f "deps.edn" ]; then
+            echo "☕ Clojure project detected..."
+            clj -M:test
+          else
+            echo "⚠️  No recognized test configuration found, skipping tests"
+          fi
         fi
     
     - name: 🎨 Setup Node.js for frontend testing
@@ -111,23 +101,13 @@ jobs:
         echo "📦 Installing frontend dependencies..."
         npm ci
         
-        # Check if test script exists
-        if npm run --silent test --dry-run 2>/dev/null; then
-          echo "🚀 Running frontend tests..."
-          npm run test
-          echo "✅ Frontend tests completed successfully"
+        # Build frontend to validate compilation
+        echo "🚀 Running frontend build test..."
+        if npm run build; then
+          echo "✅ Frontend build test completed successfully"
         else
-          echo "⚠️  No frontend test script found in package.json"
-          echo "💡 Consider adding frontend tests for comprehensive coverage"
-          
-          # Basic validation: ensure ClojureScript compiles (fast compile, no optimization)
-          echo "🔍 Performing basic frontend validation..."
-          if npx shadow-cljs compile app; then
-            echo "✅ Frontend compilation successful"
-          else
-            echo "❌ Frontend compilation failed"
-            exit 1
-          fi
+          echo "❌ Frontend build test failed"
+          exit 1
         fi
 
   # ===========================================================================
@@ -235,19 +215,6 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'frontend/package-lock.json'
     
-    - name: 💾 Cache ClojureScript compilation
-      if: steps.changes.outputs.frontend_changed == 'true'
-      uses: actions/cache@v3
-      with:
-        path: |
-          frontend/.shadow-cljs
-          frontend/resources/public/js
-          ~/.m2/repository
-          ~/.gitlibs
-        key: frontend-cljs-${{ runner.os }}-${{ hashFiles('frontend/shadow-cljs.edn', 'frontend/src/**/*.cljs') }}
-        restore-keys: |
-          frontend-cljs-${{ runner.os }}-
-    
     - name: 🎨 Build frontend application
       if: steps.changes.outputs.frontend_changed == 'true'
       run: |
@@ -263,12 +230,12 @@ jobs:
           exit 1
         fi
         
-        # Build production frontend with compilation caching
-        echo "⚙️  Compiling ClojureScript for production (with caching)..."
+        # Build production frontend with Vite
+        echo "⚙️  Building Vue 3 application with Vite..."
         if npm run build; then
           echo "✅ Frontend build completed successfully"
           echo "📊 Build artifact size:"
-          du -sh resources/public/js/ || echo "   No JS artifacts found"
+          du -sh dist/ || echo "   No dist artifacts found"
         else
           echo "❌ Frontend build failed"
           exit 1
@@ -295,6 +262,7 @@ jobs:
             echo "   Cache: GitHub Actions (GHA)"
             
             if docker buildx build \
+              --target production \
               --cache-from type=gha,scope=backend \
               --cache-to type=gha,scope=backend,mode=max \
               --platform linux/amd64 \
@@ -324,7 +292,7 @@ jobs:
             cd frontend
             
             # Verify build artifacts exist before containerization
-            if [ ! -d "resources/public/js" ]; then
+            if [ ! -d "dist" ]; then
               echo "⚠️  Frontend build artifacts not found, building now..."
               npm run build
             fi
@@ -592,7 +560,7 @@ jobs:
           echo "🧪 Running comprehensive production validation..."
           
           # Smart wait for backend initialization with health checks
-          echo "⏳ Waiting for backend initialization (ClojureScript compilation, etc.)..."
+          echo "⏳ Waiting for backend initialization (Python FastAPI startup)..."
           
           # Wait up to 3 minutes for backend to be fully ready
           MAX_WAIT=180
@@ -703,7 +671,7 @@ jobs:
           docker image prune -af --filter "until=24h"
           
           echo "✅ Production deployment completed!"
-          echo "🌐 Your website is live at: http://filter-ical.de"
+          echo "🌐 Your website is live at: https://filter-ical.de"
     
     # ===========================================================================
     # DEPLOYMENT COMPLETION NOTIFICATION

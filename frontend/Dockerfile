@@ -1,37 +1,35 @@
-# Build stage for ClojureScript with optimized layer caching
+# Frontend Dockerfile for Vue 3 + nginx
 FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Install system dependencies (cached independently)
-RUN apk add --no-cache openjdk17-jre
+# Copy package files
+COPY package*.json ./
 
-# Install shadow-cljs globally (cached independently)
-RUN npm install -g shadow-cljs
+# Install dependencies
+RUN npm ci --only=production
 
-# Copy dependency files first for better caching
-COPY package.json* ./
-COPY shadow-cljs.edn .
+# Copy source code
+COPY . .
 
-# Install npm dependencies (cached when package.json unchanged)
-RUN if [ -f package.json ]; then npm install; fi
-
-# Copy source code (changes more frequently, separate layer)
-COPY src/ src/
-COPY resources/ resources/
-
-# Build CSS and ClojureScript for production
+# Build the application
 RUN npm run build
 
-# Production stage - serve built files with nginx
+# Production stage
 FROM nginx:alpine
 
-# Copy built static files from build stage
-COPY --from=build /app/resources/public /usr/share/nginx/html
-
-# Copy custom nginx config for SPA
+# Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Copy built app from build stage
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Expose port
 EXPOSE 80
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost || exit 1
+
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]

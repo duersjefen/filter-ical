@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================  
-# Git Pre-commit Hook - Automated Quality Gate
+# Git Pre-commit Hook - Automated Quality Gate (Python + Vue 3)
 # =============================================================================
 # This runs automatically before every git commit to ensure code quality.
 # Install: git config core.hooksPath .githooks
@@ -11,9 +11,9 @@ echo "🔍 Running pre-commit quality checks..."
 
 # 1. Backend Tests (if backend files changed)
 if git diff --cached --name-only | grep -q "^backend/"; then
-    echo "📊 Backend files changed - running tests..."
+    echo "📊 Backend files changed - running Python tests..."
     cd backend
-    if ! clj -M:test -e "(require '[clojure.test :refer [run-tests]]) (require 'app.ical-viewer-test) (run-tests 'app.ical-viewer-test)" >/dev/null 2>&1; then
+    if ! source venv/bin/activate && python3 -m pytest tests/ -v >/dev/null 2>&1; then
         echo "❌ Backend tests failed! Commit aborted."
         exit 1
     fi
@@ -23,7 +23,7 @@ fi
 
 # 2. Frontend Build Check (if frontend files changed)  
 if git diff --cached --name-only | grep -q "^frontend/"; then
-    echo "🎨 Frontend files changed - checking build..."
+    echo "🎨 Frontend files changed - checking Vue 3 build..."
     cd frontend
     if ! npm run build >/dev/null 2>&1; then
         echo "❌ Frontend build failed! Commit aborted."
@@ -33,10 +33,10 @@ if git diff --cached --name-only | grep -q "^frontend/"; then
     cd ..
 fi
 
-# 3. Linting (optional - only if clj-kondo available)
-if command -v clj-kondo >/dev/null 2>&1; then
-    if ! clj-kondo --lint backend/src backend/test frontend/src --parallel >/dev/null 2>&1; then
-        echo "⚠️  Linting warnings found (not blocking commit)"
+# 3. Python linting (optional - only if available)
+if command -v flake8 >/dev/null 2>&1; then
+    if ! flake8 backend/app backend/tests >/dev/null 2>&1; then
+        echo "⚠️  Python linting warnings found (not blocking commit)"
     fi
 fi
 

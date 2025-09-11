@@ -43,21 +43,21 @@ Claude Code will automatically:
 ## 🏗️ Current Project - iCal Viewer
 
 ### Tech Stack
-- **Backend**: Clojure + Ring + Jetty
-- **Frontend**: ClojureScript + Reagent + Re-frame
-- **Build**: shadow-cljs for optimized compilation
+- **Backend**: Python + FastAPI + Uvicorn
+- **Frontend**: Vue 3 + TypeScript + Vite
+- **Build**: Modern ESM with Vite hot reload
 - **Infrastructure**: Docker + nginx + AWS EC2
 
 ### Quick Start
 ```bash
 # Backend development
-cd backend && clj -M:run
+cd backend && source venv/bin/activate && python app/main.py
 
 # Frontend development  
 cd frontend && npm run dev
 
 # Run tests
-cd backend && clj -M:test-runner
+cd backend && python -m pytest
 
 # Deploy to production
 git push origin main  # Automated pipeline
@@ -97,5 +97,5 @@ This project includes comprehensive instructions for Claude Code to automaticall
 
 ---
 
-*Template last updated: September 10, 2025*  
-*Status: Production-ready for replication*
+*Template last updated: September 11, 2025*  
+*Status: Migrated to Python + Vue 3 - Even more maintainable!*

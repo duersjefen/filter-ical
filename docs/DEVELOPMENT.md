@@ -28,7 +28,7 @@ Located in: `.github/workflows/deploy.yml`
 
 **Backend tests:**
 ```bash
-cd backend && clj -M:test-runner
+cd backend && python3 -m pytest
 ```
 
 **Frontend build check:**

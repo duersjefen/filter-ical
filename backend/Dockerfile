@@ -1,22 +1,37 @@
-FROM clojure:temurin-17-tools-deps-jammy
+# Backend Dockerfile for Python + FastAPI
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
-# Copy dependency file first for optimal caching (changes less frequently)
-COPY deps.edn .
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Download and cache dependencies (expensive operation, cached when deps.edn unchanged)
-RUN clojure -P
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy data files (changes infrequently, separate layer)
-COPY data/ data/
+# Copy application code
+COPY app/ ./app/
 
-# Copy test files (changes less frequently than src)
-COPY test/ test/
+# Test stage
+FROM base AS test
+COPY tests/ ./tests/
+RUN python3 -m pytest tests/ -v
 
-# Copy source code last (changes most frequently)
-COPY src/ src/
+# Production stage
+FROM base AS production
 
+# Create directories for data persistence
+RUN mkdir -p /app/data
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Expose port
 EXPOSE 3000
 
-CMD ["clojure", "-M:run"]
+# Run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3000"]
