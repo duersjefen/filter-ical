@@ -1,88 +1,54 @@
-# CLAUDE.md - Professional CI/CD Template with Full Automation
+# CLAUDE.md - iCal Viewer Project Instructions
 
-This file instructs Claude Code on how to **automatically set up** professional full-stack web applications with zero-downtime CI/CD pipelines.
+This file provides **project-specific instructions** for working with the iCal Viewer project. For creating new projects based on this template, see `CLAUDE_TEMPLATE.md`.
 
 ---
 
-## 🎯 CLAUDE CODE AUTOMATION INSTRUCTIONS
+## 🎯 ICAL VIEWER PROJECT INSTRUCTIONS
 
-When the user asks Claude Code to "set up a new website" or "replicate this architecture", Claude should **automatically execute** the following steps without asking for confirmation:
+This is a **production-ready Python + Vue 3 web application** with comprehensive TDD workflow and language-independent CI/CD.
 
-### 1. AUTOMATIC PROJECT SETUP
+### Key Features:
+- **Language-Independent CI/CD**: Works with any backend/frontend language
+- **Professional TDD Workflow**: Unit tests for commits, comprehensive tests for development  
+- **Zero-Downtime Deployment**: Automated with real-time monitoring
+- **Comprehensive Testing**: 40+ tests covering all functionality
+- **Development Excellence**: Pre-commit hooks, Docker-first approach, universal Makefile
 
-**Copy Essential Template Files:**
-```bash
-# Claude should automatically run these commands:
-cp .github/workflows/deploy.yml NEW_PROJECT/.github/workflows/
-cp .githooks/pre-commit NEW_PROJECT/.githooks/
-cp .pre-commit-config.yaml NEW_PROJECT/
-cp .gitignore NEW_PROJECT/
-cp -r docs/ NEW_PROJECT/
-cp -r infrastructure/ NEW_PROJECT/
-chmod +x NEW_PROJECT/.githooks/pre-commit
-cd NEW_PROJECT && git config core.hooksPath .githooks
-```
-
-### 2. AUTOMATIC CONFIGURATION UPDATES
-
-**Claude should automatically update these files with new project details:**
-
-**In `deploy.yml`:**
-- Replace `ical-viewer-backend` → `NEW_PROJECT-backend`
-- Replace `ical-viewer-frontend` → `NEW_PROJECT-frontend` 
-- Replace `filter-ical.de` → `NEW_DOMAIN.com`
-
-**In `production-nginx.conf`:**
-- Replace all instances of `filter-ical.de` → `NEW_DOMAIN.com`
-- Update SSL certificate paths to use new domain
-
-**In `production-docker-compose.yml`:**
-- Replace container names to use new project name
-
-### 3. AUTOMATIC AWS SETUP
-
-**Claude should provide these exact commands for the user to run:**
-```bash
-# Create ECR repositories
-aws ecr create-repository --repository-name NEW_PROJECT-backend --region eu-north-1
-aws ecr create-repository --repository-name NEW_PROJECT-frontend --region eu-north-1
-
-# Test deployment (after DNS is configured)
-git add . && git commit -m "Initial deployment" && git push origin main
-```
-
-### 4. USER REQUIREMENTS (Claude should ask for these only)
-
-Claude should ask the user for ONLY these 3 inputs:
-1. **Project name** (for container/repository names)
-2. **Domain name** (for nginx and SSL config)
-3. **Project type** (Python + Vue 3, Node.js, Python + React, etc.)
-
-Everything else should be automated.
+### Development Workflow:
+1. **Make changes** → `make test` (unit tests must pass)
+2. **Add new features** → Write `@pytest.mark.future` tests first (TDD)
+3. **Deploy** → `make deploy` (with real-time monitoring)
+4. **Monitor** → GitHub CLI provides immediate feedback
 
 ---
 
 ## 📁 PROJECT ARCHITECTURE
 
-### Current Project - iCal Viewer
-- **Type**: Full-stack Python + Vue 3 with TypeScript
+### iCal Viewer - Production Application
+- **Type**: Full-stack Python + Vue 3 with comprehensive TDD
 - **Backend**: Python FastAPI + Uvicorn (port 3000)
-- **Frontend**: Vue 3 SPA with Vite + TypeScript
-- **Domain**: https://filter-ical.de
-- **Status**: ✅ Production-ready template
+- **Frontend**: Vue 3 SPA with Vite + Pinia
+- **Domain**: https://filter-ical.de  
+- **Status**: ✅ Production-ready with 40+ tests
 
 ### Quick Start Commands
 ```bash
 # Development
-make dev                                # Start both backend and frontend
-make backend                           # Backend server only
-make frontend                          # Frontend development server only
+make setup                 # Auto-detect and setup environment
+make dev                   # Start both backend and frontend  
+make backend              # Backend server only
+make frontend             # Frontend development server only
 
-# Testing
-cd backend && python3 -m pytest       # Backend tests
+# TDD Testing Workflow
+make test                 # Run unit tests (for commits) - 5 tests
+make test-future          # Run TDD future tests (development guide) - 35 tests
+make test-all             # Run complete test suite - 40 tests
+make test-integration     # Run integration tests
 
-# Production
-git push origin main                   # Triggers automatic deployment
+# Production Deployment
+make deploy               # Deploy with real-time GitHub CLI monitoring
+make status               # Check latest deployment status
 ```
 
 ---
