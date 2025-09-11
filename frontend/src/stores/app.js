@@ -15,6 +15,7 @@ export const useAppStore = defineStore('app', {
     // Data
     calendars: [],
     events: [],
+    categories: [], // MINIMAL ADDITION
     filters: [],
     
     // Selected state
@@ -107,6 +108,11 @@ export const useAppStore = defineStore('app', {
     },
     eventTypes: (state) => {
       return [...new Set(state.events.map(event => event.summary))].sort()
+    },
+    // MINIMAL ADDITION: category-based grouping
+    categoriesSortedByCount: (state) => {
+      if (!state.categories) return []
+      return state.categories.sort((a, b) => b.count - a.count)
     }
   },
 
@@ -200,6 +206,8 @@ export const useAppStore = defineStore('app', {
       this.loading = true
       
       await this.loadCalendarEvents(calendarId)
+      // MINIMAL ADDITION: load categories
+      await this.loadCalendarCategories(calendarId)
     },
 
     // API calls
@@ -277,6 +285,19 @@ export const useAppStore = defineStore('app', {
         this.error = error.response?.data?.message || 'Error loading events'
       } finally {
         this.loading = false
+      }
+    },
+
+    // MINIMAL ADDITION: load categories
+    async loadCalendarCategories(calendarId) {
+      try {
+        const response = await axios.get(`/api/calendar/${calendarId}/categories`, {
+          headers: this.getUserHeaders()
+        })
+        this.categories = response.data.categories
+      } catch (error) {
+        console.error('Error loading categories:', error)
+        // Don't show error to user - categories are optional
       }
     },
 

@@ -101,6 +101,12 @@ async def fetch_ical_events(url: str) -> List[Event]:
         print(f"Error fetching iCal from {url}: {e}")
         return []
 
+def extract_category_from_event(event: Event) -> str:
+    """Extract category from existing event data - START SIMPLE"""
+    # START SIMPLE: Just use the event summary as the category
+    # This gives us the same grouping as before, but now called "categories"
+    return event.summary or 'Uncategorized'
+
 # Simple persistent store (keeps existing functional interface)
 class PersistentStore:
     def __init__(self, data_dir=None):
@@ -306,6 +312,130 @@ async def delete_filter(
         return {"message": "Filter deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Filter not found")
+
+@app.get("/api/calendar/{calendar_id}/categories")
+async def get_calendar_categories(
+    calendar_id: str,
+    x_user_id: str = Header("anonymous")
+):
+    """Get events grouped by categories - MINIMAL ADDITION"""
+    calendar = store.get_calendar(calendar_id)
+    if not calendar:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+    
+    # Get cached events (same as existing endpoint)
+    cached_events = store.get_cached_events(calendar_id)
+    if cached_events:
+        events = cached_events
+    else:
+        # Fetch fresh (same as existing endpoint)
+        events = await fetch_ical_events(calendar.url)
+        if events:
+            store.cache_events(calendar_id, events)
+    
+    # Group by categories
+    categories = {}
+    for event in events:
+        category = extract_category_from_event(event)
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(asdict(event))
+    
+    # Sort categories by event count
+    sorted_categories = sorted(
+        [(name, events) for name, events in categories.items()],
+        key=lambda x: len(x[1]),
+        reverse=True
+    )
+    
+    return {
+        "categories": [
+            {"name": name, "count": len(events), "events": events}
+            for name, events in sorted_categories
+        ]
+    }
+
+@app.get("/api/calendar/{calendar_id}/filtered.ical")
+async def download_filtered_ical(
+    calendar_id: str,
+    categories: str = "",
+    x_user_id: str = Header("anonymous")
+):
+    """Download filtered .ical file - CLEAN IMPLEMENTATION"""
+    calendar = store.get_calendar(calendar_id)
+    if not calendar:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+    
+    # Get cached events
+    cached_events = store.get_cached_events(calendar_id)
+    if not cached_events:
+        cached_events = await fetch_ical_events(calendar.url)
+        if cached_events:
+            store.cache_events(calendar_id, cached_events)
+    
+    if not cached_events:
+        raise HTTPException(status_code=404, detail="No events found")
+    
+    # Filter by selected categories
+    selected_categories = set(cat.strip() for cat in categories.split(',') if cat.strip())
+    filtered_events = []
+    
+    if selected_categories:
+        for event in cached_events:
+            event_category = extract_category_from_event(event)
+            if event_category in selected_categories:
+                filtered_events.append(event)
+    else:
+        filtered_events = cached_events
+    
+    # Generate .ical content
+    ical_content = generate_ical_content(filtered_events, calendar.name, selected_categories)
+    
+    return Response(
+        content=ical_content,
+        media_type="text/calendar",
+        headers={
+            "Content-Disposition": f'attachment; filename="filtered_{calendar.name}.ical"'
+        }
+    )
+
+def generate_ical_content(events: List[Event], calendar_name: str, categories: set) -> str:
+    """Generate proper .ical content"""
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        f"PRODID:-//iCal Viewer//Filtered {calendar_name}//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        f"X-WR-CALNAME:Filtered {calendar_name}",
+        f"X-WR-CALDESC:Filtered calendar with categories: {', '.join(categories) if categories else 'all'}"
+    ]
+    
+    for event in events:
+        lines.extend([
+            "BEGIN:VEVENT",
+            f"UID:{event.uid}",
+            f"DTSTART:{event.dtstart}",
+            f"DTEND:{event.dtend}",
+            f"SUMMARY:{event.summary}"
+        ])
+        
+        if event.location:
+            lines.append(f"LOCATION:{event.location}")
+        
+        if event.description:
+            # Properly escape description
+            desc = event.description.replace('\\', '\\\\').replace('\n', '\\n').replace(',', '\\,').replace(';', '\\;')
+            lines.append(f"DESCRIPTION:{desc}")
+            
+        # Add category back to the event
+        category = extract_category_from_event(event)
+        lines.append(f"CATEGORIES:{category}")
+        
+        lines.append("END:VEVENT")
+    
+    lines.append("END:VCALENDAR")
+    return '\r\n'.join(lines)
 
 
 # Serve static files (same as Clojure version)
