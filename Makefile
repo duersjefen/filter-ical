@@ -12,7 +12,7 @@
 setup: ## Setup local development environment (language auto-detected)
 	@echo "📦 Setting up local development environment..."
 	@if [ -f "backend/requirements.txt" ]; then \
-		cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt; \
+		cd backend && python3 -m venv venv && . venv/bin/activate && pip install -r requirements.txt; \
 	elif [ -f "backend/package.json" ]; then \
 		cd backend && npm install; \
 	elif [ -f "backend/deps.edn" ]; then \
@@ -33,7 +33,7 @@ backend: ## Start backend development server (language auto-detected)
 	@if [ -f "backend/Dockerfile" ]; then \
 		cd backend && docker build -t dev-backend --target development . && docker run -p 3000:3000 -v $(PWD)/backend:/app dev-backend; \
 	elif [ -f "backend/requirements.txt" ]; then \
-		cd backend && source venv/bin/activate && python app/main.py; \
+		cd backend && . venv/bin/activate && python app/main.py; \
 	elif [ -f "backend/package.json" ]; then \
 		cd backend && npm run dev; \
 	elif [ -f "backend/deps.edn" ]; then \
@@ -145,6 +145,33 @@ ci-test: ## Run tests in CI environment (language independent)
 
 ci-build: ## Build containers in CI environment (language independent)
 	@$(MAKE) build
+
+## Deployment Commands
+
+deploy: ## Deploy to production with native GitHub CLI monitoring
+	@echo "🚀 Deploying to production..."
+	@echo "📋 Current status:"
+	@git status --porcelain
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "⚠️  You have uncommitted changes. Commit them first:"; \
+		echo "   git add . && git commit -m 'Your commit message'"; \
+		exit 1; \
+	fi
+	@echo "📤 Pushing to remote repository..."
+	@git push origin $$(git branch --show-current)
+	@echo "👀 Monitoring deployment with GitHub CLI..."
+	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
+	@gh run watch || true
+
+deploy-force: ## Force deploy (skip dirty working tree check)  
+	@echo "🚨 Force deploying (skipping dirty working tree check)..."
+	@git push origin $$(git branch --show-current)
+	@echo "👀 Monitoring deployment..."
+	@gh run watch || true
+
+status: ## Check latest deployment status
+	@echo "📊 Latest deployment status:"
+	@gh run list --limit 3
 
 help: ## Show this help message
 	@echo "🚀 Universal Project Interface (Language Independent)"

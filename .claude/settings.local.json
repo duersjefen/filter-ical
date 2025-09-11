@@ -12,7 +12,11 @@
       "Bash(npm init:*)",
       "Bash(.githooks/pre-commit:*)",
       "Bash(curl:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(timeout:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
