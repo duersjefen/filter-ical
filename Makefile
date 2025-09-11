@@ -165,7 +165,9 @@ deploy: ## Deploy to production with native GitHub CLI monitoring
 	@git push origin $$(git branch --show-current)
 	@echo "👀 Monitoring deployment with GitHub CLI..."
 	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
-	@gh run watch || true
+	@sleep 3
+	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId') && \
+	 gh run watch $$latest_run --exit-status || true
 
 deploy-force: ## Force deploy (skip dirty working tree check)  
 	@echo "🚨 Force deploying (skipping dirty working tree check)..."

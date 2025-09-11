@@ -100,6 +100,23 @@ EC2 Instance (56.228.25.95)
 - **Test automation**: Backend + frontend validation
 - **Deployment validation**: Health checks before going live
 
+### Automatic Deployment Monitoring
+- **Real-time feedback**: `make deploy` automatically monitors deployment progress
+- **Zero manual intervention**: Automatically gets latest run ID and watches deployment
+- **Immediate failure notification**: Exit status reflects deployment success/failure
+- **GitHub CLI integration**: Uses native GitHub tools for reliable monitoring
+- **No email notifications**: Feedback provided directly in terminal where deployment initiated
+
+```bash
+# The deploy command automatically:
+# 1. Pushes changes to repository
+# 2. Waits 3 seconds for GitHub Actions to start
+# 3. Gets the latest workflow run ID
+# 4. Monitors deployment progress with gh run watch
+# 5. Exits with proper status code (0=success, 1=failure)
+make deploy
+```
+
 ---
 
 ## 📋 AUTOMATION CHECKLIST FOR CLAUDE
