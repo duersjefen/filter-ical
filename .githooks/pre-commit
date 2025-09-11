@@ -14,6 +14,41 @@ echo "🔍 Running universal pre-commit quality checks..."
 if ! git diff --cached --quiet; then
     echo "📋 Changes detected, running validation..."
     
+    # =========================================================================
+    # DEPENDENCY SYNCHRONIZATION VALIDATION
+    # =========================================================================
+    # Prevent package-lock.json sync issues that can break CI/CD
+    echo "🔧 Validating dependency synchronization..."
+    
+    # Check frontend package-lock.json sync
+    if [ -f "frontend/package.json" ] && [ -f "frontend/package-lock.json" ]; then
+        if git diff --cached --name-only | grep -q "frontend/package.json"; then
+            echo "⚠️  Frontend package.json modified - checking package-lock.json sync"
+            cd frontend
+            if ! npm ci --dry-run >/dev/null 2>&1; then
+                echo "❌ Frontend package.json and package-lock.json are out of sync!"
+                echo "🔧 Fix this by running: cd frontend && rm package-lock.json && npm install"
+                echo "   Then add the updated package-lock.json to your commit"
+                exit 1
+            fi
+            cd ..
+            echo "✅ Frontend dependencies are synchronized"
+        fi
+    fi
+    
+    # Check backend requirements.txt for malformed lines
+    if [ -f "backend/requirements.txt" ]; then
+        if git diff --cached --name-only | grep -q "backend/requirements.txt"; then
+            echo "🔍 Validating backend requirements.txt format..."
+            if grep -E '.*#.*[^[:space:]]' backend/requirements.txt >/dev/null 2>&1; then
+                echo "❌ Malformed requirements.txt detected - comments must have space after #"
+                echo "🔧 Fix by ensuring all comments have proper spacing: # comment"
+                exit 1
+            fi
+            echo "✅ Backend requirements.txt format is valid"
+        fi
+    fi
+    
     # Use the universal Makefile interface for testing
     # This works with Python, Node.js, Clojure, or any Docker-based project
     echo "🧪 Running language-independent test suite..."

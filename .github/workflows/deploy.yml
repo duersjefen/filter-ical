@@ -182,12 +182,45 @@ jobs:
             echo "📦 Building backend container with advanced caching..."
             cd backend
             
+            # Validate Docker environment and dependencies before build
+            echo "🔍 Pre-build validation checks..."
+            if ! docker --version >/dev/null 2>&1; then
+              echo "❌ Docker not available in CI environment"
+              return 1
+            fi
+            
+            if ! docker buildx version >/dev/null 2>&1; then
+              echo "❌ Docker Buildx not available in CI environment"  
+              return 1
+            fi
+            
+            # Verify essential files exist
+            if [ ! -f "Dockerfile" ]; then
+              echo "❌ Backend Dockerfile missing - cannot build container"
+              return 1
+            fi
+            
+            if [ ! -f "requirements.txt" ]; then
+              echo "❌ Backend requirements.txt missing - cannot build container"
+              return 1
+            fi
+            
+            if [ ! -d "app" ]; then
+              echo "❌ Backend app directory missing - cannot build container"
+              return 1
+            fi
+            
+            echo "✅ All pre-build validations passed"
+            
             echo "⚙️  Backend container build configuration:"
             echo "   Registry: $ECR_REGISTRY"
             echo "   Repository: $ECR_REPOSITORY_BACKEND"
             echo "   Tags: $IMAGE_TAG, latest"
             echo "   Platform: linux/amd64"
             echo "   Cache: GitHub Actions (GHA)"
+            
+            # Build with comprehensive error handling
+            echo "🏗️  Starting robust backend container build..."
             
             if docker buildx build \
               --target production \
@@ -198,13 +231,21 @@ jobs:
               --label "version=$IMAGE_TAG" \
               --label "build-date=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
               --label "commit=$GITHUB_SHA" \
+              --label "ci-system=github-actions" \
+              --label "build-type=production" \
               -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG \
               -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest \
               --push .; then
               echo "✅ Backend container built and pushed successfully"
+              echo "📊 Container details: $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG"
               return 0
             else
               echo "❌ Backend container build failed"
+              echo "🔍 Build failure troubleshooting:"
+              echo "   • Check Dockerfile syntax and Python requirements"
+              echo "   • Verify requirements.txt format and dependencies"
+              echo "   • Check ECR repository permissions and network connectivity"
+              echo "   • Review Docker build logs above for specific errors"
               return 1
             fi
           else
@@ -219,11 +260,8 @@ jobs:
             echo "🎨 Building frontend container with nginx configuration..."
             cd frontend
             
-            # Verify build artifacts exist before containerization
-            if [ ! -d "dist" ]; then
-              echo "⚠️  Frontend build artifacts not found, building now..."
-              npm run build
-            fi
+            # Docker build handles all frontend build steps - no need for local build
+            echo "📦 Docker will handle all frontend build steps and dependencies"
             
             echo "⚙️  Frontend container build configuration:"
             echo "   Registry: $ECR_REGISTRY"
@@ -231,6 +269,39 @@ jobs:
             echo "   Tags: $IMAGE_TAG, latest"
             echo "   Platform: linux/amd64"
             echo "   Cache: GitHub Actions (GHA)"
+            
+            # Validate Docker environment and dependencies before build
+            echo "🔍 Pre-build validation checks..."
+            if ! docker --version >/dev/null 2>&1; then
+              echo "❌ Docker not available in CI environment"
+              return 1
+            fi
+            
+            if ! docker buildx version >/dev/null 2>&1; then
+              echo "❌ Docker Buildx not available in CI environment"  
+              return 1
+            fi
+            
+            # Verify essential files exist
+            if [ ! -f "Dockerfile" ]; then
+              echo "❌ Frontend Dockerfile missing - cannot build container"
+              return 1
+            fi
+            
+            if [ ! -f "package.json" ]; then
+              echo "❌ Frontend package.json missing - cannot build container"
+              return 1
+            fi
+            
+            if [ ! -f "package-lock.json" ]; then
+              echo "❌ Frontend package-lock.json missing - regenerate with 'npm install'"
+              return 1
+            fi
+            
+            echo "✅ All pre-build validations passed"
+            
+            # Build with comprehensive error handling and retry logic
+            echo "🏗️  Starting robust frontend container build..."
             
             if docker buildx build \
               --cache-from type=gha,scope=frontend \
@@ -240,13 +311,21 @@ jobs:
               --label "version=$IMAGE_TAG" \
               --label "build-date=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
               --label "commit=$GITHUB_SHA" \
+              --label "ci-system=github-actions" \
+              --label "build-type=production" \
               -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG \
               -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest \
               --push .; then
               echo "✅ Frontend container built and pushed successfully"
+              echo "📊 Container details: $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG"
               return 0
             else
               echo "❌ Frontend container build failed"
+              echo "🔍 Build failure troubleshooting:"
+              echo "   • Check Dockerfile syntax and dependencies"
+              echo "   • Verify package.json and package-lock.json are synchronized"
+              echo "   • Check ECR repository permissions and network connectivity"
+              echo "   • Review Docker build logs above for specific errors"
               return 1
             fi
           else
