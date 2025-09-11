@@ -56,6 +56,46 @@
             </div>
           </div>
           
+          <!-- Keyword Search -->
+          <div class="search-section" style="margin-bottom: 20px;">
+            <label for="keyword-search" style="display: block; margin-bottom: 8px; font-weight: 500;">
+              🔍 Search Events:
+            </label>
+            <input 
+              id="keyword-search"
+              v-model="appStore.keywordFilter" 
+              type="text" 
+              placeholder="Search in titles, descriptions, locations..."
+              class="form-control"
+              style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;"
+            />
+          </div>
+
+          <!-- Timeframe Selection -->
+          <div class="timeframe-section" style="margin-bottom: 20px;">
+            <h4 style="margin: 0 0 12px 0; font-size: 16px;">📅 Timeframe:</h4>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button @click="appStore.setTimeframe('week')" class="btn btn-secondary">This Week</button>
+              <button @click="appStore.setTimeframe('month')" class="btn btn-secondary">This Month</button>
+              <button @click="appStore.setTimeframe('year')" class="btn btn-secondary">This Year</button>
+              <button @click="appStore.clearTimeframe()" class="btn btn-outline">All Time</button>
+            </div>
+          </div>
+
+          <!-- Sorting Options -->
+          <div class="sort-section" style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label for="sort-by" style="font-weight: 500;">Sort by:</label>
+              <select v-model="appStore.sortBy" id="sort-by" class="form-control" style="width: auto;">
+                <option value="date">Date</option>
+                <option value="title">Title</option>
+              </select>
+              <button @click="appStore.toggleSortDirection()" class="btn btn-secondary" style="min-width: 40px;">
+                {{ appStore.sortDirection === 'asc' ? '↑' : '↓' }}
+              </button>
+            </div>
+          </div>
+          
           <div class="filter-grid">
             <div v-for="eventType in appStore.eventTypes" :key="eventType" class="filter-item">
               <input
@@ -72,6 +112,52 @@
 
           <div v-if="appStore.selectedEventTypes.size > 0" style="margin-top: 20px;">
             <button @click="appStore.saveFilter()" class="btn">Save Current Filter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Filters Management -->
+      <div v-if="appStore.filters.length > 0" class="card" style="margin-top: 20px;">
+        <h3 style="margin-bottom: 16px;">💾 Saved Filters</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div 
+            v-for="filter in appStore.filters" 
+            :key="filter.id" 
+            style="display: flex; justify-content: between; align-items: center; padding: 12px; border: 1px solid #e0e0e0; border-radius: 6px; background-color: #f8f9fa;"
+          >
+            <div style="flex: 1;">
+              <strong>{{ filter.name }}</strong>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 4px;">
+                <span v-if="filter.config.selectedEventTypes?.length">
+                  {{ filter.config.selectedEventTypes.length }} event types
+                </span>
+                <span v-if="filter.config.keywordFilter">
+                  • Keyword: "{{ filter.config.keywordFilter }}"
+                </span>
+                <span v-if="filter.config.dateRange?.start || filter.config.dateRange?.end">
+                  • Date range
+                </span>
+                <span v-if="filter.config.sortBy && filter.config.sortBy !== 'date'">
+                  • Sort by {{ filter.config.sortBy }}
+                </span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button 
+                @click="appStore.loadFilter(filter)" 
+                class="btn btn-secondary"
+                style="padding: 6px 12px; font-size: 14px;"
+              >
+                Load
+              </button>
+              <button 
+                @click="deleteFilter(filter)" 
+                class="btn" 
+                style="background-color: #dc3545; color: white; padding: 6px 12px; font-size: 14px;"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -186,6 +272,8 @@ onMounted(async () => {
       await appStore.fetchCalendars()
     }
     await appStore.viewCalendar(calendarId)
+    // Load saved filters for this user
+    await appStore.fetchFilters()
   }
 })
 
@@ -218,6 +306,12 @@ const selectAll = () => {
   appStore.eventTypes.forEach(eventType => {
     appStore.selectedEventTypes.add(eventType)
   })
+}
+
+const deleteFilter = async (filter) => {
+  if (confirm(`Are you sure you want to delete the filter "${filter.name}"?`)) {
+    await appStore.deleteFilter(filter.id)
+  }
 }
 
 const formatDate = (dateStr) => {

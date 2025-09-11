@@ -47,9 +47,16 @@ test-future: ## Run TDD future tests - shows what to build next
 	@echo "🔮 Running TDD future tests (can fail - guides development)..."
 	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -m future -v || echo "✨ Future tests show features to implement"
 
-test-all: ## Run ALL tests (unit + integration + future)
+test-all: ## Run ALL tests (unit + integration + future + E2E)
 	@echo "🎯 Running complete test suite..."
 	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -v
+	@echo ""
+	@echo "🎭 Running E2E tests..."
+	@cd frontend && npx playwright test
+
+test-e2e: ## Run end-to-end tests (catches UI issues)
+	@echo "🎭 Running E2E tests..."
+	@cd frontend && npx playwright test
 
 ## Production Commands (Docker-First - Universal)
 
@@ -98,6 +105,24 @@ deploy-force: ## Force deploy (skip dirty working tree check)
 status: ## Check latest deployment status
 	@echo "📊 Latest deployment status:"
 	@gh run list --limit 3
+
+todos: ## Show current TODOs and project status
+	@echo "📋 Current TODOs:"
+	@if [ -f TODO.md ]; then \
+		echo ""; \
+		grep -n "^- \[ \]" TODO.md | head -10 | sed 's/^/   /' || echo "   ✅ No pending todos!"; \
+		echo ""; \
+		echo "📊 Progress:"; \
+		total=$$(grep -c "^- \[" TODO.md 2>/dev/null || echo "0"); \
+		done=$$(grep -c "^- \[x\]" TODO.md 2>/dev/null || echo "0"); \
+		if [ $$total -gt 0 ]; then \
+			echo "   $$done/$$total tasks completed"; \
+		fi; \
+		echo ""; \
+		echo "📄 View all: cat TODO.md"; \
+	else \
+		echo "   📝 Create TODO.md to track features"; \
+	fi
 
 ## Utility Commands (Universal)
 

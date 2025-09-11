@@ -21,6 +21,12 @@ export const useAppStore = defineStore('app', {
     selectedCalendar: null,
     selectedEventTypes: new Set(),
     
+    // Enhanced filtering state
+    keywordFilter: '',
+    dateRange: { start: null, end: null },
+    sortBy: 'date', // 'date', 'title', 'matches'
+    sortDirection: 'asc',
+    
     // UI state
     loading: false,
     error: null,
@@ -45,12 +51,49 @@ export const useAppStore = defineStore('app', {
   getters: {
     isLoggedIn: (state) => state.user.loggedIn,
     filteredEvents: (state) => {
-      if (state.selectedEventTypes.size === 0) {
-        return state.events
+      let filtered = state.events
+      
+      // Event type filtering (if any types selected)
+      if (state.selectedEventTypes.size > 0) {
+        filtered = filtered.filter(event => 
+          state.selectedEventTypes.has(event.summary)
+        )
       }
-      return state.events.filter(event => 
-        state.selectedEventTypes.has(event.summary)
-      )
+      
+      // Keyword filtering
+      if (state.keywordFilter.trim()) {
+        const keyword = state.keywordFilter.toLowerCase()
+        filtered = filtered.filter(event => {
+          const searchText = `${event.summary} ${event.description || ''} ${event.location || ''}`.toLowerCase()
+          return searchText.includes(keyword)
+        })
+      }
+      
+      // Date range filtering
+      if (state.dateRange.start || state.dateRange.end) {
+        filtered = filtered.filter(event => {
+          const eventDate = new Date(event.dtstart)
+          if (state.dateRange.start && eventDate < state.dateRange.start) return false
+          if (state.dateRange.end && eventDate > state.dateRange.end) return false
+          return true
+        })
+      }
+      
+      // Sorting
+      if (state.sortBy === 'date') {
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.dtstart)
+          const dateB = new Date(b.dtstart)
+          return state.sortDirection === 'asc' ? dateA - dateB : dateB - dateA
+        })
+      } else if (state.sortBy === 'title') {
+        filtered.sort((a, b) => {
+          const comparison = a.summary.localeCompare(b.summary)
+          return state.sortDirection === 'asc' ? comparison : -comparison
+        })
+      }
+      
+      return filtered
     },
     groupedEvents: (state) => {
       const grouped = {}
@@ -267,10 +310,44 @@ export const useAppStore = defineStore('app', {
 
     clearFilters() {
       this.selectedEventTypes.clear()
+      this.keywordFilter = ''
+      this.dateRange = { start: null, end: null }
     },
 
     setQuickFilter(eventTypes) {
       this.selectedEventTypes = new Set(eventTypes)
+    },
+
+    // Timeframe filtering helpers
+    setTimeframe(period) {
+      const now = new Date()
+      const start = new Date(now)
+      const end = new Date(now)
+      
+      switch (period) {
+        case 'week':
+          start.setDate(now.getDate() - now.getDay()) // Start of week
+          end.setDate(start.getDate() + 6) // End of week
+          break
+        case 'month':
+          start.setDate(1) // Start of month
+          end.setMonth(now.getMonth() + 1, 0) // End of month
+          break
+        case 'year':
+          start.setMonth(0, 1) // Start of year
+          end.setMonth(11, 31) // End of year
+          break
+      }
+      
+      this.dateRange = { start, end }
+    },
+
+    clearTimeframe() {
+      this.dateRange = { start: null, end: null }
+    },
+
+    toggleSortDirection() {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
     },
 
     // Filters API (basic implementation)
@@ -285,22 +362,53 @@ export const useAppStore = defineStore('app', {
       }
     },
 
-    async saveFilter() {
-      if (this.selectedEventTypes.size === 0) return
-
+    async saveFilter(name = null) {
       try {
+        this.loading = true
+        const filterName = name || `Filter ${this.selectedEventTypes.size} types`
+        const config = {
+          selectedEventTypes: Array.from(this.selectedEventTypes),
+          keywordFilter: this.keywordFilter,
+          dateRange: this.dateRange,
+          sortBy: this.sortBy,
+          sortDirection: this.sortDirection
+        }
+        
         await axios.post('/api/filters', {
-          calendar_id: this.selectedCalendar?.id,
-          name: `Filter ${this.selectedEventTypes.size} types`,
-          types: Array.from(this.selectedEventTypes)
+          name: filterName,
+          config: config
         }, {
           headers: this.getUserHeaders()
         })
-        
         await this.fetchFilters()
       } catch (error) {
         this.error = error.response?.data?.message || 'Error saving filter'
+      } finally {
+        this.loading = false
       }
+    },
+
+    async deleteFilter(filterId) {
+      try {
+        this.loading = true
+        await axios.delete(`/api/filters/${filterId}`, {
+          headers: this.getUserHeaders()
+        })
+        await this.fetchFilters()
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Error deleting filter'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async loadFilter(filter) {
+      const config = filter.config
+      this.selectedEventTypes = new Set(config.selectedEventTypes || [])
+      this.keywordFilter = config.keywordFilter || ''
+      this.dateRange = config.dateRange || { start: null, end: null }
+      this.sortBy = config.sortBy || 'date'
+      this.sortDirection = config.sortDirection || 'asc'
     },
 
     // UI helpers

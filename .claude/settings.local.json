@@ -21,7 +21,19 @@
       "Bash(gh run watch:*)",
       "Bash(cat:*)",
       "Bash(latest_run=17638334062)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(./venv/bin/python -m pytest tests/test_persistence.py -v)",
+      "Bash(./venv/bin/python -m pytest tests/test_integration.py::TestFullSystemIntegration::test_health_endpoint -v)",
+      "Bash(./venv/bin/python -m pytest tests/test_integration.py::TestFullSystemIntegration::test_calendars_crud_operations -v)",
+      "Bash(./venv/bin/python -m pytest tests/test_user_flow.py -v)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(npm run test:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
