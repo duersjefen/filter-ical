@@ -61,7 +61,7 @@ test: test-unit test-frontend ## Run unit tests + frontend tests (for commits)
 test-unit: ## Run unit tests only - must pass for commits
 	@echo "🧪 Running unit tests (must pass for commits)..."
 	@if [ -f "backend/Dockerfile" ] && docker --version >/dev/null 2>&1; then \
-		cd backend && docker build -t test-backend --target test . && docker run --rm test-backend pytest -m unit; \
+		cd backend && docker build -t test-backend --target test . && docker run --rm test-backend python3 -m pytest tests/ -m unit -v; \
 	elif [ -f "backend/requirements.txt" ] && [ -d "backend/tests" ]; then \
 		echo "🐍 Python backend detected, running unit tests..."; \
 		if command -v python3 >/dev/null 2>&1; then \
