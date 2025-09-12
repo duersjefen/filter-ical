@@ -1,114 +1,206 @@
 <template>
-  <!-- Enhanced Preview Events -->
-  <div v-if="selectedCategories.length > 0 && showPreview" class="preview-events">
-    <div class="preview-header">
-      <h3>Preview Filtered Events ({{ sortedPreviewEvents.length }})</h3>
-      <button @click="$emit('hide-preview')" class="close-preview-btn">Hide Preview</button>
+  <!-- Event Preview Section -->
+  <div v-if="selectedCategories.length > 0 && showPreview" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-slate-100 to-slate-50 px-4 sm:px-6 py-4 border-b border-gray-200">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-1">🔍 Event Preview</h3>
+        <p class="text-sm text-gray-600">{{ sortedPreviewEvents.length }} events from your selection</p>
+      </div>
     </div>
     
-    <!-- Simplified Preview Controls -->
-    <div class="preview-controls">
-      <div class="control-group">
-        <label>View:</label>
-        <select :value="previewGroup" @change="$emit('update:preview-group', $event.target.value)" class="preview-select">
-          <option value="none">📋 Simple List</option>
-          <option value="category">📂 By Category</option>
-          <option value="month">📅 By Month</option>
-        </select>
-      </div>
-      <div class="control-group">
-        <label>Sort:</label>
-        <button 
-          @click="$emit('toggle-preview-order')"
-          class="order-btn"
-          :class="previewOrder"
-        >
-          {{ previewOrder === 'asc' ? '📅 Oldest First' : '📅 Newest First' }}
-        </button>
+    <!-- Preview Controls -->
+    <div class="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gray-50">
+      <div class="flex justify-center">
+        <!-- View Mode Buttons -->
+        <div class="inline-flex bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+          <button 
+            @click="$emit('update:preview-group', 'none')"
+            class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
+            :class="previewGroup === 'none' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+          >
+            <span class="hidden sm:inline">📋 List</span>
+            <span class="sm:hidden">📋</span>
+          </button>
+          <button 
+            @click="$emit('update:preview-group', 'category')"
+            class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
+            :class="previewGroup === 'category' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+          >
+            <span class="hidden sm:inline">📂 Category</span>
+            <span class="sm:hidden">📂</span>
+          </button>
+          <button 
+            @click="$emit('update:preview-group', 'month')"
+            class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
+            :class="previewGroup === 'month' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+          >
+            <span class="hidden sm:inline">📅 Month</span>
+            <span class="sm:hidden">📅</span>
+          </button>
+        </div>
       </div>
     </div>
     
     <!-- Preview Content -->
-    <div class="preview-content">
-      <!-- No Grouping -->
-      <div v-if="previewGroup === 'none'" class="events-list-preview">
-        <div 
-          v-for="event in sortedPreviewEvents.slice(0, previewLimit)" 
-          :key="event.uid"
-          class="preview-event-item"
-        >
-          <div class="event-main">
-            <div class="event-title">{{ event.summary }}</div>
-            <div class="event-meta">
-              <span class="event-date">📅 {{ formatDateTime(event.dtstart) }}</span>
-              <span class="event-category">📂 {{ getCategoryForEvent(event) }}</span>
-              <span v-if="event.location" class="event-location">📍 {{ event.location }}</span>
+    <div class="max-h-[600px] overflow-y-auto">
+      <!-- Simple List View -->
+      <div v-if="previewGroup === 'none'" class="p-4">
+        <div class="flex flex-col gap-3">
+          <div 
+            v-for="event in sortedPreviewEvents" 
+            :key="event.uid"
+            class="event-item border-b border-gray-100 pb-3 last:border-b-0 last:pb-0"
+          >
+            <div class="font-semibold text-gray-800 text-sm leading-tight mb-1">{{ event.summary }}</div>
+            <div class="text-xs text-gray-600 font-medium mb-1">📅 {{ formatDateTime(event.dtstart) }}</div>
+            <div v-if="event.location" class="text-xs text-gray-500 flex items-center gap-1 mb-1">
+              📍 {{ event.location }}
+            </div>
+            <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 font-medium">
+              📂 {{ getCategoryForEvent(event) }}
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Grouped Display -->
-      <div v-else class="grouped-events">
-        <div 
-          v-for="group in groupedPreviewEvents" 
-          :key="group.name"
-          class="event-group"
-        >
-          <div class="group-header">
-            <h4>{{ group.name }}</h4>
-            <span class="group-count">{{ group.events.length }} events</span>
-          </div>
-          <div class="group-events">
+      <!-- Grouped by Category -->
+      <div v-else-if="previewGroup === 'category'" class="p-4">
+        <div class="flex flex-col gap-6">
+          <div 
+            v-for="group in groupedPreviewEvents" 
+            :key="group.name"
+            class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+          >
             <div 
-              v-for="event in group.events.slice(0, 5)" 
-              :key="event.uid"
-              class="preview-event-item"
+              @click="toggleGroupExpansion(group.name)"
+              class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 flex justify-between items-center cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all"
             >
-              <div class="event-main">
-                <div class="event-title">{{ event.summary }}</div>
-                <div class="event-meta">
-                  <span class="event-date">📅 {{ formatDateTime(event.dtstart) }}</span>
-                  <span v-if="previewGroup !== 'category'" class="event-category">📂 {{ getCategoryForEvent(event) }}</span>
-                  <span v-if="event.location" class="event-location">📍 {{ event.location }}</span>
+              <div class="flex items-center gap-3">
+                <svg 
+                  class="w-4 h-4 transition-transform duration-300" 
+                  :class="{ 'rotate-90': expandedGroups.has(group.name) }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
+              </div>
+              <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
+                {{ group.events.length }} events
+              </span>
+            </div>
+            <div v-if="expandedGroups.has(group.name)" class="p-4">
+              <div class="flex flex-col gap-3">
+                <div 
+                  v-for="event in group.events.slice(0, 10)" 
+                  :key="event.uid"
+                  class="event-item border-b border-gray-100 pb-3 last:border-b-0 last:pb-0"
+                >
+                  <div class="font-semibold text-gray-800 text-sm leading-tight mb-1">{{ event.summary }}</div>
+                  <div class="text-xs text-gray-600 font-medium mb-1">📅 {{ formatDateTime(event.dtstart) }}</div>
+                  <div v-if="event.location" class="text-xs text-gray-500 flex items-center gap-1">
+                    📍 {{ event.location }}
+                  </div>
+                </div>
+                <div v-if="group.events.length > 10" class="text-center text-gray-500 italic p-3 bg-gray-100 rounded-lg border text-sm font-medium mt-3">
+                  ... and {{ group.events.length - 10 }} more events
                 </div>
               </div>
             </div>
-            <div v-if="group.events.length > 5" class="more-events" style="margin-top: 12px;">
-              ... and {{ group.events.length - 5 }} more events
+          </div>
+        </div>
+      </div>
+      
+      <!-- Grouped by Month -->
+      <div v-else-if="previewGroup === 'month'" class="p-4">
+        <div class="flex flex-col gap-6">
+          <div 
+            v-for="group in groupedPreviewEvents" 
+            :key="group.name"
+            class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+          >
+            <div 
+              @click="toggleGroupExpansion(group.name)"
+              class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 flex justify-between items-center cursor-pointer hover:from-green-600 hover:to-green-700 transition-all"
+            >
+              <div class="flex items-center gap-3">
+                <svg 
+                  class="w-4 h-4 transition-transform duration-300" 
+                  :class="{ 'rotate-90': expandedGroups.has(group.name) }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
+              </div>
+              <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
+                {{ group.events.length }} events
+              </span>
+            </div>
+            <div v-if="expandedGroups.has(group.name)" class="p-4">
+              <div class="flex flex-col gap-3">
+                <div 
+                  v-for="event in group.events.slice(0, 10)" 
+                  :key="event.uid"
+                  class="event-item border-b border-gray-100 pb-3 last:border-b-0 last:pb-0"
+                >
+                  <div class="font-semibold text-gray-800 text-sm leading-tight mb-1">{{ event.summary }}</div>
+                  <div class="text-xs text-gray-600 font-medium mb-1">📅 {{ formatDateTime(event.dtstart) }}</div>
+                  <div v-if="event.location" class="text-xs text-gray-500 flex items-center gap-1 mb-1">
+                    📍 {{ event.location }}
+                  </div>
+                  <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 font-medium">
+                    📂 {{ getCategoryForEvent(event) }}
+                  </div>
+                </div>
+                <div v-if="group.events.length > 10" class="text-center text-gray-500 italic p-3 bg-gray-100 rounded-lg border text-sm font-medium mt-3">
+                  ... and {{ group.events.length - 10 }} more events
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Show More Button -->
-      <div v-if="sortedPreviewEvents.length > previewLimit" class="show-more">
-        <button @click="$emit('increase-preview-limit')" class="show-more-btn">
-          Show {{ Math.min(10, sortedPreviewEvents.length - previewLimit) }} more events
-          ({{ sortedPreviewEvents.length - previewLimit }} remaining)
-        </button>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  selectedCategories: Array,
-  showPreview: Boolean,
-  sortedPreviewEvents: Array,
-  previewGroup: String,
-  previewOrder: String,
-  previewLimit: Number,
-  groupedPreviewEvents: Array,
-  formatDateTime: Function,
-  getCategoryForEvent: Function
+import { ref, watch } from 'vue'
+
+const props = defineProps({
+  selectedCategories: { type: Array, default: () => [] },
+  showPreview: { type: Boolean, default: false },
+  sortedPreviewEvents: { type: Array, default: () => [] },
+  previewGroup: { type: String, default: 'none' },
+  previewOrder: { type: String, default: 'asc' },
+  groupedPreviewEvents: { type: Array, default: () => [] },
+  formatDateTime: { type: Function, required: true },
+  getCategoryForEvent: { type: Function, required: true }
 })
 
-defineEmits([
-  'hide-preview',
-  'update:preview-group',
-  'toggle-preview-order',
-  'increase-preview-limit'
+const emit = defineEmits([
+  'update:preview-group'
 ])
+
+// State for tracking which groups are expanded
+const expandedGroups = ref(new Set())
+
+// Watch for preview group changes and reset expanded state
+watch(() => props.previewGroup, () => {
+  expandedGroups.value.clear()
+})
+
+// Toggle group expansion
+const toggleGroupExpansion = (groupName) => {
+  if (expandedGroups.value.has(groupName)) {
+    expandedGroups.value.delete(groupName)
+  } else {
+    expandedGroups.value.add(groupName)
+  }
+}
 </script>
