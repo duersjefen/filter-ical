@@ -1,19 +1,19 @@
 <template>
   <!-- Event Preview Section -->
-  <div v-if="selectedCategories.length > 0" class="bg-white rounded-xl shadow-lg border border-gray-200 mb-4 overflow-hidden">
+  <div v-if="selectedCategories.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
     <!-- Collapsible Header -->
     <div 
-      class="bg-gradient-to-r from-slate-100 to-slate-50 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 cursor-pointer hover:bg-slate-100 transition-colors duration-200"
+      class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
       :class="showPreview ? 'rounded-t-xl' : 'rounded-xl'"
       @click="showPreview = !showPreview"
     >
       <!-- Mobile Layout -->
       <div class="block sm:hidden">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-800">🔍 Event Preview</h3>
-          <button class="flex-shrink-0 p-2 rounded-full bg-white/50 hover:bg-white transition-all duration-200">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">🔍 Event Preview</h3>
+          <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200">
             <svg 
-              class="w-5 h-5 text-gray-600 transition-transform duration-200" 
+              class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
               :class="{ 'rotate-180': showPreview }"
               fill="currentColor" 
               viewBox="0 0 20 20"
@@ -22,18 +22,18 @@
             </svg>
           </button>
         </div>
-        <p class="text-xs text-gray-600 text-center mt-2">{{ sortedPreviewEvents.length }} events selected</p>
+        <p class="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">{{ sortedPreviewEvents.length }} events selected</p>
       </div>
 
       <!-- Desktop Layout -->
       <div class="hidden sm:flex items-center justify-between">
         <div class="flex-1">
-          <h3 class="text-lg font-semibold text-gray-800 mb-1">🔍 Event Preview</h3>
-          <p class="text-sm text-gray-600">{{ sortedPreviewEvents.length }} events from your selection</p>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">🔍 Event Preview</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ sortedPreviewEvents.length }} events from your selection</p>
         </div>
-        <button class="flex-shrink-0 p-2 rounded-full bg-white/50 hover:bg-white transition-all duration-200 ml-4">
+        <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 ml-4">
           <svg 
-            class="w-5 h-5 text-gray-600 transition-transform duration-200" 
+            class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
             :class="{ 'rotate-180': showPreview }"
             fill="currentColor" 
             viewBox="0 0 20 20"
@@ -47,14 +47,14 @@
     <!-- Collapsible Content -->
     <div v-if="showPreview">
       <!-- Preview Controls -->
-      <div class="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gray-50">
+      <div class="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
       <div class="flex justify-center">
         <!-- View Mode Buttons -->
-        <div class="inline-flex bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+        <div class="inline-flex bg-white dark:bg-gray-700 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-600">
           <button 
             @click="$emit('update:preview-group', 'none')"
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
-            :class="previewGroup === 'none' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+            :class="previewGroup === 'none' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
             <span class="hidden sm:inline">📋 List</span>
             <span class="sm:hidden">📋</span>
@@ -62,7 +62,7 @@
           <button 
             @click="$emit('update:preview-group', 'category')"
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
-            :class="previewGroup === 'category' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+            :class="previewGroup === 'category' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
             <span class="hidden sm:inline">📂 Category</span>
             <span class="sm:hidden">📂</span>
@@ -70,7 +70,7 @@
           <button 
             @click="$emit('update:preview-group', 'month')"
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
-            :class="previewGroup === 'month' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+            :class="previewGroup === 'month' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
             <span class="hidden sm:inline">📅 Month</span>
             <span class="sm:hidden">📅</span>
@@ -87,14 +87,14 @@
           <div 
             v-for="event in sortedPreviewEvents" 
             :key="event.uid"
-            class="event-item border-b border-gray-100 pb-3 last:border-b-0 last:pb-0"
+            class="event-item border-b border-gray-100 dark:border-gray-600 pb-3 last:border-b-0 last:pb-0"
           >
-            <div class="font-semibold text-gray-800 text-sm leading-tight mb-1">{{ event.summary }}</div>
-            <div class="text-xs text-gray-600 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
-            <div v-if="event.location" class="text-xs text-gray-500 flex items-center gap-1 mb-1">
+            <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.summary }}</div>
+            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
+            <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
               📍 {{ event.location }}
             </div>
-            <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 font-medium">
+            <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
               📂 {{ getCategoryForEvent(event) }}
             </div>
           </div>
@@ -107,11 +107,11 @@
           <div 
             v-for="group in groupedPreviewEvents" 
             :key="group.name"
-            class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+            class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
             <div 
               @click="toggleGroupExpansion(group.name)"
-              class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 flex justify-between items-center cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all"
+              class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white px-4 py-3 flex justify-between items-center cursor-pointer hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 transition-all"
             >
               <div class="flex items-center gap-3">
                 <svg 
@@ -133,15 +133,15 @@
                 <div 
                   v-for="event in group.events.slice(0, 10)" 
                   :key="event.uid"
-                  class="event-item border-b border-gray-100 pb-3 last:border-b-0 last:pb-0"
+                  class="event-item border-b border-gray-100 dark:border-gray-600 pb-3 last:border-b-0 last:pb-0"
                 >
-                  <div class="font-semibold text-gray-800 text-sm leading-tight mb-1">{{ event.summary }}</div>
-                  <div class="text-xs text-gray-600 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
-                  <div v-if="event.location" class="text-xs text-gray-500 flex items-center gap-1">
+                  <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.summary }}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
+                  <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     📍 {{ event.location }}
                   </div>
                 </div>
-                <div v-if="group.events.length > 10" class="text-center text-gray-500 italic p-3 bg-gray-100 rounded-lg border text-sm font-medium mt-3">
+                <div v-if="group.events.length > 10" class="text-center text-gray-500 dark:text-gray-400 italic p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium mt-3">
                   ... and {{ group.events.length - 10 }} more events
                 </div>
               </div>
@@ -156,11 +156,11 @@
           <div 
             v-for="group in groupedPreviewEvents" 
             :key="group.name"
-            class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+            class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
             <div 
               @click="toggleGroupExpansion(group.name)"
-              class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 flex justify-between items-center cursor-pointer hover:from-green-600 hover:to-green-700 transition-all"
+              class="bg-gradient-to-r from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 text-white px-4 py-3 flex justify-between items-center cursor-pointer hover:from-green-600 hover:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 transition-all"
             >
               <div class="flex items-center gap-3">
                 <svg 
@@ -182,18 +182,18 @@
                 <div 
                   v-for="event in group.events.slice(0, 10)" 
                   :key="event.uid"
-                  class="event-item border-b border-gray-100 pb-3 last:border-b-0 last:pb-0"
+                  class="event-item border-b border-gray-100 dark:border-gray-600 pb-3 last:border-b-0 last:pb-0"
                 >
-                  <div class="font-semibold text-gray-800 text-sm leading-tight mb-1">{{ event.summary }}</div>
-                  <div class="text-xs text-gray-600 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
-                  <div v-if="event.location" class="text-xs text-gray-500 flex items-center gap-1 mb-1">
+                  <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.summary }}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
+                  <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
                     📍 {{ event.location }}
                   </div>
-                  <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 font-medium">
+                  <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
                     📂 {{ getCategoryForEvent(event) }}
                   </div>
                 </div>
-                <div v-if="group.events.length > 10" class="text-center text-gray-500 italic p-3 bg-gray-100 rounded-lg border text-sm font-medium mt-3">
+                <div v-if="group.events.length > 10" class="text-center text-gray-500 dark:text-gray-400 italic p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium mt-3">
                   ... and {{ group.events.length - 10 }} more events
                 </div>
               </div>

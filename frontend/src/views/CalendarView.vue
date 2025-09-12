@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
+  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden dark:bg-gray-900 min-h-screen">
     <HeaderSection 
       :user="appStore.user"
       :selected-calendar="appStore.selectedCalendar"
@@ -38,17 +38,17 @@
       />
 
       <!-- Download Action Section -->
-      <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
-        <div class="bg-gradient-to-r from-slate-100 to-slate-50 px-4 sm:px-6 py-4 border-b border-gray-200">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">📥 Download Your Selection</h3>
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">📥 Download Your Selection</h3>
             
             <!-- When no categories selected -->
             <div v-if="selectedCategories.length === 0" class="py-4 text-center">
               <div class="text-4xl mb-3">👆</div>
-              <p class="text-gray-600 mb-4">Select some categories above to export your custom iCal file</p>
+              <p class="text-gray-600 dark:text-gray-300 mb-4">Select some categories above to export your custom iCal file</p>
               <button 
-                class="px-8 py-3.5 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed"
+                class="px-8 py-3.5 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded-xl font-semibold cursor-not-allowed"
                 disabled
               >
                 💾 Select Categories First
@@ -57,13 +57,13 @@
 
             <!-- When categories are selected -->
             <div v-else class="py-2">
-              <p class="text-sm text-gray-600 mb-4">
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
                 Ready to download {{ selectedCategoriesCount }} events from {{ selectedCategories.length }} {{ selectedCategories.length === 1 ? 'category' : 'categories' }}
               </p>
               <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button 
                   @click="generateIcalFile"
-                  class="w-full sm:w-auto px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg min-w-[200px]"
+                  class="w-full sm:w-auto px-8 py-3 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg min-w-[200px]"
                 >
                   💾 Download iCal File
                 </button>
@@ -85,22 +85,22 @@
       />
 
       <!-- Categories not loaded fallback -->
-      <div v-if="appStore.categories.length === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg border-2 border-amber-200 text-center p-8">
+      <div v-if="appStore.categories.length === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
         <div class="text-6xl mb-4">📂</div>
-        <p class="text-amber-800 mb-3 font-semibold text-lg">
+        <p class="text-amber-800 dark:text-amber-200 mb-3 font-semibold text-lg">
           Loading categories or no categories found...
         </p>
-        <p class="text-amber-700 text-sm font-medium">
+        <p class="text-amber-700 dark:text-amber-300 text-sm font-medium">
           This may happen if the calendar doesn't have CATEGORIES fields.
         </p>
       </div>
     </template>
 
-    <div v-else-if="!appStore.loading" class="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl shadow-lg border-2 border-red-200 text-center py-12 px-8">
+    <div v-else-if="!appStore.loading" class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
       <div class="text-6xl mb-4">📅</div>
-      <h3 class="text-2xl font-bold text-red-800 mb-4">No events found</h3>
-      <p class="text-red-700 mb-6 font-medium">This calendar doesn't contain any events or there was an error loading them.</p>
-      <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
+      <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">No events found</h3>
+      <p class="text-red-700 dark:text-red-300 mb-6 font-medium">This calendar doesn't contain any events or there was an error loading them.</p>
+      <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
         Back to Calendars
       </button>
     </div>

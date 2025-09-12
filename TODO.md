@@ -13,7 +13,7 @@
 - [ ] Support calendar sharing between users  
 - [ ] Add fuzzy search across event descriptions
 - [ ] Multi-language support (English/German)
-- [ ] Dark mode toggle
+- [x] Dark mode toggle
 
 ## 📚 Documentation & Polish (Low Priority)
 > **Important but not user-facing - do when core features are stable**

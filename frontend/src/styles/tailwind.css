@@ -1,5 +1,53 @@
 @import "tailwindcss";
 
+@theme {
+  --default-transition-duration: 300ms;
+}
+
+/* Enable class-based dark mode for Tailwind v4 */
+@variant dark (.dark &);
+
+/* Ensure proper light/dark mode defaults for html and body */
+html {
+  background-color: rgb(249 250 251); /* gray-50 */
+  color: rgb(17 24 39); /* gray-900 */
+}
+
+html.dark {
+  background-color: rgb(17 24 39); /* gray-900 */  
+  color: rgb(243 244 246); /* gray-100 */
+}
+
 body {
   overflow-x: hidden;
+  background-color: inherit;
+  color: inherit;
+}
+
+/* Dark mode transitions */
+.theme-transition,
+.theme-transition *,
+.theme-transition *:before,
+.theme-transition *:after {
+  transition: background-color 300ms ease-in-out, 
+              border-color 300ms ease-in-out, 
+              color 300ms ease-in-out,
+              box-shadow 300ms ease-in-out !important;
+}
+
+/* Prevent transition on initial load */
+html.no-transition,
+html.no-transition *,
+html.no-transition *:before,
+html.no-transition *:after {
+  transition: none !important;
+}
+
+/* Smooth color scheme transition */
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
 }

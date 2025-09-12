@@ -1,18 +1,18 @@
 <template>
-  <div v-if="categories.length > 0" class="bg-white rounded-xl shadow-lg border border-gray-200 mb-4 overflow-hidden">
+  <div v-if="categories.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
     <!-- Collapsible Header -->
     <div 
-      class="bg-gradient-to-r from-slate-100 to-slate-50 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 cursor-pointer hover:bg-slate-100 transition-colors duration-200"
+      class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
       :class="showCategoriesSection ? 'rounded-t-xl' : 'rounded-xl'"
       @click="showCategoriesSection = !showCategoriesSection"
     >
       <!-- Mobile Layout -->
       <div class="block sm:hidden">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-bold text-gray-900">📂 Event Categories</h3>
-          <button class="flex-shrink-0 p-2 rounded-full bg-white/50 hover:bg-white transition-all duration-200">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">📂 Event Categories</h3>
+          <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200">
             <svg 
-              class="w-5 h-5 text-gray-600 transition-transform duration-200" 
+              class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
               :class="{ 'rotate-180': showCategoriesSection }"
               fill="currentColor" 
               viewBox="0 0 20 20"
@@ -27,8 +27,8 @@
             @click.stop="$emit('switch-filter-mode', filterMode === 'include' ? 'exclude' : 'include')"
             class="px-3 py-2 border-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95"
             :class="filterMode === 'include' 
-              ? 'border-green-400 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-500' 
-              : 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-500'"
+              ? 'border-green-400 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50 hover:border-green-500 dark:hover:border-green-400' 
+              : 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-500 dark:hover:border-red-400'"
             :title="filterMode === 'include' 
               ? 'Click to switch to EXCLUDE mode - hide selected categories from export' 
               : 'Click to switch to INCLUDE mode - show only selected categories in export'"
@@ -40,7 +40,7 @@
           </button>
         </div>
         <!-- Status text on mobile -->
-        <p class="text-xs text-gray-600 text-center leading-tight">
+        <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
           {{ selectedCategories.length > 0 
             ? filterMode === 'include'
               ? `${selectedCategories.length} selected • Export will contain ONLY these`
@@ -53,14 +53,14 @@
       <div class="hidden sm:flex items-center justify-between">
         <div class="flex-1">
           <div class="flex items-center gap-4 mb-2">
-            <h3 class="text-xl font-bold text-gray-900">📂 Event Categories</h3>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">📂 Event Categories</h3>
             <!-- Filter Mode Toggle in Header -->
             <button
               @click.stop="$emit('switch-filter-mode', filterMode === 'include' ? 'exclude' : 'include')"
               class="px-3 py-1.5 border-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95"
               :class="filterMode === 'include' 
-                ? 'border-green-400 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-500' 
-                : 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-500'"
+                ? 'border-green-400 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50 hover:border-green-500 dark:hover:border-green-400' 
+                : 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-500 dark:hover:border-red-400'"
               :title="filterMode === 'include' 
                 ? 'Click to switch to EXCLUDE mode - hide selected categories from export' 
                 : 'Click to switch to INCLUDE mode - show only selected categories in export'"
@@ -73,7 +73,7 @@
               </span>
             </button>
           </div>
-          <p class="text-sm text-gray-600">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ selectedCategories.length > 0 
               ? filterMode === 'include'
                 ? `${selectedCategories.length} selected • Export will contain ONLY these categories`
@@ -81,9 +81,9 @@
               : 'Select categories below, then choose to include or exclude them from export' }}
           </p>
         </div>
-        <button class="flex-shrink-0 p-2 rounded-full bg-white/50 hover:bg-white transition-all duration-200 ml-4">
+        <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 ml-4">
           <svg 
-            class="w-5 h-5 text-gray-600 transition-transform duration-200" 
+            class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
             :class="{ 'rotate-180': showCategoriesSection }"
             fill="currentColor" 
             viewBox="0 0 20 20"
@@ -102,13 +102,13 @@
         <template v-if="!searchTerm.trim()">
           <button 
             @click="$emit('clear-all')" 
-            class="px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-600 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
           >
             ✗ Clear All
           </button>
           <button 
             @click="$emit('select-all')" 
-            class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-blue-600 dark:hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
           >
             ✓ Select All
           </button>
@@ -119,14 +119,14 @@
           <button 
             v-if="hasAnyVisibleSelected"
             @click="clearAllVisible"
-            class="px-4 py-2 bg-rose-500 text-white rounded-lg font-semibold hover:bg-rose-600 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="px-4 py-2 bg-rose-500 dark:bg-rose-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-rose-600 dark:hover:bg-rose-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
           >
             ✗ Clear Visible
           </button>
           <button 
             v-if="!areAllVisibleSelected"
             @click="selectAllVisible"
-            class="px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="px-4 py-2 bg-emerald-500 dark:bg-emerald-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-emerald-600 dark:hover:bg-emerald-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
           >
             ✓ Select Visible ({{ filteredMainCategories.length }})
           </button>
@@ -138,8 +138,8 @@
           @click="$emit('toggle-selected-only')"
           class="px-3 py-2 border-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
           :class="showSelectedOnly 
-            ? 'border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100' 
-            : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'"
+            ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50' 
+            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
         >
           <span class="hidden sm:inline">{{ showSelectedOnly ? '👁️ Show all' : '🎯 Show selected only' }}</span>
           <span class="sm:hidden">{{ showSelectedOnly ? '👁️ All' : '🎯 Selected' }}</span>
@@ -154,13 +154,13 @@
           @input="$emit('update:search-term', $event.target.value)"
           type="text" 
           placeholder="🔍 Search categories..."
-          class="w-full px-3 py-2.5 pr-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 hover:border-gray-400 shadow-sm"
+          class="w-full px-3 py-2.5 pr-10 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm"
         >
         <!-- Clear search button -->
         <button
           v-if="searchTerm.trim()"
           @click="$emit('update:search-term', '')"
-          class="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-400 hover:bg-gray-500 text-white rounded-full flex items-center justify-center text-xs transition-all duration-200"
+          class="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-400 dark:bg-gray-500 hover:bg-gray-500 dark:hover:bg-gray-600 text-white dark:text-gray-200 rounded-full flex items-center justify-center text-xs transition-all duration-200"
           title="Clear search"
         >
           <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -176,12 +176,12 @@
           :key="category.name"
           class="rounded-lg border-2 transition-all duration-200"
           :class="selectedCategories.includes(category.name) 
-            ? 'border-green-500 bg-green-50' 
-            : 'border-gray-200'"
+            ? 'border-green-500 bg-green-50 dark:bg-green-900/30' 
+            : 'border-gray-200 dark:border-gray-700'"
         >
           <!-- Category Header -->
           <div 
-            class="flex items-center gap-3 p-2.5 cursor-pointer hover:bg-gray-50"
+            class="flex items-center gap-3 p-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
             :class="expandedCategories.includes(category.name) ? 'rounded-t-lg' : 'rounded-lg'"
             @click="$emit('toggle-category', category.name)"
           >
@@ -191,7 +191,7 @@
                 class="w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200"
                 :class="selectedCategories.includes(category.name) 
                   ? 'bg-green-500 border-green-500 text-white' 
-                  : 'border-gray-300 bg-white'"
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'"
               >
                 <span v-if="selectedCategories.includes(category.name)">✓</span>
               </div>
@@ -200,8 +200,8 @@
             <!-- Category Info -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2">
-                <span class="font-medium text-gray-800 text-xs leading-tight truncate">{{ category.name }}</span>
-                <span class="flex-shrink-0 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                <span class="font-medium text-gray-800 dark:text-gray-200 text-xs leading-tight truncate">{{ category.name }}</span>
+                <span class="flex-shrink-0 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">
                   <span class="hidden sm:inline">{{ category.count }} events</span>
                   <span class="sm:hidden">{{ category.count }}</span>
                 </span>
@@ -211,10 +211,10 @@
             <!-- Expand Button -->
             <button 
               @click.stop="$emit('toggle-expansion', category.name)"
-              class="flex-shrink-0 w-10 h-6 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white"
+              class="flex-shrink-0 w-10 h-6 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white dark:hover:bg-gray-600"
               :class="expandedCategories.includes(category.name) 
-                ? 'bg-blue-100 text-blue-600' 
-                : 'bg-gray-100 text-gray-500 hover:text-gray-700'"
+                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' 
+                : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
             >
               <svg 
                 class="w-4 h-4 transition-transform duration-200" 
@@ -230,16 +230,16 @@
           <!-- Expandable Events List -->
           <div 
             v-if="expandedCategories.includes(category.name)"
-            class="border-t border-gray-200 bg-gray-50 px-6 py-3 rounded-b-lg"
+            class="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-6 py-3 rounded-b-lg"
           >
             <div class="space-y-3">
               <div 
                 v-for="event in category.events" 
                 :key="event.uid"
-                class="py-2 border-b border-gray-200 last:border-b-0"
+                class="py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0"
               >
-                <div class="font-medium text-gray-800 text-sm mb-1">{{ event.summary }}</div>
-                <div class="flex flex-col gap-1 text-xs text-gray-600">
+                <div class="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{{ event.summary }}</div>
+                <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
                   <span>📅 {{ formatDateRange(event) }}</span>
                   <span v-if="event.location" class="break-words">📍 {{ event.location }}</span>
                 </div>
@@ -252,11 +252,11 @@
       <!-- Individual Events Section -->
       <div 
         v-if="filteredSingleCategories.length > 0" 
-        class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200 overflow-hidden"
+        class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl border-2 border-purple-200 dark:border-purple-700 overflow-hidden"
       >
         <!-- Singles Header - Fully Clickable -->
         <div 
-          class="flex items-center justify-between p-4 cursor-pointer hover:bg-purple-100/50 transition-colors duration-200"
+          class="flex items-center justify-between p-4 cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-800/30 transition-colors duration-200"
           :class="showSingleEvents ? '' : ''"
           @click="areAllSinglesSelected ? $emit('clear-all-singles') : $emit('select-all-singles')"
         >
@@ -265,18 +265,18 @@
               class="w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200"
               :class="areAllSinglesSelected
                 ? 'bg-purple-500 border-purple-500 text-white' 
-                : 'border-purple-300 bg-white'"
+                : 'border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700'"
             >
               <span v-if="areAllSinglesSelected">✓</span>
             </div>
-            <span class="font-semibold text-purple-800">📄 Individual Events</span>
-            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium">
+            <span class="font-semibold text-purple-800 dark:text-purple-300">📄 Individual Events</span>
+            <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 text-xs rounded-full font-medium">
               {{ selectedSinglesCount }}/{{ filteredSingleCategories.length }}
             </span>
           </div>
           <button 
             @click.stop="showSingleEvents = !showSingleEvents"
-            class="px-3 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1"
+            class="px-3 py-1 bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-800/50 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1"
           >
             {{ showSingleEvents ? 'Hide' : 'Show' }}
             <svg 
@@ -291,15 +291,15 @@
         </div>
 
         <!-- Singles List (when expanded) -->
-        <div v-if="showSingleEvents" class="border-t border-purple-200 p-4">
+        <div v-if="showSingleEvents" class="border-t border-purple-200 dark:border-purple-700 p-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           <div 
             v-for="category in filteredSingleCategories"
             :key="category.name"
-            class="flex items-center gap-2 p-2 rounded-lg border transition-all duration-200 cursor-pointer hover:bg-purple-50"
+            class="flex items-center gap-2 p-2 rounded-lg border transition-all duration-200 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/30"
             :class="selectedCategories.includes(category.name) 
-              ? 'border-purple-500 bg-purple-100' 
-              : 'border-purple-200 bg-white'"
+              ? 'border-purple-500 bg-purple-100 dark:bg-purple-900/50' 
+              : 'border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-700'"
             @click="$emit('toggle-category', category.name)"
           >
             <!-- Checkbox -->
@@ -307,15 +307,15 @@
               class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200 flex-shrink-0"
               :class="selectedCategories.includes(category.name) 
                 ? 'bg-purple-500 border-purple-500 text-white' 
-                : 'border-purple-300 bg-white'"
+                : 'border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700'"
             >
               <span v-if="selectedCategories.includes(category.name)">✓</span>
             </div>
             
             <!-- Event Info -->
             <div class="flex-1 min-w-0">
-              <div class="font-medium text-purple-800 text-xs leading-tight mb-1 truncate">{{ category.name }}</div>
-              <div class="flex flex-col gap-1 text-xs text-purple-600">
+              <div class="font-medium text-purple-800 dark:text-purple-300 text-xs leading-tight mb-1 truncate">{{ category.name }}</div>
+              <div class="flex flex-col gap-1 text-xs text-purple-600 dark:text-purple-400">
                 <span class="truncate">📅 {{ formatDateRange(category.events[0]) }}</span>
                 <span v-if="category.events[0].location" class="truncate">📍 {{ category.events[0].location }}</span>
               </div>

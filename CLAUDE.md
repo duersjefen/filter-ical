@@ -21,6 +21,62 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 3. **Deploy** → `make deploy` (with real-time monitoring)
 4. **Monitor** → GitHub CLI provides immediate feedback
 
+### ⚠️ CRITICAL: Development Server Rules
+**ALWAYS use Makefile commands - NEVER start servers manually:**
+- ✅ **Use:** `make dev`, `make backend`, `make frontend`
+- ❌ **Never:** Manual `npm run dev`, `uvicorn`, or direct server commands
+- ❌ **Never:** Use port 8001 or ports other than specified (frontend:8000, backend:3000)
+- ✅ **Servers run properly:** Frontend on localhost:8000, Backend on localhost:3000
+- ✅ **Cache clearing:** Use `make clean` if needed, not manual cache deletion
+
+**Why Makefile is mandatory:**
+- Ensures consistent development environment across all systems
+- Proper port configuration and proxy setup
+- Automatic dependency management and error handling  
+- Prevents port conflicts and server startup issues
+
+### ⚠️ CRITICAL: Tailwind CSS v4 Configuration
+**This project uses Tailwind CSS v4 - DO NOT use v3 syntax:**
+
+**✅ CORRECT Tailwind v4 Configuration:**
+```javascript
+// tailwind.config.js - v4 format
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{vue,js,ts,jsx,tsx}",
+  ],
+}
+```
+
+```css
+/* tailwind.css - v4 format */
+@import "tailwindcss";
+
+@theme {
+  --default-transition-duration: 300ms;
+}
+
+/* Enable class-based dark mode for Tailwind v4 */
+@variant dark (.dark &);
+```
+
+**❌ WRONG - DO NOT USE Tailwind v3 syntax:**
+- ❌ `darkMode: 'class'` in config file (v3 syntax)
+- ❌ `@tailwind base; @tailwind components; @tailwind utilities;` (v3 imports)
+- ❌ `theme: { extend: {} }` and `plugins: []` (v3 config structure)
+
+**Why v4 syntax is mandatory:**
+- Project uses `@tailwindcss/vite": "^4.0.0"` which requires v4 configuration
+- Dark mode variants are configured in CSS using `@variant dark (.dark &);`
+- CSS imports use single `@import "tailwindcss";` statement
+- Configuration is done via `@theme` blocks in CSS, not JS config
+
+**⚠️ Previous Issues Caused by v3/v4 Confusion:**
+- Dark mode toggle not working (fixed by using v4 syntax)
+- CSS hot reloading issues
+- Build failures due to incompatible configuration
+
 ---
 
 ## 📁 PROJECT ARCHITECTURE
