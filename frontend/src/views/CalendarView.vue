@@ -11,13 +11,6 @@
     />
 
     <template v-if="appStore.events.length > 0">
-      <StatisticsSection
-        :statistics="appStore.statistics"
-        :categories="appStore.categories"
-        :main-categories-count="mainCategories.length"
-        :single-categories-count="singleEventCategories.length"
-      />
-
       <CategoryCardsSection
         :categories="appStore.categories"
         :main-categories="mainCategories"
@@ -25,10 +18,12 @@
         :selected-categories="selectedCategories"
         :expanded-categories="expandedCategories"
         :show-single-events="showSingleEvents"
+        :show-categories-section="showCategoriesSection"
+        :show-selected-only="showSelectedOnly"
         :search-term="categorySearch"
         :filter-mode="filterMode"
-        :selected-categories-count="selectedCategoriesCount"
         :formatDateTime="formatDateTime"
+        :formatDateRange="formatDateRange"
         @clear-all="clearAllCategories"
         @select-all="selectAllCategories"
         @update:search-term="categorySearch = $event"
@@ -37,6 +32,8 @@
         @toggle-singles-visibility="showSingleEvents = !showSingleEvents"
         @select-all-singles="selectAllSingleEvents"
         @clear-all-singles="clearAllSingleEvents"
+        @toggle-categories-section="showCategoriesSection = !showCategoriesSection"
+        @toggle-selected-only="showSelectedOnly = !showSelectedOnly"
         @switch-filter-mode="switchFilterMode"
       />
 
@@ -70,12 +67,6 @@
                 >
                   💾 Download iCal File
                 </button>
-                <button 
-                  @click="showPreview = !showPreview"
-                  class="w-full sm:w-auto px-8 py-3 border-2 border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg min-w-[200px]"
-                >
-                  👁️ {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
-                </button>
               </div>
             </div>
           </div>
@@ -84,11 +75,11 @@
 
       <PreviewEventsSection
         :selected-categories="selectedCategories"
-        :show-preview="showPreview"
         :sorted-preview-events="sortedPreviewEvents"
         :preview-group="previewGroup"
         :grouped-preview-events="groupedPreviewEvents"
         :formatDateTime="formatDateTime"
+        :formatDateRange="formatDateRange"
         :getCategoryForEvent="getCategoryForEvent"
         @update:preview-group="previewGroup = $event"
       />
@@ -123,7 +114,6 @@ import { onMounted, watch } from 'vue'
 import { useCalendar } from '../composables/useCalendar'
 import {
   HeaderSection,
-  StatisticsSection,
   CategoryCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
@@ -138,9 +128,10 @@ const {
   selectedCategories,
   expandedCategories,
   showSingleEvents,
+  showCategoriesSection,
+  showSelectedOnly,
   categorySearch,
   filterMode,
-  showPreview,
   previewGroup,
   previewOrder,
   previewLimit,
@@ -148,13 +139,16 @@ const {
   // Computed
   mainCategories,
   singleEventCategories,
+  unifiedCategories,
   selectedCategoriesCount,
+  selectedEventsCount,
   sortedPreviewEvents,
   groupedPreviewEvents,
   
   // Methods
   getCategoryForEvent,
   formatDateTime,
+  formatDateRange,
   toggleCategory,
   toggleCategoryExpansion,
   selectAllCategories,

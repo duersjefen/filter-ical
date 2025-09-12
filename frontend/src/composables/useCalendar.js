@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
 
@@ -9,12 +9,21 @@ export function useCalendar() {
   const selectedCategories = ref([])
   const expandedCategories = ref([])
   const showSingleEvents = ref(false)
+  const showCategoriesSection = ref(true)
+  const showSelectedOnly = ref(false)
   const categorySearch = ref('')
   const filterMode = ref(FILTER_MODES.INCLUDE)
   const showPreview = ref(false)
   const previewGroup = ref(PREVIEW_GROUPS.NONE)
   const previewOrder = ref(SORT_ORDERS.ASC)
   const previewLimit = ref(EVENT_LIMITS.PREVIEW_DEFAULT)
+
+  // Watch for when selectedCategories becomes empty and auto-turn off showSelectedOnly
+  watch(selectedCategories, (newCategories) => {
+    if (newCategories.length === 0 && showSelectedOnly.value) {
+      showSelectedOnly.value = false
+    }
+  }, { deep: true })
 
   // Computed properties
   const filteredCategories = computed(() => {
@@ -36,10 +45,34 @@ export function useCalendar() {
     return filteredCategories.value.filter(category => category.count === 1)
   })
 
+  const unifiedCategories = computed(() => {
+    // Combine and sort all categories by count (highest first), then alphabetically
+    return filteredCategories.value.sort((a, b) => {
+      if (a.count !== b.count) {
+        return b.count - a.count // Higher count first
+      }
+      return a.name.localeCompare(b.name) // Alphabetical if same count
+    })
+  })
+
   const selectedCategoriesCount = computed(() => {
     return appStore.categoriesSortedByCount
       .filter(cat => selectedCategories.value.includes(cat.name))
       .reduce((sum, cat) => sum + cat.count, 0)
+  })
+
+  const selectedEventsCount = computed(() => {
+    if (selectedCategories.value.length === 0) return 0
+
+    const selectedCategoryNames = new Set(selectedCategories.value)
+    return appStore.events.filter(event => {
+      const eventCategory = getCategoryForEvent(event)
+      const isInSelectedCategory = selectedCategoryNames.has(eventCategory)
+      
+      return filterMode.value === FILTER_MODES.INCLUDE 
+        ? isInSelectedCategory 
+        : !isInSelectedCategory
+    }).length
   })
 
   const previewEvents = computed(() => {
@@ -141,8 +174,8 @@ export function useCalendar() {
     return event.categories?.[0] || event.summary || 'Uncategorized'
   }
 
-  function formatDateTime(dateString) {
-    if (!dateString) return 'No date'
+  function parseIcalDate(dateString) {
+    if (!dateString) return null
     
     try {
       let date
@@ -173,11 +206,23 @@ export function useCalendar() {
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
-        return 'Invalid date'
+        return null
       }
       
+      return date
+    } catch (error) {
+      console.warn('Date parsing error:', error, 'for date:', dateString)
+      return null
+    }
+  }
+
+  function formatDateTime(dateString) {
+    const date = parseIcalDate(dateString)
+    if (!date) return 'No date'
+    
+    try {
       // Format based on whether it has time component
-      const hasTime = dateString.includes('T') || dateString.includes(':')
+      const hasTime = dateString && (dateString.includes('T') || dateString.includes(':'))
       
       if (hasTime) {
         return date.toLocaleDateString('en-US', {
@@ -200,6 +245,49 @@ export function useCalendar() {
     } catch (error) {
       console.warn('Date formatting error:', error, 'for date:', dateString)
       return 'Invalid date'
+    }
+  }
+
+  function formatDateRange(event) {
+    if (!event) return 'No event'
+    
+    const startDate = parseIcalDate(event.dtstart)
+    const endDate = parseIcalDate(event.dtend)
+    
+    if (!startDate) return 'No start date'
+    
+    // If no end date or same day, show single date
+    if (!endDate || startDate.toDateString() === endDate.toDateString()) {
+      return formatDateTime(event.dtstart)
+    }
+    
+    // Multi-day event - show date range
+    const hasStartTime = event.dtstart && (event.dtstart.includes('T') || event.dtstart.includes(':'))
+    const hasEndTime = event.dtend && (event.dtend.includes('T') || event.dtend.includes(':'))
+    
+    try {
+      // For multi-day events, typically we want just dates without times
+      const startStr = startDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: startDate.getFullYear() !== endDate.getFullYear() ? 'numeric' : undefined
+      })
+      
+      const endStr = endDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+      
+      // If both have times and it's not an all-day event
+      if (hasStartTime && hasEndTime) {
+        return `${startStr} → ${endStr}`
+      }
+      
+      return `${startStr} – ${endStr}`
+    } catch (error) {
+      console.warn('Date range formatting error:', error, 'for event:', event)
+      return formatDateTime(event.dtstart)
     }
   }
 
@@ -284,6 +372,8 @@ export function useCalendar() {
     selectedCategories,
     expandedCategories,
     showSingleEvents,
+    showCategoriesSection,
+    showSelectedOnly,
     categorySearch,
     filterMode,
     showPreview,
@@ -295,7 +385,9 @@ export function useCalendar() {
     filteredCategories,
     mainCategories,
     singleEventCategories,
+    unifiedCategories,
     selectedCategoriesCount,
+    selectedEventsCount,
     previewEvents,
     sortedPreviewEvents,
     groupedPreviewEvents,
@@ -303,6 +395,7 @@ export function useCalendar() {
     // Methods
     getCategoryForEvent,
     formatDateTime,
+    formatDateRange,
     toggleCategory,
     toggleCategoryExpansion,
     selectAllCategories,

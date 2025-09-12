@@ -11,16 +11,16 @@
           <div class="text-sm text-gray-600 font-medium">Total Events</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl sm:text-3xl font-bold text-green-600 mb-1">{{ categories.length }}</div>
-          <div class="text-sm text-gray-600 font-medium">Categories</div>
+          <div class="text-2xl sm:text-3xl font-bold text-emerald-600 mb-1">{{ selectedEventsCount }}</div>
+          <div class="text-sm text-gray-600 font-medium">Selected Events</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">{{ mainCategoriesCount }}</div>
-          <div class="text-sm text-gray-600 font-medium">Multi-Event</div>
+          <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">{{ categories.length }}</div>
+          <div class="text-sm text-gray-600 font-medium">Available Categories</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl sm:text-3xl font-bold text-orange-600 mb-1">{{ singleCategoriesCount }}</div>
-          <div class="text-sm text-gray-600 font-medium">Unique Events</div>
+          <div class="text-2xl sm:text-3xl font-bold text-orange-600 mb-1">{{ selectedCategoriesCount }}</div>
+          <div class="text-sm text-gray-600 font-medium">Selected Categories</div>
         </div>
       </div>
     </div>
@@ -31,7 +31,7 @@
 defineProps({
   statistics: Object,
   categories: Array,
-  mainCategoriesCount: Number,
-  singleCategoriesCount: Number
+  selectedEventsCount: Number,
+  selectedCategoriesCount: Number
 })
 </script>

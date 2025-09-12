@@ -3,7 +3,6 @@
 ## 🚨 Next Priority (Choose One)
 > **Pick the most impactful item that solves real user problems**
 
-- [ ] **Data Quality**: Remove invalid calendars, validate iCal URLs before adding
 - [ ] **User Experience**: Add calendar sync status indicators (last sync, errors)
 
 ## 🎯 Medium Priority (Feature Improvements)
@@ -14,6 +13,7 @@
 - [ ] Support calendar sharing between users  
 - [ ] Add fuzzy search across event descriptions
 - [ ] Multi-language support (English/German)
+- [ ] Dark mode toggle
 
 ## 📚 Documentation & Polish (Low Priority)
 > **Important but not user-facing - do when core features are stable**
@@ -43,7 +43,6 @@
 > **Dream features - only implement if core app is perfect and users are requesting**
  
 ### UX Enhancements
-- [ ] Dark mode toggle
 - [ ] PWA capabilities for mobile
 - [ ] Keyboard shortcuts (Ctrl+A, etc.)
 - [ ] Drag & drop category selection
