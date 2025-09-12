@@ -178,6 +178,86 @@ docker image prune -af --filter "until=24h"
 
 ---
 
+## 🎨 TAILWIND CSS V4 CONFIGURATION
+
+**CRITICAL**: This project uses Tailwind CSS v4 with specific configuration requirements.
+
+### Required Dependencies and Versions
+```json
+{
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
+```
+
+### System Requirements
+- **Node.js**: 20+ (required for Tailwind v4)
+- **Vite**: 5+ (required for compatibility)
+- **Package Type**: ESM-only (`"type": "module"` in package.json)
+- **Config Files**: Must use `.mjs` extension (e.g., `tailwind.config.mjs`)
+
+### Correct CSS Import Syntax
+```css
+/* ✅ CORRECT - Tailwind v4 syntax */
+@import "tailwindcss";
+
+/* ❌ WRONG - Old Tailwind v3 syntax */
+@tailwind base;
+@tailwind components; 
+@tailwind utilities;
+```
+
+### Vite Configuration
+```js
+// vite.config.mjs
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [vue(), tailwindcss()],
+  // ... other config
+})
+```
+
+### Development Approach - Pure Tailwind Only
+- **✅ DO**: Use pure Tailwind utility classes in Vue templates
+- **❌ DON'T**: Mix custom CSS with @apply directives
+- **❌ DON'T**: Use @apply with utility classes without proper configuration
+
+```vue
+<!-- ✅ CORRECT - Pure Tailwind utilities -->
+<template>
+  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+    <h3 class="text-lg font-semibold text-gray-900">Title</h3>
+  </div>
+</template>
+
+<!-- ❌ AVOID - Custom CSS with @apply -->
+<style scoped>
+.custom-card {
+  @apply bg-gray-50 border-gray-200 rounded-lg;
+}
+</style>
+```
+
+### Known Issues
+- **Utility Class Recognition**: Some utility classes like `bg-gray-50`, `border-gray-200` may not be recognized properly in development
+- **Solution**: Use pure Tailwind approach without custom CSS mixins
+- **Alternative**: Use CSS custom properties for truly custom values
+
+### Migration Notes
+When working with existing Tailwind v3 projects:
+1. Update import syntax in CSS files
+2. Update package.json to include `"type": "module"`
+3. Rename config files to `.mjs` extension
+4. Update Vite plugin to `@tailwindcss/vite`
+5. Ensure Node.js 20+ and Vite 5+ compatibility
+
+---
+
 ## 🎯 SUCCESS CRITERIA
 
 **A successful automated setup includes:**
@@ -259,5 +339,5 @@ echo "4. Deploy: git add . && git commit -m 'Initial deployment' && git push ori
 
 ---
 
-*Last Updated: September 10, 2025*  
-*Status: Production-ready automation template*
+*Last Updated: September 12, 2025*  
+*Status: Production-ready automation template with Tailwind v4 configuration*

@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
 import App from './App.vue'
+import './styles/tailwind.css'
 
 import LoginView from './views/LoginView.vue'
 import HomeView from './views/HomeView.vue'

@@ -72,23 +72,68 @@ export function useCalendar() {
 
     const groups = {}
     
-    sortedPreviewEvents.value.forEach(event => {
+    // First, group events and collect month date info for sorting
+    previewEvents.value.forEach(event => {
       let groupKey
+      let sortKey
       
       if (previewGroup.value === PREVIEW_GROUPS.CATEGORY) {
         groupKey = getCategoryForEvent(event)
+        sortKey = groupKey
       } else if (previewGroup.value === PREVIEW_GROUPS.MONTH) {
-        const date = new Date(event.dtstart)
+        // Handle iCal date format properly
+        let date
+        if (typeof event.dtstart === 'string') {
+          if (event.dtstart.match(/^\d{8}T\d{6}Z?$/)) {
+            // Format: 20231215T140000Z
+            const year = event.dtstart.substring(0, 4)
+            const month = event.dtstart.substring(4, 6)
+            const day = event.dtstart.substring(6, 8)
+            date = new Date(`${year}-${month}-${day}`)
+          } else if (event.dtstart.match(/^\d{8}$/)) {
+            // Format: 20231215 (date only)
+            const year = event.dtstart.substring(0, 4)
+            const month = event.dtstart.substring(4, 6)
+            const day = event.dtstart.substring(6, 8)
+            date = new Date(`${year}-${month}-${day}`)
+          } else {
+            date = new Date(event.dtstart)
+          }
+        } else {
+          date = new Date(event.dtstart)
+        }
         groupKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+        sortKey = date.getTime() // Use timestamp for chronological sorting
       }
       
       if (!groups[groupKey]) {
-        groups[groupKey] = { name: groupKey, events: [] }
+        groups[groupKey] = { name: groupKey, events: [], sortKey }
       }
       groups[groupKey].events.push(event)
     })
 
-    return Object.values(groups)
+    // Sort groups and events within groups
+    const groupedArray = Object.values(groups)
+
+    if (previewGroup.value === PREVIEW_GROUPS.CATEGORY) {
+      // Sort category groups by event count (descending)
+      groupedArray.sort((a, b) => b.events.length - a.events.length)
+    } else if (previewGroup.value === PREVIEW_GROUPS.MONTH) {
+      // Sort month groups chronologically
+      groupedArray.sort((a, b) => a.sortKey - b.sortKey)
+      
+      // Sort events within each month group according to previewOrder
+      const multiplier = previewOrder.value === SORT_ORDERS.ASC ? 1 : -1
+      groupedArray.forEach(group => {
+        group.events.sort((a, b) => {
+          const dateA = new Date(a.dtstart)
+          const dateB = new Date(b.dtstart)
+          return (dateA - dateB) * multiplier
+        })
+      })
+    }
+
+    return groupedArray
   })
 
   // Methods
@@ -97,18 +142,64 @@ export function useCalendar() {
   }
 
   function formatDateTime(dateString) {
+    if (!dateString) return 'No date'
+    
     try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        year: 'numeric', 
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      let date
+      
+      // Handle iCal format dates (YYYYMMDDTHHMMSSZ or YYYYMMDD)
+      if (typeof dateString === 'string') {
+        if (dateString.match(/^\d{8}T\d{6}Z?$/)) {
+          // Format: 20231215T140000Z
+          const year = dateString.substring(0, 4)
+          const month = dateString.substring(4, 6)
+          const day = dateString.substring(6, 8)
+          const hour = dateString.substring(9, 11)
+          const minute = dateString.substring(11, 13)
+          date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`)
+        } else if (dateString.match(/^\d{8}$/)) {
+          // Format: 20231215 (date only)
+          const year = dateString.substring(0, 4)
+          const month = dateString.substring(4, 6)
+          const day = dateString.substring(6, 8)
+          date = new Date(`${year}-${month}-${day}`)
+        } else {
+          // Try parsing as regular date string
+          date = new Date(dateString)
+        }
+      } else {
+        date = new Date(dateString)
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid date'
+      }
+      
+      // Format based on whether it has time component
+      const hasTime = dateString.includes('T') || dateString.includes(':')
+      
+      if (hasTime) {
+        return date.toLocaleDateString('en-US', {
+          weekday: 'short',
+          year: 'numeric', 
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        })
+      } else {
+        return date.toLocaleDateString('en-US', {
+          weekday: 'short',
+          year: 'numeric', 
+          month: 'short',
+          day: 'numeric'
+        })
+      }
     } catch (error) {
-      return dateString
+      console.warn('Date formatting error:', error, 'for date:', dateString)
+      return 'Invalid date'
     }
   }
 
@@ -155,11 +246,7 @@ export function useCalendar() {
 
   function switchFilterMode(newMode) {
     if (filterMode.value !== newMode) {
-      // Flip the selection when switching modes
-      const allCategories = filteredCategories.value.map(cat => cat.name)
-      const currentlyUnselected = allCategories.filter(cat => !selectedCategories.value.includes(cat))
-      
-      selectedCategories.value = [...currentlyUnselected]
+      // Just switch the mode, keep the same categories selected
       filterMode.value = newMode
       previewLimit.value = EVENT_LIMITS.PREVIEW_DEFAULT
     }

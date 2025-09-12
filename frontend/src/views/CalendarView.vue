@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
     <HeaderSection 
       :user="appStore.user"
       :selected-calendar="appStore.selectedCalendar"
@@ -28,7 +28,6 @@
         :search-term="categorySearch"
         :filter-mode="filterMode"
         :selected-categories-count="selectedCategoriesCount"
-        :show-preview="showPreview"
         :formatDateTime="formatDateTime"
         @clear-all="clearAllCategories"
         @select-all="selectAllCategories"
@@ -39,41 +38,80 @@
         @select-all-singles="selectAllSingleEvents"
         @clear-all-singles="clearAllSingleEvents"
         @switch-filter-mode="switchFilterMode"
-        @generate-ical="generateIcalFile"
-        @toggle-preview="showPreview = !showPreview"
       />
+
+      <!-- Download Action Section -->
+      <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-slate-100 to-slate-50 px-4 sm:px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">📥 Download Your Selection</h3>
+            
+            <!-- When no categories selected -->
+            <div v-if="selectedCategories.length === 0" class="py-4 text-center">
+              <div class="text-4xl mb-3">👆</div>
+              <p class="text-gray-600 mb-4">Select some categories above to export your custom iCal file</p>
+              <button 
+                class="px-8 py-3.5 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed"
+                disabled
+              >
+                💾 Select Categories First
+              </button>
+            </div>
+
+            <!-- When categories are selected -->
+            <div v-else class="py-2">
+              <p class="text-sm text-gray-600 mb-4">
+                Ready to download {{ selectedCategoriesCount }} events from {{ selectedCategories.length }} {{ selectedCategories.length === 1 ? 'category' : 'categories' }}
+              </p>
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button 
+                  @click="generateIcalFile"
+                  class="w-full sm:w-auto px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg min-w-[200px]"
+                >
+                  💾 Download iCal File
+                </button>
+                <button 
+                  @click="showPreview = !showPreview"
+                  class="w-full sm:w-auto px-8 py-3 border-2 border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg min-w-[200px]"
+                >
+                  👁️ {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <PreviewEventsSection
         :selected-categories="selectedCategories"
         :show-preview="showPreview"
         :sorted-preview-events="sortedPreviewEvents"
         :preview-group="previewGroup"
-        :preview-order="previewOrder"
-        :preview-limit="previewLimit"
         :grouped-preview-events="groupedPreviewEvents"
         :formatDateTime="formatDateTime"
         :getCategoryForEvent="getCategoryForEvent"
-        @hide-preview="showPreview = false"
         @update:preview-group="previewGroup = $event"
-        @toggle-preview-order="togglePreviewOrder"
-        @increase-preview-limit="previewLimit += 10"
       />
 
       <!-- Categories not loaded fallback -->
-      <div v-if="appStore.categories.length === 0" class="card" style="text-align: center; padding: 20px;">
-        <p style="color: #6c757d;">
-          📂 Loading categories or no categories found...
+      <div v-if="appStore.categories.length === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg border-2 border-amber-200 text-center p-8">
+        <div class="text-6xl mb-4">📂</div>
+        <p class="text-amber-800 mb-3 font-semibold text-lg">
+          Loading categories or no categories found...
         </p>
-        <p style="color: #6c757d; font-size: 14px;">
+        <p class="text-amber-700 text-sm font-medium">
           This may happen if the calendar doesn't have CATEGORIES fields.
         </p>
       </div>
     </template>
 
-    <div v-else-if="!appStore.loading" class="card" style="text-align: center; padding: 40px;">
-      <h3>No events found</h3>
-      <p>This calendar doesn't contain any events or there was an error loading them.</p>
-      <button @click="navigateHome" class="btn">Back to Calendars</button>
+    <div v-else-if="!appStore.loading" class="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl shadow-lg border-2 border-red-200 text-center py-12 px-8">
+      <div class="text-6xl mb-4">📅</div>
+      <h3 class="text-2xl font-bold text-red-800 mb-4">No events found</h3>
+      <p class="text-red-700 mb-6 font-medium">This calendar doesn't contain any events or there was an error loading them.</p>
+      <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
+        Back to Calendars
+      </button>
     </div>
   </div>
 </template>
@@ -85,7 +123,7 @@ import { onMounted, watch } from 'vue'
 import { useCalendar } from '../composables/useCalendar'
 import {
   HeaderSection,
-  StatisticsSection, 
+  StatisticsSection,
   CategoryCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
@@ -163,6 +201,3 @@ const navigateHome = () => {
 }
 </script>
 
-<style>
-@import '../styles/calendar-view.css';
-</style>

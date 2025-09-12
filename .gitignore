@@ -70,6 +70,10 @@ backend/data/store.pkl
 backend/data/user-calendars.edn
 backend/data/user-filters.edn
 
+# Development calendar URLs (NEVER commit!)
+.dev-calendars.local
+*.dev-calendars.local
+
 # Claude Code local settings
 .claude/
 
