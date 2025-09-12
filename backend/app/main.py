@@ -15,6 +15,8 @@ import recurring_ical_events
 from datetime import datetime, date
 import uuid
 import json
+import re
+import asyncio
 
 # Simple persistence layer
 import pickle
@@ -220,22 +222,13 @@ class PersistentStore:
             print(f"Error saving store: {e}")
     
     def _init_fixtures(self):
-        """Initialize with fixture data"""
-        fixtures = [
-            CalendarEntry("1", "US Federal Holidays", "https://calendar.google.com/calendar/ical/usa__en%40holiday.calendar.google.com/public/basic.ics", "default"),
-            CalendarEntry("2", "Google US Holidays", "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics", "default"),
-            CalendarEntry("3", "International Holidays", "https://calendar.google.com/calendar/ical/addressbook%23contacts%40group.v.calendar.google.com/public/basic.ics", "default"),
-            CalendarEntry("5", "BCC Portal Calendar", "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics", "default")
-        ]
-        
-        for cal in fixtures:
-            self._data["calendars"][cal.id] = cal
-        self._save()
+        """Initialize with empty data - no fixtures in production"""
+        pass
     
     # Same interface as before
     def get_calendars(self, user_id: str) -> List[CalendarEntry]:
         return [cal for cal in self._data["calendars"].values() 
-                if cal.user_id == user_id or cal.user_id == "default"]
+                if cal.user_id == user_id]
     
     def add_calendar(self, name: str, url: str, user_id: str) -> CalendarEntry:
         calendar_id = str(uuid.uuid4())
@@ -312,6 +305,54 @@ async def health_check():
 async def root():
     return RedirectResponse(url="/app")
 
+async def validate_ical_url(url: str) -> tuple[bool, str]:
+    """
+    Validate that a URL points to a valid, accessible iCal file.
+    Returns (is_valid, error_message)
+    """
+    # Basic URL format validation
+    url_pattern = re.compile(
+        r'^https?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    
+    if not url_pattern.match(url):
+        return False, "Please enter a valid web address (URL) starting with http:// or https://"
+    
+    try:
+        # Check if URL is accessible and returns iCal content
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            
+            # Check if content looks like iCal
+            content = response.text
+            if not content.strip().startswith('BEGIN:VCALENDAR'):
+                return False, "This URL doesn't appear to be a calendar file. Please check that it's a valid iCal/ICS calendar URL."
+            
+            # Try to parse it with icalendar library
+            try:
+                Calendar.from_ical(content)
+            except Exception as e:
+                return False, "The calendar file appears to be corrupted or in an unsupported format. Please check the URL and try again."
+                
+            return True, ""
+            
+    except httpx.TimeoutException:
+        return False, "The calendar URL is taking too long to respond. Please check the URL or try again later."
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            return False, "Calendar not found. Please check that the URL is correct and the calendar is publicly accessible."
+        elif e.response.status_code == 403:
+            return False, "Access denied. This calendar may be private or require authentication."
+        else:
+            return False, f"Unable to access the calendar (Error {e.response.status_code}). Please check the URL and try again."
+    except Exception as e:
+        return False, "Unable to connect to the calendar URL. Please check your internet connection and the URL."
+
 @app.get("/api/calendars")
 async def get_calendars(x_user_id: str = Header("anonymous")):
     calendars = store.get_calendars(x_user_id)
@@ -327,6 +368,14 @@ async def create_calendar(
     
     if not name or not url:
         raise HTTPException(status_code=400, detail="Name and URL are required")
+    
+    # Validate the iCal URL
+    is_valid, error_message = await validate_ical_url(url)
+    if not is_valid:
+        raise HTTPException(
+            status_code=422, 
+            detail=f"Invalid calendar URL: {error_message}"
+        )
     
     calendar = store.add_calendar(name, url, x_user_id)
     return {"message": "Calendar added successfully", "id": calendar.id}

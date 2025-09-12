@@ -1,75 +1,72 @@
 # TODO — iCal Viewer
 
-## High Priority (Current Session)
-- [ ] Optimize performance for large datasets (virtual scrolling, pagination)
-- [ ] Break down CalendarView.vue into smaller components (1400+ lines currently)
-- [ ] Add robust error handling and loading states
-- [ ] Implement exclude mode functionality in backend (currently only include works)
+## 🚨 Next Priority (Choose One)
+> **Pick the most impactful item that solves real user problems**
 
-## Recently Completed ✨
-- [x] **MAJOR**: Transform to category-based filtering system with premium UI
-- [x] **MAJOR**: Add responsive card-based interface with smart selection
-- [x] **MAJOR**: Create collapsible single-event categories section
-- [x] **MAJOR**: Implement include/exclude mode switching with auto-inversion
-- [x] **MAJOR**: Add advanced preview with sorting and grouping
-- [x] **MAJOR**: Professional design system with gradients and animations
-- [x] Add smart category selection buttons (Top 5, Main Only, Singles Only)
+- [ ] **Data Quality**: Remove invalid calendars, validate iCal URLs before adding
+- [ ] **User Experience**: Add calendar sync status indicators (last sync, errors)
+
+## 🎯 Medium Priority (Feature Improvements)
+> **Enhance core functionality - do after fixing critical issues**
+
+- [ ] Allow multiple saved filters per calendar with simple UX
+- [ ] Implement proper server setup for real-time filtered iCal serving
+- [ ] Support calendar sharing between users  
+- [ ] Add fuzzy search across event descriptions
+- [ ] Multi-language support (English/German)
+
+## 📚 Documentation & Polish (Low Priority)
+> **Important but not user-facing - do when core features are stable**
+
+- [ ] Create API.md and DEVELOPMENT.md documentation
+- [ ] Add basic performance monitoring (response times)
+- [ ] Add dependency security scanning (pip-audit, npm audit)
+
+## ✅ Recently Completed (2024)
+
+### **Major Architecture Improvements**
+- [x] **Break down CalendarView.vue** (1695 → 169 lines, 90% reduction)
+- [x] **Clean frontend architecture** (composables, feature-based components)
+- [x] **Verify exclude mode works** (backend already implemented + tested)
+- [x] **Add .env.example** for environment management
+
+### **Core Features**
+- [x] Category-based filtering system with premium UI
+- [x] Include/exclude mode switching with auto-inversion  
+- [x] Advanced preview with sorting and grouping
+- [x] Responsive card-based interface
+- [x] Professional design system with gradients and animations
 - [x] Enhanced statistics display (4 statistics cards)
-- [x] Fixed time display in category dropdowns
 - [x] Proper iCal file generation and download
 
-## Planned Features
-- [ ] Remove invalid calendars from testuser, validate iCal URLs before adding
-- [ ] Allow multiple saved filters per calendar with simple UX
-- [ ] Add calendar sync status indicators (last sync, errors)
-- [ ] Implement proper server setup for real-time filtered iCal serving
-- [ ] Support calendar sharing between users
+## 🚀 Future Ideas (Not Prioritized)
+> **Dream features - only implement if core app is perfect and users are requesting**
+ 
+### UX Enhancements
+- [ ] Dark mode toggle
+- [ ] PWA capabilities for mobile
+- [ ] Keyboard shortcuts (Ctrl+A, etc.)
+- [ ] Drag & drop category selection
+- [ ] Undo/redo functionality
 
-## Technical Debt / Polish
-- [ ] Add form validation and inline feedback
-- [ ] Create API.md and DEVELOPMENT.md documentation
-- [ ] Add .env.example for environment management
+### Intelligence Features  
+- [ ] Smart recommendations ("users who selected X also selected Y")
+- [ ] Calendar health score analysis
+- [ ] AI-powered filter creation
+- [ ] Usage analytics and user patterns
 
-## Development Best Practices (Later)
-- [ ] Add code formatting/linting (Black + Ruff for backend, Prettier for frontend)
-- [ ] Add dependency security scanning (pip-audit, npm audit)
-- [ ] Add basic performance monitoring (response times)
+### Technical Nice-to-Haves
+- [ ] Code formatting/linting setup
+- [ ] Lazy loading for huge calendars
+- [ ] Debounced search optimization
 
-## Ideas from Claude 🤖
 
-### 🎯 Advanced Features
-- [ ] **🔍 Fuzzy Search**: Search by keywords across event descriptions, not just titles
-- [ ] **📅 Date Range Picker**: Visual calendar widget to filter events by date ranges
-- [ ] **🏷️ Smart Tagging**: Auto-detect event types (meeting, holiday, sport, etc.) using AI/ML
-- [ ] **📈 Usage Analytics**: Track which categories users select most often
-- [ ] **💾 Saved Filters**: Let users save and name their favorite category combinations
-- [ ] **🔗 Shareable Links**: Generate URLs for specific category combinations
+---
 
-### 🎨 UX Enhancements
-- [ ] **🎭 Dark Mode**: Toggle between light/dark themes
-- [ ] **🎨 Color-Coded Categories**: Assign colors to different category types automatically
-- [ ] **📱 Mobile App Feel**: Add PWA capabilities for mobile installation
-- [ ] **⌨️ Keyboard Shortcuts**: Hotkeys for common actions (Ctrl+A for select all, etc.)
-- [ ] **🔄 Undo/Redo**: Let users undo their last selection changes
-- [ ] **📋 Drag & Drop**: Drag categories between included/excluded lists
+## 📋 Done ✓ (Historical Archive)
+<details>
+<summary>Previously completed features</summary>
 
-### 🧠 Intelligence Features
-- [ ] **🤖 Smart Recommendations**: "Users who selected X also selected Y"
-- [ ] **📊 Calendar Health Score**: Analyze how balanced/busy the calendar is
-- [ ] **⚡ Quick Actions**: "Select weekends only", "Select work hours only"
-- [ ] **🔮 Predictive Selection**: Learn user patterns and pre-select likely choices
-
-### 🔧 Technical Improvements
-- [ ] **📦 Component Library**: Break into reusable Vue components
-- [ ] **🚀 Lazy Loading**: Load categories on-demand for huge calendars
-- [ ] **💨 Debounced Search**: Optimize search performance
-- [ ] **🎬 Smooth Animations**: Add micro-interactions and loading states
-
-## Crazy Features
-- [ ] Add AI for the user to quickly create a new filter
-- [ ] Possibility to change language between English and German
-
-## Done ✓ (Historical)
 - [x] Basic calendar subscription and display
 - [x] Event caching for performance  
 - [x] User isolation and data persistence
@@ -78,3 +75,12 @@
 - [x] Fix login page reload issue
 - [x] Add basic E2E smoke test
 - [x] Ability to remove entire calendars
+- [x] Smart category selection buttons
+- [x] Time display fixes in dropdowns
+- [x] Collapsible single-event categories section
+
+</details>
+
+---
+
+**🎯 Focus**: Pick ONE item from "Next Priority" and complete it fully before moving to the next. Quality over quantity.

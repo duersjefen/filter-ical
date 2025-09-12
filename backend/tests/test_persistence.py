@@ -28,12 +28,21 @@ class TestPersistentStore:
         shutil.rmtree(self.temp_dir)
     
     def test_store_initialization(self):
-        """Test store initializes with fixture data"""
+        """Test store initializes empty (no default fixtures)"""
         store = PersistentStore(data_dir=self.temp_dir)
         
-        calendars = store.get_calendars("default")
-        assert len(calendars) == 4
-        assert calendars[0].name == "US Federal Holidays"
+        # Store should start empty
+        calendars = store.get_calendars("any_user")
+        assert len(calendars) == 0
+        
+        # Should be able to add calendars normally
+        calendar = store.add_calendar("Test Calendar", "http://example.com/cal.ics", "testuser")
+        assert calendar.name == "Test Calendar"
+        
+        # User should see only their calendars
+        user_calendars = store.get_calendars("testuser")
+        assert len(user_calendars) == 1
+        assert user_calendars[0].name == "Test Calendar"
     
     def test_data_persistence_across_restarts(self):
         """Test data survives store restarts"""

@@ -247,7 +247,7 @@ export const useAppStore = defineStore('app', {
         this.newCalendar = { name: '', url: '' }
         await this.fetchCalendars()
       } catch (error) {
-        this.error = error.response?.data?.message || 'Error adding calendar'
+        this.error = error.response?.data?.detail || error.response?.data?.message || 'Error adding calendar'
       } finally {
         this.loading = false
       }
