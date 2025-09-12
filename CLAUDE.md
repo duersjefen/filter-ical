@@ -21,6 +21,34 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 3. **Deploy** → `make deploy` (with real-time monitoring)
 4. **Monitor** → GitHub CLI provides immediate feedback
 
+### ⚠️ CRITICAL: Testing-First Development Principles
+
+**ALWAYS test functionality before claiming it works:**
+- ✅ **Write unit tests FIRST** - Use `npm test` to verify functionality
+- ✅ **Test integration** - Ensure components work together correctly  
+- ✅ **Never rely on manual testing** - Create automated tests instead of asking users
+- ✅ **Debug systematically** - Use tests to isolate issues, not console logs
+
+**Common Testing Mistakes to Avoid:**
+- ❌ **Assuming code works** - Just because it compiles doesn't mean it functions
+- ❌ **Manual debugging** - Asking users to test or provide feedback on broken features  
+- ❌ **Incomplete integration** - Testing individual pieces but not the full workflow
+- ❌ **Configuration mismatches** - Check version compatibility (e.g., Tailwind v3 vs v4)
+
+**Required Testing Approach:**
+```bash
+# ALWAYS run tests after implementing features
+npm test                          # Unit tests
+npm test -- --run integration    # Integration tests
+make test                        # Full test suite
+```
+
+**When implementing new features:**
+1. Write failing tests first (TDD)
+2. Implement the minimum code to make tests pass
+3. Verify the feature works end-to-end with integration tests
+4. Only then mark the feature as complete
+
 ### ⚠️ CRITICAL: Development Server Rules
 **ALWAYS use Makefile commands - NEVER start servers manually:**
 - ✅ **Use:** `make dev`, `make backend`, `make frontend`

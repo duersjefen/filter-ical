@@ -10,7 +10,7 @@
       <!-- Mobile Layout -->
       <div class="block sm:hidden">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">🔍 Event Preview</h3>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">🔍 {{ $t('preview.eventPreview') }}</h3>
           <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200">
             <svg 
               class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
@@ -22,14 +22,14 @@
             </svg>
           </button>
         </div>
-        <p class="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">{{ sortedPreviewEvents.length }} events selected</p>
+        <p class="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">{{ $t('preview.eventsSelected', { count: sortedPreviewEvents.length }) }}</p>
       </div>
 
       <!-- Desktop Layout -->
       <div class="hidden sm:flex items-center justify-between">
         <div class="flex-1">
-          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">🔍 Event Preview</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ sortedPreviewEvents.length }} events from your selection</p>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">🔍 {{ $t('preview.eventPreview') }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('preview.eventsFromSelection', { count: sortedPreviewEvents.length }) }}</p>
         </div>
         <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 ml-4">
           <svg 
@@ -56,7 +56,7 @@
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
             :class="previewGroup === 'none' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
-            <span class="hidden sm:inline">📋 List</span>
+            <span class="hidden sm:inline">📋 {{ $t('preview.list') }}</span>
             <span class="sm:hidden">📋</span>
           </button>
           <button 
@@ -64,7 +64,7 @@
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
             :class="previewGroup === 'category' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
-            <span class="hidden sm:inline">📂 Category</span>
+            <span class="hidden sm:inline">📂 {{ $t('preview.byCategory') }}</span>
             <span class="sm:hidden">📂</span>
           </button>
           <button 
@@ -72,7 +72,7 @@
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
             :class="previewGroup === 'month' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
-            <span class="hidden sm:inline">📅 Month</span>
+            <span class="hidden sm:inline">📅 {{ $t('preview.byMonth') }}</span>
             <span class="sm:hidden">📅</span>
           </button>
         </div>
@@ -125,7 +125,7 @@
                 <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
               </div>
               <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
-                {{ group.events.length }} events
+                {{ $t('categories.eventsCount', { count: group.events.length }) }}
               </span>
             </div>
             <div v-if="expandedGroups.has(group.name)" class="p-4">
@@ -142,7 +142,7 @@
                   </div>
                 </div>
                 <div v-if="group.events.length > 10" class="text-center text-gray-500 dark:text-gray-400 italic p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium mt-3">
-                  ... and {{ group.events.length - 10 }} more events
+                  {{ $t('preview.andMoreEvents', { count: group.events.length - 10 }) }}
                 </div>
               </div>
             </div>
@@ -174,7 +174,7 @@
                 <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
               </div>
               <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
-                {{ group.events.length }} events
+                {{ $t('categories.eventsCount', { count: group.events.length }) }}
               </span>
             </div>
             <div v-if="expandedGroups.has(group.name)" class="p-4">
@@ -194,7 +194,7 @@
                   </div>
                 </div>
                 <div v-if="group.events.length > 10" class="text-center text-gray-500 dark:text-gray-400 italic p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium mt-3">
-                  ... and {{ group.events.length - 10 }} more events
+                  {{ $t('preview.andMoreEvents', { count: group.events.length - 10 }) }}
                 </div>
               </div>
             </div>

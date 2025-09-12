@@ -1,7 +1,13 @@
 <template>
   <div class="relative text-center mb-8 sm:mb-10 py-8 sm:py-10 px-4 sm:px-6 bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 dark:from-slate-800 dark:via-slate-900 dark:to-black text-white rounded-lg shadow-lg">
+    <!-- Language Toggle - Top Left Corner -->
+    <div class="absolute top-4 left-4 sm:top-6 sm:left-6">
+      <LanguageToggle />
+    </div>
+
     <!-- Dark Mode Toggle - Top Right Corner -->
     <div class="absolute top-4 right-4 sm:top-6 sm:right-6">
+      <!-- Dark Mode Toggle -->
       <button 
         @click="toggleDarkMode"
         class="group relative w-16 h-8 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg"
@@ -44,10 +50,10 @@
     <!-- User info in header -->
     <div v-if="showUserInfo" class="mt-5 flex justify-center items-center">
       <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30 flex items-center gap-4">
-        <span class="text-sm sm:text-base font-medium">Welcome, {{ user?.username }}!</span>
+        <span class="text-sm sm:text-base font-medium">{{ $t('common.welcome', { username: user?.username }) }}</span>
         <div class="w-px h-5 bg-white/30"></div>
         <button @click="$emit('logout')" class="text-white hover:text-white/80 text-sm font-semibold transition-all duration-300 hover:scale-105">
-          Logout
+          {{ $t('navigation.logout') }}
         </button>
       </div>
     </div>
@@ -63,6 +69,7 @@
 
 <script setup>
 import { useDarkMode } from '../../composables/useDarkMode'
+import LanguageToggle from '../LanguageToggle.vue'
 
 const { isDarkMode, toggleDarkMode } = useDarkMode()
 

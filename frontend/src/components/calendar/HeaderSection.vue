@@ -2,12 +2,12 @@
   <div>
     <!-- Page Header with Gradient -->
     <AppHeader 
-      :title="`Filter: ${selectedCalendar?.name || 'Loading...'}`"
-      subtitle="Select event types to filter and create custom subscriptions"
+      :title="$t('calendar.filterTitle', { name: selectedCalendar?.name || $t('common.loading') })"
+      :subtitle="$t('calendar.subtitle')"
       :user="user"
       :show-user-info="true"
       :show-back-button="true"
-      back-button-text="← Back to Calendars"
+      :back-button-text="$t('navigation.backToCalendars')"
       @logout="$emit('logout')"
       @navigate-back="$emit('navigate-home')"
     />
@@ -26,8 +26,8 @@
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 dark:border-blue-400 border-t-transparent mb-6"></div>
-      <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">Loading events...</div>
-      <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">Please wait while we fetch your calendar data</div>
+      <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">{{ $t('common.loadingEvents') }}</div>
+      <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">{{ $t('common.pleaseWait') }}</div>
     </div>
   </div>
 </template>

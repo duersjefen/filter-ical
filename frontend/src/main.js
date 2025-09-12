@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
 import App from './App.vue'
+import i18n from './i18n'
 import './styles/tailwind.css'
 
 import LoginView from './views/LoginView.vue'
@@ -22,4 +23,4 @@ const router = createRouter({
 
 const pinia = createPinia()
 
-createApp(App).use(router).use(pinia).mount('#app')
+createApp(App).use(router).use(pinia).use(i18n).mount('#app')

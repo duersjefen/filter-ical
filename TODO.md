@@ -12,7 +12,7 @@
 - [ ] Implement proper server setup for real-time filtered iCal serving
 - [ ] Support calendar sharing between users  
 - [ ] Add fuzzy search across event descriptions
-- [ ] Multi-language support (English/German)
+- [x] Multi-language support (English/German)
 - [x] Dark mode toggle
 
 ## 📚 Documentation & Polish (Low Priority)
