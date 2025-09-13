@@ -12,6 +12,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Set production API base URL (empty string means relative URLs)
+ENV VITE_API_BASE_URL=""
+
 # Build the application
 RUN npm run build
 
