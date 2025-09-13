@@ -11,27 +11,37 @@ inputs:
 outputs:
   project_name:
     description: 'Discovered project name'
+    value: ${{ steps.discover.outputs.project_name }}
   backend_container:
     description: 'Backend container name'
+    value: ${{ steps.discover.outputs.backend_container }}
   frontend_container:
-    description: 'Frontend container name' 
+    description: 'Frontend container name'
+    value: ${{ steps.discover.outputs.frontend_container }}
   nginx_container:
     description: 'Nginx container name'
+    value: ${{ steps.discover.outputs.nginx_container }}
   domain_name:
     description: 'Domain name for deployment'
+    value: ${{ steps.discover.outputs.domain_name }}
   ecr_registry:
     description: 'ECR registry URL'
+    value: ${{ steps.discover.outputs.ecr_registry }}
   aws_region:
     description: 'AWS region'
+    value: ${{ steps.discover.outputs.aws_region }}
   port_backend:
     description: 'Backend port'
+    value: ${{ steps.discover.outputs.port_backend }}
   port_frontend:
     description: 'Frontend port'
+    value: ${{ steps.discover.outputs.port_frontend }}
 
 runs:
   using: 'composite'
   steps:
     - name: 🔍 Discover Project Configuration
+      id: discover
       shell: bash
       run: |
         echo "🔍 Auto-discovering configuration from existing files..."
