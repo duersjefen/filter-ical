@@ -427,6 +427,32 @@ jobs:
             exit 1
           fi
           
+          # =============================================================================
+          # CREATE BACKUP OF CURRENT DEPLOYMENT (For Rollback Safety)
+          # =============================================================================
+          echo "💾 Creating backup of current deployment for rollback safety..."
+          
+          # Check if containers are currently running
+          if docker-compose ps | grep -q "Up"; then
+            echo "📦 Current deployment detected - creating backup snapshots..."
+            
+            # Create backup tags for current images
+            BACKEND_CURRENT=$(docker-compose images ical-viewer | tail -n 1 | awk '{print $4":"$5}' 2>/dev/null || echo "")
+            FRONTEND_CURRENT=$(docker-compose images ical-viewer-frontend | tail -n 1 | awk '{print $4":"$5}' 2>/dev/null || echo "")
+            
+            if [ -n "$BACKEND_CURRENT" ] && [ "$BACKEND_CURRENT" != ":" ]; then
+              docker tag "$BACKEND_CURRENT" "${BACKEND_CURRENT%:*}:backup-ical-viewer" 2>/dev/null || true
+              echo "   ✅ Backend backup created: backup-ical-viewer"
+            fi
+            
+            if [ -n "$FRONTEND_CURRENT" ] && [ "$FRONTEND_CURRENT" != ":" ]; then
+              docker tag "$FRONTEND_CURRENT" "${FRONTEND_CURRENT%:*}:backup-ical-viewer-frontend" 2>/dev/null || true
+              echo "   ✅ Frontend backup created: backup-ical-viewer-frontend"
+            fi
+          else
+            echo "   ℹ️  No current deployment running - no backup needed"
+          fi
+          
           # Pre-pull latest container images
           echo "📥 Pre-pulling latest container images..."
           
@@ -634,15 +660,23 @@ jobs:
           fi
           
           # Validate critical resources are accessible (catches deployment issues)
-          CRITICAL_RESOURCES=("/js/main.js" "/css/app.css" "/api/calendars")
-          for resource in "${CRITICAL_RESOURCES[@]}"; do
-            if curl -f --connect-timeout 5 --max-time 15 "https://filter-ical.de$resource" > /dev/null 2>&1; then
-              echo "   ✅ $resource accessible"
-            else
-              echo "   ❌ $resource not accessible - deployment may be incomplete"
-              VALIDATION_FAILED=1
-            fi
-          done
+          echo "🔍 Test 4.1/6: Checking frontend assets accessibility..."
+          
+          # Check for Vite-generated assets in /assets/ directory (modern SPA build)
+          if curl -f --connect-timeout 5 --max-time 15 "https://filter-ical.de/assets/" > /dev/null 2>&1; then
+            echo "   ✅ /assets/ directory accessible"
+          else
+            echo "   ❌ /assets/ directory not accessible - frontend may not be deployed"
+            VALIDATION_FAILED=1
+          fi
+          
+          # Check backend API endpoint
+          if curl -f --connect-timeout 5 --max-time 15 "https://filter-ical.de/api/calendars" > /dev/null 2>&1; then
+            echo "   ✅ /api/calendars accessible"
+          else
+            echo "   ❌ /api/calendars not accessible - backend may not be deployed"
+            VALIDATION_FAILED=1
+          fi
           
           # Test 5: Application Initialization Check
           echo "⚡ Test 5/6: Application initialization..."
@@ -667,10 +701,63 @@ jobs:
           if [ "$VALIDATION_FAILED" -eq 0 ]; then
             echo "✅ ALL VALIDATION TESTS PASSED - Deployment successful!"
             echo "🌐 Your website is fully operational at: https://filter-ical.de"
+            
+            # Clean up backup containers since deployment succeeded
+            if docker images | grep -q "backup-"; then
+              echo "🧹 Cleaning up backup containers after successful deployment..."
+              docker images --format "table {{.Repository}}:{{.Tag}}" | grep "backup-" | xargs -r docker rmi 2>/dev/null || true
+            fi
           else
-            echo "❌ DEPLOYMENT VALIDATION FAILED - Aborting deployment"
+            echo "❌ DEPLOYMENT VALIDATION FAILED - Initiating automatic rollback"
             echo "🔍 Check the test results above to identify the issue"
-            echo "💡 The previous version remains active for user safety"
+            
+            # =============================================================================
+            # AUTOMATIC ROLLBACK MECHANISM
+            # =============================================================================
+            echo "🔄 Starting automatic rollback to previous working version..."
+            
+            # Check if backup containers exist
+            if docker images | grep -q "backup-"; then
+              echo "📦 Found backup containers, rolling back..."
+              
+              # Stop current failed containers
+              docker-compose stop ical-viewer ical-viewer-frontend 2>/dev/null || true
+              
+              # Tag backup images back to latest
+              for container in ical-viewer ical-viewer-frontend; do
+                BACKUP_IMAGE=$(docker images --format "table {{.Repository}}:{{.Tag}}" | grep "backup-$container" | head -1 | awk '{print $1}')
+                if [ -n "$BACKUP_IMAGE" ]; then
+                  ECR_REPO=$(echo $BACKUP_IMAGE | cut -d: -f1)
+                  echo "   🔄 Restoring $container from backup..."
+                  docker tag "$BACKUP_IMAGE" "$ECR_REPO:latest"
+                fi
+              done
+              
+              # Restart with backup images
+              docker-compose up -d ical-viewer ical-viewer-frontend
+              
+              # Wait for rollback to stabilize
+              echo "⏳ Waiting for rollback to stabilize..."
+              sleep 15
+              
+              # Quick validation of rollback
+              if curl -f --connect-timeout 10 --max-time 20 https://filter-ical.de/health > /dev/null 2>&1; then
+                echo "✅ AUTOMATIC ROLLBACK SUCCESSFUL"
+                echo "🌐 Previous version restored at: https://filter-ical.de"
+                echo "⚠️  Please fix the issues above before attempting deployment again"
+              else
+                echo "❌ ROLLBACK FAILED - Manual intervention required"
+                echo "🆘 Both current and previous versions are non-functional"
+              fi
+              
+              # Clean up failed deployment images
+              docker images --format "table {{.Repository}}:{{.Tag}}" | grep ":latest" | grep -E "(ical-viewer-backend|ical-viewer-frontend)" | xargs -r docker rmi --force 2>/dev/null || true
+              
+            else
+              echo "⚠️  No backup containers found - cannot rollback automatically"
+              echo "💡 The deployment failed but no previous version backup exists"
+            fi
+            
             exit 1
           fi
           
@@ -698,6 +785,7 @@ jobs:
           echo "🏗️  ARCHITECTURE: Multi-container Docker with nginx reverse proxy"
           echo "🔒 SECURITY: Let's Encrypt SSL with comprehensive security headers"
           echo "⚡ FEATURES: Zero-downtime rolling updates with health validation"
+          echo "🔄 ROLLBACK: Automatic rollback on deployment failure"
           echo ""
           echo "🎯 Next steps:"
           echo "   • Test the live application functionality"
@@ -710,7 +798,7 @@ jobs:
           echo "   • Verify AWS credentials and permissions"
           echo "   • Ensure EC2 instance is accessible and healthy"
           echo "   • Check Docker container status on production server"
-          echo "🆘 IMPACT: Previous version remains active (zero-downtime failure)"
+          echo "🆘 IMPACT: Automatic rollback initiated to maintain service availability"
           exit 1
         fi
         
