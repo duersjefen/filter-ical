@@ -22,8 +22,8 @@ detect_all_changes() {
     
     # Output results for GitHub Actions or local testing
     if [ -n "${GITHUB_OUTPUT:-}" ]; then
-        echo "frontend_changed=$frontend_changed" >> $GITHUB_OUTPUT
-        echo "backend_changed=$backend_changed" >> $GITHUB_OUTPUT
+        echo "frontend_changed=$frontend_changed" >> "$GITHUB_OUTPUT"
+        echo "backend_changed=$backend_changed" >> "$GITHUB_OUTPUT"
     else
         echo "frontend_changed=$frontend_changed"
         echo "backend_changed=$backend_changed"
@@ -49,38 +49,38 @@ detect_component_changes() {
     local component="$1"
     local pattern="$2"
     
-    echo "📁 Checking for $component changes (pattern: $pattern)..."
+    echo "📁 Checking for $component changes (pattern: $pattern)..." >&2
     
     # Strategy 1: Compare with previous commit (ideal case)
     if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E "$pattern" >/dev/null 2>&1; then
-        echo "✅ $component changes detected (HEAD~1 comparison)"
+        echo "✅ $component changes detected (HEAD~1 comparison)" >&2
         echo "true"
         return 0
     fi
     
     # Strategy 2: Compare with origin/master (for PRs and shallow clones)
     if git diff --name-only origin/master HEAD 2>/dev/null | grep -E "$pattern" >/dev/null 2>&1; then
-        echo "✅ $component changes detected (origin/master comparison)"
+        echo "✅ $component changes detected (origin/master comparison)" >&2
         echo "true"
         return 0
     fi
     
     # Strategy 3: Check current commit only (fallback for single commits)
     if git show --name-only HEAD | grep -E "$pattern" >/dev/null 2>&1; then
-        echo "✅ $component changes detected (HEAD commit analysis)"
+        echo "✅ $component changes detected (HEAD commit analysis)" >&2
         echo "true"
         return 0
     fi
     
     # Strategy 4: Force update for new/unknown repositories (fail-safe)
     if ! git rev-parse HEAD~1 >/dev/null 2>&1; then
-        echo "⚠️ $component change detection uncertain (new repo) - FORCING update for safety"
+        echo "⚠️ $component change detection uncertain (new repo) - FORCING update for safety" >&2
         echo "true"
         return 0
     fi
     
     # No changes detected
-    echo "⏭️ No $component changes detected"
+    echo "⏭️ No $component changes detected" >&2
     echo "false"
     return 1
 }
