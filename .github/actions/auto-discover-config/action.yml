@@ -113,9 +113,14 @@ runs:
         echo "   Before: FRONTEND_CONTAINER='$FRONTEND_CONTAINER'"
         echo "   PROJECT_NAME='$PROJECT_NAME'"
         
-        # Generate container names if they're empty or default values
+        # Generate container names mapping to actual docker-compose service names
         if [ -z "$BACKEND_CONTAINER" ] || [ "$BACKEND_CONTAINER" = "app-backend" ]; then
-          BACKEND_CONTAINER="$PROJECT_NAME-backend"
+          # For ical-viewer project, the backend service is just "ical-viewer"
+          if [ "$PROJECT_NAME" = "ical-viewer" ]; then
+            BACKEND_CONTAINER="ical-viewer"
+          else
+            BACKEND_CONTAINER="$PROJECT_NAME-backend"
+          fi
           echo "   🎯 Generated BACKEND_CONTAINER: $BACKEND_CONTAINER"
         fi
         
