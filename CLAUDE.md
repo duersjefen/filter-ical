@@ -49,6 +49,100 @@ make test                        # Full test suite
 3. Verify the feature works end-to-end with integration tests
 4. Only then mark the feature as complete
 
+### ⚠️ CRITICAL: GitHub Composite Actions Deployment Debugging (Production Battle-Tested)
+
+**LEARNED FROM REAL DEPLOYMENT FAILURES - September 2025**
+
+This section documents systematic debugging approaches learned from a 4-hour production deployment debugging session.
+
+**DEPLOYMENT FAILURE PATTERNS AND SOLUTIONS:**
+
+**Phase 1: Health Check Parsing Bug (The Most Common Trap)**
+- ❌ **Issue**: `awk '{print $3}'` extracted COMMAND field ("uvicorn") instead of STATUS field ("Up (healthy)")  
+- ✅ **Fix**: `awk '{for(i=5;i<=NF;i++) printf "%s ", $i; print ""}'` to extract full status from columns 5+
+- 📚 **Lesson**: NEVER assume column positions in command output - always verify actual format
+- 🔍 **Detection**: Containers show "healthy" in logs but health checks fail with command text
+
+**Phase 2: GITHUB_OUTPUT Environment Variable Scope**
+- ❌ **Issue**: `echo "status=success" >> $GITHUB_OUTPUT` used inside SSH script where variable doesn't exist
+- ✅ **Fix**: Move output handling to separate GitHub Actions steps outside SSH context
+- 📚 **Lesson**: Environment variables are scoped - SSH sessions don't inherit GitHub Actions context
+- 🔍 **Detection**: `bash: $GITHUB_OUTPUT: ambiguous redirect` errors
+
+**Phase 3: Frontend API Base URL Configuration (Build vs Runtime)**
+- ❌ **Issue**: Frontend built with `VITE_API_BASE_URL=http://localhost:3000` (development default)
+- ✅ **Fix**: Set `ENV VITE_API_BASE_URL=""` in Dockerfile for relative URLs in production
+- 📚 **Lesson**: Build-time environment variables MUST be configured for production deployment
+- 🔍 **Detection**: HTML loads but API calls fail, blank/blue screen with no errors
+
+**Phase 4: Content Security Policy JavaScript Blocking**
+- ❌ **Issue**: CSP `script-src 'self' 'unsafe-inline'` blocked Vue.js `unsafe-eval` operations
+- ✅ **Fix**: Add `'unsafe-eval'` to CSP: `script-src 'self' 'unsafe-inline' 'unsafe-eval'`
+- 📚 **Lesson**: Modern SPA frameworks need `unsafe-eval` for JavaScript evaluation
+- 🔍 **Detection**: `EvalError: Refused to evaluate a string as JavaScript` in browser console
+
+**SYSTEMATIC DEBUGGING METHODOLOGY (Follow This Exact Order):**
+
+**Level 1: Container Infrastructure**
+1. **Container Status**: `docker-compose ps` - Are containers actually "Up (healthy)"?
+2. **Logs**: `docker-compose logs service-name` - Any startup errors or crashes?
+3. **Health Endpoints**: `curl /health` - Basic connectivity test
+
+**Level 2: HTTP Layer**  
+4. **HTTP Response Codes**: `curl -I domain.com` - 200, 404, 500 status?
+5. **Asset Delivery**: `curl -I domain.com/assets/index.js` - Static files served correctly?
+6. **API Connectivity**: `curl domain.com/api/endpoint` - Backend reachable?
+
+**Level 3: Frontend/Browser**
+7. **HTML Structure**: `curl -s domain.com` - Correct HTML with script tags?
+8. **Browser Console**: F12 DevTools - JavaScript errors, CSP violations?
+9. **Network Tab**: Failed asset loads, API call failures?
+
+**IMMEDIATE RED FLAG CHECKLIST:**
+- 🚨 **Health checks pass but website doesn't load** → Parsing bug (columns, status extraction)
+- 🚨 **"ambiguous redirect" in SSH logs** → GITHUB_OUTPUT scope issue  
+- 🚨 **Assets load but API fails** → Build-time environment variable missing
+- 🚨 **"unsafe-eval" console errors** → CSP too restrictive for SPA framework
+- 🚨 **Containers "healthy" but health endpoint fails** → Wrong port/service mapping
+
+**VALIDATION CHECKLIST (All Must Pass Before Claiming Success):**
+- [ ] `docker-compose ps` shows "Up (healthy)" for all services
+- [ ] `curl -I https://domain.com` returns HTTP 200  
+- [ ] `curl -I https://domain.com/assets/index.js` returns HTTP 200
+- [ ] `curl https://domain.com/api/endpoint` returns valid JSON
+- [ ] Browser console shows zero errors or CSP violations
+- [ ] Website displays actual content (not blank/blue screen)
+- [ ] User can interact with the application functionality
+
+**ENVIRONMENT VARIABLE SCOPING (Critical for Composite Actions):**
+```bash
+# Build-time (Dockerfile) - affects bundled frontend code
+ENV VITE_API_BASE_URL=""
+
+# Runtime (docker-compose) - affects running container
+environment:
+  - NODE_ENV=production
+
+# GitHub Actions - only available in workflow steps, NOT in SSH
+echo "status=success" >> $GITHUB_OUTPUT  # ✅ In workflow step
+echo "status=success" >> $GITHUB_OUTPUT  # ❌ Inside SSH script
+```
+
+**NGINX CONFIGURATION DEPLOYMENT:**
+- **Remember**: Nginx config changes require manual server update + restart
+- **Process**: 
+  1. Update `infrastructure/production-nginx.conf` 
+  2. Copy to server: `scp config.conf user@server:/path/nginx.conf`
+  3. Restart: `docker-compose restart nginx`
+  4. Verify: `curl -I domain.com | grep -i content-security-policy`
+
+**ADVANCED DEBUGGING INSIGHTS:**
+- **Multiple Commits Are Professional** - Atomic fixes aid debugging and enable precise rollbacks
+- **Test Each Layer Independently** - Don't assume higher layers work if lower layers pass
+- **Browser != Server Testing** - curl success doesn't guarantee browser functionality
+- **Framework Evolution** - CSP requirements change with framework versions
+- **Parse Output Verification** - Always manually verify command output formats
+
 ### ⚠️ CRITICAL: Development Server Rules
 **ALWAYS use Makefile commands - NEVER start servers manually:**
 - ✅ **Use:** `make dev`, `make backend`, `make frontend`
@@ -524,12 +618,21 @@ echo "4. Deploy: git add . && git commit -m 'Initial deployment' && git push ori
 - 📈 **Performance-First**: Optimization and monitoring built into every deployment
 - 🔄 **Self-Improving**: Continuous enhancement based on real-world usage patterns
 
-### Real-World Validation
+### Real-World Validation  
 This CI/CD system has been battle-tested with:
 - ✅ Frontend framework changes (hardcoded path failures → dynamic detection)
 - ✅ Container deployment failures (manual recovery → automatic rollback)
 - ✅ Performance degradation (slow deployments → intelligent optimization)
 - ✅ Multi-language projects (language-specific → universal patterns)
+
+### September 2025 Production Debugging Success
+**4-Hour Complex Deployment Issue Resolution:**
+- ✅ **Health Check Parsing Bug**: Fixed `awk` column extraction in 15 minutes after identification
+- ✅ **GITHUB_OUTPUT Scope Issue**: Resolved environment variable scoping in composite actions  
+- ✅ **Frontend API Configuration**: Fixed build-time environment variable for production
+- ✅ **CSP JavaScript Blocking**: Updated Content Security Policy to allow Vue.js evaluation
+- 📚 **Documentation Enhanced**: All lessons learned captured for future prevention
+- 🎯 **Result**: Comprehensive debugging methodology preventing similar issues
 
 ---
 
