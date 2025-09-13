@@ -20,9 +20,14 @@ detect_all_changes() {
     # Detect backend changes  
     local backend_changed=$(detect_component_changes "backend" "^backend/")
     
-    # Output results for GitHub Actions
-    echo "frontend_changed=$frontend_changed" >> $GITHUB_OUTPUT
-    echo "backend_changed=$backend_changed" >> $GITHUB_OUTPUT
+    # Output results for GitHub Actions or local testing
+    if [ -n "${GITHUB_OUTPUT:-}" ]; then
+        echo "frontend_changed=$frontend_changed" >> $GITHUB_OUTPUT
+        echo "backend_changed=$backend_changed" >> $GITHUB_OUTPUT
+    else
+        echo "frontend_changed=$frontend_changed"
+        echo "backend_changed=$backend_changed"
+    fi
     
     # Summary
     echo ""
