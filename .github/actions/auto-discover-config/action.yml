@@ -1,0 +1,122 @@
+name: 'Auto-Discover Configuration'
+description: 'Pure functional auto-discovery of project configuration from existing files'
+author: 'Claude Code'
+
+inputs:
+  project_root:
+    description: 'Project root directory path'
+    required: false
+    default: '.'
+
+outputs:
+  project_name:
+    description: 'Discovered project name'
+  backend_container:
+    description: 'Backend container name'
+  frontend_container:
+    description: 'Frontend container name' 
+  nginx_container:
+    description: 'Nginx container name'
+  domain_name:
+    description: 'Domain name for deployment'
+  ecr_registry:
+    description: 'ECR registry URL'
+  aws_region:
+    description: 'AWS region'
+  port_backend:
+    description: 'Backend port'
+  port_frontend:
+    description: 'Frontend port'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🔍 Discover Project Configuration
+      shell: bash
+      run: |
+        echo "🔍 Auto-discovering configuration from existing files..."
+        
+        # Initialize with smart defaults
+        PROJECT_NAME="app"
+        BACKEND_CONTAINER="app-backend"
+        FRONTEND_CONTAINER="app-frontend"
+        NGINX_CONTAINER="nginx"
+        ECR_REGISTRY="310829530903.dkr.ecr.eu-north-1.amazonaws.com"
+        AWS_REGION="eu-north-1"
+        PORT_BACKEND="3000"
+        PORT_FRONTEND="80"
+        DOMAIN_NAME=""
+        
+        # Discover from Git remote
+        if [ -d "${{ inputs.project_root }}/.git" ]; then
+          echo "📁 Discovering from Git repository..."
+          REMOTE_URL=$(git -C "${{ inputs.project_root }}" remote get-url origin 2>/dev/null || echo "")
+          if [ -n "$REMOTE_URL" ]; then
+            PROJECT_NAME=$(echo "$REMOTE_URL" | sed 's/.*[\\/:]//g' | sed 's/\.git$//')
+            echo "   ✅ PROJECT_NAME: $PROJECT_NAME (from git remote)"
+          fi
+        fi
+        
+        # Discover from package.json
+        if [ -f "${{ inputs.project_root }}/package.json" ]; then
+          echo "📦 Found package.json"
+          NPM_NAME=$(jq -r '.name // empty' "${{ inputs.project_root }}/package.json" 2>/dev/null || echo "")
+          if [ -n "$NPM_NAME" ] && [ "$PROJECT_NAME" = "app" ]; then
+            PROJECT_NAME="$NPM_NAME"
+            echo "   ✅ PROJECT_NAME: $PROJECT_NAME (from package.json)"
+          fi
+        fi
+        
+        # Discover from .env file (single source of truth)
+        if [ -f "${{ inputs.project_root }}/.env" ]; then
+          echo "🔧 Reading configuration from .env (single source of truth)..."
+          while IFS='=' read -r key value; do
+            [[ "$key" =~ ^[[:space:]]*# ]] && continue
+            [[ -z "$key" ]] && continue
+            
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | sed 's/^[\"'\'']\|[\"'\'']$//g' | xargs)
+            
+            case "$key" in
+              "DOMAIN_NAME") DOMAIN_NAME="$value" ;;
+              "ECR_REGISTRY") ECR_REGISTRY="$value" ;;
+              "AWS_REGION") AWS_REGION="$value" ;;
+              "PORT_BACKEND"|"PORT"|"BACKEND_PORT"|"SERVER_PORT") PORT_BACKEND="$value" ;;
+              "PORT_FRONTEND"|"FRONTEND_PORT"|"CLIENT_PORT") PORT_FRONTEND="$value" ;;
+              "PROJECT_NAME") PROJECT_NAME="$value" ;;
+              "BACKEND_CONTAINER") BACKEND_CONTAINER="$value" ;;
+              "FRONTEND_CONTAINER") FRONTEND_CONTAINER="$value" ;;
+            esac
+            [ -n "$value" ] && echo "   ✅ $key: $value"
+          done < "${{ inputs.project_root }}/.env"
+        fi
+        
+        # Generate smart defaults based on project name
+        if [ "$BACKEND_CONTAINER" = "app-backend" ] && [ "$PROJECT_NAME" != "app" ]; then
+          BACKEND_CONTAINER="$PROJECT_NAME-backend"
+        fi
+        
+        if [ "$FRONTEND_CONTAINER" = "app-frontend" ] && [ "$PROJECT_NAME" != "app" ]; then
+          FRONTEND_CONTAINER="$PROJECT_NAME-frontend"
+        fi
+        
+        echo ""
+        echo "✅ Configuration auto-discovered!"
+        echo "📊 PROJECT_NAME: $PROJECT_NAME"
+        echo "📊 BACKEND_CONTAINER: $BACKEND_CONTAINER"
+        echo "📊 FRONTEND_CONTAINER: $FRONTEND_CONTAINER"
+        echo "📊 NGINX_CONTAINER: $NGINX_CONTAINER"
+        echo "📊 DOMAIN_NAME: ${DOMAIN_NAME:-<needs-configuration>}"
+        echo "📊 ECR_REGISTRY: $ECR_REGISTRY"
+        echo ""
+        
+        # Export all discovered values as outputs
+        echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+        echo "backend_container=$BACKEND_CONTAINER" >> $GITHUB_OUTPUT
+        echo "frontend_container=$FRONTEND_CONTAINER" >> $GITHUB_OUTPUT
+        echo "nginx_container=$NGINX_CONTAINER" >> $GITHUB_OUTPUT
+        echo "domain_name=$DOMAIN_NAME" >> $GITHUB_OUTPUT
+        echo "ecr_registry=$ECR_REGISTRY" >> $GITHUB_OUTPUT
+        echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
+        echo "port_backend=$PORT_BACKEND" >> $GITHUB_OUTPUT
+        echo "port_frontend=$PORT_FRONTEND" >> $GITHUB_OUTPUT

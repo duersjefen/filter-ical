@@ -1,20 +1,20 @@
 # =============================================================================
-# Functional Programming CI/CD Pipeline (90% Reduction in YAML)
+# Atomic Composite Actions CI/CD Pipeline 
 # =============================================================================
 #
-# Clean, maintainable, completely configurable deployment pipeline
-# Uses pure functional programming principles with zero hardcoded values
+# Clean, maintainable deployment pipeline using atomic composite actions
+# Pure functional programming with explicit separation of concerns
 #
-# Key Features:
-# - 50 lines (down from 800+ lines)
-# - Zero hardcoded container names or domains
-# - Completely reusable across projects
-# - Pure functional approach with explicit inputs
-# - Enterprise-grade performance and reliability
+# Architecture Improvements:
+# - Atomic, single-responsibility actions
+# - Native GitHub integration (no script uploads)
+# - Better error handling and debugging
+# - Modular, reusable components
+# - Explicit inputs/outputs between actions
 #
 # =============================================================================
 
-name: Deploy Multi-App Infrastructure to AWS (Functional)
+name: Deploy Multi-App Infrastructure to AWS (Composite Actions)
 
 on:
   push:
@@ -42,119 +42,154 @@ jobs:
     timeout-minutes: 15
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
+    # Environment for composite actions
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+    
     steps:
-    - name: 📥 Setup
+    - name: 📥 Setup Repository
       uses: actions/checkout@v4
     
-    - name: 🔐 Configure AWS
+    - name: 🔐 Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: arn:aws:iam::310829530903:role/GitHubActionsRole
         role-session-name: GitHubActionsSession
         aws-region: eu-north-1
     
-    - name: 🔑 Login to ECR
+    - name: 🔑 Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v2
     
     - name: 🏗️ Setup Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: 🔍 Detect Changes
+    # === ATOMIC COMPOSITE ACTIONS ORCHESTRATION ===
+    
+    - name: 🔍 Auto-Discover Project Configuration
+      id: config
+      uses: ./.github/actions/auto-discover-config
+      with:
+        project_root: '.'
+    
+    - name: 🔍 Detect File Changes
       id: changes
       run: |
-        chmod +x .github/scripts/detect-changes.sh
-        .github/scripts/detect-changes.sh
+        # Simple change detection (keeping minimal for now)
+        if git diff --name-only HEAD~1 HEAD | grep -E '^backend/|requirements\.txt|Dockerfile' > /dev/null; then
+          echo "backend_changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "backend_changed=false" >> $GITHUB_OUTPUT
+        fi
+        
+        if git diff --name-only HEAD~1 HEAD | grep -E '^frontend/|package\.json|package-lock\.json' > /dev/null; then
+          echo "frontend_changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "frontend_changed=false" >> $GITHUB_OUTPUT
+        fi
     
-    - name: 🏗️ Build Applications
-      if: steps.changes.outputs.frontend_changed == 'true' || steps.changes.outputs.backend_changed == 'true'
-      run: make ci-build
+    - name: 🎯 Determine Deployment Strategy
+      id: strategy
+      uses: ./.github/actions/determine-deployment-strategy
+      with:
+        backend_changed: ${{ steps.changes.outputs.backend_changed }}
+        frontend_changed: ${{ steps.changes.outputs.frontend_changed }}
+        backend_container: ${{ steps.config.outputs.backend_container }}
+        frontend_container: ${{ steps.config.outputs.frontend_container }}
     
-    - name: 🐳 Build & Push Containers
-      if: steps.changes.outputs.backend_changed == 'true' || steps.changes.outputs.frontend_changed == 'true'
+    - name: 🏗️ Build and Push Container Images
+      if: steps.strategy.outputs.strategy != 'skip'
       env:
         IMAGE_TAG: ${{ github.sha }}
+        ECR_REGISTRY: ${{ steps.config.outputs.ecr_registry }}
       run: |
-        # Auto-discover configuration for builds
-        source .github/scripts/auto-config.sh
-        discover_project_config "."
-        export_discovered_config
+        echo "🏗️ Building strategy: ${{ steps.strategy.outputs.strategy }}"
+        echo "📦 Containers to update: ${{ steps.strategy.outputs.containers }}"
         
-        # Pure functional builds (parallel, zero hardcoded values)
-        if [ "${{ steps.changes.outputs.backend_changed }}" == "true" ]; then
-          echo "🏗️ Building backend container: $BACKEND_CONTAINER"
-          docker build -t "$ECR_REGISTRY/$BACKEND_CONTAINER:$IMAGE_TAG" \
-            --cache-from "$ECR_REGISTRY/$BACKEND_CONTAINER:latest" \
-            --build-arg BUILDKIT_INLINE_CACHE=1 backend/
-          docker push "$ECR_REGISTRY/$BACKEND_CONTAINER:$IMAGE_TAG"
-          docker push "$ECR_REGISTRY/$BACKEND_CONTAINER:latest" &
+        # Build applications first
+        if [ "${{ steps.strategy.outputs.strategy }}" != "skip" ]; then
+          make ci-build
         fi
         
-        if [ "${{ steps.changes.outputs.frontend_changed }}" == "true" ]; then
-          echo "🏗️ Building frontend container: $FRONTEND_CONTAINER"
-          docker build -t "$ECR_REGISTRY/$FRONTEND_CONTAINER:$IMAGE_TAG" \
-            --cache-from "$ECR_REGISTRY/$FRONTEND_CONTAINER:latest" \
-            --build-arg BUILDKIT_INLINE_CACHE=1 frontend/
-          docker push "$ECR_REGISTRY/$FRONTEND_CONTAINER:$IMAGE_TAG"
-          docker push "$ECR_REGISTRY/$FRONTEND_CONTAINER:latest" &
-        fi
+        # Build and push containers based on strategy
+        for container in ${{ steps.strategy.outputs.containers }}; do
+          if [[ "$container" == *"backend"* ]]; then
+            echo "🏗️ Building backend container: $container"
+            docker build -t "$ECR_REGISTRY/$container:$IMAGE_TAG" \
+              --cache-from "$ECR_REGISTRY/$container:latest" \
+              --build-arg BUILDKIT_INLINE_CACHE=1 backend/
+            docker tag "$ECR_REGISTRY/$container:$IMAGE_TAG" "$ECR_REGISTRY/$container:latest"
+            docker push "$ECR_REGISTRY/$container:$IMAGE_TAG" &
+            docker push "$ECR_REGISTRY/$container:latest" &
+          elif [[ "$container" == *"frontend"* ]]; then
+            echo "🏗️ Building frontend container: $container"
+            docker build -t "$ECR_REGISTRY/$container:$IMAGE_TAG" \
+              --cache-from "$ECR_REGISTRY/$container:latest" \
+              --build-arg BUILDKIT_INLINE_CACHE=1 frontend/
+            docker tag "$ECR_REGISTRY/$container:$IMAGE_TAG" "$ECR_REGISTRY/$container:latest"
+            docker push "$ECR_REGISTRY/$container:$IMAGE_TAG" &
+            docker push "$ECR_REGISTRY/$container:latest" &
+          fi
+        done
         
         wait
+        echo "✅ All container builds and pushes completed"
     
-    - name: 📤 Upload Deployment Scripts
-      uses: appleboy/scp-action@v0.1.7
+    - name: 🚀 Execute Remote Container Deployment
+      id: deploy
+      if: steps.strategy.outputs.strategy != 'skip'
+      uses: ./.github/actions/execute-remote-docker
       with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: ".github/scripts/config-driven-deploy.sh,.github/scripts/auto-config.sh,.env"
-        target: "/opt/websites/"
-        strip_components: 1
+        containers: ${{ steps.strategy.outputs.containers }}
+        operation: 'deploy'
+        nginx_restart: ${{ steps.strategy.outputs.requires_nginx_restart }}
+        nginx_container: ${{ steps.config.outputs.nginx_container }}
     
-    - name: 🚀 Deploy with Sophisticated Functional Approach
-      uses: appleboy/ssh-action@v1.0.3
+    - name: 🧪 Validate Deployment Success
+      id: validate
+      if: steps.strategy.outputs.strategy != 'skip'
+      uses: ./.github/actions/validate-endpoints
       with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd /opt/websites
-          
-          # Make scripts executable
-          chmod +x config-driven-deploy.sh auto-config.sh
-          
-          # Execute sophisticated functional deployment with proper error handling
-          if ./config-driven-deploy.sh "." "production" "${{ steps.changes.outputs.backend_changed }}" "${{ steps.changes.outputs.frontend_changed }}"; then
-            echo "✅ Sophisticated deployment completed successfully"
-          else
-            echo "❌ Deployment failed - executing automatic rollback..."
-            
-            # Source the scripts to access rollback functions
-            source ./auto-config.sh
-            discover_project_config "."
-            export_discovered_config
-            
-            # Execute rollback with the sophisticated scripts
-            if source ./config-driven-deploy.sh && execute_deployment_rollback "$BACKEND_CONTAINER $FRONTEND_CONTAINER" "backup" "https://$DOMAIN_NAME/health"; then
-              echo "✅ Automatic rollback completed successfully"
-              exit 1  # Still fail the CI/CD to indicate deployment issues
-            else
-              echo "❌ Rollback failed - manual intervention required"
-              exit 2  # Critical failure requiring immediate attention
-            fi
-          fi
+        domain: ${{ steps.config.outputs.domain_name }}
+        endpoints: '/,/health,/api/calendars'
+        timeout: '15'
+        retries: '3'
     
+    # === AUTOMATIC ROLLBACK ON FAILURE ===
     
-    - name: 📊 Sophisticated Deployment Report
+    - name: 🔄 Execute Automatic Rollback
+      id: rollback
+      if: failure() && steps.deploy.outputs.backup_created != ''
+      uses: ./.github/actions/rollback-deployment
+      with:
+        containers: ${{ steps.strategy.outputs.containers }}
+        backup_tag: ${{ steps.deploy.outputs.backup_created }}
+        domain: ${{ steps.config.outputs.domain_name }}
+        nginx_restart: ${{ steps.strategy.outputs.requires_nginx_restart }}
+        nginx_container: ${{ steps.config.outputs.nginx_container }}
+        validation_endpoints: '/,/health'
+    
+    - name: 📊 Deployment Summary Report
       if: always()
       run: |
         echo "================================================================================="
-        echo "🏁 SOPHISTICATED FUNCTIONAL DEPLOYMENT PIPELINE COMPLETED"
+        echo "🏁 ATOMIC COMPOSITE ACTIONS DEPLOYMENT COMPLETED"
         echo "================================================================================="
-        echo "Status: ${{ job.status }}"
-        echo "Auto-Configuration Discovery: ✅"
-        echo "Pure Functional Programming: ✅"
-        echo "Comprehensive Health Validation: ✅"
-        echo "Automatic Rollback Capability: ✅"
-        echo "Zero Hardcoded Values: ✅"
-        echo "Enterprise-Grade Robustness: ✅"
+        echo "🎯 Strategy: ${{ steps.strategy.outputs.strategy }}"
+        echo "⏱️ Estimated Downtime: ${{ steps.strategy.outputs.estimated_downtime }}s"
+        echo "🐳 Containers: ${{ steps.strategy.outputs.containers }}"
+        echo "🔄 Nginx Restart: ${{ steps.strategy.outputs.requires_nginx_restart }}"
+        echo ""
+        echo "📊 Results:"
+        echo "   🚀 Deployment: ${{ steps.deploy.outputs.operation_status || 'skipped' }}"
+        echo "   🧪 Validation: ${{ steps.validate.outputs.validation_status || 'skipped' }}"
+        echo "   🔄 Rollback: ${{ steps.rollback.outputs.rollback_status || 'not-required' }}"
+        echo ""
+        echo "✅ Architecture Benefits Delivered:"
+        echo "   - Atomic, single-responsibility actions"
+        echo "   - Native GitHub integration (no script uploads)"
+        echo "   - Explicit separation of concerns"
+        echo "   - Better error handling and debugging"
+        echo "   - Modular, reusable components"
         echo "================================================================================="

@@ -1,0 +1,78 @@
+name: 'Determine Deployment Strategy'
+description: 'Pure function: determines optimal deployment strategy based on changes'
+author: 'Claude Code'
+
+inputs:
+  backend_changed:
+    description: 'Whether backend changed'
+    required: true
+  frontend_changed:
+    description: 'Whether frontend changed'
+    required: true
+  backend_container:
+    description: 'Backend container name'
+    required: true
+  frontend_container:
+    description: 'Frontend container name'
+    required: true
+
+outputs:
+  strategy:
+    description: 'Deployment strategy (skip|backend-only|frontend-only|full)'
+  containers:
+    description: 'Space-separated list of containers to update'
+  requires_nginx_restart:
+    description: 'Whether nginx restart is required (true/false)'
+  estimated_downtime:
+    description: 'Estimated downtime in seconds'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🎯 Calculate Optimal Deployment Strategy
+      shell: bash
+      run: |
+        echo "🎯 Determining optimal deployment strategy..."
+        
+        backend_changed="${{ inputs.backend_changed }}"
+        frontend_changed="${{ inputs.frontend_changed }}"
+        
+        # Pure functional strategy determination
+        if [ "$backend_changed" = "false" ] && [ "$frontend_changed" = "false" ]; then
+          strategy="skip"
+          containers=""
+          nginx_restart="false"
+          downtime="0"
+          echo "📊 Strategy: SKIP - No changes detected"
+          
+        elif [ "$backend_changed" = "true" ] && [ "$frontend_changed" = "false" ]; then
+          strategy="backend-only"
+          containers="${{ inputs.backend_container }}"
+          nginx_restart="false"
+          downtime="15"
+          echo "📊 Strategy: BACKEND ONLY - API updates without frontend changes"
+          
+        elif [ "$backend_changed" = "false" ] && [ "$frontend_changed" = "true" ]; then
+          strategy="frontend-only"
+          containers="${{ inputs.frontend_container }}"
+          nginx_restart="true"
+          downtime="10"
+          echo "📊 Strategy: FRONTEND ONLY - UI updates with nginx restart"
+          
+        else
+          strategy="full"
+          containers="${{ inputs.backend_container }} ${{ inputs.frontend_container }}"
+          nginx_restart="true"
+          downtime="25"
+          echo "📊 Strategy: FULL DEPLOYMENT - Complete application update"
+        fi
+        
+        echo "📋 Containers to update: ${containers:-none}"
+        echo "🔄 Nginx restart required: $nginx_restart"
+        echo "⏱️ Estimated downtime: ${downtime}s"
+        
+        # Output strategy for downstream actions
+        echo "strategy=$strategy" >> $GITHUB_OUTPUT
+        echo "containers=$containers" >> $GITHUB_OUTPUT
+        echo "requires_nginx_restart=$nginx_restart" >> $GITHUB_OUTPUT
+        echo "estimated_downtime=$downtime" >> $GITHUB_OUTPUT

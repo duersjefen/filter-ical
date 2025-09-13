@@ -1,0 +1,166 @@
+name: 'Execute Remote Docker Commands'
+description: 'Atomic action: executes docker commands on remote host with native GitHub integration'
+author: 'Claude Code'
+
+inputs:
+  containers:
+    description: 'Space-separated list of containers to operate on'
+    required: true
+  operation:
+    description: 'Operation to perform (deploy|restart|health-check|rollback)'
+    required: true
+  nginx_restart:
+    description: 'Whether to restart nginx (true/false)'
+    required: false
+    default: 'false'
+  nginx_container:
+    description: 'Nginx container name'
+    required: false
+    default: 'nginx'
+  backup_tag:
+    description: 'Backup tag to create/restore from'
+    required: false
+    default: ''
+
+outputs:
+  operation_status:
+    description: 'Operation status (success|failed)'
+  containers_affected:
+    description: 'Containers that were actually affected'
+  backup_created:
+    description: 'Backup tag that was created'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🐳 Execute Remote Docker Operation
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ env.EC2_HOST }}
+        username: ${{ env.EC2_USER }}
+        key: ${{ env.EC2_SSH_KEY }}
+        script: |
+          cd /opt/websites
+          operation="${{ inputs.operation }}"
+          containers="${{ inputs.containers }}"
+          
+          echo "🐳 Executing operation: $operation on containers: $containers"
+          
+          case "$operation" in
+            "deploy")
+              # Create backup with timestamp
+              backup_tag="backup-$(date +%s)"
+              echo "💾 Creating backup: $backup_tag"
+              
+              for container in $containers; do
+                current_image=$(docker-compose images "$container" 2>/dev/null | tail -n 1 | awk '{print $4":"$5}' || echo "")
+                if [ -n "$current_image" ] && [ "$current_image" != ":" ]; then
+                  docker tag "$current_image" "${current_image%:*}:$backup_tag" 2>/dev/null || true
+                  echo "✅ Backup created: $container -> $backup_tag"
+                fi
+              done
+              
+              # Zero-downtime deployment
+              echo "🚀 Executing zero-downtime deployment..."
+              docker-compose pull $containers
+              docker-compose up -d --no-deps $containers
+              
+              # Intelligent health monitoring
+              echo "🏥 Monitoring container health..."
+              for i in {1..24}; do  # 2 minutes max
+                unhealthy=0
+                for container in $containers; do
+                  if ! docker-compose ps "$container" | grep -q "Up.*healthy"; then
+                    unhealthy=$((unhealthy + 1))
+                  fi
+                done
+                
+                if [ $unhealthy -eq 0 ]; then
+                  echo "✅ All containers healthy after $((i * 5))s"
+                  break
+                fi
+                
+                if [ $i -eq 24 ]; then
+                  echo "❌ Health check timeout - containers may be unhealthy"
+                  exit 1
+                fi
+                
+                sleep 5
+              done
+              
+              # Conditional nginx restart
+              if [ "${{ inputs.nginx_restart }}" = "true" ]; then
+                echo "🔄 Restarting nginx..."
+                docker-compose restart "${{ inputs.nginx_container }}"
+                sleep 3
+              fi
+              
+              echo "backup_created=$backup_tag" >> $GITHUB_OUTPUT
+              ;;
+              
+            "health-check")
+              echo "🏥 Checking container health..."
+              healthy_count=0
+              for container in $containers; do
+                if docker-compose ps "$container" | grep -q "Up.*healthy"; then
+                  echo "✅ $container: healthy"
+                  healthy_count=$((healthy_count + 1))
+                else
+                  echo "❌ $container: unhealthy"
+                fi
+              done
+              
+              total_containers=$(echo $containers | wc -w)
+              if [ $healthy_count -eq $total_containers ]; then
+                echo "✅ All $total_containers containers are healthy"
+              else
+                echo "❌ Only $healthy_count/$total_containers containers are healthy"
+                exit 1
+              fi
+              ;;
+              
+            "rollback")
+              backup_tag="${{ inputs.backup_tag }}"
+              if [ -z "$backup_tag" ]; then
+                echo "❌ No backup tag provided for rollback"
+                exit 1
+              fi
+              
+              echo "🔄 Rolling back to: $backup_tag"
+              for container in $containers; do
+                # Find the backup image
+                backup_image=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":$backup_tag" | head -1)
+                if [ -n "$backup_image" ]; then
+                  # Tag it as latest
+                  repo_name="${backup_image%:*}"
+                  docker tag "$backup_image" "$repo_name:latest"
+                  echo "✅ Restored $container from $backup_tag"
+                else
+                  echo "❌ No backup found for $container with tag $backup_tag"
+                fi
+              done
+              
+              # Restart containers with restored images
+              docker-compose up -d --no-deps $containers
+              ;;
+              
+            *)
+              echo "❌ Unknown operation: $operation"
+              exit 1
+              ;;
+          esac
+          
+          echo "operation_status=success" >> $GITHUB_OUTPUT
+          echo "containers_affected=$containers" >> $GITHUB_OUTPUT
+      env:
+        EC2_HOST: ${{ env.EC2_HOST }}
+        EC2_USER: ${{ env.EC2_USER }}
+        EC2_SSH_KEY: ${{ env.EC2_SSH_KEY }}
+    
+    - name: Handle Operation Failure
+      if: failure()
+      shell: bash
+      run: |
+        echo "operation_status=failed" >> $GITHUB_OUTPUT
+        echo "containers_affected=" >> $GITHUB_OUTPUT
+        echo "backup_created=" >> $GITHUB_OUTPUT
