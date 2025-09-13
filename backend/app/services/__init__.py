@@ -1,9 +1,8 @@
 """
-Services Package - Business logic layer
+Services Package - Pure event processing functions
+Legacy module for backward compatibility
 """
 
-from .calendar import CalendarService
-from .filters import FilterService
 from .events import (
     fetch_ical_events, 
     parse_ical_content, 
@@ -12,8 +11,6 @@ from .events import (
 )
 
 __all__ = [
-    'CalendarService',
-    'FilterService',
     'fetch_ical_events',
     'parse_ical_content',
     'extract_category_from_event',

@@ -8,17 +8,29 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, Response
 from typing import List, Dict, Optional, Any
 from pathlib import Path
-import asyncio
 
-# Import our modular components
+# Import pure functions (Functional Core)
 from .models import CalendarEntry, Event, Filter
-from .storage import PersistentStore
-from .services import CalendarService, FilterService, generate_ical_content
+from .data.calendar import (
+    validate_calendar_data, find_calendar_by_id, calendar_to_dict
+)
+from .data.store import (
+    add_calendar_to_store, get_calendars_from_store,
+    remove_calendar_from_store,
+    cache_events_in_store, get_cached_events_from_store,
+    add_filter_to_store, get_filters_from_store, remove_filter_from_store
+)
+from .data.http import (
+    validate_ical_url_http, fetch_calendar_events, extract_event_categories
+)
+from .data.filters import (
+    is_valid_filter_data, normalize_filter_config
+)
+from .services.events import generate_ical_content
 
-# Initialize storage and services
-store = PersistentStore()
-calendar_service = CalendarService(store)
-filter_service = FilterService(store)
+# Initialize store data (Imperative Shell)
+from .storage import PersistentStore
+store_instance = PersistentStore()  # For I/O operations only
 
 # FastAPI app
 app = FastAPI(title="iCal Viewer API")
@@ -36,6 +48,19 @@ def get_user_id_from_header(x_user_id: str = Header("anonymous")) -> str:
     return x_user_id if x_user_id else "anonymous"
 
 
+# === IMPERATIVE SHELL HELPERS ===
+
+def get_store_data():
+    """Get current store data - I/O boundary"""
+    return store_instance._data
+
+
+def save_store_data(new_data):
+    """Save store data - I/O boundary"""
+    store_instance._data = new_data
+    store_instance._save()
+
+
 # === API ROUTES ===
 
 @app.get("/health")
@@ -51,10 +76,19 @@ async def root():
 
 @app.get("/api/calendars")
 async def get_calendars(x_user_id: str = Header("anonymous")):
-    """Get all calendars for the current user"""
+    """Get all calendars for the current user - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
-    calendars = calendar_service.get_calendars(user_id)
-    return {"calendars": [{"id": c.id, "name": c.name, "url": c.url} for c in calendars]}
+    
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Use pure function to get calendars
+    calendars = get_calendars_from_store(store_data, user_id)
+    
+    # Transform to API format using pure functions
+    calendar_dicts = [calendar_to_dict(c) for c in calendars]
+    
+    return {"calendars": calendar_dicts}
 
 
 @app.post("/api/calendars")
@@ -62,23 +96,33 @@ async def create_calendar(
     data: dict, 
     x_user_id: str = Header("anonymous")
 ):
-    """Create a new calendar"""
+    """Create a new calendar - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
     
     name = data.get("name")
     url = data.get("url")
     
-    if not name or not url:
-        raise HTTPException(status_code=400, detail="Name and URL are required")
+    # Validate input data using pure function
+    is_valid_input, validation_message = validate_calendar_data(name, url)
+    if not is_valid_input:
+        raise HTTPException(status_code=400, detail=validation_message)
     
-    # Validate the iCal URL
-    is_valid, message = await calendar_service.validate_ical_url(url)
-    if not is_valid:
-        raise HTTPException(status_code=400, detail=f"Invalid iCal URL: {message}")
+    # Validate the iCal URL using pure function (I/O operation)
+    is_valid_url, url_message = await validate_ical_url_http(url)
+    if not is_valid_url:
+        raise HTTPException(status_code=400, detail=f"Invalid iCal URL: {url_message}")
     
-    # Create the calendar
-    calendar = await calendar_service.create_calendar(name, url, user_id)
-    return {"id": calendar.id, "name": calendar.name, "url": calendar.url}
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Create calendar using pure function
+    new_store_data, calendar = add_calendar_to_store(store_data, name, url, user_id)
+    
+    # Save updated store data (I/O)
+    save_store_data(new_store_data)
+    
+    # Return using pure function
+    return calendar_to_dict(calendar)
 
 
 @app.delete("/api/calendars/{calendar_id}")
@@ -86,12 +130,20 @@ async def delete_calendar(
     calendar_id: str, 
     x_user_id: str = Header("anonymous")
 ):
-    """Delete a calendar"""
+    """Delete a calendar - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
     
-    success = calendar_service.delete_calendar(calendar_id, user_id)
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Delete calendar using pure function
+    new_store_data, success = remove_calendar_from_store(store_data, calendar_id, user_id)
+    
     if not success:
         raise HTTPException(status_code=404, detail="Calendar not found")
+    
+    # Save updated store data (I/O)
+    save_store_data(new_store_data)
     
     return {"message": "Calendar deleted"}
 
@@ -101,15 +153,34 @@ async def get_calendar_events(
     calendar_id: str, 
     x_user_id: str = Header("anonymous")
 ):
-    """Get events for a specific calendar"""
+    """Get events for a specific calendar - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
     
-    # Verify user owns this calendar
-    calendars = calendar_service.get_calendars(user_id)
-    if not any(c.id == calendar_id for c in calendars):
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Get user calendars and verify ownership using pure functions
+    user_calendars = get_calendars_from_store(store_data, user_id)
+    calendar = find_calendar_by_id(user_calendars, calendar_id)
+    
+    if not calendar:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    events = await calendar_service.get_calendar_events(calendar_id)
+    # Try to get cached events first using pure function
+    cached_events = get_cached_events_from_store(store_data, calendar_id)
+    
+    if cached_events:
+        events = cached_events
+    else:
+        # Fetch fresh events using pure function (I/O operation)
+        success, events, error_msg = await fetch_calendar_events(calendar.url)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Error fetching events: {error_msg}")
+        
+        # Cache events using pure function
+        if events:
+            new_store_data = cache_events_in_store(store_data, calendar_id, events)
+            save_store_data(new_store_data)
     
     return {
         "events": [
@@ -130,15 +201,37 @@ async def get_calendar_categories(
     calendar_id: str, 
     x_user_id: str = Header("anonymous")
 ):
-    """Get event categories for a calendar"""
+    """Get event categories for a calendar - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
     
-    # Verify user owns this calendar
-    calendars = calendar_service.get_calendars(user_id)
-    if not any(c.id == calendar_id for c in calendars):
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Verify user owns this calendar using pure functions
+    user_calendars = get_calendars_from_store(store_data, user_id)
+    calendar = find_calendar_by_id(user_calendars, calendar_id)
+    
+    if not calendar:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    categories = await calendar_service.get_calendar_categories(calendar_id)
+    # Get events (try cache first)
+    cached_events = get_cached_events_from_store(store_data, calendar_id)
+    
+    if cached_events:
+        events = cached_events
+    else:
+        # Fetch fresh events (I/O operation)
+        success, events, error_msg = await fetch_calendar_events(calendar.url)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Error fetching events: {error_msg}")
+        
+        # Cache events
+        if events:
+            new_store_data = cache_events_in_store(store_data, calendar_id, events)
+            save_store_data(new_store_data)
+    
+    # Extract categories using pure function
+    categories = extract_event_categories(events)
     return {"categories": categories}
 
 
@@ -146,21 +239,43 @@ async def get_calendar_categories(
 
 @app.get("/api/filters")
 async def get_filters(x_user_id: str = Header("anonymous")):
-    """Get all filters for the current user"""
+    """Get all filters for the current user - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
-    filters = filter_service.get_filters(user_id)
+    
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Get filters using pure function
+    filters = get_filters_from_store(store_data, user_id)
+    
     return {"filters": filters}
 
 
 @app.post("/api/filters")
 async def create_filter(data: dict, x_user_id: str = Header("anonymous")):
-    """Create a new filter"""
+    """Create a new filter - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
     
     name = data.get("name", "Untitled Filter")
     config = data.get("config", {})
     
-    filter_data = filter_service.create_filter(name, config, user_id)
+    # Validate filter data using pure function
+    is_valid, validation_message = is_valid_filter_data(name, config)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=validation_message)
+    
+    # Normalize config using pure function
+    normalized_config = normalize_filter_config(config)
+    
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Add filter using pure function
+    new_store_data, filter_data = add_filter_to_store(store_data, name, normalized_config, user_id)
+    
+    # Save updated store data (I/O)
+    save_store_data(new_store_data)
+    
     return filter_data
 
 
@@ -169,12 +284,20 @@ async def delete_filter(
     filter_id: str, 
     x_user_id: str = Header("anonymous")
 ):
-    """Delete a filter"""
+    """Delete a filter - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
     
-    success = filter_service.delete_filter(filter_id, user_id)
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Delete filter using pure function
+    new_store_data, success = remove_filter_from_store(store_data, filter_id, user_id)
+    
     if not success:
         raise HTTPException(status_code=404, detail="Filter not found")
+    
+    # Save updated store data (I/O)
+    save_store_data(new_store_data)
     
     return {"message": "Filter deleted"}
 
@@ -188,30 +311,48 @@ async def download_filtered_ical(
     mode: Optional[str] = "include",
     x_user_id: str = Header("anonymous")
 ):
-    """Download filtered iCal file"""
+    """Download filtered iCal file - Functional approach"""
     user_id = get_user_id_from_header(x_user_id)
     
-    # Verify user owns this calendar
-    calendars = calendar_service.get_calendars(user_id)
-    calendar = next((c for c in calendars if c.id == calendar_id), None)
+    # Get current store data (I/O)
+    store_data = get_store_data()
+    
+    # Verify user owns this calendar using pure functions
+    user_calendars = get_calendars_from_store(store_data, user_id)
+    calendar = find_calendar_by_id(user_calendars, calendar_id)
+    
     if not calendar:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    # Get events
-    events = await calendar_service.get_calendar_events(calendar_id)
+    # Get events (try cache first)
+    cached_events = get_cached_events_from_store(store_data, calendar_id)
+    
+    if cached_events:
+        events = cached_events
+    else:
+        # Fetch fresh events (I/O operation)
+        success, events, error_msg = await fetch_calendar_events(calendar.url)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Error fetching events: {error_msg}")
+        
+        # Cache events
+        if events:
+            new_store_data = cache_events_in_store(store_data, calendar_id, events)
+            save_store_data(new_store_data)
+    
     if not events:
         raise HTTPException(status_code=404, detail="No events found")
     
-    # Parse categories filter
+    # Parse categories filter (pure operation)
     category_set = set()
     if categories:
         category_list = categories.split(",")
         category_set = {cat.strip() for cat in category_list if cat.strip()}
     
-    # Generate iCal content
+    # Generate iCal content using pure function
     ical_content = generate_ical_content(events, calendar.name, category_set)
     
-    # Determine filename
+    # Determine filename (pure operation)
     mode_suffix = f"-{mode}" if mode != "include" else ""
     categories_suffix = f"-{len(category_set)}cats" if category_set else ""
     filename = f"{calendar.name.replace(' ', '_')}{mode_suffix}{categories_suffix}.ics"
