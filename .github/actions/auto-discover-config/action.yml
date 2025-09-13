@@ -111,6 +111,11 @@ runs:
         echo ""
         
         # Export all discovered values as outputs
+        echo "🐛 DEBUG: Before setting outputs:"
+        echo "   BACKEND_CONTAINER='$BACKEND_CONTAINER'"
+        echo "   FRONTEND_CONTAINER='$FRONTEND_CONTAINER'"
+        echo "   PROJECT_NAME='$PROJECT_NAME'"
+        
         echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
         echo "backend_container=$BACKEND_CONTAINER" >> $GITHUB_OUTPUT
         echo "frontend_container=$FRONTEND_CONTAINER" >> $GITHUB_OUTPUT
@@ -120,3 +125,7 @@ runs:
         echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
         echo "port_backend=$PORT_BACKEND" >> $GITHUB_OUTPUT
         echo "port_frontend=$PORT_FRONTEND" >> $GITHUB_OUTPUT
+        
+        echo "🐛 DEBUG: What was written to GITHUB_OUTPUT:"
+        echo "   backend_container=$BACKEND_CONTAINER"
+        echo "   frontend_container=$FRONTEND_CONTAINER"
