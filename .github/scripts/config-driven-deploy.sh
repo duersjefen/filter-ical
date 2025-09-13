@@ -20,7 +20,9 @@ deploy_application() {
     echo "🚀 Starting configuration-driven deployment..."
     
     # Auto-discover configuration from existing project files
-    source "$(dirname "${BASH_SOURCE[0]}")/auto-config.sh"
+    # Both scripts are in the same directory after upload with strip_components: 1
+    local script_dir="$(dirname "${BASH_SOURCE[0]}")"
+    source "$script_dir/auto-config.sh"
     discover_project_config "$project_root"
     export_discovered_config
     
