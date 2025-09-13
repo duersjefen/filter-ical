@@ -106,7 +106,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: ".github/scripts/config-driven-deploy.sh,.github/scripts/auto-config.sh,.github/config/deployment-overrides.conf"
+        source: ".github/scripts/config-driven-deploy.sh,.github/scripts/auto-config.sh"
         target: "/opt/websites/"
         strip_components: 1
     

@@ -46,33 +46,9 @@ discover_project_config() {
         fi
     fi
     
-    # Discover from .env files
+    # Discover from .env file (single source of truth)
     if [ -f "$project_root/.env" ]; then
-        echo "🔧 Found .env file"
-        while IFS='=' read -r key value; do
-            [[ "$key" =~ ^[[:space:]]*# ]] && continue
-            [[ -z "$key" ]] && continue
-            
-            key=$(echo "$key" | xargs)
-            value=$(echo "$value" | sed 's/^["'\'']\|["'\'']$//g' | xargs)
-            
-            case "$key" in
-                "DOMAIN"|"APP_DOMAIN"|"DOMAIN_NAME")
-                    DOMAIN_NAME="$value"
-                    echo "   ✅ DOMAIN_NAME: $value"
-                    ;;
-                "PORT"|"BACKEND_PORT"|"SERVER_PORT")
-                    PORT_BACKEND="$value"
-                    echo "   ✅ BACKEND_PORT: $value"
-                    ;;
-            esac
-        done < "$project_root/.env"
-    fi
-    
-    # Apply deployment overrides
-    local override_file="$project_root/.github/config/deployment-overrides.conf"
-    if [ -f "$override_file" ]; then
-        echo "🔧 Applying deployment overrides..."
+        echo "🔧 Reading configuration from .env (single source of truth)..."
         while IFS='=' read -r key value; do
             [[ "$key" =~ ^[[:space:]]*# ]] && continue
             [[ -z "$key" ]] && continue
@@ -84,12 +60,16 @@ discover_project_config() {
                 "DOMAIN_NAME") DOMAIN_NAME="$value" ;;
                 "ECR_REGISTRY") ECR_REGISTRY="$value" ;;
                 "AWS_REGION") AWS_REGION="$value" ;;
+                "AWS_ACCOUNT_ID") AWS_ACCOUNT_ID="$value" ;;
+                "EC2_HOST") EC2_HOST="$value" ;;
+                "PORT_BACKEND"|"PORT"|"BACKEND_PORT"|"SERVER_PORT") PORT_BACKEND="$value" ;;
+                "PORT_FRONTEND"|"FRONTEND_PORT"|"CLIENT_PORT") PORT_FRONTEND="$value" ;;
                 "PROJECT_NAME") PROJECT_NAME="$value" ;;
                 "BACKEND_CONTAINER") BACKEND_CONTAINER="$value" ;;
                 "FRONTEND_CONTAINER") FRONTEND_CONTAINER="$value" ;;
             esac
-            echo "   🔧 Override: $key=$value"
-        done < "$override_file"
+            [ -n "$value" ] && echo "   ✅ $key: $value"
+        done < "$project_root/.env"
     fi
     
     # Generate smart defaults based on project name
