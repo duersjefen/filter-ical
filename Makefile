@@ -128,7 +128,10 @@ todos: ## Show current TODOs and project status
 
 health: ## Check application health
 	@echo "🔍 Checking application health..."
+	@echo "🐍 Backend health check:"
 	@curl -sf http://localhost:3000/health && echo " ✅ Backend healthy" || echo " ❌ Backend unhealthy"
+	@echo "🎨 Frontend health check:"
+	@curl -sf http://localhost:8000/ >/dev/null 2>&1 && echo " ✅ Frontend healthy" || echo " ❌ Frontend unhealthy"
 
 clean: ## Clean up development artifacts
 	@echo "🧹 Cleaning up..."
