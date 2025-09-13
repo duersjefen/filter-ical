@@ -133,7 +133,7 @@ runs:
                 sleep 3
               fi
               
-              echo "backup_created=$backup_tag" >> $GITHUB_OUTPUT
+              echo "backup_created=$backup_tag"
               ;;
               
             "health-check")
@@ -189,13 +189,18 @@ runs:
               exit 1
               ;;
           esac
-          
-          echo "operation_status=success" >> $GITHUB_OUTPUT
-          echo "containers_affected=$containers" >> $GITHUB_OUTPUT
       env:
         EC2_HOST: ${{ env.EC2_HOST }}
         EC2_USER: ${{ env.EC2_USER }}
         EC2_SSH_KEY: ${{ env.EC2_SSH_KEY }}
+    
+    - name: Handle Operation Success  
+      if: success()
+      shell: bash
+      run: |
+        echo "operation_status=success" >> $GITHUB_OUTPUT
+        echo "containers_affected=${{ inputs.containers }}" >> $GITHUB_OUTPUT
+        echo "backup_created=backup-$(date +%s)" >> $GITHUB_OUTPUT
     
     - name: Handle Operation Failure
       if: failure()
