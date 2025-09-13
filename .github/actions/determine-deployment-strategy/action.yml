@@ -36,6 +36,13 @@ runs:
         
         backend_changed="${{ inputs.backend_changed }}"
         frontend_changed="${{ inputs.frontend_changed }}"
+        backend_container="${{ inputs.backend_container }}"
+        frontend_container="${{ inputs.frontend_container }}"
+        
+        echo "🔍 DEBUG: backend_changed=$backend_changed"
+        echo "🔍 DEBUG: frontend_changed=$frontend_changed"  
+        echo "🔍 DEBUG: backend_container=$backend_container"
+        echo "🔍 DEBUG: frontend_container=$frontend_container"
         
         # Pure functional strategy determination
         if [ "$backend_changed" = "false" ] && [ "$frontend_changed" = "false" ]; then
@@ -47,21 +54,21 @@ runs:
           
         elif [ "$backend_changed" = "true" ] && [ "$frontend_changed" = "false" ]; then
           strategy="backend-only"
-          containers="${{ inputs.backend_container }}"
+          containers="$backend_container"
           nginx_restart="false"
           downtime="15"
           echo "📊 Strategy: BACKEND ONLY - API updates without frontend changes"
           
         elif [ "$backend_changed" = "false" ] && [ "$frontend_changed" = "true" ]; then
           strategy="frontend-only"
-          containers="${{ inputs.frontend_container }}"
+          containers="$frontend_container"
           nginx_restart="true"
           downtime="10"
           echo "📊 Strategy: FRONTEND ONLY - UI updates with nginx restart"
           
         else
           strategy="full"
-          containers="${{ inputs.backend_container }} ${{ inputs.frontend_container }}"
+          containers="$backend_container $frontend_container"
           nginx_restart="true"
           downtime="25"
           echo "📊 Strategy: FULL DEPLOYMENT - Complete application update"
