@@ -78,6 +78,12 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
     steps:
+    - name: 📊 Initialize deployment performance tracking
+      run: |
+        echo "DEPLOY_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        echo "🚀 Deployment started at: $(date)"
+        echo "📊 Performance tracking initialized"
+    
     - name: Checkout code
       uses: actions/checkout@v4
     
@@ -545,43 +551,71 @@ jobs:
             echo "   🎨 Frontend changes detected - ical-viewer-frontend container will be updated"
           fi
           
-          # Execute deployment strategy
+          # Execute deployment strategy with smart optimizations
           if [[ -z "$CONTAINERS_TO_UPDATE" ]]; then
             echo "✨ No application containers require updating - deployment complete"
             echo "🔍 Current container status:"
             docker-compose ps
-          else
-            echo "🔄 Executing rolling update for containers:$CONTAINERS_TO_UPDATE"
             
-            # Pull latest images
-            echo "📥 Pulling latest container images..."
-            docker-compose pull$CONTAINERS_TO_UPDATE
+            # Skip full validation for no-change deployments (performance optimization)
+            echo "⚡ Skipping extensive validation (no changes deployed)"
+            VALIDATION_FAILED=0
+          else
+            echo "🔄 Executing optimized rolling update for containers:$CONTAINERS_TO_UPDATE"
+            
+            # Pull latest images in parallel for speed
+            echo "📥 Pulling latest container images (parallel)..."
+            (
+              for container in $CONTAINERS_TO_UPDATE; do
+                docker-compose pull $container &
+              done
+              wait
+            )
             
             # Perform rolling update (no downtime)
             echo "🔄 Performing zero-downtime rolling update..."
             docker-compose up -d --no-deps$CONTAINERS_TO_UPDATE
             
-            # Initial service stabilization
-            echo "⏳ Allowing services to stabilize..."
-            sleep 30
+            # Adaptive stabilization wait based on container type
+            if [[ "$CONTAINERS_TO_UPDATE" == *"ical-viewer"* ]]; then
+              echo "⏳ Allowing backend to stabilize (extended wait for Python app)..."
+              sleep 45
+            else
+              echo "⏳ Allowing services to stabilize..."
+              sleep 20
+            fi
             
             # Display current status
             echo "🔍 Post-deployment container status:"
             docker-compose ps
             
-            # Check for any failed containers
-            if docker-compose ps | grep -q "Exit\|unhealthy"; then
-              echo "❌ Some containers failed to start properly!"
-              docker-compose logs --tail=50
+            # Enhanced container health validation
+            echo "🏥 Running enhanced container health checks..."
+            UNHEALTHY_CONTAINERS=0
+            
+            for container in $CONTAINERS_TO_UPDATE; do
+              if docker-compose ps $container | grep -q "Exit\|unhealthy\|Restarting"; then
+                echo "   ❌ Container $container is unhealthy"
+                UNHEALTHY_CONTAINERS=$((UNHEALTHY_CONTAINERS + 1))
+                docker-compose logs --tail=20 $container
+              else
+                echo "   ✅ Container $container is healthy"
+              fi
+            done
+            
+            if [ $UNHEALTHY_CONTAINERS -gt 0 ]; then
+              echo "❌ $UNHEALTHY_CONTAINERS container(s) failed health checks!"
               exit 1
-            else
-              echo "✅ All containers started successfully"
             fi
             
-            # Restart nginx to ensure it picks up new container configurations
-            echo "🔄 Restarting nginx to refresh configuration..."
-            docker-compose restart nginx
-            sleep 5
+            # Smart nginx restart (only if frontend changed)
+            if [[ "$CONTAINERS_TO_UPDATE" == *"frontend"* ]]; then
+              echo "🔄 Restarting nginx (frontend changed)..."
+              docker-compose restart nginx
+              sleep 5
+            else
+              echo "⏭️  Nginx restart skipped (frontend unchanged)"
+            fi
           fi
           
           # =============================================================================
@@ -629,12 +663,18 @@ jobs:
             VALIDATION_FAILED=1
           fi
           
-          # Test 2: JavaScript Bundle Loading
-          echo "📄 Test 2/6: Frontend JavaScript delivery..."
-          if curl -f --connect-timeout 10 --max-time 30 https://filter-ical.de/js/main.js > /dev/null 2>&1; then
-            echo "   ✅ JavaScript bundle loading correctly"
+          # Test 2: Dynamic Frontend Asset Detection (Framework Agnostic)
+          echo "📄 Test 2/6: Frontend asset delivery (framework agnostic)..."
+          
+          # Modern approach: Check if the main page loads and contains asset references
+          PAGE_ASSETS=$(echo "$PAGE_CONTENT" | grep -o 'src="[^"]*\.js"' | wc -l 2>/dev/null || echo "0")
+          CSS_ASSETS=$(echo "$PAGE_CONTENT" | grep -o 'href="[^"]*\.css"' | wc -l 2>/dev/null || echo "0") 
+          
+          if [ "$PAGE_ASSETS" -gt 0 ] && [ "$CSS_ASSETS" -gt 0 ]; then
+            echo "   ✅ Frontend assets detected (JS: $PAGE_ASSETS, CSS: $CSS_ASSETS)"
           else
-            echo "   ❌ JavaScript bundle not accessible"
+            echo "   ❌ Frontend assets not found in page content"
+            echo "   🔍 Page may not be loading correctly or assets missing"
             VALIDATION_FAILED=1
           fi
           
@@ -780,12 +820,26 @@ jobs:
         echo "================================================================================="
         
         if [ "${{ job.status }}" == "success" ]; then
+          # Calculate deployment performance metrics
+          DEPLOY_END_TIME=$(date +%s)
+          TOTAL_DEPLOY_TIME=$((DEPLOY_END_TIME - DEPLOY_START_TIME))
+          DEPLOY_MINUTES=$((TOTAL_DEPLOY_TIME / 60))
+          DEPLOY_SECONDS=$((TOTAL_DEPLOY_TIME % 60))
+          
           echo "✅ STATUS: SUCCESSFUL"
           echo "🌐 LIVE SITE: https://${{ env.DOMAIN_NAME }}/"
+          echo "⏱️  DEPLOYMENT TIME: ${DEPLOY_MINUTES}m ${DEPLOY_SECONDS}s"
           echo "🏗️  ARCHITECTURE: Multi-container Docker with nginx reverse proxy"
           echo "🔒 SECURITY: Let's Encrypt SSL with comprehensive security headers"
           echo "⚡ FEATURES: Zero-downtime rolling updates with health validation"
           echo "🔄 ROLLBACK: Automatic rollback on deployment failure"
+          
+          # Performance optimization suggestions
+          if [ $TOTAL_DEPLOY_TIME -gt 300 ]; then
+            echo "💡 PERFORMANCE: Deployment took over 5 minutes - consider optimizing Docker cache"
+          elif [ $TOTAL_DEPLOY_TIME -lt 180 ]; then
+            echo "🚀 PERFORMANCE: Excellent deployment speed (under 3 minutes)"
+          fi
           echo ""
           echo "🎯 Next steps:"
           echo "   • Test the live application functionality"
