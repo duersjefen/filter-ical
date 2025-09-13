@@ -58,7 +58,7 @@ runs:
         echo "🔍 DEBUG: backend_container=$backend_container"
         echo "🔍 DEBUG: frontend_container=$frontend_container"
         
-        # Pure functional strategy determination
+        # Pure functional strategy determination (using updated container names)
         if [ "$backend_changed" = "false" ] && [ "$frontend_changed" = "false" ]; then
           strategy="skip"
           containers=""
@@ -87,6 +87,8 @@ runs:
           downtime="25"
           echo "📊 Strategy: FULL DEPLOYMENT - Complete application update"
         fi
+        
+        echo "🔍 FINAL DEBUG: containers variable = '$containers'"
         
         echo "📋 Containers to update: ${containers:-none}"
         echo "🔄 Nginx restart required: $nginx_restart"
