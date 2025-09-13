@@ -74,7 +74,7 @@ discover_project_config() {
     
     # Generate smart defaults based on project name
     if [ "$BACKEND_CONTAINER" = "app" ] && [ "$PROJECT_NAME" != "app" ]; then
-        BACKEND_CONTAINER="$PROJECT_NAME"
+        BACKEND_CONTAINER="$PROJECT_NAME-backend"  # Use existing naming convention
     fi
     
     if [ "$FRONTEND_CONTAINER" = "app-frontend" ] && [ "$PROJECT_NAME" != "app" ]; then
