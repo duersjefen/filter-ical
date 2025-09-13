@@ -65,23 +65,29 @@ runs:
               docker-compose pull $containers
               docker-compose up -d --no-deps $containers
               
-              # Intelligent health monitoring
+              # Intelligent health monitoring with fallback for containers without health checks
               echo "🏥 Monitoring container health..."
               for i in {1..24}; do  # 2 minutes max
                 unhealthy=0
                 for container in $containers; do
-                  if ! docker-compose ps "$container" | grep -q "Up.*healthy"; then
+                  container_status=$(docker-compose ps "$container" 2>/dev/null | grep "$container" | awk '{print $3}' || echo "")
+                  if [[ "$container_status" == "Up" || "$container_status" =~ ^Up.*healthy ]]; then
+                    echo "✅ $container: $container_status"
+                  else
+                    echo "⚠️  $container: $container_status (waiting...)"
                     unhealthy=$((unhealthy + 1))
                   fi
                 done
                 
                 if [ $unhealthy -eq 0 ]; then
-                  echo "✅ All containers healthy after $((i * 5))s"
+                  echo "✅ All containers running after $((i * 5))s"
                   break
                 fi
                 
                 if [ $i -eq 24 ]; then
-                  echo "❌ Health check timeout - containers may be unhealthy"
+                  echo "❌ Container startup timeout - some containers failed to start"
+                  echo "🔍 Final container status:"
+                  docker-compose ps $containers || echo "❌ Failed to get container status"
                   exit 1
                 fi
                 
@@ -102,19 +108,21 @@ runs:
               echo "🏥 Checking container health..."
               healthy_count=0
               for container in $containers; do
-                if docker-compose ps "$container" | grep -q "Up.*healthy"; then
-                  echo "✅ $container: healthy"
+                container_status=$(docker-compose ps "$container" 2>/dev/null | grep "$container" | awk '{print $3}' || echo "")
+                if [[ "$container_status" == "Up" || "$container_status" =~ ^Up.*healthy ]]; then
+                  echo "✅ $container: $container_status"
                   healthy_count=$((healthy_count + 1))
                 else
-                  echo "❌ $container: unhealthy"
+                  echo "❌ $container: $container_status"
                 fi
               done
               
               total_containers=$(echo $containers | wc -w)
               if [ $healthy_count -eq $total_containers ]; then
-                echo "✅ All $total_containers containers are healthy"
+                echo "✅ All $total_containers containers are running"
               else
-                echo "❌ Only $healthy_count/$total_containers containers are healthy"
+                echo "❌ Only $healthy_count/$total_containers containers are running"
+                docker-compose ps $containers || echo "❌ Failed to get container status"
                 exit 1
               fi
               ;;
