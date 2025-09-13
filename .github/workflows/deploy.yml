@@ -76,17 +76,25 @@ jobs:
     - name: 🔍 Detect File Changes
       id: changes
       run: |
-        # Simple change detection (keeping minimal for now)
-        if git diff --name-only HEAD~1 HEAD | grep -E '^backend/|requirements\.txt|Dockerfile' > /dev/null; then
+        # Robust change detection that handles first commit case
+        if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+          # Normal case: compare with previous commit
+          if git diff --name-only HEAD~1 HEAD | grep -E '^backend/|requirements\.txt|Dockerfile' > /dev/null; then
+            echo "backend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if git diff --name-only HEAD~1 HEAD | grep -E '^frontend/|package\.json|package-lock\.json' > /dev/null; then
+            echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_changed=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          # First commit case: assume everything changed for testing
+          echo "🔄 First commit detected - forcing full deployment for testing"
           echo "backend_changed=true" >> $GITHUB_OUTPUT
-        else
-          echo "backend_changed=false" >> $GITHUB_OUTPUT
-        fi
-        
-        if git diff --name-only HEAD~1 HEAD | grep -E '^frontend/|package\.json|package-lock\.json' > /dev/null; then
           echo "frontend_changed=true" >> $GITHUB_OUTPUT
-        else
-          echo "frontend_changed=false" >> $GITHUB_OUTPUT
         fi
     
     - name: 🎯 Determine Deployment Strategy
