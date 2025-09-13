@@ -47,7 +47,8 @@
       "System(*)",
       "Interactive(*)",
       "WebFetch(domain:docs.github.com)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:filter-ical.de)"
     ],
     "deny": [],
     "ask": []

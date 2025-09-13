@@ -8,8 +8,9 @@ Tests for new functionality added in the recent development session:
 import pytest
 from datetime import datetime, date
 from fastapi.testclient import TestClient
-from app.main import app, parse_date_to_string, ical_component_to_event, generate_ical_content
-from app.main import Event
+from app.main import app
+from app.models import Event
+from app.services.events import parse_date_to_string, ical_component_to_event, generate_ical_content
 
 client = TestClient(app)
 
