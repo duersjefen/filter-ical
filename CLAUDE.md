@@ -39,6 +39,195 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 
 ---
 
+## ⚠️ CRITICAL: Functional Programming Architecture - MANDATORY PRINCIPLES
+
+**This project uses Rich Hickey's functional programming philosophy. NEVER deviate from these principles without explicit user approval.**
+
+### 🏗️ CORE ARCHITECTURE PATTERN: "Functional Core, Imperative Shell"
+
+**Backend Structure (Python):**
+```
+app/
+├── data/           # FUNCTIONAL CORE (Pure Functions Only)
+│   ├── calendar.py     # Pure validation & business logic
+│   ├── store.py        # Immutable data transformations
+│   ├── http.py         # Pure HTTP operations
+│   └── filters.py      # Pure filter operations
+├── main.py         # IMPERATIVE SHELL (I/O orchestration)
+└── storage/        # I/O boundary (persistence layer)
+```
+
+**Frontend Structure (Vue 3):**
+```
+src/
+├── composables/    # FUNCTIONAL CORE (Pure Functions)
+│   ├── useCalendarData.js  # Pure validation & transformations
+│   └── useAPI.js           # Pure error handling patterns
+└── stores/         # IMPERATIVE SHELL (State + I/O)
+    └── calendars-functional.js  # I/O orchestration
+```
+
+### ⚠️ MANDATORY FUNCTIONAL PRINCIPLES
+
+**1. PURE FUNCTIONS ONLY in /data/ and /composables/**
+```javascript
+// ✅ CORRECT - Pure function
+export function validateCalendarData(calendar) {
+  return {
+    isValid: !!calendar.name && !!calendar.url,
+    errors: []
+  }
+}
+
+// ❌ WRONG - Side effects in pure function
+export function validateCalendarData(calendar) {
+  console.log("Validating...") // Side effect!
+  api.error.value = "Invalid"  // Mutation!
+  return { isValid: false }
+}
+```
+
+**2. NO CLASSES - Functions Only**
+```python
+# ✅ CORRECT - Pure function approach
+def add_calendar_to_store(store_data, name, url, user_id):
+    new_calendar = CalendarEntry(id=str(uuid.uuid4()), name=name, url=url, user_id=user_id)
+    new_store = {**store_data, "calendars": {**store_data["calendars"], new_calendar.id: new_calendar}}
+    return new_store, new_calendar
+
+# ❌ WRONG - Class with hidden state
+class CalendarService:
+    def __init__(self, store):
+        self.store = store  # Hidden dependency!
+    
+    def add_calendar(self, name, url):
+        # Method with side effects
+```
+
+**3. EXPLICIT DATA FLOW**
+```python
+# ✅ CORRECT - Explicit inputs and outputs
+def create_calendar_workflow(name: str, url: str, user_id: str) -> Dict:
+    # 1. Pure validation
+    is_valid, message = validate_calendar_data(name, url)
+    if not is_valid:
+        return {"success": False, "error": message}
+    
+    # 2. Pure transformation
+    store_data = get_store_data()  # I/O boundary
+    new_store, calendar = add_calendar_to_store(store_data, name, url, user_id)
+    
+    # 3. I/O operation
+    save_store_data(new_store)  # I/O boundary
+    return {"success": True, "calendar": calendar}
+
+# ❌ WRONG - Hidden dependencies and side effects
+def create_calendar(name, url):
+    if not self.validate(name, url):  # Hidden validation
+        raise Exception("Invalid")    # Unclear error handling
+    self.store.add(name, url)        # Hidden mutation
+```
+
+**4. IMMUTABLE DATA TRANSFORMATIONS**
+```javascript
+// ✅ CORRECT - Return new arrays/objects
+export function addCalendarToList(calendars, newCalendar) {
+  return [...calendars, newCalendar]  // New array
+}
+
+export function updateCalendarInList(calendars, updatedCalendar) {
+  return calendars.map(cal => 
+    cal.id === updatedCalendar.id ? {...cal, ...updatedCalendar} : cal
+  )  // New array with new objects
+}
+
+// ❌ WRONG - Mutating existing data
+export function addCalendarToList(calendars, newCalendar) {
+  calendars.push(newCalendar)  // Mutation!
+  return calendars
+}
+```
+
+### 🎯 WHY THESE PRINCIPLES ARE MANDATORY
+
+**Real Benefits Proven in This Project:**
+- **100% Testability**: All business logic testable without mocking
+- **Zero Side Effects**: Same input always produces same output
+- **Predictable Debugging**: Stack traces point directly to problem
+- **Easy Refactoring**: Functions compose without breaking dependencies
+- **Clear Error Boundaries**: I/O failures isolated from business logic
+
+**Consequences of Violating These Principles:**
+- Tests become brittle and require extensive mocking
+- Bugs become harder to reproduce and isolate
+- Code becomes tightly coupled and difficult to modify
+- New features break existing functionality unexpectedly
+- Performance becomes unpredictable due to hidden state
+
+### 🚫 NEVER DO THESE THINGS
+
+**Backend - Forbidden Patterns:**
+- ❌ Creating new classes for business logic
+- ❌ Mixing I/O operations with data transformations
+- ❌ Using mutable global state or singletons
+- ❌ Functions that modify their inputs
+- ❌ Hidden dependencies in function signatures
+
+**Frontend - Forbidden Patterns:**
+- ❌ Mutating props or store state directly in composables
+- ❌ Making HTTP calls inside pure transformation functions
+- ❌ Using `reactive()` or `ref()` inside pure data functions
+- ❌ Console.log or side effects in validation functions
+- ❌ Mixing business logic with Vue lifecycle hooks
+
+### 📚 FUNCTIONAL DEVELOPMENT WORKFLOW
+
+**When Adding New Features:**
+1. **Write Pure Functions First** - All business logic in /data/ or /composables/
+2. **Test Pure Functions** - Unit tests without mocking
+3. **Create I/O Shell** - Orchestrate pure functions in main.py or stores
+4. **Integration Tests** - Test the I/O boundaries
+5. **Never Mix Concerns** - Keep pure functions separate from side effects
+
+**When Debugging:**
+1. **Check Pure Functions First** - Most bugs are data transformation issues
+2. **Isolate I/O Operations** - Network/file errors are separate from business logic
+3. **Trace Data Flow** - Follow explicit function calls, not hidden object state
+4. **Test Transformations** - Verify pure functions with known inputs
+
+### ⚡ PERFORMANCE BENEFITS
+
+**Functional Approach Advantages:**
+- **Predictable Performance**: No hidden object creation or mutation
+- **Easy Optimization**: Pure functions can be memoized safely
+- **Parallel Processing**: Pure functions can run concurrently
+- **Memory Efficiency**: Immutable data can be garbage collected predictably
+
+**Anti-Patterns That Hurt Performance:**
+- Hidden object mutations causing unnecessary re-renders
+- Class hierarchies with implicit state dependencies
+- Side effects in computed properties or reactive functions
+
+### 🔧 ENFORCEMENT GUIDELINES FOR CLAUDE
+
+**When Writing New Code:**
+1. ✅ **Always** start with pure functions in appropriate directories
+2. ✅ **Always** write unit tests for pure functions without mocking
+3. ✅ **Always** separate I/O operations into "shell" layers
+4. ✅ **Always** return new data structures instead of mutating
+5. ✅ **Always** make dependencies explicit in function parameters
+
+**When Reviewing Existing Code:**
+1. 🚫 **Never** accept classes for business logic (unless refactoring legacy)
+2. 🚫 **Never** allow side effects in /data/ or /composables/ directories
+3. 🚫 **Never** permit hidden dependencies or implicit state
+4. 🚫 **Never** allow mutation of function parameters
+5. 🚫 **Never** mix I/O operations with data transformations
+
+**This functional architecture is not optional - it's the foundation of this project's reliability and maintainability.**
+
+---
+
 ## 🛠️ UNIVERSAL TEMPLATE SECTIONS 
 *The following sections apply to ALL projects using this template architecture*
 
