@@ -112,16 +112,16 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
         ECR_REGISTRY: ${{ steps.config.outputs.ecr_registry }}
       run: |
-        echo "🏗️ Building strategy: ${{ steps.strategy.outputs.strategy }}"
-        echo "📦 Containers to update: ${{ steps.strategy.outputs.containers }}"
+        # DIRECT FIX: Hardcode container names to bypass composite action issues
+        CONTAINERS="ical-viewer-backend ical-viewer-frontend"
+        echo "🏗️ Using direct container names: $CONTAINERS"
+        echo "📦 Containers to update: $CONTAINERS"
         
         # Build applications first
-        if [ "${{ steps.strategy.outputs.strategy }}" != "skip" ]; then
-          make ci-build
-        fi
+        make ci-build
         
         # Build and push containers based on strategy
-        for container in ${{ steps.strategy.outputs.containers }}; do
+        for container in $CONTAINERS; do
           if [[ "$container" == *"backend"* ]]; then
             echo "🏗️ Building backend container: $container"
             docker build -t "$ECR_REGISTRY/$container:$IMAGE_TAG" \
@@ -149,10 +149,10 @@ jobs:
       if: steps.strategy.outputs.strategy != 'skip'
       uses: ./.github/actions/execute-remote-docker
       with:
-        containers: ${{ steps.strategy.outputs.containers }}
+        containers: 'ical-viewer-backend ical-viewer-frontend'
         operation: 'deploy'
-        nginx_restart: ${{ steps.strategy.outputs.requires_nginx_restart }}
-        nginx_container: ${{ steps.config.outputs.nginx_container }}
+        nginx_restart: 'true'
+        nginx_container: 'nginx'
     
     - name: 🧪 Validate Deployment Success
       id: validate
