@@ -92,12 +92,23 @@ runs:
         fi
         
         # Generate smart defaults based on project name
+        echo "🔍 Smart defaults check:"
+        echo "   BACKEND_CONTAINER='$BACKEND_CONTAINER' (expecting 'app-backend')"
+        echo "   FRONTEND_CONTAINER='$FRONTEND_CONTAINER' (expecting 'app-frontend')"
+        echo "   PROJECT_NAME='$PROJECT_NAME' (expecting NOT 'app')"
+        
         if [ "$BACKEND_CONTAINER" = "app-backend" ] && [ "$PROJECT_NAME" != "app" ]; then
           BACKEND_CONTAINER="$PROJECT_NAME-backend"
+          echo "   🎯 Generated backend container: $BACKEND_CONTAINER"
+        else
+          echo "   ❌ Backend condition failed: BACKEND='$BACKEND_CONTAINER', PROJECT='$PROJECT_NAME'"
         fi
         
         if [ "$FRONTEND_CONTAINER" = "app-frontend" ] && [ "$PROJECT_NAME" != "app" ]; then
           FRONTEND_CONTAINER="$PROJECT_NAME-frontend"
+          echo "   🎯 Generated frontend container: $FRONTEND_CONTAINER"
+        else
+          echo "   ❌ Frontend condition failed: FRONTEND='$FRONTEND_CONTAINER', PROJECT='$PROJECT_NAME'"
         fi
         
         echo ""
@@ -111,6 +122,10 @@ runs:
         echo ""
         
         # Export all discovered values as outputs
+        echo "🔍 DEBUG: Writing outputs to $GITHUB_OUTPUT"
+        echo "🔍 DEBUG: BACKEND_CONTAINER=$BACKEND_CONTAINER"
+        echo "🔍 DEBUG: FRONTEND_CONTAINER=$FRONTEND_CONTAINER"
+        
         echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
         echo "backend_container=$BACKEND_CONTAINER" >> $GITHUB_OUTPUT
         echo "frontend_container=$FRONTEND_CONTAINER" >> $GITHUB_OUTPUT
@@ -120,3 +135,5 @@ runs:
         echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
         echo "port_backend=$PORT_BACKEND" >> $GITHUB_OUTPUT
         echo "port_frontend=$PORT_FRONTEND" >> $GITHUB_OUTPUT
+        
+        echo "🔍 DEBUG: Outputs written successfully"
