@@ -32,7 +32,6 @@ runs:
   using: 'composite'
   steps:
     - name: 🔍 Discover Project Configuration
-      id: discover
       shell: bash
       run: |
         echo "🔍 Auto-discovering configuration from existing files..."
@@ -133,31 +132,15 @@ runs:
         echo "   ecr_registry: $ECR_REGISTRY"
         echo ""
         
-        # Write to GitHub Actions outputs (composite action format)
-        {
-          echo "project_name=$PROJECT_NAME"
-          echo "backend_container=$BACKEND_CONTAINER"
-          echo "frontend_container=$FRONTEND_CONTAINER"
-          echo "nginx_container=$NGINX_CONTAINER"
-          echo "domain_name=$DOMAIN_NAME"
-          echo "ecr_registry=$ECR_REGISTRY"
-          echo "aws_region=$AWS_REGION"
-          echo "port_backend=$PORT_BACKEND"
-          echo "port_frontend=$PORT_FRONTEND"
-        } >> "$GITHUB_OUTPUT"
+        # Write to GitHub Actions outputs
+        echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+        echo "backend_container=$BACKEND_CONTAINER" >> $GITHUB_OUTPUT
+        echo "frontend_container=$FRONTEND_CONTAINER" >> $GITHUB_OUTPUT
+        echo "nginx_container=$NGINX_CONTAINER" >> $GITHUB_OUTPUT
+        echo "domain_name=$DOMAIN_NAME" >> $GITHUB_OUTPUT
+        echo "ecr_registry=$ECR_REGISTRY" >> $GITHUB_OUTPUT
+        echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
+        echo "port_backend=$PORT_BACKEND" >> $GITHUB_OUTPUT
+        echo "port_frontend=$PORT_FRONTEND" >> $GITHUB_OUTPUT
         
         echo "✅ All outputs written to GitHub Actions successfully"
-    
-    # Map internal step outputs to composite action outputs
-    - name: 📤 Export Composite Action Outputs
-      shell: bash
-      run: |
-        echo "project_name=${{ steps.discover.outputs.project_name }}" >> $GITHUB_OUTPUT
-        echo "backend_container=${{ steps.discover.outputs.backend_container }}" >> $GITHUB_OUTPUT
-        echo "frontend_container=${{ steps.discover.outputs.frontend_container }}" >> $GITHUB_OUTPUT
-        echo "nginx_container=${{ steps.discover.outputs.nginx_container }}" >> $GITHUB_OUTPUT
-        echo "domain_name=${{ steps.discover.outputs.domain_name }}" >> $GITHUB_OUTPUT
-        echo "ecr_registry=${{ steps.discover.outputs.ecr_registry }}" >> $GITHUB_OUTPUT
-        echo "aws_region=${{ steps.discover.outputs.aws_region }}" >> $GITHUB_OUTPUT
-        echo "port_backend=${{ steps.discover.outputs.port_backend }}" >> $GITHUB_OUTPUT
-        echo "port_frontend=${{ steps.discover.outputs.port_frontend }}" >> $GITHUB_OUTPUT
