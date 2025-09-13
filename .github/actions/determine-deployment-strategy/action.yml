@@ -19,17 +19,22 @@ inputs:
 outputs:
   strategy:
     description: 'Deployment strategy (skip|backend-only|frontend-only|full)'
+    value: ${{ steps.calculate.outputs.strategy }}
   containers:
     description: 'Space-separated list of containers to update'
+    value: ${{ steps.calculate.outputs.containers }}
   requires_nginx_restart:
     description: 'Whether nginx restart is required (true/false)'
+    value: ${{ steps.calculate.outputs.requires_nginx_restart }}
   estimated_downtime:
     description: 'Estimated downtime in seconds'
+    value: ${{ steps.calculate.outputs.estimated_downtime }}
 
 runs:
   using: 'composite'
   steps:
     - name: 🎯 Calculate Optimal Deployment Strategy
+      id: calculate
       shell: bash
       run: |
         echo "🎯 Determining optimal deployment strategy..."
