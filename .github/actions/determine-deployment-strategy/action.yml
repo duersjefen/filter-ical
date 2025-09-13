@@ -39,6 +39,20 @@ runs:
         backend_container="${{ inputs.backend_container }}"
         frontend_container="${{ inputs.frontend_container }}"
         
+        # Auto-discover from git if container names are empty
+        echo "🔍 Checking if container auto-discovery is needed..."
+        echo "   backend_container length: ${#backend_container}"
+        echo "   frontend_container length: ${#frontend_container}"
+        if [ -z "$backend_container" ] || [ -z "$frontend_container" ] || [ "$backend_container" = "" ] || [ "$frontend_container" = "" ]; then
+          echo "🔍 Container names empty, auto-discovering from git..."
+          PROJECT_NAME=$(git remote get-url origin 2>/dev/null | sed 's/.*[\\/:]//g' | sed 's/\.git$//' || echo "app")
+          [ -z "$backend_container" ] && backend_container="$PROJECT_NAME-backend"
+          [ -z "$frontend_container" ] && frontend_container="$PROJECT_NAME-frontend"
+          echo "   🎯 Auto-discovered: backend=$backend_container, frontend=$frontend_container"
+        else
+          echo "   ✅ Container names already provided"
+        fi
+        
         echo "🔍 DEBUG: backend_changed=$backend_changed"
         echo "🔍 DEBUG: frontend_changed=$frontend_changed"  
         echo "🔍 DEBUG: backend_container=$backend_container"

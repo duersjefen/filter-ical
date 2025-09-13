@@ -97,14 +97,6 @@ jobs:
           echo "frontend_changed=true" >> $GITHUB_OUTPUT
         fi
     
-    - name: 🐛 Debug Config Outputs Before Strategy
-      run: |
-        echo "🐛 DEBUG: Config outputs before strategy:"
-        echo "   backend_container: '${{ steps.config.outputs.backend_container }}'"
-        echo "   frontend_container: '${{ steps.config.outputs.frontend_container }}'"
-        echo "   backend_changed: '${{ steps.changes.outputs.backend_changed }}'"
-        echo "   frontend_changed: '${{ steps.changes.outputs.frontend_changed }}'"
-    
     - name: 🎯 Determine Deployment Strategy
       id: strategy
       uses: ./.github/actions/determine-deployment-strategy
