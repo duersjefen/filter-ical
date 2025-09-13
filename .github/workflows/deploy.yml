@@ -103,8 +103,8 @@ jobs:
     - name: 📤 Upload Deployment Scripts
       uses: appleboy/scp-action@v0.1.7
       with:
-        host: 56.228.25.95
-        username: ec2-user
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: ".github/scripts/config-driven-deploy.sh,.github/scripts/auto-config.sh"
         target: "/opt/websites/"
@@ -113,8 +113,8 @@ jobs:
     - name: 🚀 Deploy with Configuration-Driven Approach
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: 56.228.25.95
-        username: ec2-user
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /opt/websites

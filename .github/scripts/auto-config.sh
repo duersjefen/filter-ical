@@ -94,7 +94,13 @@ discover_project_config() {
 export_discovered_config() {
     export PROJECT_NAME BACKEND_CONTAINER FRONTEND_CONTAINER NGINX_CONTAINER
     export BACKUP_PREFIX HEALTH_ENDPOINT API_ENDPOINT HEALTH_TIMEOUT
-    export PORT_BACKEND PORT_FRONTEND DOMAIN_NAME ECR_REGISTRY AWS_REGION
+    export PORT_BACKEND PORT_FRONTEND DOMAIN_NAME
+    
+    # Set defaults if not discovered
+    export ECR_REGISTRY="${ECR_REGISTRY:-310829530903.dkr.ecr.eu-north-1.amazonaws.com}"
+    export AWS_REGION="${AWS_REGION:-eu-north-1}"
+    export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-310829530903}"
+    export EC2_HOST="${EC2_HOST:-56.228.25.95}"
 }
 
 # Main function
