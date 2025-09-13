@@ -4,6 +4,22 @@ This file provides **project-specific instructions** for working with the iCal V
 
 ---
 
+## 📋 TABLE OF CONTENTS
+
+**🎯 Project-Specific Sections:**
+- [iCal Viewer Instructions](#-ical-viewer-project-instructions)
+- [Project Architecture](#-project-architecture) 
+- [Production Infrastructure](#-production-infrastructure)
+- [Maintenance & Monitoring](#-maintenance--monitoring)
+
+**🛠️ Universal Template Sections (Apply to All Projects):**
+- [Critical Development Principles](#-critical-development-principles)
+- [GitHub Composite Actions Debugging](#-critical-github-composite-actions-deployment-debugging)
+- [CI/CD Features & Performance](#-automated-cicd-features)
+- [Success Metrics & Validation](#-claude-code-automation-success-metrics)
+
+---
+
 ## 🎯 ICAL VIEWER PROJECT INSTRUCTIONS
 
 This is a **production-ready Python + Vue 3 web application** with comprehensive TDD workflow and language-independent CI/CD.
@@ -20,6 +36,11 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 2. **Add new features** → Write `@pytest.mark.future` tests first (TDD)
 3. **Deploy** → `make deploy` (with real-time monitoring)
 4. **Monitor** → GitHub CLI provides immediate feedback
+
+---
+
+## 🛠️ UNIVERSAL TEMPLATE SECTIONS 
+*The following sections apply to ALL projects using this template architecture*
 
 ### ⚠️ CRITICAL: Testing-First Development Principles
 
@@ -143,6 +164,11 @@ echo "status=success" >> $GITHUB_OUTPUT  # ❌ Inside SSH script
 - **Framework Evolution** - CSP requirements change with framework versions
 - **Parse Output Verification** - Always manually verify command output formats
 
+---
+
+## 🎯 PROJECT-SPECIFIC SECTIONS
+*The following sections are specific to the iCal Viewer project*
+
 ### ⚠️ CRITICAL: Development Server Rules
 **ALWAYS use Makefile commands - NEVER start servers manually:**
 - ✅ **Use:** `make dev`, `make backend`, `make frontend`
@@ -263,9 +289,10 @@ EC2 Instance (56.228.25.95)
 
 ---
 
-## 🔄 AUTOMATED CI/CD FEATURES
+### 🔄 UNIVERSAL CI/CD FEATURES
+*These features work with any programming language and framework*
 
-### Enterprise-Grade Deployment System
+**Enterprise-Grade Deployment System:**
 - **Framework-agnostic validation**: Works with any tech stack (React, Vue, Angular, etc.)
 - **Intelligent change detection**: Only rebuilds changed components, skips unchanged
 - **Automatic rollback**: Failed deployments instantly revert to previous working version
@@ -637,4 +664,19 @@ This CI/CD system has been battle-tested with:
 ---
 
 *Last Updated: September 13, 2025*  
-*Status: Enterprise-grade CI/CD template with automatic rollback and performance optimization*
+*Status: Production-proven CI/CD template with comprehensive debugging methodology*
+
+---
+
+## 📝 ORGANIZATION NOTES
+
+**For New Projects:**
+- Copy universal template sections (🛠️) to new project CLAUDE.md
+- Update project-specific sections (🎯) with new project details
+- All debugging methodology applies universally
+
+**Template Reusability:**
+- GitHub Composite Actions work with any language
+- Debugging methodology applies to all deployment types
+- Environment variable scoping rules are universal
+- Health check patterns work for any containerized service
