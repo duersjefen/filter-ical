@@ -110,7 +110,7 @@ jobs:
         target: "/opt/websites/"
         strip_components: 1
     
-    - name: 🚀 Deploy with Configuration-Driven Approach
+    - name: 🚀 Deploy with Direct Docker-Compose Approach
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -119,15 +119,37 @@ jobs:
         script: |
           cd /opt/websites
           
-          # Make scripts executable
-          chmod +x scripts/*.sh
+          # Source environment configuration
+          if [ -f .env ]; then
+            export $(grep -v '^#' .env | xargs)
+          fi
           
-          # Execute functional deployment (zero hardcoded values)
-          scripts/config-driven-deploy.sh \
-            "." \
-            "production" \
-            "${{ steps.changes.outputs.backend_changed }}" \
-            "${{ steps.changes.outputs.frontend_changed }}"
+          # Set default values for deployment
+          export PROJECT_NAME="ical-viewer"
+          export BACKEND_CONTAINER="ical-viewer-backend"
+          export FRONTEND_CONTAINER="ical-viewer-frontend"
+          export NGINX_CONTAINER="nginx"
+          export ECR_REGISTRY="310829530903.dkr.ecr.eu-north-1.amazonaws.com"
+          
+          echo "🚀 Starting simplified deployment for $PROJECT_NAME"
+          
+          # Pull latest container images
+          docker-compose pull
+          
+          # Stop and remove existing containers
+          docker-compose down
+          
+          # Start containers with new images
+          docker-compose up -d
+          
+          # Wait for containers to be healthy
+          echo "⏳ Waiting for containers to be healthy..."
+          sleep 30
+          
+          # Check container health
+          docker-compose ps
+          
+          echo "✅ Deployment completed!"
     
     
     - name: 📊 Deployment Report
