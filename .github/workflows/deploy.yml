@@ -112,10 +112,25 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
         ECR_REGISTRY: ${{ steps.config.outputs.ecr_registry }}
       run: |
-        # DIRECT FIX: Hardcode container names to bypass composite action issues
-        CONTAINERS="ical-viewer-backend ical-viewer-frontend"
-        echo "🏗️ Using direct container names: $CONTAINERS"
-        echo "📦 Containers to update: $CONTAINERS"
+        # DEBUG: Show ALL composite action outputs to identify the issue
+        echo "🔍 COMPOSITE ACTION DEBUG:"
+        echo "   config.project_name: '${{ steps.config.outputs.project_name }}'"
+        echo "   config.backend_container: '${{ steps.config.outputs.backend_container }}'"
+        echo "   config.frontend_container: '${{ steps.config.outputs.frontend_container }}'"
+        echo "   config.test_output: '${{ steps.config.outputs.test_output }}'"
+        echo "   config.container_list: '${{ steps.config.outputs.container_list }}'"
+        echo "   strategy.containers: '${{ steps.strategy.outputs.containers }}'"
+        
+        # Use composite action outputs if available, fallback to hardcoded
+        if [ -n "${{ steps.config.outputs.backend_container }}" ] && [ -n "${{ steps.config.outputs.frontend_container }}" ]; then
+          CONTAINERS="${{ steps.config.outputs.backend_container }} ${{ steps.config.outputs.frontend_container }}"
+          echo "✅ Using composite action outputs: $CONTAINERS"
+        else
+          CONTAINERS="ical-viewer-backend ical-viewer-frontend"
+          echo "⚠️  Fallback to hardcoded containers: $CONTAINERS"
+        fi
+        
+        echo "🏗️ Final containers to build: $CONTAINERS"
         
         # Build applications first
         make ci-build
@@ -149,7 +164,7 @@ jobs:
       if: steps.strategy.outputs.strategy != 'skip'
       uses: ./.github/actions/execute-remote-docker
       with:
-        containers: 'ical-viewer-backend ical-viewer-frontend'
+        containers: ${{ steps.config.outputs.container_list || 'ical-viewer-backend ical-viewer-frontend' }}
         operation: 'deploy'
         nginx_restart: 'true'
         nginx_container: 'nginx'

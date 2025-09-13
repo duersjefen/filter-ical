@@ -45,7 +45,9 @@
       "SCP(*)",
       "General(*)",
       "System(*)",
-      "Interactive(*)"
+      "Interactive(*)",
+      "WebFetch(domain:docs.github.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
