@@ -51,16 +51,10 @@ runs:
         if [ -z "$backend_container" ] || [ -z "$frontend_container" ] || [ "$backend_container" = "" ] || [ "$frontend_container" = "" ]; then
           echo "🔍 Container names empty, auto-discovering from git..."
           PROJECT_NAME=$(git remote get-url origin 2>/dev/null | sed 's/.*[\\/:]//g' | sed 's/\.git$//' || echo "app")
-          # Map to actual docker-compose service names
-          if [ -z "$backend_container" ]; then
-            if [ "$PROJECT_NAME" = "ical-viewer" ]; then
-              backend_container="ical-viewer"
-            else
-              backend_container="$PROJECT_NAME-backend"
-            fi
-          fi
+          [ -z "$backend_container" ] && backend_container="$PROJECT_NAME-backend"
           [ -z "$frontend_container" ] && frontend_container="$PROJECT_NAME-frontend"
           echo "   🎯 Auto-discovered: backend=$backend_container, frontend=$frontend_container"
+          echo "   📝 Note: These will be dynamically mapped to actual docker-compose services during deployment"
         else
           echo "   ✅ Container names already provided"
         fi

@@ -42,9 +42,40 @@ runs:
         script: |
           cd /opt/websites
           operation="${{ inputs.operation }}"
-          containers="${{ inputs.containers }}"
+          requested_containers="${{ inputs.containers }}"
           
-          echo "🐳 Executing operation: $operation on containers: $containers"
+          echo "🐳 Executing operation: $operation on requested containers: $requested_containers"
+          
+          # Dynamic service name mapping from docker-compose.yml
+          echo "🔍 Mapping requested container names to actual docker-compose services..."
+          actual_containers=""
+          
+          for container in $requested_containers; do
+            # Try to find the actual service name that matches the requested container
+            if docker-compose config --services | grep -q "^${container}$"; then
+              # Exact match found
+              actual_service="$container"
+              echo "   ✅ $container -> $actual_service (exact match)"
+            elif docker-compose config --services | grep -q "^${container%-*}$"; then
+              # Try without the last suffix (e.g., ical-viewer-backend -> ical-viewer)
+              actual_service="${container%-*}"
+              echo "   🎯 $container -> $actual_service (mapped)"
+            elif docker-compose config --services | grep -q "^${container%%-*}$"; then
+              # Try project name only (e.g., ical-viewer-backend -> ical-viewer from ical-viewer-backend)
+              actual_service="${container%%-*}"
+              echo "   🎯 $container -> $actual_service (project name)"
+            else
+              # Fallback: use original name and let docker-compose handle the error
+              actual_service="$container"
+              echo "   ⚠️  $container -> $actual_service (fallback - may not exist)"
+            fi
+            
+            actual_containers="$actual_containers $actual_service"
+          done
+          
+          # Clean up extra spaces
+          containers=$(echo $actual_containers | xargs)
+          echo "🔍 Final mapped containers: $containers"
           
           case "$operation" in
             "deploy")
