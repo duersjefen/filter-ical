@@ -5,31 +5,47 @@
 # When copying to a new project, adapt the language-specific commands below.
 # The universal commands (deploy, clean, etc.) work with any language.
 
-.PHONY: setup dev backend frontend test test-unit test-integration test-future test-all build clean help deploy deploy-force status health
+.PHONY: setup dev backend frontend stop test test-unit test-integration test-future test-all build clean help deploy deploy-force status health
 .DEFAULT_GOAL := help
 
 ## Development Commands (Language-Specific: Python + Vue 3)
 
-setup: ## Setup local development environment
-	@echo "📦 Setting up Python + Vue 3 development environment..."
-	@echo "🐍 Setting up Python backend..."
-	@cd backend && python3 -m venv venv && . venv/bin/activate && pip install -r requirements.txt
-	@echo "🎨 Setting up Vue 3 frontend..."
-	@cd frontend && npm install
+setup: setup-backend setup-frontend ## Setup local development environment
 	@echo "✅ Setup complete! Run 'make dev' to start development."
 
-dev: ## Start full development environment
+dev: ## Start full development environment (kills existing servers first)
 	@echo "🚀 Starting Python + Vue 3 development..."
+	@echo "🔍 Checking for existing processes on ports 3000 and 8000..."
+	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
+	@lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
+	@sleep 1
+	@echo "🆕 Starting fresh development servers..."
 	@echo "Press Ctrl+C to stop both services"
 	@(trap 'kill 0' INT; $(MAKE) backend & $(MAKE) frontend & wait)
 
-backend: ## Start backend development server
+backend: setup-backend ## Start backend development server
 	@echo "🐍 Starting Python FastAPI backend..."
-	@cd backend && . venv/bin/activate && python app/main.py
+	@cd backend && . venv/bin/activate && python -m app.main
 
-frontend: ## Start frontend development server
+setup-backend: ## Setup backend virtual environment and dependencies
+	@echo "🔧 Setting up Python backend..."
+	@cd backend && python3 -m venv venv 2>/dev/null || true
+	@cd backend && . venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+
+frontend: setup-frontend ## Start frontend development server
 	@echo "🎨 Starting Vue 3 frontend..."
 	@cd frontend && npm run dev
+
+setup-frontend: ## Setup frontend dependencies
+	@echo "🔧 Setting up frontend dependencies..."
+	@cd frontend && npm install
+
+stop: ## Stop all development servers
+	@echo "🛑 Stopping development servers..."
+	@pkill -f "python.*app.main" 2>/dev/null && echo "🐍 Backend stopped" || echo "🐍 Backend not running"
+	@pkill -f "vite.*dev" 2>/dev/null && echo "🎨 Frontend stopped" || echo "🎨 Frontend not running"  
+	@pkill -f "npm.*run.*dev" 2>/dev/null || true
+	@echo "✅ All development servers stopped"
 
 ## Testing Commands (TDD Workflow - Universal Pattern)
 
@@ -57,6 +73,14 @@ test-all: ## Run ALL tests (unit + integration + future + E2E)
 test-e2e: ## Run end-to-end tests (catches UI issues)
 	@echo "🎭 Running E2E tests..."
 	@cd frontend && npx playwright test
+
+test-api: setup-backend ## Run OpenAPI contract tests (validates API against spec)
+	@echo "📋 Running OpenAPI contract tests..."
+	@cd backend && . venv/bin/activate && python -m pytest tests/test_api_contract.py -v
+
+test-backend: setup-backend ## Run backend unit tests
+	@echo "🧪 Running backend tests..."
+	@cd backend && . venv/bin/activate && python -m pytest tests/ -v --tb=short
 
 ## Production Commands (Docker-First - Universal)
 

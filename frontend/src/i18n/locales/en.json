@@ -120,7 +120,11 @@
     "name": "Name",
     "url": "URL",
     "actions": "Actions",
-    "deleteConfirmation": "Are you sure you want to delete this calendar?"
+    "deleteConfirmation": "Are you sure you want to delete this calendar?",
+    "deleteCalendar": "Delete Calendar",
+    "deleteCalendarMessage": "Are you sure you want to delete the calendar '{name}'? This action cannot be undone.",
+    "deleteCalendarConfirm": "Delete",
+    "deleteCalendarCancel": "Cancel"
   },
   "login": {
     "subtitle": "Please log in to access your calendars",
@@ -129,5 +133,31 @@
     "usernamePlaceholder": "Enter your username",
     "loggingIn": "Logging in...",
     "loginButton": "Login"
+  },
+  "filteredCalendar": {
+    "title": "Filtered Calendar Links",
+    "description": "Create persistent calendar URLs that automatically update when your source calendar changes",
+    "createNew": "Create Filtered Calendar",
+    "createTitle": "Create New Filtered Calendar",
+    "name": "Calendar Name",
+    "namePlaceholder": "Enter a name for your filtered calendar",
+    "currentFilter": "Current Filter Configuration",
+    "includeMode": "Include Mode",
+    "excludeMode": "Exclude Mode", 
+    "allCategories": "All categories",
+    "noExclusions": "No exclusions",
+    "filterInfo": "This filter will be applied to create your permanent calendar link",
+    "creating": "Creating...",
+    "create": "Create Calendar",
+    "yourFiltered": "Your Filtered Calendars",
+    "created": "Created",
+    "copyUrl": "Copy URL",
+    "preview": "Preview",
+    "urlCopied": "Calendar URL copied to clipboard!",
+    "noFiltered": "No filtered calendars created yet",
+    "getStarted": "Select some categories above and create your first filtered calendar link",
+    "editTitle": "Edit Filtered Calendar",
+    "confirmDelete": "Are you sure you want to delete this filtered calendar? This will make the public URL inaccessible.",
+    "saving": "Saving..."
   }
 }

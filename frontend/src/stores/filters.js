@@ -14,11 +14,10 @@ export const useFiltersStore = defineStore('filters', () => {
   // API composable
   const api = useAPI()
 
-  // User authentication helpers
+  // User authentication helpers - removed anonymous fallback
+  // This store should not be used independently - only through compatibility store
   const getUserHeaders = () => {
-    return {
-      'x-user-id': 'anonymous' // TODO: Implement proper user management
-    }
+    throw new Error('Filters store should not be used directly - use compatibility store with proper user context')
   }
 
   // Actions

@@ -1,0 +1,410 @@
+openapi: 3.0.3
+info:
+  title: iCal Viewer API
+  version: 1.0.0
+  description: REST API for managing iCal calendars with filtering capabilities
+  contact:
+    name: iCal Viewer
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://filter-ical.de
+    description: Production server
+
+security:
+  - UserIdHeader: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: healthCheck
+      tags: [System]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                    example: ical-viewer
+
+  /api/calendars:
+    get:
+      summary: List user calendars
+      operationId: listCalendars
+      tags: [Calendars]
+      responses:
+        '200':
+          description: List of calendars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  calendars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Calendar'
+    post:
+      summary: Add new calendar
+      operationId: addCalendar
+      tags: [Calendars]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url]
+              properties:
+                name:
+                  type: string
+                  example: "My Work Calendar"
+                url:
+                  type: string
+                  format: uri
+                  example: "https://example.com/calendar.ics"
+      responses:
+        '200':
+          description: Calendar added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  calendar:
+                    $ref: '#/components/schemas/Calendar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/calendars/{calendarId}:
+    delete:
+      summary: Delete calendar
+      operationId: deleteCalendar
+      tags: [Calendars]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      responses:
+        '200':
+          description: Calendar deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/calendar/{calendarId}/events:
+    get:
+      summary: Get calendar events
+      operationId: getCalendarEvents
+      tags: [Events]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/calendar/{calendarId}/categories:
+    get:
+      summary: Get event categories with counts
+      operationId: getCalendarCategories
+      tags: [Events]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      responses:
+        '200':
+          description: Categories with event counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    example:
+                      Work: 15
+                      Meeting: 8
+                      Personal: 3
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/calendar/{calendarId}/generate:
+    post:
+      summary: Generate filtered iCal file
+      operationId: generateFilteredCalendar
+      tags: [Filtering]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selected_categories]
+              properties:
+                selected_categories:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Work", "Meeting"]
+                filter_mode:
+                  type: string
+                  enum: [include, exclude]
+                  default: include
+      responses:
+        '200':
+          description: Generated iCal file
+          content:
+            text/calendar:
+              schema:
+                type: string
+                example: |
+                  BEGIN:VCALENDAR
+                  VERSION:2.0
+                  PRODID:-//iCal Viewer//EN
+                  BEGIN:VEVENT
+                  UID:event-123
+                  SUMMARY:Work Meeting
+                  DTSTART:20250913T100000Z
+                  DTEND:20250913T110000Z
+                  END:VEVENT
+                  END:VCALENDAR
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              example: 'attachment; filename="filtered-calendar.ics"'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/filters:
+    get:
+      summary: List saved filters
+      operationId: listFilters
+      tags: [Filters]
+      responses:
+        '200':
+          description: List of saved filters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Filter'
+    post:
+      summary: Create saved filter
+      operationId: createFilter
+      tags: [Filters]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, calendar_id, selected_categories]
+              properties:
+                name:
+                  type: string
+                  example: "Work Events Only"
+                calendar_id:
+                  type: string
+                  format: uuid
+                selected_categories:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Work", "Meeting"]
+      responses:
+        '200':
+          description: Filter created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  filter:
+                    $ref: '#/components/schemas/Filter'
+
+components:
+  securitySchemes:
+    UserIdHeader:
+      type: apiKey
+      in: header
+      name: x-user-id
+      description: User identifier (defaults to 'anonymous')
+
+  parameters:
+    CalendarId:
+      name: calendarId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Calendar identifier
+
+  schemas:
+    Calendar:
+      type: object
+      required: [id, name, url, user_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+        name:
+          type: string
+          example: "My Work Calendar"
+        url:
+          type: string
+          format: uri
+          example: "https://example.com/calendar.ics"
+        user_id:
+          type: string
+          example: "anonymous"
+
+    Event:
+      type: object
+      required: [uid, summary, dtstart]
+      properties:
+        uid:
+          type: string
+          example: "event-123@example.com"
+        summary:
+          type: string
+          example: "Team Meeting"
+        description:
+          type: string
+          example: "Weekly team sync meeting"
+        dtstart:
+          type: string
+          format: date-time
+          example: "2025-09-13T10:00:00Z"
+        dtend:
+          type: string
+          format: date-time
+          example: "2025-09-13T11:00:00Z"
+        location:
+          type: string
+          example: "Conference Room A"
+        categories:
+          type: array
+          items:
+            type: string
+          example: ["Work", "Meeting"]
+        rrule:
+          type: string
+          example: "FREQ=WEEKLY;BYDAY=FR"
+
+    Filter:
+      type: object
+      required: [id, name, calendar_id, selected_categories, user_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "filter-uuid-123"
+        name:
+          type: string
+          example: "Work Events Only"
+        calendar_id:
+          type: string
+          format: uuid
+          example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+        selected_categories:
+          type: array
+          items:
+            type: string
+          example: ["Work", "Meeting"]
+        user_id:
+          type: string
+          example: "anonymous"
+
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          example: "Calendar not found"
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Invalid calendar URL format"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Calendar not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Error fetching events: Connection timeout"
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Calendars
+    description: Calendar management operations
+  - name: Events
+    description: Event data retrieval
+  - name: Filtering
+    description: Event filtering and iCal generation
+  - name: Filters
+    description: Saved filter management

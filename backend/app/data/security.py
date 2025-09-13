@@ -8,6 +8,7 @@ import secrets
 import hashlib
 import hmac
 import time
+import base64
 from datetime import datetime, timedelta
 from typing import Dict, Tuple, Optional, List
 from urllib.parse import quote, unquote
@@ -23,7 +24,7 @@ def generate_public_token() -> str:
     # Generate 16 random bytes (128 bits of entropy)
     random_bytes = secrets.token_bytes(16)
     # Convert to URL-safe base64 (no padding needed for 16 bytes)
-    token = secrets.urlsafe_base64_encode(random_bytes).decode('ascii')
+    token = base64.urlsafe_b64encode(random_bytes).decode('ascii')
     # Remove padding if present (shouldn't be for 16 bytes, but safety first)
     return token.rstrip('=')
 
@@ -165,6 +166,14 @@ def sanitize_ical_content(ical_content: str) -> str:
         elif line.startswith('ORGANIZER'):
             # Remove organizer information for privacy  
             continue
+        elif line.startswith(('UID:', 'SUMMARY:', 'DESCRIPTION:', 'LOCATION:')):
+            # Sanitize fields that may contain sensitive data
+            field, _, value = line.partition(':')
+            sanitized_value = sanitize_calendar_field_value(value)
+            sanitized_lines.append(f"{field}:{sanitized_value}")
+        elif line.startswith(('X-CUSTOM-', 'X-MALWARE', 'X-PRIVATE')):
+            # Remove custom/malicious fields
+            continue
         else:
             sanitized_lines.append(line)
     
@@ -176,8 +185,9 @@ def sanitize_calendar_field_value(value: str) -> str:
     Pure function: Sanitize individual field values
     Returns: Sanitized field value
     """
-    # Remove email addresses
     import re
+    
+    # Remove email addresses
     email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     value = re.sub(email_pattern, '[email-removed]', value)
     
@@ -185,8 +195,8 @@ def sanitize_calendar_field_value(value: str) -> str:
     url_pattern = r'https?://[^\s<>"\']*'
     value = re.sub(url_pattern, '[url-removed]', value)
     
-    # Remove phone numbers
-    phone_pattern = r'[\+]?[1-9]?[0-9]{7,15}'
+    # Remove phone numbers (comprehensive pattern including +1-800-EVIL format)
+    phone_pattern = r'[\+]?[1-9]?[0-9-]{2,}(?:[-.\s]?[A-Z0-9-]{3,})+'
     value = re.sub(phone_pattern, '[phone-removed]', value)
     
     return value

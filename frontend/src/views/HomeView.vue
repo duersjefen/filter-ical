@@ -5,7 +5,7 @@
       subtitle="Easily filter your iCal feeds and create custom subscriptions"
       :user="appStore.user"
       :show-user-info="true"
-      @logout="appStore.logout()"
+      @logout="handleLogout"
     />
 
     <!-- Add Calendar Form -->
@@ -137,14 +137,26 @@
         </div>
       </div>
     </div>
+    
+    <!-- Confirmation Dialog -->
+    <ConfirmDialog
+      ref="confirmDialog"
+      :title="$t('home.deleteCalendar')"
+      :message="$t('home.deleteCalendarMessage', { name: calendarToDelete?.name || '' })"
+      :confirm-text="$t('home.deleteCalendarConfirm')"
+      :cancel-text="$t('home.deleteCalendarCancel')"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>
 
 <script setup>
-import { useAppStore } from '../stores/app'
+import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
 import { useRouter } from 'vue-router'
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, ref } from 'vue'
 import AppHeader from '../components/shared/AppHeader.vue'
+import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import { useDarkMode } from '../composables/useDarkMode'
 
 const appStore = useAppStore()
@@ -153,21 +165,22 @@ const router = useRouter()
 // Initialize dark mode
 const { isDarkMode, toggleDarkMode } = useDarkMode()
 
+// Confirmation dialog refs
+const confirmDialog = ref(null)
+const calendarToDelete = ref(null)
+
 onMounted(() => {
+  console.log('HomeView mounted. User state:', appStore.user)
+  console.log('Is logged in:', appStore.isLoggedIn)
+  
   if (!appStore.isLoggedIn) {
+    console.log('Not logged in, redirecting to login')
     router.push('/login')
     return
   }
+  
+  console.log('User is logged in, fetching calendars')
   appStore.fetchCalendars()
-})
-
-// Watch for navigation changes
-watch(() => appStore.currentView, (newView) => {
-  if (newView === 'calendar') {
-    router.push(`/calendar/${appStore.selectedCalendar?.id}`)
-  } else if (newView === 'login') {
-    router.push('/login')
-  }
 })
 
 const handleAddCalendar = async () => {
@@ -175,12 +188,50 @@ const handleAddCalendar = async () => {
 }
 
 const viewCalendar = async (calendarId) => {
-  await appStore.viewCalendar(calendarId)
+  console.log('viewCalendar called with ID:', calendarId)
+  router.push(`/calendar/${calendarId}`)
 }
 
 const deleteCalendar = async (calendarId) => {
-  if (confirm($t('home.deleteConfirmation'))) {
-    await appStore.deleteCalendar(calendarId)
+  console.log('Delete calendar called with ID:', calendarId)
+  
+  // Find the calendar to show its name in the confirmation
+  const calendar = appStore.calendars.find(c => c.id === calendarId)
+  if (!calendar) {
+    console.error('Calendar not found for deletion')
+    return
   }
+  
+  // Store the calendar for the confirmation dialog
+  calendarToDelete.value = calendar
+  
+  // Open the beautiful confirmation dialog
+  confirmDialog.value?.open()
+}
+
+// Handle confirmation
+const confirmDelete = async () => {
+  if (!calendarToDelete.value) return
+  
+  console.log('User confirmed deletion')
+  try {
+    const result = await appStore.deleteCalendar(calendarToDelete.value.id)
+    console.log('Delete result:', result)
+  } catch (error) {
+    console.error('Error during deletion:', error)
+  } finally {
+    calendarToDelete.value = null
+  }
+}
+
+// Handle cancellation  
+const cancelDelete = () => {
+  console.log('User cancelled deletion')
+  calendarToDelete.value = null
+}
+
+const handleLogout = () => {
+  appStore.logout()
+  router.push('/login')
 }
 </script>

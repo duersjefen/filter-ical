@@ -42,10 +42,14 @@ def ical_component_to_event(component) -> Event:
 
 
 def parse_ical_content(content: str) -> List[Event]:
-    """Parse iCal content and return list of events - original version"""
+    """Parse iCal content and return list of events - with proper error handling"""
+    if not content or not content.strip():
+        raise ValueError("Empty iCal content provided")
+    
     try:
         calendar = Calendar.from_ical(content)
         events = []
+        parse_errors = []
         
         for component in calendar.walk():
             if component.name == "VEVENT":
@@ -53,13 +57,15 @@ def parse_ical_content(content: str) -> List[Event]:
                     event = ical_component_to_event(component)
                     events.append(event)
                 except Exception as e:
-                    print(f"Error parsing event: {e}")
+                    parse_errors.append(f"Event parsing error: {str(e)}")
                     continue
+        
+        if not events and parse_errors:
+            raise ValueError(f"No events could be parsed. Errors: {'; '.join(parse_errors[:3])}")
         
         return events
     except Exception as e:
-        print(f"Error parsing calendar: {e}")
-        return []
+        raise ValueError(f"Calendar parsing failed: {str(e)}")
 
 
 def ical_component_to_event_with_fallback(component) -> Event:

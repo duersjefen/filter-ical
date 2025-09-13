@@ -48,7 +48,9 @@
       "Interactive(*)",
       "WebFetch(domain:docs.github.com)",
       "WebSearch",
-      "WebFetch(domain:filter-ical.de)"
+      "WebFetch(domain:filter-ical.de)",
+      "Read(//home/martijn/.claude-notifications/**)",
+      "Read(//home/martijn/**)"
     ],
     "deny": [],
     "ask": []

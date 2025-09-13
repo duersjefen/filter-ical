@@ -11,7 +11,6 @@
 - [ ] Allow multiple saved filters per calendar with simple UX
 - [ ] Implement proper server setup for real-time filtered iCal serving
 - [ ] Support calendar sharing between users  
-- [ ] Add fuzzy search across event descriptions
 - [x] Multi-language support (English/German)
 - [x] Dark mode toggle
 
@@ -83,5 +82,3 @@
 ---
 
 **🎯 Focus**: Pick ONE item from "Next Priority" and complete it fully before moving to the next. Quality over quantity.
-
-Do you think it makes sense to rigorously Go through our Code to see if we can improve the code quality. We've been adding a lot of features the last days and that sometimes leads to Technical debt and complex interdependencies. Because it's not always easy to have the entire architecture in mind and the goal and the end while adding short term features. Or do you think our architecture and code is so good that we should just continue adding new features?

@@ -6,7 +6,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { useAppStore } from './stores/app'
+import { useCompatibilityStore as useAppStore } from './stores/compatibility'
 import { useDarkMode } from './composables/useDarkMode'
 
 const appStore = useAppStore()

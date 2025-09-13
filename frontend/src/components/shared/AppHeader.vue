@@ -50,7 +50,7 @@
     <!-- User info in header -->
     <div v-if="showUserInfo" class="mt-5 flex justify-center items-center">
       <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30 flex items-center gap-4">
-        <span class="text-sm sm:text-base font-medium">{{ $t('common.welcome', { username: user?.username }) }}</span>
+        <span class="text-sm sm:text-base font-medium">{{ $t('common.welcome', { username: user?.username || user?.id || 'Guest' }) }}</span>
         <div class="w-px h-5 bg-white/30"></div>
         <button @click="$emit('logout')" class="text-white hover:text-white/80 text-sm font-semibold transition-all duration-300 hover:scale-105">
           {{ $t('navigation.logout') }}

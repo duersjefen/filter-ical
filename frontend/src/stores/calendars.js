@@ -19,12 +19,10 @@ export const useCalendarStore = defineStore('calendars', () => {
   // API composable for error handling
   const api = useAPI()
 
-  // User authentication helpers
+  // User authentication helpers - removed anonymous fallback
+  // This store should not be used independently - only through compatibility store
   const getUserHeaders = () => {
-    // This should be imported from a shared auth composable in the future
-    return {
-      'x-user-id': 'anonymous' // TODO: Implement proper user management
-    }
+    throw new Error('Calendar store should not be used directly - use compatibility store with proper user context')
   }
 
   // Actions
@@ -96,6 +94,10 @@ export const useCalendarStore = defineStore('calendars', () => {
     selectedCalendar.value = null
   }
 
+  const clearError = () => {
+    api.clearError()
+  }
+
   return {
     // State
     calendars,
@@ -111,6 +113,7 @@ export const useCalendarStore = defineStore('calendars', () => {
     addCalendar,
     deleteCalendar,
     selectCalendar,
-    clearSelection
+    clearSelection,
+    clearError
   }
 })

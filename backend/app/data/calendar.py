@@ -79,5 +79,6 @@ def calendar_to_dict(calendar: CalendarEntry) -> Dict[str, Any]:
     return {
         "id": calendar.id,
         "name": calendar.name,
-        "url": calendar.url
+        "url": calendar.url,
+        "user_id": calendar.user_id
     }

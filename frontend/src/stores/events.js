@@ -23,11 +23,10 @@ export const useEventsStore = defineStore('events', () => {
   // API composable
   const api = useAPI()
 
-  // User authentication helpers  
+  // User authentication helpers - removed anonymous fallback
+  // This store should not be used independently - only through compatibility store
   const getUserHeaders = () => {
-    return {
-      'x-user-id': 'anonymous' // TODO: Implement proper user management
-    }
+    throw new Error('Events store should not be used directly - use compatibility store with proper user context')
   }
 
   // Computed - Filtered Events
@@ -96,10 +95,11 @@ export const useEventsStore = defineStore('events', () => {
   })
 
   // Actions
-  const loadCalendarEvents = async (calendarId) => {
+  const loadCalendarEvents = async (calendarId, userHeaders = null) => {
+    const headers = userHeaders || getUserHeaders()
     const result = await api.safeExecute(async () => {
       const response = await axios.get(`/api/calendar/${calendarId}/events`, {
-        headers: getUserHeaders()
+        headers
       })
       return response.data.events
     })
@@ -111,10 +111,11 @@ export const useEventsStore = defineStore('events', () => {
     return result
   }
 
-  const loadCalendarCategories = async (calendarId) => {
+  const loadCalendarCategories = async (calendarId, userHeaders = null) => {
+    const headers = userHeaders || getUserHeaders()
     const result = await api.safeExecute(async () => {
       const response = await axios.get(`/api/calendar/${calendarId}/categories`, {
-        headers: getUserHeaders()
+        headers
       })
       return response.data.categories
     })

@@ -139,7 +139,7 @@ def filter_by_keywords(events: List[Event], include: List[str], exclude: List[st
         
         # Check exclude keywords first
         if exclude:
-            exclude_found = any(keyword in searchable_text for keyword in exclude)
+            exclude_found = any(keyword.lower() in searchable_text for keyword in exclude)
             if exclude_found:
                 continue
         
@@ -147,10 +147,10 @@ def filter_by_keywords(events: List[Event], include: List[str], exclude: List[st
         if include:
             if match_all:
                 # All keywords must be present
-                include_match = all(keyword in searchable_text for keyword in include)
+                include_match = all(keyword.lower() in searchable_text for keyword in include)
             else:
                 # At least one keyword must be present
-                include_match = any(keyword in searchable_text for keyword in include)
+                include_match = any(keyword.lower() in searchable_text for keyword in include)
             
             if not include_match:
                 continue
@@ -211,7 +211,7 @@ def filter_by_date_range(events: List[Event], start_date: Optional[str], end_dat
         # Check if event falls within range
         if start_dt and event_start < start_dt:
             continue
-        if end_dt and event_start > end_dt:
+        if end_dt and event_start >= end_dt:
             continue
         
         filtered_events.append(event)

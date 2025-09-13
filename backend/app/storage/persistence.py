@@ -23,7 +23,8 @@ class PersistentStore:
         self._data = self._load() or {
             "calendars": {},
             "events_cache": {},  # calendar_id -> events
-            "filters": {}  # filter_id -> filter data
+            "filters": {},  # filter_id -> filter data
+            "filtered_calendars": {}  # token -> filtered calendar data
         }
     
     def _load(self) -> Optional[Dict]:
@@ -138,5 +139,47 @@ class PersistentStore:
             return False
         
         del self._data["filters"][filter_id]
+        self._save()
+        return True
+    
+    # Filtered calendar operations
+    def add_filtered_calendar(self, token: str, name: str, source_calendar_id: str, 
+                             filter_config: Dict[str, Any], user_id: str, 
+                             filtered_content: str) -> Dict[str, Any]:
+        """Store a filtered calendar"""
+        filtered_calendar_data = {
+            "token": token,
+            "name": name,
+            "source_calendar_id": source_calendar_id,
+            "filter_config": filter_config,
+            "user_id": user_id,
+            "filtered_content": filtered_content,
+            "created_at": str(uuid.uuid4())  # Using uuid as timestamp placeholder
+        }
+        self._data["filtered_calendars"][token] = filtered_calendar_data
+        self._save()
+        return filtered_calendar_data
+    
+    def get_filtered_calendar(self, token: str) -> Optional[Dict[str, Any]]:
+        """Get a filtered calendar by token"""
+        return self._data["filtered_calendars"].get(token)
+    
+    def get_filtered_calendars(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get all filtered calendars for a user"""
+        return [
+            filtered_cal for filtered_cal in self._data["filtered_calendars"].values()
+            if filtered_cal["user_id"] == user_id
+        ]
+    
+    def delete_filtered_calendar(self, token: str, user_id: str) -> bool:
+        """Delete a filtered calendar (with user authorization)"""
+        if token not in self._data["filtered_calendars"]:
+            return False
+        
+        filtered_calendar = self._data["filtered_calendars"][token]
+        if filtered_calendar["user_id"] != user_id:
+            return False
+        
+        del self._data["filtered_calendars"][token]
         self._save()
         return True

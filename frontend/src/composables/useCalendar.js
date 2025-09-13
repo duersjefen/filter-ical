@@ -1,9 +1,13 @@
 import { ref, computed, watch } from 'vue'
-import { useAppStore } from '../stores/app'
+import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
 
-export function useCalendar() {
+export function useCalendar(eventsData = null, categoriesData = null) {
   const appStore = useAppStore()
+  
+  // Use provided data or fall back to store
+  const events = eventsData || computed(() => appStore.events)
+  const categories = categoriesData || computed(() => appStore.categories)
   
   // Reactive state
   const selectedCategories = ref([])
@@ -25,14 +29,35 @@ export function useCalendar() {
     }
   }, { deep: true })
 
+  // Convert categories object to sorted array with events
+  const categoriesSortedByCount = computed(() => {
+    if (!categories.value) return []
+    if (Array.isArray(categories.value)) return categories.value
+    
+    // Convert object to array format and attach events to each category
+    return Object.entries(categories.value).map(([name, count]) => {
+      // Find events for this category
+      const categoryEvents = events.value.filter(event => {
+        const eventCategory = getCategoryForEvent(event)
+        return eventCategory === name
+      })
+      
+      return {
+        name,
+        count,
+        events: categoryEvents
+      }
+    }).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  })
+
   // Computed properties
   const filteredCategories = computed(() => {
     if (!categorySearch.value.trim()) {
-      return appStore.categoriesSortedByCount
+      return categoriesSortedByCount.value
     }
     
     const searchTerm = categorySearch.value.toLowerCase()
-    return appStore.categoriesSortedByCount.filter(category => 
+    return categoriesSortedByCount.value.filter(category => 
       category.name.toLowerCase().includes(searchTerm)
     )
   })
@@ -56,7 +81,7 @@ export function useCalendar() {
   })
 
   const selectedCategoriesCount = computed(() => {
-    return appStore.categoriesSortedByCount
+    return categoriesSortedByCount.value
       .filter(cat => selectedCategories.value.includes(cat.name))
       .reduce((sum, cat) => sum + cat.count, 0)
   })
@@ -65,7 +90,7 @@ export function useCalendar() {
     if (selectedCategories.value.length === 0) return 0
 
     const selectedCategoryNames = new Set(selectedCategories.value)
-    return appStore.events.filter(event => {
+    return events.value.filter(event => {
       const eventCategory = getCategoryForEvent(event)
       const isInSelectedCategory = selectedCategoryNames.has(eventCategory)
       
@@ -79,7 +104,7 @@ export function useCalendar() {
     if (selectedCategories.value.length === 0) return []
 
     const selectedCategoryNames = new Set(selectedCategories.value)
-    return appStore.events.filter(event => {
+    return events.value.filter(event => {
       const eventCategory = getCategoryForEvent(event)
       const isInSelectedCategory = selectedCategoryNames.has(eventCategory)
       
@@ -346,22 +371,26 @@ export function useCalendar() {
 
   async function generateIcalFile() {
     try {
-      const response = await appStore.generateIcal({
+      const result = await appStore.generateIcal({
         calendarId: appStore.selectedCalendar.id,
         selectedCategories: selectedCategories.value,
         filterMode: filterMode.value
       })
       
-      // Create and trigger download
-      const blob = new Blob([response.data], { type: 'text/calendar' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${appStore.selectedCalendar.name}_filtered.ics`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      if (result.success) {
+        // Create and trigger download
+        const blob = new Blob([result.data], { type: 'text/calendar' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${appStore.selectedCalendar.name}_filtered.ics`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      } else {
+        console.error('Error generating iCal:', result.error)
+      }
     } catch (error) {
       console.error('Error generating iCal:', error)
     }

@@ -120,7 +120,11 @@
     "name": "Name",
     "url": "URL",
     "actions": "Aktionen",
-    "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Kalender löschen möchten?"
+    "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Kalender löschen möchten?",
+    "deleteCalendar": "Kalender löschen",
+    "deleteCalendarMessage": "Sind Sie sicher, dass Sie den Kalender '{name}' löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteCalendarConfirm": "Löschen",
+    "deleteCalendarCancel": "Abbrechen"
   },
   "login": {
     "subtitle": "Bitte melden Sie sich an, um auf Ihre Kalender zuzugreifen",
@@ -129,5 +133,31 @@
     "usernamePlaceholder": "Geben Sie Ihren Benutzernamen ein",
     "loggingIn": "Wird angemeldet...",
     "loginButton": "Anmelden"
+  },
+  "filteredCalendar": {
+    "title": "Gefilterte Kalender-Links",
+    "description": "Erstellen Sie dauerhafte Kalender-URLs, die sich automatisch aktualisieren, wenn sich Ihr Quellkalender ändert",
+    "createNew": "Gefilterten Kalender erstellen",
+    "createTitle": "Neuen gefilterten Kalender erstellen",
+    "name": "Kalendername",
+    "namePlaceholder": "Geben Sie einen Namen für Ihren gefilterten Kalender ein",
+    "currentFilter": "Aktuelle Filterkonfiguration",
+    "includeMode": "Einschließen-Modus",
+    "excludeMode": "Ausschließen-Modus",
+    "allCategories": "Alle Kategorien",
+    "noExclusions": "Keine Ausschlüsse",
+    "filterInfo": "Dieser Filter wird angewendet, um Ihren permanenten Kalender-Link zu erstellen",
+    "creating": "Wird erstellt...",
+    "create": "Kalender erstellen",
+    "yourFiltered": "Ihre gefilterten Kalender",
+    "created": "Erstellt",
+    "copyUrl": "URL kopieren",
+    "preview": "Vorschau",
+    "urlCopied": "Kalender-URL in die Zwischenablage kopiert!",
+    "noFiltered": "Noch keine gefilterten Kalender erstellt",
+    "getStarted": "Wählen Sie oben einige Kategorien aus und erstellen Sie Ihren ersten gefilterten Kalender-Link",
+    "editTitle": "Gefilterten Kalender bearbeiten",
+    "confirmDelete": "Sind Sie sicher, dass Sie diesen gefilterten Kalender löschen möchten? Dadurch wird die öffentliche URL unzugänglich.",
+    "saving": "Wird gespeichert..."
   }
 }

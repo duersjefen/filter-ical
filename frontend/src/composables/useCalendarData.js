@@ -199,7 +199,10 @@ export function transformApiError(error) {
  * @param {string} userId - User ID
  * @returns {Object} - Request headers
  */
-export function createApiHeaders(userId = 'anonymous') {
+export function createApiHeaders(userId) {
+  if (!userId) {
+    throw new Error('User ID is required for API calls - authentication needed')
+  }
   return {
     'x-user-id': userId,
     'Content-Type': 'application/json'

@@ -49,17 +49,31 @@ def add_calendar_to_store(store_data: Dict[str, Any], name: str, url: str, user_
 
 def get_calendars_from_store(store_data: Dict[str, Any], user_id: str) -> List[CalendarEntry]:
     """Pure function: extract user's calendars from store data"""
-    return [
-        CalendarEntry(**cal_data) 
-        for cal_data in store_data["calendars"].values()
-        if cal_data["user_id"] == user_id
-    ]
+    result = []
+    for cal_data in store_data["calendars"].values():
+        # Handle both dictionary and CalendarEntry object cases (compatibility)
+        if isinstance(cal_data, dict):
+            if cal_data["user_id"] == user_id:
+                result.append(CalendarEntry(**cal_data))
+        elif hasattr(cal_data, 'user_id'):
+            if cal_data.user_id == user_id:
+                result.append(cal_data)
+    return result
 
 
 def get_calendar_from_store(store_data: Dict[str, Any], calendar_id: str) -> Optional[CalendarEntry]:
     """Pure function: get specific calendar from store data"""
     cal_data = store_data["calendars"].get(calendar_id)
-    return CalendarEntry(**cal_data) if cal_data else None
+    if not cal_data:
+        return None
+    
+    # Handle both dictionary and CalendarEntry object cases (compatibility)
+    if isinstance(cal_data, dict):
+        return CalendarEntry(**cal_data)
+    elif hasattr(cal_data, 'id'):
+        return cal_data
+    else:
+        return None
 
 
 def remove_calendar_from_store(store_data: Dict[str, Any], calendar_id: str, user_id: str) -> Tuple[Dict[str, Any], bool]:

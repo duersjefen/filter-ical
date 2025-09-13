@@ -4,11 +4,13 @@
  * This allows gradual migration of components
  */
 import { defineStore } from 'pinia'
-import { computed } from 'vue'
-import { useAppStore } from './app'
+import { computed, reactive } from 'vue'
+import axios from 'axios'
+import { useAppStore } from './appStore'
 import { useCalendarStore } from './calendars'
 import { useEventsStore } from './events'
 import { useFiltersStore } from './filters'
+import { useAPI } from '../composables/useAPI'
 
 export const useCompatibilityStore = defineStore('compatibility', () => {
   // Get all the new modular stores
@@ -17,31 +19,53 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
   const eventsStore = useEventsStore()
   const filtersStore = useFiltersStore()
 
-  // Bridge the old interface to new stores
+  // API composable for error handling
+  const api = useAPI()
+
+  // Local state for form data (compatibility layer)
+  const loginForm = reactive({
+    username: ''
+  })
+
+  // Bridge the old interface to new stores using computed for reactivity
+  const user = computed({
+    get() { return appStore.user },
+    set(value) { appStore.user = value }
+  })
+
   return {
-    // App state (direct delegation)
-    get currentView() { return appStore.currentView },
-    set currentView(value) { appStore.currentView = value },
+    // App state (reactive delegation) - use computed for reactivity
+    // currentView removed - navigation now handled directly by Vue Router
     
-    get user() { return appStore.user },
-    set user(value) { appStore.user = value },
+    user,
 
-    // Calendar state (direct delegation)
-    get calendars() { return calendarStore.calendars },
-    set calendars(value) { calendarStore.calendars = value },
+    // Form state (compatibility layer)
+    loginForm,
 
-    get selectedCalendar() { return calendarStore.selectedCalendar },
-    set selectedCalendar(value) { calendarStore.selectedCalendar = value },
+    // Calendar state (reactive delegation) 
+    calendars: computed({
+      get() { return calendarStore.calendars },
+      set(value) { calendarStore.calendars = value }
+    }),
+
+    selectedCalendar: computed({
+      get() { return calendarStore.selectedCalendar },
+      set(value) { calendarStore.selectedCalendar = value }
+    }),
 
     get newCalendar() { return calendarStore.newCalendar },
     set newCalendar(value) { calendarStore.newCalendar = value },
 
-    // Events state (direct delegation)
-    get events() { return eventsStore.events },
-    set events(value) { eventsStore.events = value },
+    // Events state (reactive delegation)
+    events: computed({
+      get() { return eventsStore.events },
+      set(value) { eventsStore.events = value }
+    }),
 
-    get categories() { return eventsStore.categories },
-    set categories(value) { eventsStore.categories = value },
+    categories: computed({
+      get() { return eventsStore.categories },
+      set(value) { eventsStore.categories = value }
+    }),
 
     get selectedEventTypes() { return eventsStore.selectedEventTypes },
     set selectedEventTypes(value) { eventsStore.selectedEventTypes = value },
@@ -77,26 +101,85 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
     statistics: computed(() => eventsStore.statistics),
 
     // Actions (delegate to appropriate stores)
-    async login() { return await appStore.login() },
+    async login() { 
+      const username = loginForm.username?.trim()
+      if (!username) {
+        return { success: false, error: 'Please enter a username' }
+      }
+      const result = await appStore.login(username)
+      // Clear the form after successful login
+      if (result) {
+        loginForm.username = ''
+      }
+      return result
+    },
     logout() { appStore.logout() },
 
-    async viewCalendar(calendarId) {
-      const calendar = calendarStore.calendars.find(c => c.id === calendarId)
-      if (!calendar) return
+    // viewCalendar method removed - navigation handled directly by components using router
 
-      calendarStore.selectCalendar(calendar)
-      appStore.setView('calendar')
+    async fetchCalendars() { 
+      // Override calendar store to use proper user headers
+      const result = await api.safeExecute(async () => {
+        const response = await axios.get('/api/calendars', {
+          headers: this.getUserHeaders()
+        })
+        return response.data.calendars
+      })
+
+      if (result.success) {
+        calendarStore.calendars = result.data
+      }
       
-      await eventsStore.loadCalendarEvents(calendarId)
-      await eventsStore.loadCalendarCategories(calendarId)
+      return result
+    },
+    async addCalendar() { 
+      // Override calendar store to use proper user headers  
+      if (!calendarStore.newCalendar.name.trim() || !calendarStore.newCalendar.url.trim()) {
+        return { success: false, error: 'Please provide both calendar name and URL' }
+      }
+
+      const result = await api.safeExecute(async () => {
+        const response = await axios.post('/api/calendars', {
+          name: calendarStore.newCalendar.name,
+          url: calendarStore.newCalendar.url
+        }, {
+          headers: this.getUserHeaders()
+        })
+        return response.data
+      })
+
+      if (result.success) {
+        // Reset form
+        calendarStore.newCalendar.name = ''
+        calendarStore.newCalendar.url = ''
+        
+        // Refresh calendars list
+        await this.fetchCalendars()
+      }
+
+      return result
+    },
+    async deleteCalendar(calendarId) { 
+      console.log('deleteCalendar called for ID:', calendarId)
+      const result = await api.safeExecute(async () => {
+        await axios.delete(`/api/calendars/${calendarId}`, {
+          headers: this.getUserHeaders()
+        })
+      })
+
+      console.log('Delete API result:', result)
+      if (result.success) {
+        console.log('Delete successful, refreshing calendars...')
+        // Refresh calendars list
+        await this.fetchCalendars()
+        console.log('Calendars refreshed, current count:', this.calendars.length)
+      }
+
+      return result
     },
 
-    async fetchCalendars() { return await calendarStore.fetchCalendars() },
-    async addCalendar() { return await calendarStore.addCalendar() },
-    async deleteCalendar(calendarId) { return await calendarStore.deleteCalendar(calendarId) },
-
-    async loadCalendarEvents(calendarId) { return await eventsStore.loadCalendarEvents(calendarId) },
-    async loadCalendarCategories(calendarId) { return await eventsStore.loadCalendarCategories(calendarId) },
+    async loadCalendarEvents(calendarId) { return await eventsStore.loadCalendarEvents(calendarId, this.getUserHeaders()) },
+    async loadCalendarCategories(calendarId) { return await eventsStore.loadCalendarCategories(calendarId, this.getUserHeaders()) },
 
     async fetchFilters() { return await filtersStore.fetchFilters() },
     async saveFilter(name = null) {
@@ -109,14 +192,43 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
       filtersStore.applyFilter(filter, eventsStore)
     },
 
+    // App initialization
+    initializeApp() {
+      return appStore.initializeApp()
+    },
+
+    // navigateHome removed - components should use router.push('/home') directly
+
     // Helper methods
     getUserHeaders() {
-      return { 'x-user-id': appStore.getUserId() }
+      try {
+        return { 'x-user-id': appStore.getUserId() }
+      } catch (error) {
+        // If user not logged in, throw error to force login
+        throw new Error('Authentication required - please log in')
+      }
     },
 
     toggleEventType(eventType) { eventsStore.toggleEventType(eventType) },
     updateStatistics() { /* Now computed automatically */ },
     clearAllFilters() { eventsStore.clearAllFilters() },
-    selectAllEventTypes() { eventsStore.selectAllEventTypes() }
+    selectAllEventTypes() { eventsStore.selectAllEventTypes() },
+    clearError() { calendarStore.clearError() },
+
+    // iCal generation - use correct backend endpoint
+    async generateIcal(config) {
+      const result = await api.safeExecute(async () => {
+        const response = await axios.post(`/api/calendar/${config.calendarId}/generate`, {
+          selected_categories: config.selectedCategories,
+          filter_mode: config.filterMode
+        }, {
+          headers: this.getUserHeaders(),
+          responseType: 'text' // For iCal file content
+        })
+        return response.data
+      })
+
+      return result
+    }
   }
 })

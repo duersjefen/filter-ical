@@ -2,17 +2,25 @@
   <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden dark:bg-gray-900 min-h-screen">
     <HeaderSection 
       :user="appStore.user"
-      :selected-calendar="appStore.selectedCalendar"
-      :error="appStore.error"
-      :loading="appStore.loading"
+      :selected-calendar="selectedCalendar"
+      :error="error"
+      :loading="loading"
       @logout="appStore.logout()"
       @navigate-home="navigateHome"
-      @clear-error="appStore.clearError()"
+      @clear-error="clearError"
     />
 
-    <template v-if="appStore.events.length > 0">
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-6"></div>
+      <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">{{ $t('common.loadingEvents') }}</div>
+      <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">{{ $t('common.pleaseWait') }}</div>
+    </div>
+
+    <!-- Main Content -->
+    <template v-else-if="events.length > 0 && categories && Object.keys(categories).length > 0">
       <CategoryCardsSection
-        :categories="appStore.categories"
+        :categories="mainCategories"
         :main-categories="mainCategories"
         :single-categories="singleEventCategories"
         :selected-categories="selectedCategories"
@@ -76,6 +84,14 @@
         </div>
       </div>
 
+      <!-- Filtered Calendar Section -->
+      <FilteredCalendarSection
+        v-if="selectedCategories.length > 0"
+        :selected-calendar="selectedCalendar"
+        :selected-categories="selectedCategories"
+        :filter-mode="filterMode"
+      />
+
       <PreviewEventsSection
         :selected-categories="selectedCategories"
         :sorted-preview-events="sortedPreviewEvents"
@@ -88,7 +104,7 @@
       />
 
       <!-- Categories not loaded fallback -->
-      <div v-if="appStore.categories.length === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
+      <div v-if="Object.keys(categories).length === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
         <div class="text-6xl mb-4">📂</div>
         <p class="text-amber-800 dark:text-amber-200 mb-3 font-semibold text-lg">
           {{ $t('calendar.loadingCategoriesOrNotFound') }}
@@ -99,7 +115,8 @@
       </div>
     </template>
 
-    <div v-else-if="!appStore.loading" class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
+    <!-- No Events Found -->
+    <div v-else-if="!loading" class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
       <div class="text-6xl mb-4">📅</div>
       <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">{{ $t('calendar.noEventsFound') }}</h3>
       <p class="text-red-700 dark:text-red-300 mb-6 font-medium">{{ $t('calendar.noEventsFoundDescription') }}</p>
@@ -111,23 +128,33 @@
 </template>
 
 <script setup>
-import { useAppStore } from '../stores/app'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { onMounted, watch } from 'vue'
+import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
+import { useAPI } from '../composables/useAPI'
 import { useCalendar } from '../composables/useCalendar'
+import axios from 'axios'
 import {
   HeaderSection,
   CategoryCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
+import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 
 const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
+const api = useAPI()
 
-// Use calendar composable for all calendar-related functionality
+// Local reactive data - much simpler than store delegation
+const loading = ref(false)
+const error = ref(null)
+const events = ref([])
+const categories = ref({})
+const selectedCalendar = ref(null)
+
+// Use calendar composable with local data
 const {
-  // State
   selectedCategories,
   expandedCategories,
   showSingleEvents,
@@ -136,19 +163,11 @@ const {
   categorySearch,
   filterMode,
   previewGroup,
-  previewOrder,
-  previewLimit,
-  
-  // Computed
   mainCategories,
   singleEventCategories,
-  unifiedCategories,
   selectedCategoriesCount,
-  selectedEventsCount,
   sortedPreviewEvents,
   groupedPreviewEvents,
-  
-  // Methods
   getCategoryForEvent,
   formatDateTime,
   formatDateRange,
@@ -159,42 +178,93 @@ const {
   selectAllSingleEvents,
   clearAllSingleEvents,
   switchFilterMode,
-  togglePreviewOrder,
   generateIcalFile
-} = useCalendar()
+} = useCalendar(events, categories)
 
 const props = defineProps(['id'])
 
+// Simple, direct data loading
+const loadCalendarData = async (calendarId) => {
+  console.log('Loading calendar data for:', calendarId)
+  loading.value = true
+  error.value = null
+  
+  try {
+    const userHeaders = appStore.getUserHeaders()
+    
+    // Load calendar info
+    if (appStore.calendars.length === 0) {
+      await appStore.fetchCalendars()
+    }
+    
+    const calendar = appStore.calendars.find(c => c.id === calendarId)
+    if (calendar) {
+      selectedCalendar.value = calendar
+    }
+    
+    // Load events and categories directly
+    const [eventsResult, categoriesResult] = await Promise.all([
+      api.safeExecute(async () => {
+        const response = await axios.get(`/api/calendar/${calendarId}/events`, { headers: userHeaders })
+        return response.data.events
+      }),
+      api.safeExecute(async () => {
+        const response = await axios.get(`/api/calendar/${calendarId}/categories`, { headers: userHeaders })
+        return response.data.categories
+      })
+    ])
+    
+    if (eventsResult.success) {
+      // Backend returns {events: [...]} - extract the events array
+      events.value = eventsResult.data.events || eventsResult.data
+      console.log('Loaded events:', events.value.length)
+    }
+    
+    if (categoriesResult.success) {
+      // Backend returns {categories: {...}} - extract the categories object
+      categories.value = categoriesResult.data.categories || categoriesResult.data
+      console.log('Loaded categories:', Object.keys(categories.value).length)
+    }
+    
+  } catch (err) {
+    console.error('Error loading calendar data:', err)
+    error.value = 'Failed to load calendar data'
+  } finally {
+    loading.value = false
+  }
+}
+
+const clearError = () => {
+  error.value = null
+}
+
+const navigateHome = () => {
+  router.push('/home')
+}
+
 onMounted(async () => {
+  console.log('Simple CalendarView mounted')
+  console.log('User state:', appStore.user)
+  console.log('Is logged in:', appStore.isLoggedIn)
+  
+  // Initialize app state first (handles saved login)
+  await appStore.initializeApp()
+  console.log('After init - User state:', appStore.user)
+  console.log('After init - Is logged in:', appStore.isLoggedIn)
+  
   if (!appStore.isLoggedIn) {
+    console.log('Not logged in, redirecting to login')
     router.push('/login')
     return
   }
 
   const calendarId = props.id || route.params.id
+  console.log('Calendar ID from route:', calendarId)
+  
   if (calendarId) {
-    // If we don't have calendars loaded, load them first
-    if (appStore.calendars.length === 0) {
-      await appStore.fetchCalendars()
-    }
-    await appStore.viewCalendar(calendarId)
-    // Load saved filters for this user
-    await appStore.fetchFilters()
+    await loadCalendarData(calendarId)
   }
 })
 
-// Watch for navigation
-watch(() => appStore.currentView, (newView) => {
-  if (newView === 'home') {
-    router.push('/home')
-  } else if (newView === 'login') {
-    router.push('/login')
-  }
-})
-
-// Navigation helper
-const navigateHome = () => {
-  appStore.navigateHome()
-}
+// No watchers needed - direct navigation only
 </script>
-

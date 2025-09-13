@@ -42,10 +42,18 @@ export function useAPI() {
     }
   }
 
+  /**
+   * Clear the current error state
+   */
+  const clearError = () => {
+    error.value = null
+  }
+
   return {
     loading,
     error,
     execute,
-    safeExecute
+    safeExecute,
+    clearError
   }
 }

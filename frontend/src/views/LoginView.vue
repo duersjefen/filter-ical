@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { useAppStore } from '../stores/app'
+import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
 import { useRouter } from 'vue-router'
 import { watch, onMounted } from 'vue'
 import AppHeader from '../components/shared/AppHeader.vue'
@@ -52,9 +52,9 @@ const router = useRouter()
 const { isDarkMode, toggleDarkMode } = useDarkMode()
 
 const handleLogin = async () => {
-  await appStore.login()
+  const result = await appStore.login()
   // Explicitly redirect after successful login
-  if (appStore.isLoggedIn) {
+  if (result && appStore.isLoggedIn) {
     router.push('/home')
   }
 }
