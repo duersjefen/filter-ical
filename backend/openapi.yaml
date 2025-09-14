@@ -113,6 +113,57 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/calendars/{calendarId}/preferences:
+    get:
+      summary: Get user preferences for specific calendar
+      operationId: getCalendarPreferences
+      tags: [User Preferences]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      responses:
+        '200':
+          description: Calendar preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  preferences:
+                    $ref: '#/components/schemas/UserPreferences'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update user preferences for specific calendar
+      operationId: updateCalendarPreferences
+      tags: [User Preferences]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Preferences saved successfully"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /api/calendar/{calendarId}/events:
     get:
       summary: Get calendar events
@@ -266,6 +317,186 @@ paths:
                   filter:
                     $ref: '#/components/schemas/Filter'
 
+  /api/filtered-calendars:
+    get:
+      summary: List user's filtered calendars
+      operationId: listFilteredCalendars
+      tags: [Filtered Calendars]
+      responses:
+        '200':
+          description: List of filtered calendars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filtered_calendars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FilteredCalendar'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Create new filtered calendar
+      operationId: createFilteredCalendar
+      tags: [Filtered Calendars]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_calendar_id, name, filter_config]
+              properties:
+                source_calendar_id:
+                  type: string
+                  format: uuid
+                  example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+                name:
+                  type: string
+                  example: "Work Events Only"
+                filter_config:
+                  $ref: '#/components/schemas/FilterConfiguration'
+      responses:
+        '200':
+          description: Filtered calendar created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  filtered_calendar:
+                    $ref: '#/components/schemas/FilteredCalendar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/filtered-calendars/{filteredCalendarId}:
+    put:
+      summary: Update filtered calendar
+      operationId: updateFilteredCalendar
+      tags: [Filtered Calendars]
+      parameters:
+        - name: filteredCalendarId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Filtered calendar identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Work Events"
+      responses:
+        '200':
+          description: Filtered calendar updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete filtered calendar
+      operationId: deleteFilteredCalendar
+      tags: [Filtered Calendars]
+      parameters:
+        - name: filteredCalendarId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Filtered calendar identifier
+      responses:
+        '200':
+          description: Filtered calendar deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cal/{token}.ics:
+    get:
+      summary: Get filtered iCal file by public token
+      operationId: getFilteredICalFile
+      tags: [Public Access]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public access token
+      responses:
+        '200':
+          description: Filtered iCal file
+          content:
+            text/calendar:
+              schema:
+                type: string
+                example: |
+                  BEGIN:VCALENDAR
+                  VERSION:2.0
+                  PRODID:-//iCal Viewer//EN
+                  BEGIN:VEVENT
+                  UID:event-123
+                  SUMMARY:Work Meeting
+                  DTSTART:20250913T100000Z
+                  DTEND:20250913T110000Z
+                  END:VEVENT
+                  END:VCALENDAR
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cal/{token}:
+    get:
+      summary: Preview filtered calendar by public token
+      operationId: previewFilteredCalendar
+      tags: [Public Access]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public access token
+      responses:
+        '200':
+          description: Filtered calendar preview (HTML)
+          content:
+            text/html:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   securitySchemes:
     UserIdHeader:
@@ -361,6 +592,158 @@ components:
           type: string
           example: "anonymous"
 
+    UserPreferences:
+      type: object
+      description: User preferences for calendar filtering
+      properties:
+        selected_categories:
+          type: array
+          items:
+            type: string
+          description: Categories selected by user
+          example: ["Work", "Meeting"]
+        filter_mode:
+          type: string
+          enum: [include, exclude]
+          description: Filter mode (include or exclude selected categories)
+          example: "include"
+        saved_at:
+          type: string
+          format: date-time
+          description: When preferences were saved
+          example: "2025-09-13T10:30:00Z"
+
+    FilterConfiguration:
+      type: object
+      description: Advanced filter configuration for filtered calendars
+      properties:
+        include_categories:
+          type: array
+          items:
+            type: string
+          description: Categories to include
+          example: ["Work", "Meeting"]
+        exclude_categories:
+          type: array
+          items:
+            type: string
+          description: Categories to exclude
+          example: ["Personal"]
+        include_keywords:
+          type: array
+          items:
+            type: string
+          description: Keywords to include in summary/description
+          example: ["urgent", "important"]
+        exclude_keywords:
+          type: array
+          items:
+            type: string
+          description: Keywords to exclude from summary/description
+          example: ["cancelled", "optional"]
+        date_range_start:
+          type: string
+          format: date
+          description: Start date for filtering (optional)
+          example: "2025-09-01"
+        date_range_end:
+          type: string
+          format: date
+          description: End date for filtering (optional)
+          example: "2025-12-31"
+        date_range_type:
+          type: string
+          enum: [absolute, relative, rolling]
+          default: absolute
+          description: Type of date range filtering
+        location_filter:
+          type: string
+          description: Filter by location (contains match)
+          example: "Office"
+        attendee_filter:
+          type: string
+          description: Filter by attendee (contains match)
+          example: "john@example.com"
+        organizer_filter:
+          type: string
+          description: Filter by organizer (contains match)
+          example: "admin@company.com"
+        min_duration_minutes:
+          type: integer
+          description: Minimum event duration in minutes
+          example: 30
+        max_duration_minutes:
+          type: integer
+          description: Maximum event duration in minutes
+          example: 480
+        filter_mode:
+          type: string
+          enum: [include, exclude]
+          default: include
+          description: Overall filter mode
+        match_all:
+          type: boolean
+          default: false
+          description: Whether to match all criteria (AND) or any (OR)
+
+    FilteredCalendar:
+      type: object
+      required: [id, name, source_calendar_id, public_token, user_id, created_at]
+      description: A filtered calendar with public access
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Filtered calendar identifier
+          example: "filtered-123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: User-friendly name for filtered calendar
+          example: "Work Events Only"
+        source_calendar_id:
+          type: string
+          format: uuid
+          description: Reference to source calendar
+          example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+        filter_config:
+          $ref: '#/components/schemas/FilterConfiguration'
+        public_token:
+          type: string
+          description: Public access token for sharing
+          example: "abc123def456"
+        calendar_url:
+          type: string
+          format: uri
+          description: Public iCal URL
+          example: "https://filter-ical.de/cal/abc123def456.ics"
+        preview_url:
+          type: string
+          format: uri
+          description: Public preview URL
+          example: "https://filter-ical.de/cal/abc123def456"
+        user_id:
+          type: string
+          description: Owner of the filtered calendar
+          example: "anonymous"
+        created_at:
+          type: string
+          format: date-time
+          description: When filtered calendar was created
+          example: "2025-09-13T10:00:00Z"
+        last_accessed:
+          type: string
+          format: date-time
+          description: Last access timestamp
+          example: "2025-09-13T15:30:00Z"
+        access_count:
+          type: integer
+          description: Number of times accessed
+          example: 42
+        is_active:
+          type: boolean
+          description: Whether the filtered calendar is active
+          example: true
+
     Error:
       type: object
       required: [detail]
@@ -408,3 +791,9 @@ tags:
     description: Event filtering and iCal generation
   - name: Filters
     description: Saved filter management
+  - name: User Preferences
+    description: Calendar-specific user preferences stored in SQLite
+  - name: Filtered Calendars
+    description: Advanced filtered calendar management with public sharing
+  - name: Public Access
+    description: Public access to filtered calendars via tokens

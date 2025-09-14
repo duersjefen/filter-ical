@@ -17,8 +17,8 @@
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>
-        <!-- Chevron icon (consistent with CategoryCardsSection) -->
-        <div class="flex items-center justify-center w-8 h-8">
+        <!-- Chevron icon with background circle (consistent with CategoryCardsSection) -->
+        <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 pointer-events-none">
           <svg 
             class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
             :class="{ 'rotate-180': isExpanded }"
@@ -27,7 +27,7 @@
           >
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
-        </div>
+        </button>
       </div>
     </div>
 
