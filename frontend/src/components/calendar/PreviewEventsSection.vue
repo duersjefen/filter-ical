@@ -22,14 +22,14 @@
             </svg>
           </button>
         </div>
-        <p class="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">{{ $t('preview.eventsSelected', { count: sortedPreviewEvents.length }) }}</p>
+        <p class="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">{{ $t(`preview.${eventCountInfo.mobileMessage}`, { count: eventCountInfo.count }) }}</p>
       </div>
 
       <!-- Desktop Layout -->
       <div class="hidden sm:flex items-center justify-between">
         <div class="flex-1">
           <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">🔍 {{ $t('preview.eventPreview') }}</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('preview.eventsFromSelection', { count: sortedPreviewEvents.length }) }}</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t(`preview.${eventCountInfo.desktopMessage}`, { count: eventCountInfo.count }) }}</p>
         </div>
         <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 ml-4">
           <svg 
@@ -208,7 +208,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
   selectedCategories: { type: Array, default: () => [] },
@@ -216,6 +216,8 @@ const props = defineProps({
   previewGroup: { type: String, default: 'none' },
   previewOrder: { type: String, default: 'asc' },
   groupedPreviewEvents: { type: Array, default: () => [] },
+  filterMode: { type: String, default: 'include' },
+  allEvents: { type: Array, default: () => [] },
   formatDateTime: { type: Function, required: true },
   formatDateRange: { type: Function, required: true },
   getCategoryForEvent: { type: Function, required: true }
@@ -244,4 +246,24 @@ const toggleGroupExpansion = (groupName) => {
     expandedGroups.value.add(groupName)
   }
 }
+
+// Compute correct event count and message based on filter mode
+const eventCountInfo = computed(() => {
+  if (props.filterMode === 'include') {
+    // Include mode: show selected events (they will be included)
+    return {
+      count: props.sortedPreviewEvents.length,
+      mobileMessage: 'eventsSelected',
+      desktopMessage: 'eventsFromSelection'
+    }
+  } else {
+    // Exclude mode: still show the preview events (events that will be included after exclusion)
+    // The sortedPreviewEvents already contains the correct filtered events to show
+    return {
+      count: props.sortedPreviewEvents.length,
+      mobileMessage: 'eventsIncluded', 
+      desktopMessage: 'eventsWillBeIncluded'
+    }
+  }
+})
 </script>

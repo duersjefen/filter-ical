@@ -4,7 +4,6 @@
       :user="appStore.user"
       :selected-calendar="selectedCalendar"
       :error="error"
-      :loading="loading"
       @logout="appStore.logout()"
       @navigate-home="navigateHome"
       @clear-error="clearError"
@@ -45,51 +44,15 @@
         @switch-filter-mode="switchFilterMode"
       />
 
-      <!-- Download Action Section -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
-        <div class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">📥 {{ $t('calendar.downloadYourSelection') }}</h3>
-            
-            <!-- When no categories selected -->
-            <div v-if="selectedCategories.length === 0" class="py-4 text-center">
-              <div class="text-4xl mb-3">👆</div>
-              <p class="text-gray-600 dark:text-gray-300 mb-4">{{ $t('calendar.selectSomeCategoriesAbove') }}</p>
-              <button 
-                class="px-8 py-3.5 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded-xl font-semibold cursor-not-allowed"
-                disabled
-              >
-                💾 {{ $t('calendar.selectCategoriesFirst') }}
-              </button>
-            </div>
-
-            <!-- When categories are selected -->
-            <div v-else class="py-2">
-              <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                {{ $t('calendar.readyToDownload', { 
-                  eventText: $t('calendar.eventCount', { count: selectedCategoriesCount }, selectedCategoriesCount),
-                  categoryText: $t('calendar.categoryCount', { count: selectedCategories.length }, selectedCategories.length)
-                }) }}
-              </p>
-              <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button 
-                  @click="generateIcalFile"
-                  class="w-full sm:w-auto px-8 py-3 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg min-w-[200px]"
-                >
-                  💾 {{ $t('calendar.downloadIcalFile') }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Filtered Calendar Section -->
+      <!-- Always show if categories selected OR if existing filtered calendars exist -->
       <FilteredCalendarSection
-        v-if="selectedCategories.length > 0"
         :selected-calendar="selectedCalendar"
         :selected-categories="selectedCategories"
         :filter-mode="filterMode"
+        :main-categories="mainCategories"
+        :single-event-categories="singleEventCategories"
       />
 
       <PreviewEventsSection
@@ -97,6 +60,8 @@
         :sorted-preview-events="sortedPreviewEvents"
         :preview-group="previewGroup"
         :grouped-preview-events="groupedPreviewEvents"
+        :filter-mode="filterMode"
+        :all-events="events"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
         :getCategoryForEvent="getCategoryForEvent"
@@ -177,8 +142,7 @@ const {
   clearAllCategories,
   selectAllSingleEvents,
   clearAllSingleEvents,
-  switchFilterMode,
-  generateIcalFile
+  switchFilterMode
 } = useCalendar(events, categories)
 
 const props = defineProps(['id'])

@@ -1,5 +1,8 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+  <div 
+    v-if="shouldShowSection" 
+    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6"
+  >
     <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
       <div class="flex items-center justify-between">
         <div>
@@ -10,20 +13,13 @@
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>
-        <button
-          v-if="!showCreateForm"
-          @click="startCreateForm"
-          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          :disabled="selectedCategories.length === 0"
-        >
-          ➕ {{ $t('filteredCalendar.createNew') }}
-        </button>
+        <!-- Auto-show form when categories selected, no button needed -->
       </div>
     </div>
 
     <div class="p-4 sm:p-6">
-      <!-- Create Form -->
-      <div v-if="showCreateForm" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+      <!-- Create Form - Auto-show when categories selected -->
+      <div v-if="selectedCategories.length > 0" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
         <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">
           {{ $t('filteredCalendar.createTitle') }}
         </h4>
@@ -49,11 +45,11 @@
             <div class="text-sm text-gray-600 dark:text-gray-400">
               <div v-if="filterMode === 'include'" class="mb-1">
                 ✅ <strong>{{ $t('filteredCalendar.includeMode') }}</strong>: 
-                {{ selectedCategories.join(', ') || $t('filteredCalendar.allCategories') }}
+                {{ getSmartCategoryDisplay(selectedCategories) || $t('filteredCalendar.allCategories') }}
               </div>
               <div v-else class="mb-1">
                 ❌ <strong>{{ $t('filteredCalendar.excludeMode') }}</strong>: 
-                {{ selectedCategories.join(', ') || $t('filteredCalendar.noExclusions') }}
+                {{ getSmartCategoryDisplay(selectedCategories) || $t('filteredCalendar.noExclusions') }}
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-500">
                 {{ $t('filteredCalendar.filterInfo') }}
@@ -61,20 +57,13 @@
             </div>
           </div>
 
-          <div class="flex gap-2">
+          <div>
             <button
               type="submit"
               :disabled="!createForm.name.trim() || creating"
               class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               {{ creating ? $t('filteredCalendar.creating') : $t('filteredCalendar.create') }}
-            </button>
-            <button
-              type="button"
-              @click="cancelCreateForm"
-              class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              {{ $t('common.cancel') }}
             </button>
           </div>
         </form>
@@ -94,31 +83,90 @@
           >
             <div class="flex items-start justify-between">
               <div class="flex-1">
-                <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-1">
-                  {{ calendar.name }}
-                </h5>
+                <div class="flex items-center gap-2 mb-1">
+                  <h5 class="font-medium text-gray-800 dark:text-gray-200">
+                    {{ calendar.name }}
+                  </h5>
+                  <button
+                    @click="startEditForm(calendar)"
+                    class="inline-flex items-center p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded transition-colors"
+                    :title="t('common.edit')"
+                  >
+                    ✏️
+                  </button>
+                </div>
                 
                 <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   <div class="mb-1">
                     📅 {{ $t('filteredCalendar.created') }}: {{ formatDateTime(calendar.created_at) }}
                   </div>
-                  <div v-if="calendar.filter_config" class="flex flex-wrap gap-1">
-                    <span
-                      v-for="category in getFilterCategories(calendar.filter_config)"
-                      :key="category"
-                      class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
-                    >
-                      {{ category }}
-                    </span>
+                  
+                  <!-- Filter Logic Summary -->
+                  <div v-if="calendar.filter_config" class="bg-gray-100 dark:bg-gray-600 rounded-lg p-3 mb-2">
+                    <div class="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                      🔍 {{ $t('filteredCalendar.filterLogic') }}:
+                    </div>
+                    
+                    <!-- Include Mode Display -->
+                    <div v-if="hasIncludeCategories(calendar.filter_config)" class="mb-2">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs font-medium">
+                          ✅ {{ $t('filteredCalendar.includeOnly') }}
+                        </span>
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                          {{ getIncludeCategoriesCount(calendar.filter_config) }} {{ $t('filteredCalendar.categories') }}
+                        </span>
+                      </div>
+                      <div class="text-xs text-gray-700 dark:text-gray-300">
+                        {{ getSmartCategoryDisplay(getIncludeCategories(calendar.filter_config)) }}
+                      </div>
+                    </div>
+                    
+                    <!-- Exclude Mode Display -->
+                    <div v-else-if="hasExcludeCategories(calendar.filter_config)" class="mb-2">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-2 py-1 rounded text-xs font-medium">
+                          ❌ {{ $t('filteredCalendar.excludeOnly') }}
+                        </span>
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                          {{ getExcludeCategoriesCount(calendar.filter_config) }} {{ $t('filteredCalendar.categories') }}
+                        </span>
+                      </div>
+                      <div class="text-xs text-gray-700 dark:text-gray-300">
+                        {{ getSmartCategoryDisplay(getExcludeCategories(calendar.filter_config)) }}
+                      </div>
+                    </div>
+                    
+                    <!-- No Category Filter Display -->
+                    <div v-else class="mb-2">
+                      <span class="bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-2 py-1 rounded text-xs font-medium">
+                        📋 No category filter applied
+                      </span>
+                      <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        This calendar contains the original events
+                      </div>
+                    </div>
+                    
+                    <!-- Additional Filter Info -->
+                    <div v-if="calendar.filter_config.filter_mode" class="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-500 pt-2 mt-2">
+                      {{ $t('filteredCalendar.mode') }}: {{ calendar.filter_config.filter_mode === 'include' ? $t('filteredCalendar.includeMode') : $t('filteredCalendar.excludeMode') }}
+                    </div>
                   </div>
                 </div>
 
                 <div class="flex flex-wrap gap-2 text-xs">
                   <button
                     @click="copyToClipboard(calendar.calendar_url)"
-                    class="inline-flex items-center px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                    class="inline-flex items-center px-2 py-1 rounded transition-colors"
+                    :class="copySuccess === calendar.calendar_url 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'"
                   >
-                    📋 {{ $t('filteredCalendar.copyUrl') }}
+                    <span v-if="copySuccess === calendar.calendar_url">✅</span>
+                    <span v-else>📋</span>
+                    {{ copySuccess === calendar.calendar_url 
+                      ? $t('filteredCalendar.copied') 
+                      : $t('filteredCalendar.copyUrl') }}
                   </button>
                   
                   <a
@@ -128,13 +176,6 @@
                   >
                     👁️ {{ $t('filteredCalendar.preview') }}
                   </a>
-                  
-                  <button
-                    @click="startEditForm(calendar)"
-                    class="inline-flex items-center px-2 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors"
-                  >
-                    ✏️ {{ $t('common.edit') }}
-                  </button>
                   
                   <button
                     @click="deleteFilteredCalendar(calendar.id)"
@@ -150,8 +191,8 @@
         </div>
       </div>
 
-      <!-- Empty state -->
-      <div v-else-if="!showCreateForm" class="text-center py-6">
+      <!-- Empty state - only show if no existing calendars and no categories selected -->
+      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedCategories.length === 0" class="text-center py-6">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
           {{ $t('filteredCalendar.noFiltered') }}
@@ -161,10 +202,10 @@
         </p>
       </div>
 
-      <!-- Loading state -->
-      <div v-if="loading" class="text-center py-4">
+      <!-- Loading state - only show if not creating/updating (avoid double loading indicators) -->
+      <div v-if="loading && !creating && !updating" class="text-center py-4">
         <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-        <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ $t('common.loading') }}</p>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ $t('filteredCalendar.loadingCalendars') }}</p>
       </div>
     </div>
   </div>
@@ -208,13 +249,25 @@
       </form>
     </div>
   </div>
+
+  <!-- Confirm Dialog -->
+  <ConfirmDialog
+    ref="confirmDialog"
+    title="Delete Calendar"
+    :message="$t('filteredCalendar.confirmDelete')"
+    :confirm-text="$t('common.delete')"
+    :cancel-text="$t('common.cancel')"
+    @confirm="handleDeleteConfirm"
+    @cancel="handleDeleteCancel"
+  />
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatDateTime as formatDateTimeUtil, formatDateRange as formatDateRangeUtil } from '@/utils/dates'
 import { useFilteredCalendarAPI } from '@/composables/useFilteredCalendarAPI'
+import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 
 // Props
 const props = defineProps({
@@ -229,6 +282,14 @@ const props = defineProps({
   filterMode: {
     type: String,
     required: true
+  },
+  mainCategories: {
+    type: Array,
+    default: () => []
+  },
+  singleEventCategories: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -246,7 +307,6 @@ const {
 } = useFilteredCalendarAPI()
 
 // Reactive state
-const showCreateForm = ref(false)
 const showEditModal = ref(false)
 const createForm = ref({
   name: ''
@@ -255,19 +315,27 @@ const editForm = ref({
   id: '',
   name: ''
 })
+const confirmDialog = ref(null)
+const deleteCalendarId = ref(null)
+const copySuccess = ref(null) // Track which URL was successfully copied
 
 // Computed
 const formatDateTime = computed(() => formatDateTimeUtil)
 const formatDateRange = computed(() => formatDateRangeUtil)
 
-// Methods
-const startCreateForm = () => {
-  createForm.value.name = `${props.selectedCalendar.name} - ${props.filterMode === 'include' ? t('filteredCalendar.includeMode') : t('filteredCalendar.excludeMode')}`
-  showCreateForm.value = true
+// Show section if there are existing filtered calendars OR if categories are selected
+const shouldShowSection = computed(() => {
+  return filteredCalendars.value.length > 0 || props.selectedCategories.length > 0
+})
+
+// Auto-populate form name when categories selected
+const updateFormName = () => {
+  if (props.selectedCategories.length > 0 && !createForm.value.name.trim()) {
+    createForm.value.name = `${props.selectedCalendar.name} - ${props.filterMode === 'include' ? t('filteredCalendar.includeMode') : t('filteredCalendar.excludeMode')}`
+  }
 }
 
-const cancelCreateForm = () => {
-  showCreateForm.value = false
+const clearCreateForm = () => {
   createForm.value.name = ''
 }
 
@@ -285,7 +353,7 @@ const createFilteredCalendar = async () => {
   )
 
   if (success) {
-    cancelCreateForm()
+    clearCreateForm()
   }
 }
 
@@ -314,16 +382,29 @@ const updateFilteredCalendar = async () => {
 }
 
 const deleteFilteredCalendar = async (id) => {
-  if (confirm(t('filteredCalendar.confirmDelete'))) {
-    await apiDeleteFiltered(id)
+  deleteCalendarId.value = id
+  confirmDialog.value.open()
+}
+
+const handleDeleteConfirm = async () => {
+  if (deleteCalendarId.value) {
+    await apiDeleteFiltered(deleteCalendarId.value)
+    deleteCalendarId.value = null
   }
+}
+
+const handleDeleteCancel = () => {
+  deleteCalendarId.value = null
 }
 
 const copyToClipboard = async (url) => {
   try {
     await navigator.clipboard.writeText(url)
-    // TODO: Add toast notification
-    alert(t('filteredCalendar.urlCopied'))
+    // Show success feedback
+    copySuccess.value = url
+    setTimeout(() => {
+      copySuccess.value = null
+    }, 2000)
   } catch (err) {
     console.error('Failed to copy URL:', err)
     // Fallback for older browsers
@@ -333,7 +414,11 @@ const copyToClipboard = async (url) => {
     textArea.select()
     document.execCommand('copy')
     document.body.removeChild(textArea)
-    alert(t('filteredCalendar.urlCopied'))
+    // Show success feedback
+    copySuccess.value = url
+    setTimeout(() => {
+      copySuccess.value = null
+    }, 2000)
   }
 }
 
@@ -350,10 +435,88 @@ const getFilterCategories = (filterConfig) => {
   return []
 }
 
+// New helper functions for improved UX
+const hasIncludeCategories = (filterConfig) => {
+  return filterConfig?.include_categories && filterConfig.include_categories.length > 0
+}
+
+const hasExcludeCategories = (filterConfig) => {
+  return filterConfig?.exclude_categories && filterConfig.exclude_categories.length > 0
+}
+
+const getIncludeCategories = (filterConfig) => {
+  return filterConfig?.include_categories || []
+}
+
+const getExcludeCategories = (filterConfig) => {
+  return filterConfig?.exclude_categories || []
+}
+
+const getIncludeCategoriesCount = (filterConfig) => {
+  return filterConfig?.include_categories?.length || 0
+}
+
+const getExcludeCategoriesCount = (filterConfig) => {
+  return filterConfig?.exclude_categories?.length || 0
+}
+
+const getSmartCategoryDisplay = (selectedCategories) => {
+  if (!selectedCategories || selectedCategories.length === 0) return ''
+  
+  // Use proper category data to distinguish main vs single categories
+  const mainCategoryNames = props.mainCategories.map(cat => cat.name)
+  const singleEventCategoryNames = props.singleEventCategories.map(cat => cat.name)
+  
+  // Separate selected categories by their actual type (not name length heuristic)
+  const selectedMainCats = selectedCategories.filter(cat => mainCategoryNames.includes(cat))
+  const selectedSingleEvents = selectedCategories.filter(cat => singleEventCategoryNames.includes(cat))
+  
+  let display = ''
+  
+  // Show main categories first
+  if (selectedMainCats.length > 0) {
+    if (selectedMainCats.length <= 3) {
+      display = selectedMainCats.join(', ')
+    } else {
+      display = `${selectedMainCats.slice(0, 2).join(', ')} and ${selectedMainCats.length - 2} more categories`
+    }
+  }
+  
+  // Add single events summary if any
+  if (selectedSingleEvents.length > 0) {
+    const eventSummary = selectedSingleEvents.length === 1 ? '1 individual event' : `${selectedSingleEvents.length} individual events`
+    display = display ? `${display} + ${eventSummary}` : eventSummary
+  }
+  
+  return display
+}
+
+// Keep the old function for backward compatibility in existing calendars display
+const getConciseCategories = (categories) => {
+  if (!categories || categories.length === 0) return ''
+  
+  // For 1-2 items, show all
+  if (categories.length <= 2) {
+    return categories.join(', ')
+  }
+  
+  // For 3+ items, be more aggressive with truncation to avoid UI clutter
+  const firstCategory = categories[0]
+  const remaining = categories.length - 1
+  
+  return `${firstCategory} and ${remaining} more...`
+}
+
+// Watch for category changes to auto-populate form name
+watch([() => props.selectedCategories, () => props.filterMode], () => {
+  updateFormName()
+}, { immediate: true })
+
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   if (props.selectedCalendar?.id) {
-    loadFilteredCalendars()
+    await loadFilteredCalendars()
+    updateFormName() // Auto-populate form name on mount
   }
 })
 </script>

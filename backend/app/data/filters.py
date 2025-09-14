@@ -20,7 +20,7 @@ def is_valid_filter_data(name: str, config: Dict[str, Any]) -> Tuple[bool, str]:
     # Validate common filter config fields
     valid_filter_keys = {
         'categories', 'selectedEventTypes', 'keywordFilter', 
-        'dateRange', 'sortBy', 'sortDirection'
+        'dateRange', 'sortBy', 'sortDirection', 'mode'
     }
     
     # Check for unknown keys (warn but don't fail)
@@ -80,6 +80,12 @@ def normalize_filter_config(config: Dict[str, Any]) -> Dict[str, Any]:
         sort_dir = config['sortDirection']
         valid_directions = ['asc', 'desc']
         normalized['sortDirection'] = str(sort_dir) if sort_dir in valid_directions else 'asc'
+    
+    # Handle mode (should be string)
+    if 'mode' in config:
+        mode = config['mode']
+        valid_modes = ['include', 'exclude']
+        normalized['mode'] = str(mode) if mode in valid_modes else 'include'
     
     # Copy any other fields as-is
     for key, value in config.items():
