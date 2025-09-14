@@ -20,12 +20,20 @@ class PersistentStore:
         self.store_file = self.data_dir / "store.pkl"
         
         # Load existing data or initialize
-        self._data = self._load() or {
+        self._data = self._load() or {}
+        
+        # Ensure all required keys exist (for existing store files that may not have new keys)
+        required_keys = {
             "calendars": {},
             "events_cache": {},  # calendar_id -> events
             "filters": {},  # filter_id -> filter data
-            "filtered_calendars": {}  # token -> filtered calendar data
+            "filtered_calendars": {},  # token -> filtered calendar data
+            "user_preferences": {}  # user_id -> preferences data
         }
+        
+        for key, default_value in required_keys.items():
+            if key not in self._data:
+                self._data[key] = default_value
     
     def _load(self) -> Optional[Dict]:
         """Load data from disk"""
@@ -165,10 +173,10 @@ class PersistentStore:
         return self._data["filtered_calendars"].get(token)
     
     def get_filtered_calendars(self, user_id: str) -> List[Dict[str, Any]]:
-        """Get all filtered calendars for a user"""
+        """Get all active filtered calendars for a user"""
         return [
             filtered_cal for filtered_cal in self._data["filtered_calendars"].values()
-            if filtered_cal["user_id"] == user_id
+            if filtered_cal["user_id"] == user_id and filtered_cal.get("is_active", True)
         ]
     
     def delete_filtered_calendar(self, token: str, user_id: str) -> bool:
@@ -183,3 +191,19 @@ class PersistentStore:
         del self._data["filtered_calendars"][token]
         self._save()
         return True
+    
+    # User preferences operations
+    def get_user_preferences(self, user_id: str) -> Dict[str, Any]:
+        """Get user preferences"""
+        return self._data["user_preferences"].get(user_id, {})
+    
+    def set_user_preferences(self, user_id: str, preferences: Dict[str, Any]) -> None:
+        """Set user preferences"""
+        self._data["user_preferences"][user_id] = preferences
+        self._save()
+    
+    def update_user_preferences(self, user_id: str, preferences: Dict[str, Any]) -> None:
+        """Update user preferences (merge with existing)"""
+        current_prefs = self.get_user_preferences(user_id)
+        updated_prefs = {**current_prefs, **preferences}
+        self.set_user_preferences(user_id, updated_prefs)

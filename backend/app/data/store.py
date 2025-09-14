@@ -121,7 +121,17 @@ def cache_events_in_store(store_data: Dict[str, Any], calendar_id: str, events: 
 def get_cached_events_from_store(store_data: Dict[str, Any], calendar_id: str) -> Optional[List[Event]]:
     """Pure function: get cached events from store data"""
     cached_data = store_data["events_cache"].get(calendar_id)
-    return [Event(**event_data) for event_data in cached_data] if cached_data else None
+    if not cached_data:
+        return None
+    
+    # Handle both Event objects and dictionaries (for backward compatibility)
+    result = []
+    for event_data in cached_data:
+        if isinstance(event_data, Event):
+            result.append(event_data)
+        else:
+            result.append(Event(**event_data))
+    return result
 
 
 def add_filter_to_store(store_data: Dict[str, Any], name: str, config: Dict[str, Any], user_id: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:

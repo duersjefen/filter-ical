@@ -53,6 +53,7 @@
         :filter-mode="filterMode"
         :main-categories="mainCategories"
         :single-event-categories="singleEventCategories"
+        @navigate-to-calendar="navigateToCalendar"
       />
 
       <PreviewEventsSection
@@ -118,7 +119,10 @@ const events = ref([])
 const categories = ref({})
 const selectedCalendar = ref(null)
 
-// Use calendar composable with local data
+// Define props first
+const props = defineProps(['id'])
+
+// Use calendar composable with local data and calendar ID for persistence
 const {
   selectedCategories,
   expandedCategories,
@@ -142,10 +146,10 @@ const {
   clearAllCategories,
   selectAllSingleEvents,
   clearAllSingleEvents,
-  switchFilterMode
-} = useCalendar(events, categories)
-
-const props = defineProps(['id'])
+  switchFilterMode,
+  loadFilterState,
+  preferencesLoaded
+} = useCalendar(events, categories, props.id)
 
 // Simple, direct data loading
 const loadCalendarData = async (calendarId) => {
@@ -206,6 +210,11 @@ const navigateHome = () => {
   router.push('/home')
 }
 
+const navigateToCalendar = () => {
+  // Stay on current calendar view - this is the calendar view, so no navigation needed
+  // The function exists to fulfill the event handler requirement from FilteredCalendarSection
+}
+
 onMounted(async () => {
   console.log('Simple CalendarView mounted')
   console.log('User state:', appStore.user)
@@ -227,6 +236,8 @@ onMounted(async () => {
   
   if (calendarId) {
     await loadCalendarData(calendarId)
+    // Load saved filter state after calendar data is loaded
+    await loadFilterState()
   }
 })
 

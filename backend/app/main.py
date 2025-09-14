@@ -30,15 +30,12 @@ from .data.filters import (
     is_valid_filter_data, normalize_filter_config
 )
 from .data.filtering import (
-    apply_filter_config, create_filter_config_hash
+    apply_filter_config, create_filter_config_hash, filter_past_events
 )
 from .data.security import (
     generate_public_token, sanitize_ical_content, 
     create_secure_calendar_url, extract_token_from_url,
     validate_public_token_format, create_security_headers
-)
-from .data.caching import (
-    create_cache_key, is_cache_expired, should_refresh_cache
 )
 from .services.events import generate_ical_content
 
@@ -90,8 +87,11 @@ def find_calendar_in_store(store_data: dict, calendar_id: str, user_id: str) -> 
     calendars = store_data.get("calendars", {})
     calendar_data = calendars.get(calendar_id)
     
-    if calendar_data and calendar_data.get("user_id") == user_id:
-        return calendar_data
+    if calendar_data:
+        # Handle both dict and dataclass formats
+        calendar_user_id = getattr(calendar_data, 'user_id', None) or calendar_data.get('user_id', None) if hasattr(calendar_data, 'get') else getattr(calendar_data, 'user_id', None)
+        if calendar_user_id == user_id:
+            return calendar_data
     return None
 
 
@@ -232,6 +232,9 @@ async def get_calendar_events(
             new_store_data = cache_events_in_store(store_data, calendar_id, events)
             save_store_data(new_store_data)
     
+    # Filter out past events using pure function
+    future_events = filter_past_events(events)
+    
     return {
         "events": [
             {
@@ -241,7 +244,7 @@ async def get_calendar_events(
                 "dtend": e.dtend,
                 "location": e.location,
                 "description": e.description
-            } for e in events
+            } for e in future_events
         ]
     }
 
@@ -280,8 +283,11 @@ async def get_calendar_categories(
             new_store_data = cache_events_in_store(store_data, calendar_id, events)
             save_store_data(new_store_data)
     
+    # Filter out past events using pure function
+    future_events = filter_past_events(events)
+    
     # Extract categories using pure function
-    categories = extract_event_categories(events)
+    categories = extract_event_categories(future_events)
     return {"categories": categories}
 
 
@@ -498,7 +504,9 @@ async def create_filtered_calendar(data: dict, x_user_id: str = Header("anonymou
     
     if not cached_events:
         # Fetch fresh events if not cached
-        success, events, error_msg = await fetch_calendar_events(source_calendar["url"])
+        # Handle both dict and dataclass formats for source calendar
+        calendar_url = getattr(source_calendar, 'url', None) or source_calendar.get('url', None) if hasattr(source_calendar, 'get') else getattr(source_calendar, 'url', None)
+        success, events, error_msg = await fetch_calendar_events(calendar_url)
         if not success:
             raise HTTPException(status_code=500, detail=f"Error fetching events: {error_msg}")
         
@@ -508,10 +516,13 @@ async def create_filtered_calendar(data: dict, x_user_id: str = Header("anonymou
         cached_events = events
     
     # Apply filters to get filtered events
-    filtered_events = apply_filter_config(cached_events, normalized_config)
+    filtered_events = apply_filter_config(cached_events, filter_config)
+    
+    # Filter out past events using pure function
+    future_filtered_events = filter_past_events(filtered_events)
     
     # Generate filtered iCal content
-    filtered_content = generate_ical_content(filtered_events, filter_name, set())
+    filtered_content = generate_ical_content(future_filtered_events, filter_name, set())
     
     # Store in persistent database using PersistentStore methods
     filtered_calendar_data = store_instance.add_filtered_calendar(
@@ -552,10 +563,14 @@ async def get_filtered_calendars(x_user_id: str = Header("anonymous")):
     for filtered_cal_data in filtered_calendar_list:
         # Create URLs using pure functions
         base_url = "https://filter-ical.de"  # TODO: Get from config
-        public_token = filtered_cal_data["token"]  # Note: using "token" key from database
+        # Handle both old and new data formats for token - PersistentStore uses "token" field
+        public_token = filtered_cal_data.get("token")
+        if not public_token:
+            # Skip entries without valid tokens to prevent crashes
+            continue
         
         filtered_calendars.append({
-            "id": filtered_cal_data["token"],  # Using token as ID for compatibility
+            "id": public_token,  # Using token as ID for compatibility
             "name": filtered_cal_data["name"],
             "public_token": public_token,
             "source_calendar_id": filtered_cal_data["source_calendar_id"],
@@ -679,7 +694,7 @@ async def delete_filtered_calendar(
 
 @app.get("/cal/{token}.ics")
 async def serve_filtered_calendar_ics(token: str):
-    """Serve filtered iCal content via public URL"""
+    """Serve filtered iCal content via public URL - generates content dynamically from fresh source data"""
     
     # Validate token format using pure function
     is_valid_token, error_msg = validate_public_token_format(token)
@@ -692,15 +707,71 @@ async def serve_filtered_calendar_ics(token: str):
     if not filtered_calendar:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    # Use pre-computed filtered content from database
-    ical_content = filtered_calendar["filtered_content"]
+    # Get store data for finding source calendar
+    store_data = get_store_data()
+    
+    # Get source calendar
+    source_calendar_id = filtered_calendar["source_calendar_id"]
+    source_calendar = find_calendar_in_store(store_data, source_calendar_id, filtered_calendar["user_id"])
+    
+    if not source_calendar:
+        raise HTTPException(status_code=404, detail="Source calendar not found")
+    
+    # Fetch fresh events from source calendar (I/O)
+    # Handle both dict and dataclass formats for source calendar
+    calendar_url = getattr(source_calendar, 'url', None) or source_calendar.get('url', None) if hasattr(source_calendar, 'get') else getattr(source_calendar, 'url', None)
+    success, events, error_msg = await fetch_calendar_events(calendar_url)
+    if not success or not events:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch calendar events: {error_msg}")
+    
+    # Apply filter using pure function
+    filter_config_data = filtered_calendar["filter_config"]
+    
+    # Create FilterConfig from stored data - handle both old and new data formats
+    from datetime import datetime
+    import uuid
+    filter_config = FilterConfig(
+        id=filter_config_data.get("id", str(uuid.uuid4())),
+        name=filter_config_data.get("name", ""),
+        user_id=filter_config_data.get("user_id", ""),
+        # Handle both formats: old {"categories": [...]} and new {"include_categories": [...]}
+        include_categories=filter_config_data.get("include_categories") or 
+                          (filter_config_data.get("categories") if filter_config_data.get("mode") == "include" else []),
+        exclude_categories=filter_config_data.get("exclude_categories") or 
+                          (filter_config_data.get("categories") if filter_config_data.get("mode") == "exclude" else []),
+        include_keywords=filter_config_data.get("include_keywords", []),
+        exclude_keywords=filter_config_data.get("exclude_keywords", []),
+        date_range_start=filter_config_data.get("date_range_start"),
+        date_range_end=filter_config_data.get("date_range_end"),
+        date_range_type=filter_config_data.get("date_range_type", "absolute"),
+        location_filter=filter_config_data.get("location_filter"),
+        attendee_filter=filter_config_data.get("attendee_filter"),
+        organizer_filter=filter_config_data.get("organizer_filter"),
+        min_duration_minutes=filter_config_data.get("min_duration_minutes"),
+        max_duration_minutes=filter_config_data.get("max_duration_minutes"),
+        # Handle both "mode" and "filter_mode" keys
+        filter_mode=filter_config_data.get("filter_mode") or filter_config_data.get("mode", "include"),
+        match_all=filter_config_data.get("match_all", False),
+        created_at=filter_config_data.get("created_at", datetime.now().isoformat()),
+        updated_at=filter_config_data.get("updated_at", datetime.now().isoformat())
+    )
+    
+    # Apply filters to get filtered events
+    filtered_events = apply_filter_config(events, filter_config)
+    
+    # Filter out past events using pure function
+    future_filtered_events = filter_past_events(filtered_events)
+    
+    # Generate fresh filtered iCal content
+    ical_content = generate_ical_content(future_filtered_events, filtered_calendar["name"], set())
     
     # Sanitize content for public consumption using pure function
     sanitized_content = sanitize_ical_content(ical_content)
     
     # Create security headers using pure function
     headers = create_security_headers("public")
-    headers["Content-Disposition"] = f"attachment; filename=\"{filtered_calendar['name'].replace(' ', '_')}.ics\""
+    # Remove attachment disposition to allow calendar subscription instead of forced download
+    # headers["Content-Disposition"] = f"attachment; filename=\"{filtered_calendar['name'].replace(' ', '_')}.ics\""
     
     return Response(
         content=sanitized_content,
@@ -735,7 +806,9 @@ async def preview_filtered_calendar(token: str):
         raise HTTPException(status_code=404, detail="Source calendar not found")
     
     # Fetch fresh events from source calendar (I/O)
-    success, events, error_msg = await fetch_calendar_events(source_calendar["url"])
+    # Handle both dict and dataclass formats for source calendar
+    calendar_url = getattr(source_calendar, 'url', None) or source_calendar.get('url', None) if hasattr(source_calendar, 'get') else getattr(source_calendar, 'url', None)
+    success, events, error_msg = await fetch_calendar_events(calendar_url)
     if not success or not events:
         raise HTTPException(status_code=500, detail=f"Failed to fetch calendar events: {error_msg}")
     
@@ -789,6 +862,84 @@ async def preview_filtered_calendar(token: str):
             "keywords": filter_config_data.get("include_keywords", [])
         }
     }
+
+
+# === USER PREFERENCES ENDPOINTS ===
+from .data.database_simple import (
+    init_database, 
+    get_user_preferences as db_get_preferences, 
+    save_user_preferences as db_save_preferences,
+    delete_all_user_preferences as db_delete_user,
+    get_all_users as db_get_users
+)
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize the database on startup"""
+    init_database()
+
+@app.get("/api/calendars/{calendar_id}/preferences")
+async def get_calendar_preferences(calendar_id: str, user_id: str = Header("anonymous")):
+    """Get filter preferences for specific calendar"""
+    try:
+        preferences = db_get_preferences(user_id, calendar_id)
+        return {
+            "success": True,
+            "preferences": preferences or {}
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load preferences: {str(e)}")
+
+
+@app.put("/api/calendars/{calendar_id}/preferences")
+async def update_calendar_preferences(
+    calendar_id: str,
+    preferences_data: dict,
+    user_id: str = Header("anonymous")
+):
+    """Update filter preferences for specific calendar"""
+    try:
+        success = db_save_preferences(user_id, calendar_id, preferences_data)
+        if success:
+            return {
+                "success": True,
+                "message": "Preferences saved successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save preferences")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save preferences: {str(e)}")
+
+
+# === DEVELOPMENT CLEANUP ENDPOINTS ===
+
+@app.delete("/api/admin/users/{user_id}/preferences")
+async def delete_user_preferences(user_id: str):
+    """Delete all preferences for a user (development endpoint)"""
+    try:
+        success = db_delete_user(user_id)
+        if success:
+            return {
+                "success": True,
+                "message": f"All preferences deleted for user: {user_id}"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to delete user preferences")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete user preferences: {str(e)}")
+
+
+@app.get("/api/admin/users")
+async def list_users():
+    """List all users in database (development endpoint)"""
+    try:
+        users = db_get_users()
+        return {
+            "success": True,
+            "users": users
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list users: {str(e)}")
 
 
 if __name__ == "__main__":

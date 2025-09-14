@@ -26,15 +26,19 @@ export const useAppStore = defineStore('app', () => {
         throw new Error('Please enter a valid username')
       }
       
-      user.value = {
+      const userData = {
         username: username.trim(),
-        loggedIn: true
+        loggedIn: true,
+        loginTime: new Date().getTime(), // Add timestamp for session tracking
+        lastActivity: new Date().getTime()
       }
       
-      // Store in localStorage for persistence
-      localStorage.setItem('icalViewer_user', JSON.stringify(user.value))
+      user.value = userData
       
-      return user.value
+      // Store in localStorage for persistence
+      localStorage.setItem('icalViewer_user', JSON.stringify(userData))
+      
+      return userData
     })
 
     return result
@@ -53,9 +57,24 @@ export const useAppStore = defineStore('app', () => {
       const savedUser = localStorage.getItem('icalViewer_user')
       if (savedUser) {
         const parsed = JSON.parse(savedUser)
-        if (parsed && parsed.username) {
-          user.value = parsed
-          return true
+        
+        if (parsed && parsed.username && parsed.loggedIn) {
+          // Check if session is valid (optional - could add expiration logic here)
+          const now = new Date().getTime()
+          const sessionAge = now - (parsed.loginTime || now)
+          const maxSessionAge = 7 * 24 * 60 * 60 * 1000 // 7 days
+          
+          if (sessionAge < maxSessionAge) {
+            // Update last activity timestamp
+            parsed.lastActivity = now
+            user.value = parsed
+            localStorage.setItem('icalViewer_user', JSON.stringify(parsed))
+            return true
+          } else {
+            // Session expired
+            logout()
+            return false
+          }
         }
       }
     } catch (error) {
@@ -70,6 +89,13 @@ export const useAppStore = defineStore('app', () => {
       throw new Error('User not logged in - authentication required')
     }
     return user.value.username
+  }
+
+  const updateActivity = () => {
+    if (user.value.loggedIn) {
+      user.value.lastActivity = new Date().getTime()
+      localStorage.setItem('icalViewer_user', JSON.stringify(user.value))
+    }
   }
 
   // Deprecated navigation method (components should use router directly)
@@ -89,6 +115,7 @@ export const useAppStore = defineStore('app', () => {
     logout,
     initializeApp,
     getUserId,
+    updateActivity,
     setView
   }
 })

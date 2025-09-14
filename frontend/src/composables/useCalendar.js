@@ -1,15 +1,17 @@
 import { ref, computed, watch } from 'vue'
 import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
+import { useUserPreferences } from './useUserPreferences'
 
-export function useCalendar(eventsData = null, categoriesData = null) {
+export function useCalendar(eventsData = null, categoriesData = null, calendarId = null) {
   const appStore = useAppStore()
+  const { saveCalendarFilterState, loadCalendarFilterState } = useUserPreferences()
   
   // Use provided data or fall back to store
   const events = eventsData || computed(() => appStore.events)
   const categories = categoriesData || computed(() => appStore.categories)
   
-  // Reactive state
+  // Reactive state - these will be loaded from backend preferences
   const selectedCategories = ref([])
   const expandedCategories = ref([])
   const showSingleEvents = ref(false)
@@ -21,6 +23,9 @@ export function useCalendar(eventsData = null, categoriesData = null) {
   const previewGroup = ref(PREVIEW_GROUPS.NONE)
   const previewOrder = ref(SORT_ORDERS.ASC)
   const previewLimit = ref(EVENT_LIMITS.PREVIEW_DEFAULT)
+  
+  // Track if preferences have been loaded
+  const preferencesLoaded = ref(false)
 
   // Watch for when selectedCategories becomes empty and auto-turn off showSelectedOnly
   watch(selectedCategories, (newCategories) => {
@@ -396,6 +401,65 @@ export function useCalendar(eventsData = null, categoriesData = null) {
     }
   }
 
+  // Persistence functions for filter state
+  const loadFilterState = async () => {
+    if (!calendarId) return
+    
+    try {
+      const savedState = await loadCalendarFilterState(calendarId)
+      
+      // Apply saved state to reactive refs
+      selectedCategories.value = savedState.selectedCategories || []
+      expandedCategories.value = savedState.expandedCategories || []
+      showSingleEvents.value = savedState.showSingleEvents || false
+      showCategoriesSection.value = savedState.showCategoriesSection !== undefined ? savedState.showCategoriesSection : true
+      showSelectedOnly.value = savedState.showSelectedOnly || false
+      categorySearch.value = savedState.categorySearch || ''
+      filterMode.value = savedState.filterMode || FILTER_MODES.INCLUDE
+      previewGroup.value = savedState.previewGroup || PREVIEW_GROUPS.NONE
+      
+      preferencesLoaded.value = true
+      console.log('Loaded filter state for calendar:', calendarId, savedState)
+    } catch (error) {
+      console.error('Failed to load filter state:', error)
+      preferencesLoaded.value = true // Still mark as loaded to prevent infinite attempts
+    }
+  }
+
+  const saveFilterState = async () => {
+    if (!calendarId || !preferencesLoaded.value) return
+    
+    const currentState = {
+      selectedCategories: selectedCategories.value,
+      expandedCategories: expandedCategories.value,
+      showSingleEvents: showSingleEvents.value,
+      showCategoriesSection: showCategoriesSection.value,
+      showSelectedOnly: showSelectedOnly.value,
+      categorySearch: categorySearch.value,
+      filterMode: filterMode.value,
+      previewGroup: previewGroup.value
+    }
+    
+    try {
+      await saveCalendarFilterState(calendarId, currentState)
+      console.log('Saved filter state for calendar:', calendarId, currentState)
+    } catch (error) {
+      console.error('Failed to save filter state:', error)
+    }
+  }
+
+  // Auto-save filter state when it changes (debounced to avoid excessive API calls)
+  let saveTimeout
+  const debouncedSave = () => {
+    clearTimeout(saveTimeout)
+    saveTimeout = setTimeout(saveFilterState, 1000) // Save after 1 second of inactivity
+  }
+
+  // Watch for changes and auto-save
+  watch([selectedCategories, expandedCategories, showSingleEvents, showCategoriesSection, 
+         showSelectedOnly, categorySearch, filterMode, previewGroup], 
+         debouncedSave, { deep: true })
+
   return {
     // State
     selectedCategories,
@@ -409,6 +473,7 @@ export function useCalendar(eventsData = null, categoriesData = null) {
     previewGroup,
     previewOrder,
     previewLimit,
+    preferencesLoaded,
     
     // Computed
     filteredCategories,
@@ -433,6 +498,8 @@ export function useCalendar(eventsData = null, categoriesData = null) {
     clearAllSingleEvents,
     switchFilterMode,
     togglePreviewOrder,
-    generateIcalFile
+    generateIcalFile,
+    loadFilterState,
+    saveFilterState
   }
 }

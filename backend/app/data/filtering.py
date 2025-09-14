@@ -473,6 +473,43 @@ def create_events_content_hash(events: List[Event]) -> str:
     return hashlib.sha256(events_str.encode()).hexdigest()
 
 
+def filter_past_events(events: List[Event]) -> List[Event]:
+    """
+    Pure function: Filter out events that have already ended
+    Returns: New list of events that have not ended yet
+    """
+    from datetime import timezone
+    
+    # Use timezone-aware datetime for consistent comparison
+    now = datetime.now(timezone.utc)
+    filtered_events = []
+    
+    for event in events:
+        # Check event end time first, then start time
+        event_end = parse_event_datetime(event.dtend) if event.dtend else None
+        event_start = parse_event_datetime(event.dtstart) if event.dtstart else None
+        
+        # If event has end time, use that for comparison
+        if event_end:
+            # Make event_end timezone-aware if it isn't
+            if event_end.tzinfo is None:
+                event_end = event_end.replace(tzinfo=timezone.utc)
+            if event_end > now:
+                filtered_events.append(event)
+        # If no end time but has start time, use start time
+        elif event_start:
+            # Make event_start timezone-aware if it isn't
+            if event_start.tzinfo is None:
+                event_start = event_start.replace(tzinfo=timezone.utc)
+            if event_start > now:
+                filtered_events.append(event)
+        # If neither end nor start time, keep the event (data quality issue)
+        else:
+            filtered_events.append(event)
+    
+    return filtered_events
+
+
 def filter_stats_summary(original_events: List[Event], filtered_events: List[Event], 
                         config: FilterConfig) -> Dict[str, Any]:
     """

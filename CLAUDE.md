@@ -1,6 +1,6 @@
 # CLAUDE.md - iCal Viewer Project Instructions
 
-This file provides **project-specific instructions** for working with the iCal Viewer project. For creating new projects based on this template, see `CLAUDE_TEMPLATE.md`.
+This file provides **project-specific instructions** for working with the iCal Viewer project.
 
 ---
 
@@ -10,13 +10,12 @@ This file provides **project-specific instructions** for working with the iCal V
 - [iCal Viewer Instructions](#-ical-viewer-project-instructions)
 - [Project Architecture](#-project-architecture) 
 - [Production Infrastructure](#-production-infrastructure)
-- [Maintenance & Monitoring](#-maintenance--monitoring)
 
-**🛠️ Universal Template Sections (Apply to All Projects):**
-- [Critical Development Principles](#-critical-development-principles)
-- [GitHub Composite Actions Debugging](#-critical-github-composite-actions-deployment-debugging)
-- [CI/CD Features & Performance](#-automated-cicd-features)
-- [Success Metrics & Validation](#-claude-code-automation-success-metrics)
+**🛠️ Universal Template Sections:**
+- [Test-First Development](#-mandatory-test-first-development)
+- [Professional Guidance](#-professional-guidance--critical-thinking)
+- [Debugging Methodology](#-systematic-debugging-methodology)
+- [Deployment & CI/CD](#-production-deployment--cicd)
 
 ---
 
@@ -32,42 +31,80 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 - **Development Excellence**: Pre-commit hooks, Docker-first approach, universal Makefile
 
 ### Development Workflow:
-1. **Make changes** → `make test` (unit tests must pass)
-2. **Add new features** → Write `@pytest.mark.future` tests first (TDD)
-3. **Deploy** → `make deploy` (with real-time monitoring)
-4. **Monitor** → GitHub CLI provides immediate feedback
+1. **Write failing test FIRST** → `@pytest.mark.future` tests drive implementation (TDD)
+2. **Make minimum implementation** → Code only what's needed to pass tests
+3. **Refactor safely** → `make test` ensures no regression
+4. **Deploy** → `make deploy` (with real-time monitoring)
 
-### 🎯 CRITICAL: Automated Frontend Testing Methodology - MANDATORY APPROACH
+### 📝 CRITICAL: Automatic TODO Management - MANDATORY BEHAVIOR
 
-**NEVER ask users to test functionality - ALWAYS create automated E2E tests to verify fixes:**
+**I MUST automatically manage the TODO.md file after completing substantial tasks:**
 
-**✅ CORRECT Testing Approach:**
+**✅ ALWAYS AUTO-MANAGE TODO AFTER:**
+- Completing any significant task or implementation
+- Finishing a feature or bug fix
+- Completing any item marked as a todo
+- Any substantial work session
+- When user asks to continue with todos (automatic organization before starting)
+
+**🔧 TODO MANAGEMENT PROCESS:**
+1. **Sort Quick Capture items** → Move user ideas from "Quick Capture" to appropriate priority sections
+2. **Remove completed items** → Delete finished tasks entirely (git commits track completed work)
+3. **Clean up formatting** → Fix any formatting issues, empty lines, or inconsistencies (never add placeholder items like "Add your new ideas here")
+4. **Reorganize priorities** → Ensure items are in logical order within their sections
+5. **Maintain focus** → Keep "NEXT UP" section to 1-3 items maximum
+
+**📋 TODO ORGANIZATION RULES:**
+- **Quick Capture** → User's raw ideas (don't delete, sort into sections)
+- **NEXT UP** → 1-3 highest impact items only
+- **HIGH PRIORITY** → Core functionality improvements 
+- **MEDIUM PRIORITY** → Polish and quality improvements
+- **Future Ideas** → Keep collapsed to avoid distraction
+- **NO COMPLETED SECTIONS** → Remove finished items completely (git history tracks completed work)
+
+**💡 EXAMPLES:**
 ```bash
-# Create specific E2E tests for issues
-npx playwright test tests/e2e/debug-username.spec.js --reporter=line
-npx playwright test tests/e2e/trace-login.spec.js --reporter=line 
-npx playwright test tests/e2e/user-workflow.spec.js --reporter=line
+# After completing a feature
+1. Remove completed item entirely
+2. Sort any new Quick Capture items into priority sections
+3. Clean up formatting and empty lines
+4. Ensure NEXT UP has clear focus items
 ```
 
-**📋 Testing Methodology:**
-1. **Create debug tests** → Trace exact data flow and capture browser logs
-2. **Verify API layer** → Test backend endpoints work correctly via curl
-3. **Test user workflow** → Complete end-to-end user experience automation
-4. **Debug reactivity** → Inspect localStorage vs reactive state synchronization
-5. **Never assume** → Always verify both backend API and frontend UI work together
+**IMPORTANT**: This TODO management happens automatically - I don't ask permission, I just do it as part of completing substantial work. This keeps the TODO file always clean and actionable for the user.
 
-**🔍 Why This Approach Works:**
-- **Catches real user experience bugs** → Tests exactly what users see
-- **Prevents regression** → Automated tests prevent breaking working features
-- **Faster debugging** → Browser logs and traces show exact failure points  
-- **Professional development** → Self-testing instead of user-testing
-- **Architectural validation** → Ensures frontend/backend integration works correctly
+## 🧪 MANDATORY: TEST-FIRST DEVELOPMENT
 
-**⚠️ Common Testing Mistakes to Avoid:**
-- ❌ Asking users to test broken functionality
-- ❌ Assuming backend API working means frontend works
-- ❌ Manual testing instead of automated verification
-- ❌ Not testing complete user workflows end-to-end
+**RULE: Write failing tests BEFORE writing any implementation code**
+
+**✅ Required TDD Workflow:**
+1. **Understand requirement** → What exactly needs to work?
+2. **Write failing test** → Test describes desired behavior
+3. **Run test to confirm failure** → Verify test fails for right reason
+4. **Write minimum code** → Make test pass with simplest solution
+5. **Refactor if needed** → Clean up while keeping tests green
+
+**Testing Commands:**
+```bash
+make test                 # Unit tests (for commits) - must pass
+make test-future         # TDD development tests - guide implementation
+make test-all           # Complete test suite - 40+ tests
+npm test -- --run integration  # Integration tests
+```
+
+**❌ Forbidden Patterns:**
+- Writing implementation code without tests
+- Writing tests after implementation  
+- Skipping tests for "quick fixes"
+- Testing manually instead of automated tests
+- Assuming code works because it compiles
+- Asking users to test broken functionality
+
+**✅ Test Coverage Requirements:**
+- **Unit tests**: Pure functions, business logic
+- **Integration tests**: Component interactions, API endpoints
+- **E2E tests**: Real user workflows with Playwright
+- **Debug tests**: Data flow tracing, browser console logs
 
 ### ⚡ CRITICAL: Vue 3 + Pinia Reactivity Fix - MANDATORY SOLUTION
 
@@ -313,130 +350,99 @@ export function addCalendarToList(calendars, newCalendar) {
 
 ---
 
-## 🛠️ UNIVERSAL TEMPLATE SECTIONS 
-*The following sections apply to ALL projects using this template architecture*
+## 🧠 PROFESSIONAL GUIDANCE & CRITICAL THINKING
 
-### ⚠️ CRITICAL: Testing-First Development Principles
+**MANDATORY: Claude must think critically and provide professional guidance - NOT just execute commands**
 
-**ALWAYS test functionality before claiming it works:**
-- ✅ **Write unit tests FIRST** - Use `npm test` to verify functionality
-- ✅ **Test integration** - Ensure components work together correctly  
-- ✅ **Never rely on manual testing** - Create automated tests instead of asking users
-- ✅ **Debug systematically** - Use tests to isolate issues, not console logs
+**✅ Critical Thinking Approach:**
+- **Question approaches** → "Is this the best solution?"
+- **Consider alternatives** → "What other solutions might work better?"
+- **Think long-term** → "What are implications in 6 months? 2 years?"
+- **Challenge assumptions** → "Are we solving the right problem?"
+- **Suggest improvements** → "Here's a better approach because..."
+- **Warn about pitfalls** → "This will cause problems later..."
 
-**Common Testing Mistakes to Avoid:**
-- ❌ **Assuming code works** - Just because it compiles doesn't mean it functions
-- ❌ **Manual debugging** - Asking users to test or provide feedback on broken features  
-- ❌ **Incomplete integration** - Testing individual pieces but not the full workflow
-- ❌ **Configuration mismatches** - Check version compatibility (e.g., Tailwind v3 vs v4)
+**❌ Forbidden Behaviors:**
+- Blindly implementing requests without analysis
+- Assuming user's initial idea is best
+- Avoiding better alternatives to preserve ego
+- Executing poor solutions without pushback
+- Ignoring long-term architectural consequences
 
-**Required Testing Approach:**
-```bash
-# ALWAYS run tests after implementing features
-npm test                          # Unit tests
-npm test -- --run integration    # Integration tests
-make test                        # Full test suite
-```
+**Professional Response Template:**
+*"I understand you want to [goal]. This approach will cause [problems] because [reasons]. Instead, let me implement [better solution] which [benefits]. This prevents future issues and saves time later."*
 
-**When implementing new features:**
-1. Write failing tests first (TDD)
-2. Implement the minimum code to make tests pass
-3. Verify the feature works end-to-end with integration tests
-4. Only then mark the feature as complete
+**Must Challenge:**
+- Architectural shortcuts → "Creates tight coupling..."
+- Security vulnerabilities → "Exposes application to..."
+- Performance anti-patterns → "Doesn't scale because..."
+- Maintainability issues → "Future developers will struggle..."
+- Framework misuse → "Fighting against framework..."
 
-### ⚠️ CRITICAL: GitHub Composite Actions Deployment Debugging (Production Battle-Tested)
+## 🔍 SYSTEMATIC DEBUGGING METHODOLOGY
 
-**LEARNED FROM REAL DEPLOYMENT FAILURES - September 2025**
+**CRITICAL RULE: After 2 failed attempts, IMMEDIATELY find the real root cause**
 
-This section documents systematic debugging approaches learned from a 4-hour production deployment debugging session.
+**The 2-Failure Rule:**
+- ✅ **2 attempts maximum** → If it doesn't work twice, problem is deeper
+- 🛑 **Stop micro-debugging** → No endless tweaking or random fixes
+- 🔍 **Find root cause** → Address system-level issues, not symptoms
 
-**DEPLOYMENT FAILURE PATTERNS AND SOLUTIONS:**
+**Root Cause Analysis Levels:**
+1. **Surface Symptoms** → Error messages, UI bugs, failed tests
+2. **Direct Causes** → Wrong calls, missing imports, config errors  
+3. **Root Causes** → Architecture mismatch, wrong mental model
+4. **System Issues** → Framework misuse, technology choice problems
 
-**Phase 1: Health Check Parsing Bug (The Most Common Trap)**
-- ❌ **Issue**: `awk '{print $3}'` extracted COMMAND field ("uvicorn") instead of STATUS field ("Up (healthy)")  
-- ✅ **Fix**: `awk '{for(i=5;i<=NF;i++) printf "%s ", $i; print ""}'` to extract full status from columns 5+
-- 📚 **Lesson**: NEVER assume column positions in command output - always verify actual format
-- 🔍 **Detection**: Containers show "healthy" in logs but health checks fail with command text
+**Red Flags - Stop and Think Deeper:**
+- 🚨 "Let me try one more small change..." → Step back now
+- 🚨 "It works sometimes but not others..." → Systematic issue
+- 🚨 "This used to work, now it doesn't..." → Environment change
+- 🚨 "The error message doesn't make sense..." → Wrong mental model
 
-**Phase 2: GITHUB_OUTPUT Environment Variable Scope**
-- ❌ **Issue**: `echo "status=success" >> $GITHUB_OUTPUT` used inside SSH script where variable doesn't exist
-- ✅ **Fix**: Move output handling to separate GitHub Actions steps outside SSH context
-- 📚 **Lesson**: Environment variables are scoped - SSH sessions don't inherit GitHub Actions context
-- 🔍 **Detection**: `bash: $GITHUB_OUTPUT: ambiguous redirect` errors
+**Root Cause Template:**
+*"I've tried [approach 1] and [approach 2], both failed. Let me find the root cause. The real issue is likely [fundamental problem] because [reasoning]. The solution is probably simpler: [root cause solution]"*
 
-**Phase 3: Frontend API Base URL Configuration (Build vs Runtime)**
-- ❌ **Issue**: Frontend built with `VITE_API_BASE_URL=http://localhost:3000` (development default)
-- ✅ **Fix**: Set `ENV VITE_API_BASE_URL=""` in Dockerfile for relative URLs in production
-- 📚 **Lesson**: Build-time environment variables MUST be configured for production deployment
-- 🔍 **Detection**: HTML loads but API calls fail, blank/blue screen with no errors
+**Real Project Examples:**
+- **Vue 3 Reactivity** → Root cause: Using getters vs `computed`
+- **Tailwind Styles** → Root cause: v3 syntax with v4 framework
+- **API Integration** → Root cause: Build-time vs runtime env variables
 
-**Phase 4: Content Security Policy JavaScript Blocking**
-- ❌ **Issue**: CSP `script-src 'self' 'unsafe-inline'` blocked Vue.js `unsafe-eval` operations
-- ✅ **Fix**: Add `'unsafe-eval'` to CSP: `script-src 'self' 'unsafe-inline' 'unsafe-eval'`
-- 📚 **Lesson**: Modern SPA frameworks need `unsafe-eval` for JavaScript evaluation
-- 🔍 **Detection**: `EvalError: Refused to evaluate a string as JavaScript` in browser console
+---
 
-**SYSTEMATIC DEBUGGING METHODOLOGY (Follow This Exact Order):**
 
-**Level 1: Container Infrastructure**
-1. **Container Status**: `docker-compose ps` - Are containers actually "Up (healthy)"?
-2. **Logs**: `docker-compose logs service-name` - Any startup errors or crashes?
-3. **Health Endpoints**: `curl /health` - Basic connectivity test
+## 🚢 PRODUCTION DEPLOYMENT & CI/CD
 
-**Level 2: HTTP Layer**  
-4. **HTTP Response Codes**: `curl -I domain.com` - 200, 404, 500 status?
-5. **Asset Delivery**: `curl -I domain.com/assets/index.js` - Static files served correctly?
-6. **API Connectivity**: `curl domain.com/api/endpoint` - Backend reachable?
+**Universal deployment system - works with any programming language**
 
-**Level 3: Frontend/Browser**
-7. **HTML Structure**: `curl -s domain.com` - Correct HTML with script tags?
-8. **Browser Console**: F12 DevTools - JavaScript errors, CSP violations?
-9. **Network Tab**: Failed asset loads, API call failures?
+**Core Features:**
+- **Framework-agnostic validation** - Works with React, Vue, Angular, etc.
+- **Zero-downtime updates** - Blue/green deployment with health validation  
+- **Automatic rollback** - Failed deployments instantly revert (100% success rate)
+- **Performance optimization** - 40% faster deployments (6min → 3-5min)
+- **Smart caching** - Change detection, parallel builds
 
-**IMMEDIATE RED FLAG CHECKLIST:**
-- 🚨 **Health checks pass but website doesn't load** → Parsing bug (columns, status extraction)
-- 🚨 **"ambiguous redirect" in SSH logs** → GITHUB_OUTPUT scope issue  
-- 🚨 **Assets load but API fails** → Build-time environment variable missing
-- 🚨 **"unsafe-eval" console errors** → CSP too restrictive for SPA framework
-- 🚨 **Containers "healthy" but health endpoint fails** → Wrong port/service mapping
+**Common Deployment Failures:**
+1. **Health Check Parsing** → `awk '{print $3}'` gets COMMAND not STATUS
+2. **Environment Scope** → `$GITHUB_OUTPUT` doesn't exist in SSH
+3. **Build-time Variables** → Frontend built with localhost URLs
+4. **CSP Restrictions** → Vue.js needs `'unsafe-eval'` for JS evaluation
 
-**VALIDATION CHECKLIST (All Must Pass Before Claiming Success):**
-- [ ] `docker-compose ps` shows "Up (healthy)" for all services
-- [ ] `curl -I https://domain.com` returns HTTP 200  
-- [ ] `curl -I https://domain.com/assets/index.js` returns HTTP 200
-- [ ] `curl https://domain.com/api/endpoint` returns valid JSON
-- [ ] Browser console shows zero errors or CSP violations
-- [ ] Website displays actual content (not blank/blue screen)
-- [ ] User can interact with the application functionality
+**Debugging Methodology (Follow Order):**
+1. **Container Layer** → `docker-compose ps`, logs, health endpoints
+2. **HTTP Layer** → `curl -I domain.com`, asset delivery, API connectivity
+3. **Frontend Layer** → Browser console, network tab, CSP violations
 
-**ENVIRONMENT VARIABLE SCOPING (Critical for Composite Actions):**
-```bash
-# Build-time (Dockerfile) - affects bundled frontend code
-ENV VITE_API_BASE_URL=""
+**Deployment Validation (All Must Pass):**
+- [ ] `docker-compose ps` shows "Up (healthy)"
+- [ ] `curl -I https://domain.com` returns HTTP 200
+- [ ] Browser console shows zero errors
+- [ ] User can interact with application
 
-# Runtime (docker-compose) - affects running container
-environment:
-  - NODE_ENV=production
-
-# GitHub Actions - only available in workflow steps, NOT in SSH
-echo "status=success" >> $GITHUB_OUTPUT  # ✅ In workflow step
-echo "status=success" >> $GITHUB_OUTPUT  # ❌ Inside SSH script
-```
-
-**NGINX CONFIGURATION DEPLOYMENT:**
-- **Remember**: Nginx config changes require manual server update + restart
-- **Process**: 
-  1. Update `infrastructure/production-nginx.conf` 
-  2. Copy to server: `scp config.conf user@server:/path/nginx.conf`
-  3. Restart: `docker-compose restart nginx`
-  4. Verify: `curl -I domain.com | grep -i content-security-policy`
-
-**ADVANCED DEBUGGING INSIGHTS:**
-- **Multiple Commits Are Professional** - Atomic fixes aid debugging and enable precise rollbacks
-- **Test Each Layer Independently** - Don't assume higher layers work if lower layers pass
-- **Browser != Server Testing** - curl success doesn't guarantee browser functionality
-- **Framework Evolution** - CSP requirements change with framework versions
-- **Parse Output Verification** - Always manually verify command output formats
+**Performance Results:**
+- Typical deployment: 3-5 minutes (was 6+ minutes)
+- No-change deployments: 30 seconds (smart skip)
+- Rollback time: 15-30 seconds (automatic)
 
 ---
 
@@ -457,47 +463,6 @@ echo "status=success" >> $GITHUB_OUTPUT  # ❌ Inside SSH script
 - Automatic dependency management and error handling  
 - Prevents port conflicts and server startup issues
 
-### ⚠️ CRITICAL: Tailwind CSS v4 Configuration
-**This project uses Tailwind CSS v4 - DO NOT use v3 syntax:**
-
-**✅ CORRECT Tailwind v4 Configuration:**
-```javascript
-// tailwind.config.js - v4 format
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
-}
-```
-
-```css
-/* tailwind.css - v4 format */
-@import "tailwindcss";
-
-@theme {
-  --default-transition-duration: 300ms;
-}
-
-/* Enable class-based dark mode for Tailwind v4 */
-@variant dark (.dark &);
-```
-
-**❌ WRONG - DO NOT USE Tailwind v3 syntax:**
-- ❌ `darkMode: 'class'` in config file (v3 syntax)
-- ❌ `@tailwind base; @tailwind components; @tailwind utilities;` (v3 imports)
-- ❌ `theme: { extend: {} }` and `plugins: []` (v3 config structure)
-
-**Why v4 syntax is mandatory:**
-- Project uses `@tailwindcss/vite": "^4.0.0"` which requires v4 configuration
-- Dark mode variants are configured in CSS using `@variant dark (.dark &);`
-- CSS imports use single `@import "tailwindcss";` statement
-- Configuration is done via `@theme` blocks in CSS, not JS config
-
-**⚠️ Previous Issues Caused by v3/v4 Confusion:**
-- Dark mode toggle not working (fixed by using v4 syntax)
-- CSS hot reloading issues
-- Build failures due to incompatible configuration
 
 ---
 
@@ -563,151 +528,11 @@ EC2 Instance (56.228.25.95)
 
 ---
 
-### 🔄 UNIVERSAL CI/CD FEATURES
-*These features work with any programming language and framework*
-
-**Enterprise-Grade Deployment System:**
-- **Framework-agnostic validation**: Works with any tech stack (React, Vue, Angular, etc.)
-- **Intelligent change detection**: Only rebuilds changed components, skips unchanged
-- **Automatic rollback**: Failed deployments instantly revert to previous working version
-- **Zero-downtime updates**: Blue/green deployment with health validation
-- **Performance optimization**: Parallel builds, smart caching, adaptive wait times
-- **Universal patterns**: Template works across all programming languages
-
-### Resilient Deployment Pipeline
-- **Pre-deployment backup**: Creates snapshots before any changes
-- **Multi-layer validation**: Container health + application functionality + user accessibility
-- **Smart asset detection**: Dynamic frontend validation (no hardcoded paths)
-- **Graceful failure handling**: Comprehensive error recovery and diagnostics
-- **Self-healing infrastructure**: Automatic problem detection and resolution
-
-### Advanced CI/CD Safeguards  
-- **Framework-agnostic asset validation**: Detects build outputs for any SPA framework
-- **Dependency sync validation**: Prevents package-lock.json issues automatically
-- **Requirements.txt validation**: Catches malformed Python dependencies  
-- **Docker environment validation**: Comprehensive pre-build checks
-- **Build failure diagnostics**: Detailed troubleshooting guidance
-- **Container metadata**: Full build traceability and debugging info
-- **Rollback verification**: Validates rollback success with health checks
-
-### Production-Ready Monitoring
-- **Real-time feedback**: `make deploy` automatically monitors deployment progress
-- **Deployment performance metrics**: Tracks build times and optimization opportunities
-- **Health check orchestration**: Multi-tier validation (container → service → user experience)
-- **Automatic failure recovery**: Rollback + notification + preservation of service availability
-- **GitHub CLI integration**: Native GitHub tools for reliable monitoring
-- **Terminal-native UX**: No email spam, immediate feedback where you deploy
-
-### Template Project Advantages
-- **Language-Independent**: Same workflow for Python, Node.js, Go, Rust, etc.
-- **Copy-and-Deploy**: New projects get production-ready CI/CD instantly
-- **Framework Flexibility**: Supports any frontend (React, Vue, Angular, Svelte)
-- **Scaling Ready**: Multi-container orchestration with nginx reverse proxy
-- **Security First**: Let's Encrypt SSL, security headers, rate limiting built-in
-
-```bash
-# The deploy command automatically:
-# 1. Pre-commit validation (prevents broken deployments)
-# 2. Pushes changes to repository  
-# 3. Monitors GitHub Actions deployment in real-time
-# 4. Creates backup snapshots before deployment
-# 5. Validates deployment success with framework-agnostic checks
-# 6. Automatic rollback on failure with health verification
-# 7. Exits with proper status code (0=success, 1=failure)
-make deploy
-```
-
-### Performance Characteristics
-- **Typical deployment time**: 3-5 minutes (optimized from 6+ minutes)
-- **No-change deployments**: 30 seconds (smart skip optimization)
-- **Rollback time**: 15-30 seconds (automatic on failure)
-- **Concurrent builds**: Parallel container building for speed
-- **Cache efficiency**: Docker layer caching reduces rebuild times by 60%
 
 ---
 
-## 🛡️ FAILURE PREVENTION & LESSONS LEARNED
-
-### Common Deployment Failure Patterns (Now Prevented)
-
-**1. Frontend Asset Path Mismatches**
-- ❌ **Problem**: Hardcoded validation paths (`/js/main.js`) don't match modern build tools
-- ✅ **Solution**: Dynamic asset detection that works with any framework/build tool
-- 🔧 **Prevention**: Framework-agnostic validation patterns in deployment pipeline
-
-**2. Missing Rollback Capability**  
-- ❌ **Problem**: Failed deployments leave broken services running
-- ✅ **Solution**: Automatic backup creation + rollback with health verification
-- 🔧 **Prevention**: Every deployment creates recovery snapshots automatically
-
-**3. Framework-Specific Assumptions**
-- ❌ **Problem**: CI/CD hardcoded for specific tech stacks (breaks when tech evolves)
-- ✅ **Solution**: Universal patterns that work across all languages/frameworks
-- 🔧 **Prevention**: Template uses language-agnostic detection and validation
-
-**4. Insufficient Health Validation**
-- ❌ **Problem**: Deployments "succeed" but services aren't actually working
-- ✅ **Solution**: Multi-tier validation (container → service → user experience)
-- 🔧 **Prevention**: Comprehensive health checks at every deployment layer
-
-**5. Performance Degradation Over Time**
-- ❌ **Problem**: Deployments get slower as projects grow
-- ✅ **Solution**: Smart caching, change detection, parallel operations
-- 🔧 **Prevention**: Performance monitoring built into deployment pipeline
-
-### Template Project Robustness Features
-
-**🚀 Self-Healing Deployment Pipeline**
-```yaml
-# Automatic features that prevent common failures:
-- Pre-deployment health snapshots
-- Framework-agnostic asset validation  
-- Intelligent change detection (skip unchanged components)
-- Parallel container builds for performance
-- Automatic rollback on any validation failure
-- Multi-tier health verification (container + service + UX)
-- Performance monitoring and optimization suggestions
-```
-
-**🔧 Copy-to-New-Project Reliability**
-- All patterns work regardless of backend language (Python, Node.js, Go, Rust, etc.)
-- Frontend validation adapts to any framework (React, Vue, Angular, Svelte, etc.)  
-- Infrastructure scales automatically (single service → microservices)
-- Security built-in by default (SSL, headers, rate limiting)
-- Production-ready from first deployment
-
-**📊 Continuous Improvement Built-In**
-- Deployment time tracking and optimization recommendations
-- Failure pattern detection and automatic prevention
-- Performance regression alerts
-- Template evolution based on real-world usage patterns
-
 ---
 
-## 📋 AUTOMATION CHECKLIST FOR CLAUDE
-
-When setting up a new project, Claude should automatically:
-
-**✅ File Operations:**
-- [ ] Copy all template files to new project directory
-- [ ] Update project-specific configuration (names, domains)
-- [ ] Set executable permissions on git hooks
-- [ ] Configure git hooks path
-
-**✅ Documentation:**
-- [ ] Create project-specific README
-- [ ] Update CLAUDE.md for the new project
-- [ ] Generate deployment documentation
-
-**✅ Testing:**
-- [ ] Verify configuration file syntax
-- [ ] Test git hook functionality
-- [ ] Validate CI/CD pipeline configuration
-
-**✅ User Instructions:**
-- [ ] Provide AWS commands to run
-- [ ] List DNS configuration requirements
-- [ ] Show deployment verification steps
 
 ---
 
@@ -813,144 +638,3 @@ When working with existing Tailwind v3 projects:
 3. Rename config files to `.mjs` extension
 4. Update Vite plugin to `@tailwindcss/vite`
 5. Ensure Node.js 20+ and Vite 5+ compatibility
-
----
-
-## 🎯 SUCCESS CRITERIA
-
-**A successful automated setup includes:**
-1. ✅ All template files copied and configured
-2. ✅ Project builds without errors
-3. ✅ Pre-commit hooks preventing broken commits
-4. ✅ CI/CD pipeline configured and validated
-5. ✅ Documentation generated for new project
-6. ✅ Clear next steps provided to user
-
-**After DNS configuration and first deployment:**
-1. ✅ HTTPS website accessible
-2. ✅ SSL certificate valid
-3. ✅ Health endpoints responding
-4. ✅ Zero-downtime updates working
-
----
-
-## 📚 DOCUMENTATION STRUCTURE
-
-```
-docs/
-├── DEVELOPMENT.md              # Developer workflow guide
-├── DEPLOYMENT_TEMPLATE.md      # Step-by-step replication guide
-├── ARCHITECTURE.md            # Technical architecture details
-└── TROUBLESHOOTING.md         # Common issues and solutions
-```
-
----
-
-## 🚀 CLAUDE CODE SCRIPT TEMPLATE
-
-When user says "set up new website", Claude should execute:
-
-```bash
-#!/bin/bash
-# Claude Code Automation Script
-
-# Get user inputs
-read -p "Project name (e.g., 'my-blog'): " PROJECT_NAME
-read -p "Domain name (e.g., 'myblog.com'): " DOMAIN_NAME
-read -p "Project type (python-vue/node/python-react): " PROJECT_TYPE
-
-# Automated setup
-echo "🚀 Setting up $PROJECT_NAME with Claude Code automation..."
-
-# Create project structure
-mkdir -p $PROJECT_NAME/{.github/workflows,.githooks,docs,infrastructure}
-
-# Copy and configure template files
-cp .github/workflows/deploy.yml $PROJECT_NAME/.github/workflows/
-sed -i "s/ical-viewer/$PROJECT_NAME/g" $PROJECT_NAME/.github/workflows/deploy.yml
-sed -i "s/filter-ical.de/$DOMAIN_NAME/g" $PROJECT_NAME/.github/workflows/deploy.yml
-
-cp .githooks/pre-commit $PROJECT_NAME/.githooks/
-chmod +x $PROJECT_NAME/.githooks/pre-commit
-
-cp .gitignore $PROJECT_NAME/
-cp -r docs/* $PROJECT_NAME/docs/
-cp -r infrastructure/* $PROJECT_NAME/infrastructure/
-
-# Configure git hooks
-cd $PROJECT_NAME
-git init
-git config core.hooksPath .githooks
-
-# Generate project-specific documentation
-echo "# $PROJECT_NAME - Professional Web Application" > README.md
-echo "Deployed at: https://$DOMAIN_NAME" >> README.md
-
-echo "✅ Setup complete! Next steps:"
-echo "1. Configure DNS: $DOMAIN_NAME → 56.228.25.95"
-echo "2. Run: aws ecr create-repository --repository-name $PROJECT_NAME-backend --region eu-north-1"
-echo "3. Run: aws ecr create-repository --repository-name $PROJECT_NAME-frontend --region eu-north-1"
-echo "4. Deploy: git add . && git commit -m 'Initial deployment' && git push origin main"
-```
-
-**This automation eliminates all manual configuration and ensures perfect replication every time.**
-
----
-
----
-
-## 🎯 CLAUDE CODE AUTOMATION SUCCESS METRICS
-
-### Deployment Reliability
-- ✅ **100% Rollback Success**: Failed deployments automatically revert to working version
-- ✅ **Zero Downtime**: Service availability maintained during all deployments and failures
-- ✅ **Framework Agnostic**: Works with React, Vue, Angular, Svelte, and any future frameworks
-- ✅ **Language Universal**: Same CI/CD for Python, Node.js, Go, Rust, Java, etc.
-
-### Performance Optimization Results
-- 🚀 **40% Faster**: Deployment time reduced from 6+ minutes to 3-5 minutes  
-- ⚡ **Smart Skipping**: No-change deployments complete in 30 seconds
-- 📊 **Real-time Metrics**: Performance tracking with optimization recommendations
-- 🔄 **Instant Rollback**: 15-30 second recovery time on deployment failures
-
-### Template Project Value
-- 🏗️ **Copy-Ready**: New projects get enterprise-grade CI/CD instantly
-- 🛡️ **Failure-Proof**: Built-in prevention for common deployment failure patterns
-- 📈 **Performance-First**: Optimization and monitoring built into every deployment
-- 🔄 **Self-Improving**: Continuous enhancement based on real-world usage patterns
-
-### Real-World Validation  
-This CI/CD system has been battle-tested with:
-- ✅ Frontend framework changes (hardcoded path failures → dynamic detection)
-- ✅ Container deployment failures (manual recovery → automatic rollback)
-- ✅ Performance degradation (slow deployments → intelligent optimization)
-- ✅ Multi-language projects (language-specific → universal patterns)
-
-### September 2025 Production Debugging Success
-**4-Hour Complex Deployment Issue Resolution:**
-- ✅ **Health Check Parsing Bug**: Fixed `awk` column extraction in 15 minutes after identification
-- ✅ **GITHUB_OUTPUT Scope Issue**: Resolved environment variable scoping in composite actions  
-- ✅ **Frontend API Configuration**: Fixed build-time environment variable for production
-- ✅ **CSP JavaScript Blocking**: Updated Content Security Policy to allow Vue.js evaluation
-- 📚 **Documentation Enhanced**: All lessons learned captured for future prevention
-- 🎯 **Result**: Comprehensive debugging methodology preventing similar issues
-
----
-
-*Last Updated: September 13, 2025*  
-*Status: Production-proven CI/CD template with comprehensive debugging methodology*
-
----
-
-## 📝 ORGANIZATION NOTES
-
-**For New Projects:**
-- Copy universal template sections (🛠️) to new project CLAUDE.md
-- Update project-specific sections (🎯) with new project details
-- All debugging methodology applies universally
-
-**Template Reusability:**
-- GitHub Composite Actions work with any language
-- Debugging methodology applies to all deployment types
-- Environment variable scoping rules are universal
-- Health check patterns work for any containerized service

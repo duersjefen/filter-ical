@@ -4,7 +4,9 @@
  */
 
 import { ref, reactive } from 'vue'
+import axios from 'axios'
 import { useAPI } from './useAPI'
+import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
 
 export function useFilteredCalendarAPI() {
   // State
@@ -13,27 +15,33 @@ export function useFilteredCalendarAPI() {
   const creating = ref(false)
   const updating = ref(false)
   const error = ref(null)
+  
+  // Get user authentication headers
+  const appStore = useAppStore()
+  const getUserHeaders = () => appStore.getUserHeaders()
 
-  // Get API instance
-  const { api } = useAPI()
+  // Use axios directly for HTTP calls
 
   /**
    * Pure function: Create filtered calendar data payload
    */
   const createFilteredCalendarPayload = (sourceCalendarId, name, filterConfig) => {
+    // Convert include/exclude categories to simple categories list based on mode
+    let categories = []
+    if (filterConfig.filter_mode === 'include' && filterConfig.include_categories) {
+      categories = filterConfig.include_categories
+    } else if (filterConfig.filter_mode === 'exclude' && filterConfig.exclude_categories) {
+      categories = filterConfig.exclude_categories
+    } else if (filterConfig.include_categories) {
+      categories = filterConfig.include_categories
+    }
+
     return {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
       filter_config: {
-        include_categories: filterConfig.include_categories || [],
-        exclude_categories: filterConfig.exclude_categories || [],
-        include_keywords: filterConfig.include_keywords || [],
-        exclude_keywords: filterConfig.exclude_keywords || [],
-        filter_mode: filterConfig.filter_mode || 'include',
-        match_all: filterConfig.match_all || false,
-        date_range_start: filterConfig.date_range_start || null,
-        date_range_end: filterConfig.date_range_end || null,
-        date_range_type: filterConfig.date_range_type || 'absolute'
+        categories: categories,
+        mode: filterConfig.filter_mode || 'include'
       }
     }
   }
@@ -80,7 +88,9 @@ export function useFilteredCalendarAPI() {
     error.value = null
     
     try {
-      const response = await api.get('/api/filtered-calendars')
+      const response = await axios.get('/api/filtered-calendars', {
+        headers: getUserHeaders()
+      })
       
       if (response.data && response.data.filtered_calendars) {
         filteredCalendars.value = response.data.filtered_calendars.map(transformFilteredCalendar)
@@ -104,7 +114,9 @@ export function useFilteredCalendarAPI() {
 
     try {
       const payload = createFilteredCalendarPayload(sourceCalendarId, name, filterConfig)
-      const response = await api.post('/api/filtered-calendars', payload)
+      const response = await axios.post('/api/filtered-calendars', payload, {
+        headers: getUserHeaders()
+      })
       
       if (response.data) {
         const newCalendar = transformFilteredCalendar(response.data)
@@ -142,7 +154,9 @@ export function useFilteredCalendarAPI() {
         }
       })
 
-      const response = await api.put(`/api/filtered-calendars/${calendarId}`, payload)
+      const response = await axios.put(`/api/filtered-calendars/${calendarId}`, payload, {
+        headers: getUserHeaders()
+      })
       
       if (response.data) {
         const updatedCalendar = transformFilteredCalendar(response.data)
@@ -171,7 +185,9 @@ export function useFilteredCalendarAPI() {
     error.value = null
 
     try {
-      await api.delete(`/api/filtered-calendars/${calendarId}`)
+      await axios.delete(`/api/filtered-calendars/${calendarId}`, {
+        headers: getUserHeaders()
+      })
       
       filteredCalendars.value = removeFilteredCalendarFromList(
         filteredCalendars.value, 
@@ -189,7 +205,9 @@ export function useFilteredCalendarAPI() {
 
   const getPublicCalendar = async (token) => {
     try {
-      const response = await api.get(`/cal/${token}`)
+      const response = await axios.get(`/cal/${token}`, {
+        headers: getUserHeaders()
+      })
       return response.data
     } catch (err) {
       error.value = err.response?.data?.detail || 'Failed to load public calendar'
@@ -198,30 +216,8 @@ export function useFilteredCalendarAPI() {
     }
   }
 
-  const downloadFilteredCalendar = async (token) => {
-    try {
-      const response = await api.get(`/cal/${token}.ics`, {
-        responseType: 'blob'
-      })
-      
-      // Create download link
-      const blob = new Blob([response.data], { type: 'text/calendar' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `filtered-calendar-${token}.ics`
-      document.body.appendChild(link)
-      link.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(link)
-      
-      return true
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to download calendar'
-      console.error('Error downloading calendar:', err)
-      return false
-    }
-  }
+  // Note: Removed downloadFilteredCalendar function since we now provide
+  // calendar subscription URLs instead of forcing file downloads
 
   /**
    * Pure helper functions for validation
@@ -288,7 +284,6 @@ export function useFilteredCalendarAPI() {
     updateFilteredCalendar,
     deleteFilteredCalendar,
     getPublicCalendar,
-    downloadFilteredCalendar,
     
     // Utilities
     validateFilterConfig,
