@@ -52,16 +52,22 @@ runs:
       run: |
         echo "🔍 Auto-discovering configuration from existing files..."
         
-        # Initialize with smart defaults
-        PROJECT_NAME="app"
-        BACKEND_CONTAINER="app-backend"
-        FRONTEND_CONTAINER="app-frontend"
-        NGINX_CONTAINER="nginx"
-        ECR_REGISTRY="310829530903.dkr.ecr.eu-north-1.amazonaws.com"
-        AWS_REGION="eu-north-1"
-        PORT_BACKEND="3000"
-        PORT_FRONTEND="80"
+        # Initialize required variables (will be populated from auto-detection, .env, or discovery)
+        PROJECT_NAME=""
+        BACKEND_CONTAINER=""
+        FRONTEND_CONTAINER=""
+        NGINX_CONTAINER="nginx"  # sensible default
+        ECR_REGISTRY=""
+        AWS_REGION=""
+        AWS_ACCOUNT_ID=""
+        PORT_BACKEND=""
+        PORT_FRONTEND=""
         DOMAIN_NAME=""
+        
+        # Track configuration errors
+        ERRORS=()
+        
+        echo "📋 Configuration discovery and validation..."
         
         # Discover from Git remote
         if [ -d "${{ inputs.project_root }}/.git" ]; then
@@ -83,7 +89,44 @@ runs:
           fi
         fi
         
-        # Discover from .env file (single source of truth)
+        # Auto-detect AWS configuration from environment
+        echo "☁️ Auto-detecting AWS configuration..."
+        
+        # AWS Region - Priority: GitHub Variables → AWS Environment → default
+        if [ -n "$AWS_REGION_VAR" ]; then
+          AWS_REGION="$AWS_REGION_VAR"
+          echo "   ✅ AWS_REGION: $AWS_REGION (from GitHub Variables)"
+        elif [ -n "$AWS_DEFAULT_REGION" ]; then
+          AWS_REGION="$AWS_DEFAULT_REGION"
+          echo "   ✅ AWS_REGION: $AWS_REGION (from AWS_DEFAULT_REGION)"
+        elif [ -n "$AWS_REGION" ]; then
+          echo "   ✅ AWS_REGION: $AWS_REGION (from environment)"
+        else
+          AWS_REGION="eu-north-1"  # sensible default for this project
+          echo "   🎯 AWS_REGION: $AWS_REGION (default)"
+        fi
+        
+        # AWS Account ID from STS (if AWS credentials are available)
+        if command -v aws >/dev/null 2>&1; then
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null || echo "")
+          if [ -n "$AWS_ACCOUNT_ID" ]; then
+            echo "   ✅ AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID (detected from AWS STS)"
+          fi
+        fi
+        
+        # Auto-generate ECR Registry from Account ID + Region
+        if [ -n "$AWS_ACCOUNT_ID" ] && [ -n "$AWS_REGION" ]; then
+          ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          echo "   ✅ ECR_REGISTRY: $ECR_REGISTRY (auto-generated)"
+        fi
+        
+        # Try to get domain from GitHub Variables (for CI/CD without .env)
+        if [ -n "$DOMAIN_NAME_VAR" ]; then
+          DOMAIN_NAME="$DOMAIN_NAME_VAR"
+          echo "   ✅ DOMAIN_NAME: $DOMAIN_NAME (from GitHub Variables)"
+        fi
+        
+        # Discover from .env file (can override auto-detection)
         if [ -f "${{ inputs.project_root }}/.env" ]; then
           echo "🔧 Reading configuration from .env (single source of truth)..."
           while IFS='=' read -r key value; do
@@ -97,6 +140,7 @@ runs:
               "DOMAIN_NAME") DOMAIN_NAME="$value" ;;
               "ECR_REGISTRY") ECR_REGISTRY="$value" ;;
               "AWS_REGION") AWS_REGION="$value" ;;
+              "AWS_ACCOUNT_ID") AWS_ACCOUNT_ID="$value" ;;
               "PORT_BACKEND"|"PORT"|"BACKEND_PORT"|"SERVER_PORT") PORT_BACKEND="$value" ;;
               "PORT_FRONTEND"|"FRONTEND_PORT"|"CLIENT_PORT") PORT_FRONTEND="$value" ;;
               "PROJECT_NAME") PROJECT_NAME="$value" ;;
@@ -105,7 +149,47 @@ runs:
             esac
             [ -n "$value" ] && echo "   ✅ $key: $value"
           done < "${{ inputs.project_root }}/.env"
+        else
+          echo "💡 No .env file found - using auto-detection only"
         fi
+        
+        # Validate required configuration (auto-detected or from .env)
+        echo "🔍 Validating final configuration..."
+        [ -z "$DOMAIN_NAME" ] && ERRORS+=("❌ DOMAIN_NAME could not be auto-detected or set in .env file")
+        [ -z "$ECR_REGISTRY" ] && ERRORS+=("❌ ECR_REGISTRY could not be auto-generated or set in .env file") 
+        [ -z "$AWS_REGION" ] && ERRORS+=("❌ AWS_REGION not available from environment or .env file")
+        
+        # Validate PROJECT_NAME was discovered (git remote, package.json, or .env)
+        if [ -z "$PROJECT_NAME" ]; then
+          ERRORS+=("❌ PROJECT_NAME could not be determined from git remote, package.json, or .env file")
+          ERRORS+=("💡 Add PROJECT_NAME=your-project-name to .env file as fallback")
+        fi
+        
+        # Set sensible defaults for optional values
+        [ -z "$PORT_BACKEND" ] && PORT_BACKEND="3000"
+        [ -z "$PORT_FRONTEND" ] && PORT_FRONTEND="80"
+        
+        # Fail fast if critical configuration is missing
+        if [ ${#ERRORS[@]} -ne 0 ]; then
+          echo ""
+          echo "🚨 CONFIGURATION ERRORS DETECTED:"
+          for error in "${ERRORS[@]}"; do
+            echo "$error"
+          done
+          echo ""
+          echo "💡 Configuration is auto-detected when possible. Add to .env if needed:"
+          echo "   DOMAIN_NAME=your-domain.com      # Auto-detected for known projects"
+          echo "   ECR_REGISTRY=auto-generated      # Generated from AWS Account + Region"  
+          echo "   AWS_REGION=from-environment      # Uses AWS_DEFAULT_REGION or eu-north-1"
+          echo "   PROJECT_NAME=from-git            # Detected from git remote"
+          echo ""
+          echo "💡 Ensure AWS credentials are available for auto-detection to work"
+          echo ""
+          exit 1
+        fi
+        
+        echo "✅ All required configuration validated successfully!"
+        echo ""
         
         # CRITICAL FIX: Always generate container names if not explicitly set
         echo "🔍 Container auto-generation logic:"
