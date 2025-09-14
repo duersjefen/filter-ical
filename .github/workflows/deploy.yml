@@ -72,6 +72,9 @@ jobs:
       uses: ./.github/actions/auto-discover-config
       with:
         project_root: '.'
+      env:
+        DOMAIN_NAME_VAR: ${{ vars.DOMAIN_NAME_VAR }}
+        AWS_REGION_VAR: ${{ vars.AWS_REGION }}
     
     - name: 🔍 Detect File Changes
       id: changes
