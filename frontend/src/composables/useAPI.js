@@ -21,7 +21,7 @@ export function useAPI() {
       const result = await apiCall()
       return result
     } catch (err) {
-      error.value = err.response?.data?.message || 'An error occurred'
+      error.value = err.response?.data?.detail || err.response?.data?.message || 'An error occurred'
       throw err // Re-throw so caller can handle if needed
     } finally {
       loading.value = false

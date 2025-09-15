@@ -94,6 +94,10 @@ export const useCalendarStore = defineStore('calendars', () => {
     selectedCalendar.value = null
   }
 
+  const setError = (errorMessage) => {
+    api.error.value = errorMessage
+  }
+
   const clearError = () => {
     api.clearError()
   }
@@ -114,6 +118,7 @@ export const useCalendarStore = defineStore('calendars', () => {
     deleteCalendar,
     selectCalendar,
     clearSelection,
+    setError,
     clearError
   }
 })

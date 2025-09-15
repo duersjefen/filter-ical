@@ -41,9 +41,35 @@
       }"
     >
       <div class="p-4 sm:p-6">
-      <!-- Create Form - Auto-show when categories selected -->
-      <div v-if="selectedCategories.length > 0" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-        <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">
+      <!-- Create/Update Form - Auto-show when categories selected -->
+      <div v-if="selectedCategories.length > 0" class="mb-6 p-4 rounded-lg border" 
+           :class="isUpdateMode 
+             ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
+             : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
+        
+        <!-- Update Mode Header -->
+        <div v-if="isUpdateMode" class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🔄</span>
+            <div>
+              <h4 class="text-md font-medium text-amber-800 dark:text-amber-200">
+                Update Filter: "{{ updateModeCalendar?.name }}"
+              </h4>
+              <p class="text-xs text-amber-700 dark:text-amber-300">
+                You're modifying an existing filtered calendar
+              </p>
+            </div>
+          </div>
+          <button 
+            @click="exitUpdateMode"
+            class="text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 font-medium text-sm"
+          >
+            ✕ Cancel Update
+          </button>
+        </div>
+        
+        <!-- Create Mode Header -->
+        <h4 v-else class="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">
           {{ $t('filteredCalendar.createTitle') }}
         </h4>
         
@@ -80,13 +106,30 @@
             </div>
           </div>
 
-          <div>
+          <div class="flex gap-3">
             <button
               type="submit"
               :disabled="!createForm.name.trim() || creating"
-              class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              :class="isUpdateMode 
+                ? 'bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white' 
+                : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white'"
             >
-              {{ creating ? $t('filteredCalendar.creating') : $t('filteredCalendar.create') }}
+              <span v-if="isUpdateMode">
+                {{ creating ? 'Updating...' : '🔄 Update Filter' }}
+              </span>
+              <span v-else>
+                {{ creating ? $t('filteredCalendar.creating') : $t('filteredCalendar.create') }}
+              </span>
+            </button>
+            
+            <button
+              v-if="isUpdateMode"
+              type="button"
+              @click="exitUpdateMode"
+              class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Cancel
             </button>
           </div>
         </form>
@@ -122,8 +165,19 @@
                 </div>
                 
                 <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <div class="mb-1">
-                    📅 {{ $t('filteredCalendar.created') }}: {{ formatDateTime(calendar.created_at) }}
+                  <div class="flex flex-wrap gap-4 mb-1 text-xs">
+                    <div>
+                      📅 {{ $t('filteredCalendar.created') }}: {{ formatCreatedDate(calendar.created_at) }}
+                    </div>
+                    <div v-if="calendar.updated_at && calendar.updated_at !== calendar.created_at">
+                      ✏️ Last edited: {{ formatCreatedDate(calendar.updated_at) }}
+                    </div>
+                    <div v-else-if="calendar.last_accessed">
+                      👁️ Last accessed: {{ formatCreatedDate(calendar.last_accessed) }}
+                    </div>
+                    <div v-if="calendar.access_count > 0">
+                      📊 {{ calendar.access_count }} {{ calendar.access_count === 1 ? 'access' : 'accesses' }}
+                    </div>
                   </div>
                   
                   <!-- Filter Logic Summary -->
@@ -164,11 +218,11 @@
                     
                     <!-- No Category Filter Display -->
                     <div v-else class="mb-2">
-                      <span class="bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-2 py-1 rounded text-xs font-medium">
-                        📋 No category filter applied
+                      <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded text-xs font-medium">
+                        ⚠️ {{ calendar.filter_config?.filter_mode ? 'Filter categories missing' : 'No category filter applied' }}
                       </span>
                       <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        This calendar contains the original events
+                        {{ calendar.filter_config?.filter_mode ? 'Categories may have been deleted or filter corrupted' : 'This calendar contains the original events' }}
                       </div>
                     </div>
                     
@@ -179,35 +233,36 @@
                   </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2 text-xs">
+                <div class="flex flex-wrap gap-3 mt-3">
                   <button
                     @click="copyToClipboard(calendar.calendar_url)"
-                    class="inline-flex items-center px-2 py-1 rounded transition-colors"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md"
                     :class="copySuccess === calendar.calendar_url 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'"
+                      ? 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-800' 
+                      : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'"
                   >
                     <span v-if="copySuccess === calendar.calendar_url">✅</span>
                     <span v-else>📋</span>
-                    {{ copySuccess === calendar.calendar_url 
+                    <span>{{ copySuccess === calendar.calendar_url 
                       ? $t('filteredCalendar.copied') 
-                      : $t('filteredCalendar.copyUrl') }}
+                      : $t('filteredCalendar.copyUrl') }}</span>
                   </button>
                   
-                  <a
-                    :href="calendar.preview_url"
-                    target="_blank"
-                    class="inline-flex items-center px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                  <button
+                    @click="loadFilterIntoPage(calendar)"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md"
                   >
-                    👁️ {{ $t('filteredCalendar.preview') }}
-                  </a>
+                    <span>🔄</span>
+                    <span>Update Filter</span>
+                  </button>
                   
                   <button
                     @click="deleteFilteredCalendar(calendar.id)"
-                    class="inline-flex items-center px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-rose-500 dark:bg-rose-600 text-white hover:bg-rose-600 dark:hover:bg-rose-700 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md"
                     @click.stop
                   >
-                    🗑️ {{ $t('common.delete') }}
+                    <span>🗑️</span>
+                    <span>{{ $t('common.delete') }}</span>
                   </button>
                 </div>
               </div>
@@ -356,7 +411,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['navigate-to-calendar'])
+const emit = defineEmits(['navigate-to-calendar', 'load-filter'])
 
 // Composables
 const { t } = useI18n()
@@ -374,6 +429,9 @@ const {
 // Reactive state
 const isExpanded = ref(true) // Start expanded by default
 const showEditModal = ref(false)
+const hasEverHadCategories = ref(false) // Track if user has ever selected categories
+const isUpdateMode = ref(false) // Track if user is updating an existing filter
+const updateModeCalendar = ref(null) // Store the calendar being updated
 const createForm = ref({
   name: ''
 })
@@ -392,8 +450,25 @@ const formatDateTime = computed(() => formatDateTimeUtil)
 const formatDateRange = computed(() => formatDateRangeUtil)
 
 // Show section if there are existing filtered calendars OR if categories are selected
+// OR if user has ever interacted with categories (to prevent disappearing during search/filter workflows)
 const shouldShowSection = computed(() => {
-  return filteredCalendars.value.length > 0 || props.selectedCategories.length > 0
+  // Always show if there are existing filtered calendars
+  if (filteredCalendars.value.length > 0) {
+    return true
+  }
+  
+  // Show if categories are currently selected
+  if (props.selectedCategories.length > 0) {
+    return true
+  }
+  
+  // Show if user has ever selected categories in this session
+  // This prevents the section from disappearing during search/filter operations
+  if (hasEverHadCategories.value) {
+    return true
+  }
+  
+  return false
 })
 
 // Auto-populate form name when categories selected
@@ -418,14 +493,31 @@ const createFilteredCalendar = async () => {
     filter_mode: props.filterMode
   }
 
-  const success = await apiCreateFiltered(
-    props.selectedCalendar.id,
-    createForm.value.name,
-    filterConfig
-  )
+  let success = false
+
+  if (isUpdateMode.value && updateModeCalendar.value) {
+    // Update existing calendar
+    success = await apiUpdateFiltered(
+      updateModeCalendar.value.id,
+      { 
+        name: createForm.value.name,
+        filter_config: filterConfig
+      }
+    )
+  } else {
+    // Create new calendar
+    success = await apiCreateFiltered(
+      props.selectedCalendar.id,
+      createForm.value.name,
+      filterConfig
+    )
+  }
 
   if (success) {
     clearCreateForm()
+    if (isUpdateMode.value) {
+      exitUpdateMode()
+    }
   }
 }
 
@@ -504,6 +596,72 @@ const handleDeleteConfirm = async () => {
 
 const handleDeleteCancel = () => {
   deleteCalendarId.value = null
+}
+
+const loadFilterIntoPage = (calendar) => {
+  // Extract the filter configuration
+  const filterConfig = calendar.filter_config
+  if (!filterConfig) return
+  
+  // Determine the categories to select and the filter mode
+  const categoriesToSelect = filterConfig.filter_mode === 'include' 
+    ? filterConfig.include_categories || []
+    : filterConfig.exclude_categories || []
+  
+  const filterMode = filterConfig.filter_mode || 'include'
+  
+  // Enter update mode
+  isUpdateMode.value = true
+  updateModeCalendar.value = calendar
+  createForm.value.name = calendar.name
+  
+  // Emit to parent component to load the filter
+  emit('load-filter', {
+    categories: categoriesToSelect,
+    mode: filterMode,
+    calendarName: calendar.name
+  })
+}
+
+const exitUpdateMode = () => {
+  isUpdateMode.value = false
+  updateModeCalendar.value = null
+  createForm.value.name = ''
+}
+
+const formatCreatedDate = (dateString) => {
+  if (!dateString) {
+    return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+  
+  try {
+    // Handle different date formats from backend
+    let date
+    
+    // Try parsing as ISO string first
+    if (typeof dateString === 'string') {
+      date = new Date(dateString)
+    } else {
+      // Handle if it's already a Date object or timestamp
+      date = new Date(dateString)
+    }
+    
+    // Validate the date
+    if (isNaN(date.getTime())) {
+      // Fallback to current date if invalid
+      console.warn('Invalid date format, using current date:', dateString)
+      date = new Date()
+    }
+    
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric'
+    })
+  } catch (error) {
+    console.error('Date formatting error:', error, 'for date:', dateString)
+    return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  }
 }
 
 const copyToClipboard = async (url) => {
@@ -616,9 +774,19 @@ const getConciseCategories = (categories) => {
   return `${firstCategory} and ${remaining} more...`
 }
 
-// Watch for category changes to auto-populate form name
+// Watch for category changes to auto-populate form name and track user interaction
 watch([() => props.selectedCategories, () => props.filterMode], () => {
   updateFormName()
+  
+  // Track if user has ever selected categories to prevent section from disappearing
+  if (props.selectedCategories.length > 0) {
+    hasEverHadCategories.value = true
+  }
+  
+  // Exit update mode if no categories are selected
+  if (props.selectedCategories.length === 0 && isUpdateMode.value) {
+    exitUpdateMode()
+  }
 }, { immediate: true })
 
 // Lifecycle

@@ -22,6 +22,7 @@
         :categories="mainCategories"
         :main-categories="mainCategories"
         :single-categories="singleEventCategories"
+        :all-categories="categoriesSortedByCount"
         :selected-categories="selectedCategories"
         :expanded-categories="expandedCategories"
         :show-single-events="showSingleEvents"
@@ -54,6 +55,7 @@
         :main-categories="mainCategories"
         :single-event-categories="singleEventCategories"
         @navigate-to-calendar="navigateToCalendar"
+        @load-filter="loadFilterIntoPage"
       />
 
       <PreviewEventsSection
@@ -132,6 +134,7 @@ const {
   categorySearch,
   filterMode,
   previewGroup,
+  categoriesSortedByCount,
   mainCategories,
   singleEventCategories,
   selectedCategoriesCount,
@@ -213,6 +216,23 @@ const navigateHome = () => {
 const navigateToCalendar = () => {
   // Stay on current calendar view - this is the calendar view, so no navigation needed
   // The function exists to fulfill the event handler requirement from FilteredCalendarSection
+}
+
+const loadFilterIntoPage = (filterData) => {
+  // Clear current selection
+  clearAllCategories()
+  
+  // Set the filter mode
+  if (filterData.mode !== filterMode.value) {
+    switchFilterMode(filterData.mode)
+  }
+  
+  // Select the categories from the filter
+  filterData.categories.forEach(categoryName => {
+    toggleCategory(categoryName)
+  })
+  
+  console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.categories.length} categories in ${filterData.mode} mode`)
 }
 
 onMounted(async () => {

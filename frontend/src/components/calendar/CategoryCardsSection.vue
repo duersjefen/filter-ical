@@ -1,5 +1,5 @@
 <template>
-  <div v-if="categories.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+  <div v-if="hasAnyCategories" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
     <!-- Collapsible Header -->
     <div 
       class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -249,6 +249,22 @@
         </div>
       </div>
 
+      <!-- No Results Message -->
+      <div 
+        v-if="!hasAnyVisibleCategories && (searchTerm.trim() || showSelectedOnly)" 
+        class="text-center py-8 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600"
+      >
+        <div class="text-4xl mb-3">🔍</div>
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          {{ searchTerm.trim() ? $t('categories.noSearchResults') : $t('categories.noSelectedVisible') }}
+        </h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          {{ searchTerm.trim() 
+            ? $t('categories.tryDifferentSearch') 
+            : $t('categories.selectCategoriesFirst') }}
+        </p>
+      </div>
+
       <!-- Individual Events Section -->
       <div 
         v-if="filteredSingleCategories.length > 0" 
@@ -335,6 +351,7 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   mainCategories: { type: Array, default: () => [] },
   singleCategories: { type: Array, default: () => [] },
+  allCategories: { type: Array, default: () => [] }, // Unfiltered categories for visibility check
   selectedCategories: { type: Array, default: () => [] },
   expandedCategories: { type: Array, default: () => [] },
   showSingleEvents: { type: Boolean, default: false },
@@ -344,6 +361,12 @@ const props = defineProps({
   filterMode: { type: String, default: 'include' },
   formatDateTime: { type: Function, required: true },
   formatDateRange: { type: Function, required: true }
+})
+
+// Check if there are any categories at all (for section visibility)
+// Use unfiltered categories to prevent section from disappearing during search
+const hasAnyCategories = computed(() => {
+  return props.allCategories.length > 0
 })
 
 // Filtered categories based on search and selection
@@ -411,6 +434,11 @@ const areAllVisibleSelected = computed(() => {
 const hasAnyVisibleSelected = computed(() => {
   const visibleNames = filteredMainCategories.value.map(cat => cat.name)
   return visibleNames.some(name => props.selectedCategories.includes(name))
+})
+
+// Check if filtering/search results in any visible categories
+const hasAnyVisibleCategories = computed(() => {
+  return filteredMainCategories.value.length > 0 || filteredSingleCategories.value.length > 0
 })
 
 // Methods for visible category selection

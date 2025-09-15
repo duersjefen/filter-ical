@@ -491,6 +491,7 @@ async def create_filtered_calendar(data: dict, x_user_id: str = Header("anonymou
         description=None,
         user_id=user_id,
         created_at=current_time,
+        updated_at=current_time,
         last_accessed=None,
         access_count=0,
         cache_key=None,
@@ -645,7 +646,7 @@ async def update_filtered_calendar(
     filtered_cal_data["name"] = new_name
     filtered_cal_data["filter_config"] = updated_filter_config.__dict__
     filtered_cal_data["filter_config_hash"] = new_filter_config_hash
-    filtered_cal_data["updated_at"] = updated_filter_config.created_at
+    filtered_cal_data["updated_at"] = current_time
     
     # Save updated store data (I/O)
     save_store_data(store_data)

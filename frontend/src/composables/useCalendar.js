@@ -476,6 +476,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     preferencesLoaded,
     
     // Computed
+    categoriesSortedByCount,
     filteredCategories,
     mainCategories,
     singleEventCategories,

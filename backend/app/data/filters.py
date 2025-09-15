@@ -35,7 +35,7 @@ def normalize_filter_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """Pure function: normalize and sanitize filter configuration"""
     normalized = {}
     
-    # Handle categories (should be list)
+    # Handle categories (should be list) - legacy support
     if 'categories' in config:
         categories = config['categories']
         if isinstance(categories, list):
@@ -44,6 +44,26 @@ def normalize_filter_config(config: Dict[str, Any]) -> Dict[str, Any]:
             normalized['categories'] = [categories.strip()] if categories.strip() else []
         else:
             normalized['categories'] = []
+    
+    # Handle include_categories (should be list)
+    if 'include_categories' in config:
+        include_categories = config['include_categories']
+        if isinstance(include_categories, list):
+            normalized['include_categories'] = [str(cat).strip() for cat in include_categories if cat]
+        elif isinstance(include_categories, str):
+            normalized['include_categories'] = [include_categories.strip()] if include_categories.strip() else []
+        else:
+            normalized['include_categories'] = []
+    
+    # Handle exclude_categories (should be list)
+    if 'exclude_categories' in config:
+        exclude_categories = config['exclude_categories']
+        if isinstance(exclude_categories, list):
+            normalized['exclude_categories'] = [str(cat).strip() for cat in exclude_categories if cat]
+        elif isinstance(exclude_categories, str):
+            normalized['exclude_categories'] = [exclude_categories.strip()] if exclude_categories.strip() else []
+        else:
+            normalized['exclude_categories'] = []
     
     # Handle selectedEventTypes (should be list)
     if 'selectedEventTypes' in config:
@@ -81,11 +101,17 @@ def normalize_filter_config(config: Dict[str, Any]) -> Dict[str, Any]:
         valid_directions = ['asc', 'desc']
         normalized['sortDirection'] = str(sort_dir) if sort_dir in valid_directions else 'asc'
     
-    # Handle mode (should be string)
+    # Handle mode (should be string) - legacy support
     if 'mode' in config:
         mode = config['mode']
         valid_modes = ['include', 'exclude']
         normalized['mode'] = str(mode) if mode in valid_modes else 'include'
+    
+    # Handle filter_mode (should be string)
+    if 'filter_mode' in config:
+        filter_mode = config['filter_mode']
+        valid_modes = ['include', 'exclude']
+        normalized['filter_mode'] = str(filter_mode) if filter_mode in valid_modes else 'include'
     
     # Copy any other fields as-is
     for key, value in config.items():

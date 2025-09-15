@@ -26,22 +26,14 @@ export function useFilteredCalendarAPI() {
    * Pure function: Create filtered calendar data payload
    */
   const createFilteredCalendarPayload = (sourceCalendarId, name, filterConfig) => {
-    // Convert include/exclude categories to simple categories list based on mode
-    let categories = []
-    if (filterConfig.filter_mode === 'include' && filterConfig.include_categories) {
-      categories = filterConfig.include_categories
-    } else if (filterConfig.filter_mode === 'exclude' && filterConfig.exclude_categories) {
-      categories = filterConfig.exclude_categories
-    } else if (filterConfig.include_categories) {
-      categories = filterConfig.include_categories
-    }
-
+    // Keep the original structure that the frontend expects
     return {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
       filter_config: {
-        categories: categories,
-        mode: filterConfig.filter_mode || 'include'
+        include_categories: filterConfig.include_categories || [],
+        exclude_categories: filterConfig.exclude_categories || [],
+        filter_mode: filterConfig.filter_mode || 'include'
       }
     }
   }

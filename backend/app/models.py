@@ -80,6 +80,7 @@ class FilteredCalendar:
     description: Optional[str]       # Optional description
     user_id: str                     # Owner
     created_at: str                  # ISO timestamp
+    updated_at: str                  # ISO timestamp
     last_accessed: Optional[str]     # Track usage for analytics
     access_count: int                # Usage metrics
     cache_key: Optional[str]         # For cache invalidation

@@ -194,6 +194,10 @@ export const useEventsStore = defineStore('events', () => {
     setSorting,
     clearAllFilters,
     selectAllEventTypes,
-    clearEventSelection
+    clearEventSelection,
+    
+    // Error handling
+    setError: (errorMessage) => { api.error.value = errorMessage },
+    clearError: () => { api.clearError() }
   }
 })

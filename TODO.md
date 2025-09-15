@@ -4,6 +4,7 @@
 > **Drop new ideas here without thinking about priority - sort later!**
 
 - I don't like the design of the renaming icon, and does it make sense to rename it where it is, without a toast notification?
+- Add data-testid attributes to key UI elements for better E2E testing
 
 ## 🚨 NEXT UP (Pick One & Focus)
 > **Most impactful items that solve real user problems**

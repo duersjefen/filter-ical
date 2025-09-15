@@ -106,6 +106,10 @@ export const useFiltersStore = defineStore('filters', () => {
     saveFilter,
     deleteFilter,
     createFilterConfig,
-    applyFilter
+    applyFilter,
+    
+    // Error handling
+    setError: (errorMessage) => { api.error.value = errorMessage },
+    clearError: () => { api.clearError() }
   }
 })

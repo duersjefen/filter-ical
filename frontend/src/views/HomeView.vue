@@ -184,7 +184,11 @@ onMounted(() => {
 })
 
 const handleAddCalendar = async () => {
-  await appStore.addCalendar()
+  const result = await appStore.addCalendar()
+  if (!result.success && result.error) {
+    // Set error in app store for display
+    appStore.setError(result.error)
+  }
 }
 
 const viewCalendar = async (calendarId) => {

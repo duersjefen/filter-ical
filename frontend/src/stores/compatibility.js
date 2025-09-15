@@ -53,8 +53,10 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
       set(value) { calendarStore.selectedCalendar = value }
     }),
 
-    get newCalendar() { return calendarStore.newCalendar },
-    set newCalendar(value) { calendarStore.newCalendar = value },
+    newCalendar: computed({
+      get() { return calendarStore.newCalendar },
+      set(value) { calendarStore.newCalendar = value }
+    }),
 
     // Events state (reactive delegation)
     events: computed({
@@ -87,13 +89,13 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
     set savedFilters(value) { filtersStore.savedFilters = value },
 
     // Combined loading and error states
-    get loading() { 
+    loading: computed(() => {
       return calendarStore.loading || eventsStore.loading || filtersStore.loading 
-    },
+    }),
     
-    get error() {
+    error: computed(() => {
       return calendarStore.error || eventsStore.error || filtersStore.error || null
-    },
+    }),
 
     // Computed properties (delegate to events store)
     isLoggedIn: computed(() => appStore.isLoggedIn),
@@ -213,7 +215,16 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
     updateStatistics() { /* Now computed automatically */ },
     clearAllFilters() { eventsStore.clearAllFilters() },
     selectAllEventTypes() { eventsStore.selectAllEventTypes() },
-    clearError() { calendarStore.clearError() },
+    setError(errorMessage) { 
+      // Set error in the appropriate store based on context
+      // For calendar operations, set in calendar store
+      calendarStore.setError(errorMessage)
+    },
+    clearError() { 
+      calendarStore.clearError()
+      eventsStore.clearError()
+      filtersStore.clearError()
+    },
 
     // iCal generation - use correct backend endpoint
     async generateIcal(config) {
