@@ -14,6 +14,7 @@ from app.domain.community import (
 )
 
 
+@pytest.mark.unit
 class TestCommunityCreation:
     """Test pure community creation functions"""
     
@@ -90,6 +91,7 @@ class TestCommunityCreation:
         assert result.events == []
 
 
+@pytest.mark.unit
 class TestCommunityValidation:
     """Test pure validation functions"""
     
@@ -142,6 +144,7 @@ class TestCommunityValidation:
         assert "valid HTTP URL" in error
 
 
+@pytest.mark.unit
 class TestCommunityUpdates:
     """Test pure community update functions"""
     
@@ -203,6 +206,7 @@ class TestCommunityUpdates:
         assert result.new_state == empty_state
 
 
+@pytest.mark.unit
 class TestCommunityQueries:
     """Test pure query functions"""
     
@@ -300,6 +304,7 @@ class TestCommunityQueries:
         assert "not found" in result.error_message
 
 
+@pytest.mark.unit
 class TestGroupAddition:
     """Test adding default groups to community"""
     

@@ -14,6 +14,7 @@ from app.data.schemas import AppState, CommunityData
 from app.persistence.repositories import StateRepository
 
 
+@pytest.mark.unit
 class TestCommunityService:
     """Test service layer orchestration"""
     
@@ -268,6 +269,7 @@ class TestCommunityService:
         self.mock_repository.load_state.assert_called_once()
 
 
+@pytest.mark.unit
 class TestServiceResultModel:
     """Test ServiceResult data model"""
     
@@ -297,6 +299,7 @@ class TestServiceResultModel:
         assert result.events == []  # Default empty list
 
 
+@pytest.mark.unit
 class TestRequestModels:
     """Test Pydantic request models for OpenAPI"""
     

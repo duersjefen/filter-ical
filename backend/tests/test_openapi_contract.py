@@ -13,6 +13,8 @@ from typing import Dict, Any, List
 from app.main import app
 
 
+@pytest.mark.unit
+@pytest.mark.unit
 class TestOpenAPIContract:
     """Test that API implementation matches OpenAPI specification exactly"""
     
@@ -160,6 +162,7 @@ class TestOpenAPIContract:
         assert response.status_code in [200, 401, 422]
 
 
+@pytest.mark.unit
 class TestOpenAPISchemaValidation:
     """Validate specific schemas from OpenAPI specification"""
     
@@ -203,6 +206,7 @@ class TestOpenAPISchemaValidation:
             assert "detail" in error_schema["properties"], "Error schema should have 'detail' field"
 
 
+@pytest.mark.unit
 class TestOpenAPISpecificationStructure:
     """Test the OpenAPI specification itself is valid"""
     
@@ -261,6 +265,7 @@ class TestOpenAPISpecificationStructure:
                     assert "type" in schema or "$ref" in schema, f"Schema {schema_name} should have type or $ref"
 
 
+@pytest.mark.unit
 class TestContractConsistency:
     """Test consistency between OpenAPI spec and actual implementation"""
     
