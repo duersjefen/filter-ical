@@ -76,11 +76,11 @@ def startup_event():
     print("🚀 iCal Viewer API starting with functional architecture")
     print("📋 Contract-driven development with OpenAPI compliance")
 
-# Authentication dependency
+# Optional authentication dependency for public-first access
 def get_user_id(x_user_id: Optional[str] = Header(None)) -> str:
-    """Extract user ID from x-user-id header"""
+    """Extract user ID from x-user-id header, use default 'public' user if none provided"""
     if not x_user_id or x_user_id.strip() == '':
-        raise HTTPException(status_code=401, detail="Authentication required - please log in")
+        return 'public'  # Default user for public access
     return x_user_id.strip()
 
 # Utility function for error responses

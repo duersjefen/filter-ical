@@ -12,37 +12,20 @@ import CalendarView from './views/CalendarView.vue'
 const routes = [
   { 
     path: '/', 
-    redirect: () => {
-      // Check if user is already logged in via localStorage
-      try {
-        const savedUser = localStorage.getItem('icalViewer_user')
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser)
-          if (parsed && parsed.username && parsed.loggedIn) {
-            return '/home'
-          }
-        }
-      } catch (error) {
-        console.warn('Error checking saved user:', error)
-      }
-      return '/login'
-    }
+    redirect: '/home'
   },
   { 
     path: '/login', 
-    component: LoginView,
-    meta: { requiresGuest: true }
+    component: LoginView
   },
   { 
     path: '/home', 
-    component: HomeView,
-    meta: { requiresAuth: true }
+    component: HomeView
   },
   { 
     path: '/calendar/:id', 
     component: CalendarView, 
-    props: true,
-    meta: { requiresAuth: true }
+    props: true
   }
 ]
 
@@ -56,40 +39,6 @@ const pinia = createPinia()
 // Create app instance
 const app = createApp(App).use(pinia).use(i18n)
 
-// Add navigation guards after pinia is available
-router.beforeEach((to, from, next) => {
-  try {
-    const savedUser = localStorage.getItem('icalViewer_user')
-    let isLoggedIn = false
-    
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser)
-      isLoggedIn = !!(parsed && parsed.username && parsed.loggedIn)
-    }
-    
-    // If route requires auth and user is not logged in
-    if (to.meta.requiresAuth && !isLoggedIn) {
-      next('/login')
-      return
-    }
-    
-    // If route requires guest (login page) and user is logged in
-    if (to.meta.requiresGuest && isLoggedIn) {
-      next('/home')
-      return
-    }
-    
-    next()
-  } catch (error) {
-    console.warn('Navigation guard error:', error)
-    // Clear corrupted data and redirect to login
-    localStorage.removeItem('icalViewer_user')
-    if (to.meta.requiresAuth) {
-      next('/login')
-    } else {
-      next()
-    }
-  }
-})
+// No authentication guards needed for public-first access
 
 app.use(router).mount('#app')

@@ -29,10 +29,11 @@ export const useAppStore = defineStore('app', () => {
   const isLoggedIn = computed(() => user.value.loggedIn)
 
   const getUserHeaders = () => {
-    if (!user.value.loggedIn || !user.value.username) {
-      throw new Error('User not logged in - authentication required')
+    // Optional authentication - provide user ID if available
+    if (user.value.loggedIn && user.value.username) {
+      return { 'x-user-id': user.value.username }
     }
-    return { 'x-user-id': user.value.username }
+    return {}
   }
 
   const login = async (username) => {
@@ -111,7 +112,7 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const fetchCalendars = async () => {
-    const result = await get('/api/calendars', getUserHeaders)
+    const result = await get('/api/calendars', getUserHeaders())
     
     if (result.success) {
       calendars.value = result.data.calendars
@@ -128,7 +129,7 @@ export const useAppStore = defineStore('app', () => {
     const result = await post('/api/calendars', {
       name: newCalendar.value.name,
       url: newCalendar.value.url
-    }, getUserHeaders)
+    }, getUserHeaders())
 
     if (result.success) {
       // Reset form
@@ -145,7 +146,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const deleteCalendar = async (calendarId) => {
-    const result = await del(`/api/calendars/${calendarId}`, getUserHeaders)
+    const result = await del(`/api/calendars/${calendarId}`, getUserHeaders())
 
     if (result.success) {
       // Refresh calendars list
@@ -195,7 +196,7 @@ export const useAppStore = defineStore('app', () => {
   const statistics = eventFiltering.statistics
 
   const loadCalendarEvents = async (calendarId) => {
-    const result = await get(`/api/calendar/${calendarId}/events`, getUserHeaders)
+    const result = await get(`/api/calendar/${calendarId}/events`, getUserHeaders())
 
     if (result.success) {
       events.value = result.data.events
@@ -205,7 +206,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const loadCalendarCategories = async (calendarId) => {
-    const result = await get(`/api/calendar/${calendarId}/categories`, getUserHeaders)
+    const result = await get(`/api/calendar/${calendarId}/categories`, getUserHeaders())
 
     if (result.success) {
       categories.value = result.data.categories
@@ -257,7 +258,7 @@ export const useAppStore = defineStore('app', () => {
   const savedFilters = ref([])
 
   const fetchFilters = async () => {
-    const result = await get('/api/filters', getUserHeaders)
+    const result = await get('/api/filters', getUserHeaders())
 
     if (result.success) {
       savedFilters.value = result.data.filters
@@ -272,7 +273,7 @@ export const useAppStore = defineStore('app', () => {
     const result = await post('/api/filters', {
       name: filterName,
       config: config
-    }, getUserHeaders)
+    }, getUserHeaders())
 
     if (result.success) {
       // Refresh filters list
@@ -283,7 +284,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const deleteFilter = async (filterId) => {
-    const result = await del(`/api/filters/${filterId}`, getUserHeaders)
+    const result = await del(`/api/filters/${filterId}`, getUserHeaders())
 
     if (result.success) {
       // Refresh filters list
@@ -320,7 +321,7 @@ export const useAppStore = defineStore('app', () => {
   const filteredCalendars = ref([])
 
   const loadFilteredCalendars = async () => {
-    const result = await get('/api/filtered-calendars', getUserHeaders)
+    const result = await get('/api/filtered-calendars', getUserHeaders())
     
     if (result.success) {
       filteredCalendars.value = result.data.filtered_calendars
@@ -338,7 +339,7 @@ export const useAppStore = defineStore('app', () => {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
       filter_config: filterConfig
-    }, getUserHeaders)
+    }, getUserHeaders())
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -353,7 +354,7 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Calendar ID is required' }
     }
 
-    const result = await put(`/api/filtered-calendars/${calendarId}`, updates, getUserHeaders)
+    const result = await put(`/api/filtered-calendars/${calendarId}`, updates, getUserHeaders())
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -368,7 +369,7 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Calendar ID is required' }
     }
 
-    const result = await del(`/api/filtered-calendars/${calendarId}`, getUserHeaders)
+    const result = await del(`/api/filtered-calendars/${calendarId}`, getUserHeaders())
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -383,19 +384,19 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   
   const getUserPreferences = async () => {
-    return await get('/api/user/preferences', getUserHeaders)
+    return await get('/api/user/preferences', getUserHeaders())
   }
 
   const saveUserPreferences = async (preferences) => {
-    return await put('/api/user/preferences', preferences, getUserHeaders)
+    return await put('/api/user/preferences', preferences, getUserHeaders())
   }
 
   const getCalendarPreferences = async (calendarId) => {
-    return await get(`/api/calendars/${calendarId}/preferences`, getUserHeaders)
+    return await get(`/api/calendars/${calendarId}/preferences`, getUserHeaders())
   }
 
   const saveCalendarPreferences = async (calendarId, preferences) => {
-    return await put(`/api/calendars/${calendarId}/preferences`, preferences, getUserHeaders)
+    return await put(`/api/calendars/${calendarId}/preferences`, preferences, getUserHeaders())
   }
 
   // ===============================================
@@ -406,7 +407,7 @@ export const useAppStore = defineStore('app', () => {
     return await post(`/api/calendar/${calendarId}/generate`, {
       selected_categories: selectedCategories,
       filter_mode: filterMode
-    }, getUserHeaders)
+    }, getUserHeaders())
   }
 
   // ===============================================

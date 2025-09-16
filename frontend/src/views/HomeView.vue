@@ -4,7 +4,7 @@
       title="🗓️ iCal Filter & Subscribe"
       subtitle="Easily filter your iCal feeds and create custom subscriptions"
       :user="appStore.user"
-      :show-user-info="true"
+      :show-user-info="appStore.isLoggedIn"
       @logout="handleLogout"
     />
 
@@ -170,16 +170,10 @@ const confirmDialog = ref(null)
 const calendarToDelete = ref(null)
 
 onMounted(() => {
-  console.log('HomeView mounted. User state:', appStore.user)
-  console.log('Is logged in:', appStore.isLoggedIn)
+  console.log('HomeView mounted in public-first mode')
   
-  if (!appStore.isLoggedIn) {
-    console.log('Not logged in, redirecting to login')
-    router.push('/login')
-    return
-  }
-  
-  console.log('User is logged in, fetching calendars')
+  // Public-first access - always try to initialize and fetch calendars
+  appStore.initializeApp()
   appStore.fetchCalendars()
 })
 
