@@ -201,7 +201,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
 
   // Methods
   function getCategoryForEvent(event) {
-    return event.summary || event.categories?.[0] || 'Uncategorized'
+    return event.categories?.[0] || event.summary || 'Uncategorized'
   }
 
   function parseIcalDate(dateString) {

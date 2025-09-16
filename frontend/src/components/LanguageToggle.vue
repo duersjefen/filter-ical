@@ -2,7 +2,7 @@
   <div class="relative">
     <button
       @click="toggleLanguage"
-      class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-200/80 hover:bg-gray-200 dark:bg-gray-700/80 dark:hover:bg-gray-700 transition-colors duration-200 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 shadow-lg backdrop-blur-sm"
+      class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 dark:bg-gray-700/50 hover:bg-white/20 dark:hover:bg-gray-700/70 transition-colors duration-200 text-white dark:text-gray-200 border border-white/20 dark:border-gray-600"
       :title="$t('language.switch')"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

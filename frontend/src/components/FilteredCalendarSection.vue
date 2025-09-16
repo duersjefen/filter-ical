@@ -42,7 +42,7 @@
     >
       <div class="p-4 sm:p-6">
       <!-- Create/Update Form - Auto-show when categories selected -->
-      <div v-if="selectedCategories?.length > 0" class="mb-6 p-4 rounded-lg border" 
+      <div v-if="selectedCategories.length > 0" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
              : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
@@ -272,7 +272,7 @@
       </div>
 
       <!-- Empty state - only show if no existing calendars and no categories selected -->
-      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedCategories?.length === 0" class="text-center py-6">
+      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedCategories.length === 0" class="text-center py-6">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
           {{ $t('filteredCalendar.noFiltered') }}
@@ -458,7 +458,7 @@ const shouldShowSection = computed(() => {
   }
   
   // Show if categories are currently selected
-  if (props.selectedCategories?.length > 0) {
+  if (props.selectedCategories.length > 0) {
     return true
   }
   
@@ -473,8 +473,8 @@ const shouldShowSection = computed(() => {
 
 // Auto-populate form name when categories selected
 const updateFormName = () => {
-  if (props.selectedCategories?.length > 0 && !createForm.value.name.trim()) {
-    createForm.value.name = `${props.selectedCalendar?.name || 'Calendar'} - ${props.filterMode === 'include' ? t('filteredCalendar.includeMode') : t('filteredCalendar.excludeMode')}`
+  if (props.selectedCategories.length > 0 && !createForm.value.name.trim()) {
+    createForm.value.name = `${props.selectedCalendar.name} - ${props.filterMode === 'include' ? t('filteredCalendar.includeMode') : t('filteredCalendar.excludeMode')}`
   }
 }
 
@@ -488,8 +488,8 @@ const toggleExpanded = () => {
 
 const createFilteredCalendar = async () => {
   const filterConfig = {
-    include_categories: props.filterMode === 'include' ? (props.selectedCategories || []) : [],
-    exclude_categories: props.filterMode === 'exclude' ? (props.selectedCategories || []) : [],
+    include_categories: props.filterMode === 'include' ? props.selectedCategories : [],
+    exclude_categories: props.filterMode === 'exclude' ? props.selectedCategories : [],
     filter_mode: props.filterMode
   }
 
@@ -779,12 +779,12 @@ watch([() => props.selectedCategories, () => props.filterMode], () => {
   updateFormName()
   
   // Track if user has ever selected categories to prevent section from disappearing
-  if (props.selectedCategories?.length > 0) {
+  if (props.selectedCategories.length > 0) {
     hasEverHadCategories.value = true
   }
   
   // Exit update mode if no categories are selected
-  if (props.selectedCategories?.length === 0 && isUpdateMode.value) {
+  if (props.selectedCategories.length === 0 && isUpdateMode.value) {
     exitUpdateMode()
   }
 }, { immediate: true })

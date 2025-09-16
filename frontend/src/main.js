@@ -8,13 +8,25 @@ import './styles/tailwind.css'
 import LoginView from './views/LoginView.vue'
 import HomeView from './views/HomeView.vue'
 import CalendarView from './views/CalendarView.vue'
-import ExterPasswordView from './views/ExterPasswordView.vue'
 
 const routes = [
   { 
     path: '/', 
-    component: HomeView,
-    meta: { requiresAuth: true }
+    redirect: () => {
+      // Check if user is already logged in via localStorage
+      try {
+        const savedUser = localStorage.getItem('icalViewer_user')
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser)
+          if (parsed && parsed.username && parsed.loggedIn) {
+            return '/home'
+          }
+        }
+      } catch (error) {
+        console.warn('Error checking saved user:', error)
+      }
+      return '/login'
+    }
   },
   { 
     path: '/login', 
@@ -22,14 +34,15 @@ const routes = [
     meta: { requiresGuest: true }
   },
   { 
+    path: '/home', 
+    component: HomeView,
+    meta: { requiresAuth: true }
+  },
+  { 
     path: '/calendar/:id', 
     component: CalendarView, 
     props: true,
     meta: { requiresAuth: true }
-  },
-  { 
-    path: '/exter', 
-    component: ExterPasswordView
   }
 ]
 
@@ -46,12 +59,6 @@ const app = createApp(App).use(pinia).use(i18n)
 // Add navigation guards after pinia is available
 router.beforeEach((to, from, next) => {
   try {
-    // Handle community routes separately (they have their own authentication)
-    if (to.path.startsWith('/exter')) {
-      next()
-      return
-    }
-    
     const savedUser = localStorage.getItem('icalViewer_user')
     let isLoggedIn = false
     
@@ -68,7 +75,7 @@ router.beforeEach((to, from, next) => {
     
     // If route requires guest (login page) and user is logged in
     if (to.meta.requiresGuest && isLoggedIn) {
-      next('/')
+      next('/home')
       return
     }
     

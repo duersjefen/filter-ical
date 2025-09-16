@@ -9,7 +9,7 @@
       <!-- Mobile Layout -->
       <div class="block sm:hidden">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">🗓️ {{ $t('calendar.events') }}</h3>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">📂 {{ $t('calendar.eventCategories') }}</h3>
           <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200">
             <svg 
               class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
@@ -53,7 +53,7 @@
       <div class="hidden sm:flex items-center justify-between">
         <div class="flex-1">
           <div class="flex items-center gap-4 mb-2">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">🗓️ {{ $t('calendar.events') }}</h3>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">📂 {{ $t('calendar.eventCategories') }}</h3>
             <!-- Filter Mode Toggle in Header -->
             <button
               @click.stop="$emit('switch-filter-mode', filterMode === 'include' ? 'exclude' : 'include')"
