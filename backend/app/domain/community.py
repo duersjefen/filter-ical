@@ -60,6 +60,7 @@ def create_community(
         groups=state.groups,
         filters=state.filters,
         subscriptions=state.subscriptions,
+        filtered_calendars=state.filtered_calendars,
         events_cache=state.events_cache,
         version=state.version + 1
     )
@@ -114,6 +115,7 @@ def update_community_calendar_url(
         groups=state.groups,
         filters=state.filters,
         subscriptions=state.subscriptions,
+        filtered_calendars=state.filtered_calendars,
         events_cache=state.events_cache,
         version=state.version + 1
     )
@@ -231,6 +233,7 @@ def add_default_groups_to_community(
         groups=new_groups,
         filters=state.filters,
         subscriptions=state.subscriptions,
+        filtered_calendars=state.filtered_calendars,
         events_cache=state.events_cache,
         version=state.version + 1
     )

@@ -12,7 +12,7 @@ from datetime import datetime
 
 from ..data.schemas import (
     AppState, CommunityData, GroupData, CalendarData, 
-    FilterData, SubscriptionData, EventData
+    FilterData, SubscriptionData, EventData, FilteredCalendarData
 )
 
 
@@ -107,6 +107,24 @@ class StateRepository:
                     updated_at TEXT NOT NULL,
                     last_accessed TEXT NOT NULL,
                     FOREIGN KEY (community_id) REFERENCES communities (id)
+                )
+            """)
+            
+            # Filtered calendars table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS filtered_calendars (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    source_calendar_id TEXT NOT NULL,
+                    filter_config TEXT NOT NULL,  -- JSON
+                    public_token TEXT UNIQUE,
+                    user_id TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    last_accessed TEXT,
+                    access_count INTEGER NOT NULL DEFAULT 0,
+                    is_active BOOLEAN NOT NULL DEFAULT 1,
+                    FOREIGN KEY (source_calendar_id) REFERENCES calendars (id)
                 )
             """)
             
@@ -213,6 +231,23 @@ class StateRepository:
                     last_accessed=row["last_accessed"]
                 )
             
+            # Load filtered calendars
+            filtered_calendars = {}
+            for row in conn.execute("SELECT * FROM filtered_calendars"):
+                filtered_calendars[row["id"]] = FilteredCalendarData(
+                    id=row["id"],
+                    name=row["name"],
+                    source_calendar_id=row["source_calendar_id"],
+                    filter_config=json.loads(row["filter_config"]),
+                    public_token=row["public_token"],
+                    user_id=row["user_id"],
+                    created_at=row["created_at"],
+                    updated_at=row["updated_at"],
+                    last_accessed=row["last_accessed"],
+                    access_count=int(row["access_count"]),
+                    is_active=bool(row["is_active"])
+                )
+            
             # Load events cache
             events_cache = {}
             for row in conn.execute("SELECT * FROM events_cache"):
@@ -227,6 +262,7 @@ class StateRepository:
             groups=groups,
             filters=filters,
             subscriptions=subscriptions,
+            filtered_calendars=filtered_calendars,
             events_cache=events_cache,
             version=0  # Will be managed by the application layer
         )
@@ -242,6 +278,7 @@ class StateRepository:
                 
                 # Clear existing data
                 conn.execute("DELETE FROM events_cache")
+                conn.execute("DELETE FROM filtered_calendars")
                 conn.execute("DELETE FROM subscriptions")
                 conn.execute("DELETE FROM filters")
                 conn.execute("DELETE FROM groups")
@@ -316,6 +353,20 @@ class StateRepository:
                         json.dumps(subscription.explicitly_unsubscribed_categories),
                         subscription.filter_mode, subscription.personal_token,
                         subscription.created_at, subscription.updated_at, subscription.last_accessed
+                    ))
+                
+                # Save filtered calendars
+                for filtered_cal in state.filtered_calendars.values():
+                    conn.execute("""
+                        INSERT INTO filtered_calendars 
+                        (id, name, source_calendar_id, filter_config, public_token,
+                         user_id, created_at, updated_at, last_accessed, access_count, is_active)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        filtered_cal.id, filtered_cal.name, filtered_cal.source_calendar_id,
+                        json.dumps(filtered_cal.filter_config), filtered_cal.public_token,
+                        filtered_cal.user_id, filtered_cal.created_at, filtered_cal.updated_at,
+                        filtered_cal.last_accessed, filtered_cal.access_count, filtered_cal.is_active
                     ))
                 
                 # Save events cache

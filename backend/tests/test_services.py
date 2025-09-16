@@ -37,7 +37,7 @@ class TestCommunityService:
         
         empty_state = AppState(
             calendars={}, communities={}, groups={}, 
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         # Mock repository calls
@@ -123,7 +123,7 @@ class TestCommunityService:
         
         state_with_community = AppState(
             calendars={}, communities={"exter": existing_community}, groups={},
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         self.mock_repository.load_state.return_value = state_with_community
@@ -152,7 +152,7 @@ class TestCommunityService:
         
         empty_state = AppState(
             calendars={}, communities={}, groups={}, 
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         self.mock_repository.load_state.return_value = empty_state
@@ -179,7 +179,7 @@ class TestCommunityService:
         
         state = AppState(
             calendars={}, communities={"exter": existing_community}, groups={},
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         request = CommunityUpdateRequest(
@@ -213,7 +213,7 @@ class TestCommunityService:
         
         state = AppState(
             calendars={}, communities={"exter": community}, groups={},
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         self.mock_repository.load_state.return_value = state
@@ -250,7 +250,7 @@ class TestCommunityService:
         
         state = AppState(
             calendars={}, communities={"exter": community}, groups={"football": group},
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         self.mock_repository.load_state.return_value = state

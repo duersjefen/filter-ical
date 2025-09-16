@@ -196,15 +196,15 @@ async def create_calendar(
     return result.data["calendar"]
 
 
-@app.delete("/api/calendars/{calendar_id}")
+@app.delete("/api/calendars/{calendarId}")
 async def delete_calendar(
-    calendar_id: str,
+    calendarId: str,
     user_id: str = Depends(get_user_id),
     calendar_service: CalendarService = Depends(get_calendar_service)
 ):
     """Delete calendar - follows OpenAPI specification exactly"""
     
-    result = calendar_service.delete_calendar_workflow(calendar_id, user_id)
+    result = calendar_service.delete_calendar_workflow(calendarId, user_id)
     
     if not result.success:
         if is_not_found_error(result.error_message):
@@ -258,16 +258,16 @@ async def get_events(
     return result.data["events"]
 
 
-@app.get("/api/calendar/{calendar_id}/events")
+@app.get("/api/calendar/{calendarId}/events")
 async def get_calendar_events_by_path(
-    calendar_id: str,
+    calendarId: str,
     include_past: bool = False,
     user_id: str = Depends(get_user_id),
     event_service: EventService = Depends(get_event_service)
 ):
     """Get calendar events by path parameter - follows OpenAPI specification exactly"""
     
-    result = event_service.get_calendar_events(calendar_id, user_id)
+    result = event_service.get_calendar_events(calendarId, user_id, include_past)
     
     if not result.success:
         if is_not_found_error(result.error_message):
@@ -275,14 +275,12 @@ async def get_calendar_events_by_path(
         else:
             raise HTTPException(status_code=500, detail=result.error_message)
     
-    events = result.data["events"]
-    
-    # Filter past events if include_past is False (default behavior per OpenAPI spec)
-    if not include_past:
-        # For now, return all events - would implement date filtering in real version
-        pass
-    
-    return events
+    # Return full response object as per OpenAPI spec
+    return {
+        "events": result.data["events"],
+        "total_count": result.data["total_count"],
+        "cache_status": result.data["cache_status"]
+    }
 
 
 @app.get("/api/calendar/{calendar_id}/categories")
@@ -293,7 +291,7 @@ async def get_calendar_categories(
 ):
     """Get event categories with counts - follows OpenAPI specification exactly"""
     
-    result = event_service.get_calendar_events(calendar_id, user_id)
+    result = event_service.get_calendar_categories(calendar_id, user_id)
     
     if not result.success:
         if is_not_found_error(result.error_message):
@@ -301,23 +299,10 @@ async def get_calendar_categories(
         else:
             raise HTTPException(status_code=500, detail=result.error_message)
     
-    # Extract categories from events (simplified implementation)
-    events = result.data["events"]
-    categories = {}
-    
-    for event in events:
-        event_categories = event.get("categories", [])
-        for category in event_categories:
-            if category:
-                categories[category] = categories.get(category, 0) + 1
-    
-    # Convert to list format expected by OpenAPI spec
-    category_list = [
-        {"name": name, "count": count} 
-        for name, count in categories.items()
-    ]
-    
-    return category_list
+    return {
+        "categories": result.data["categories"],
+        "total_events": result.data["total_events"]
+    }
 
 
 @app.post("/api/calendar/{calendar_id}/generate")
@@ -329,7 +314,20 @@ async def generate_filtered_calendar(
 ):
     """Generate filtered iCal file - follows OpenAPI specification exactly"""
     
-    result = event_service.get_calendar_events(calendar_id, user_id)
+    # Extract filter parameters
+    selected_categories = filter_request.get("selected_categories", [])
+    filter_mode = filter_request.get("filter_mode", "include")
+    date_range = filter_request.get("date_range", {})
+    
+    # Generate filtered calendar using the service
+    result = event_service.generate_filtered_calendar(
+        calendar_id=calendar_id,
+        user_id=user_id,
+        selected_categories=selected_categories,
+        filter_mode=filter_mode,
+        date_range_start=date_range.get("start"),
+        date_range_end=date_range.get("end")
+    )
     
     if not result.success:
         if is_not_found_error(result.error_message):
@@ -337,46 +335,14 @@ async def generate_filtered_calendar(
         else:
             raise HTTPException(status_code=500, detail=result.error_message)
     
-    # For now, return a simple iCal structure
-    # In real implementation, would generate proper iCal content
-    events = result.data["events"]
-    
-    # Apply basic filtering based on categories
-    selected_categories = filter_request.get("categories", [])
-    filter_mode = filter_request.get("filter_mode", "include")
-    
-    if selected_categories:
-        if filter_mode == "include":
-            filtered_events = [
-                event for event in events 
-                if any(cat in event.get("categories", []) for cat in selected_categories)
-            ]
-        else:  # exclude mode
-            filtered_events = [
-                event for event in events 
-                if not any(cat in event.get("categories", []) for cat in selected_categories)
-            ]
-    else:
-        filtered_events = events
-    
-    # Generate basic iCal content
-    ical_content = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//iCal Viewer//EN\n"
-    
-    for event in filtered_events:
-        ical_content += "BEGIN:VEVENT\n"
-        ical_content += f"UID:{event.get('id', 'unknown')}\n"
-        ical_content += f"SUMMARY:{event.get('summary', 'No Title')}\n"
-        if event.get("description"):
-            ical_content += f"DESCRIPTION:{event.get('description')}\n"
-        ical_content += "END:VEVENT\n"
-    
-    ical_content += "END:VCALENDAR"
-    
-    return {
-        "ical_content": ical_content,
-        "total_events": len(filtered_events),
-        "filter_applied": filter_request
-    }
+    return PlainTextResponse(
+        content=result.data["ical_content"],
+        media_type="text/calendar; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="filtered-calendar.ics"',
+            "Cache-Control": "private, max-age=3600"
+        }
+    )
 
 
 @app.get("/api/calendars/{calendar_id}/preferences")
@@ -424,7 +390,7 @@ async def create_filtered_calendar(
     """Create filtered calendar - follows OpenAPI specification exactly"""
     
     # Validate required fields per OpenAPI spec
-    required_fields = ["name", "calendar_id", "filter_config"]
+    required_fields = ["name", "source_calendar_id", "filter_config"]
     for field in required_fields:
         if field not in filter_data:
             raise HTTPException(
@@ -434,7 +400,7 @@ async def create_filtered_calendar(
     
     result = filter_service.create_filtered_calendar_workflow(
         name=filter_data["name"],
-        calendar_id=filter_data["calendar_id"],
+        source_calendar_id=filter_data["source_calendar_id"],
         filter_config=filter_data["filter_config"],
         user_id=user_id
     )
@@ -442,7 +408,7 @@ async def create_filtered_calendar(
     if not result.success:
         raise HTTPException(status_code=400, detail=result.error_message)
     
-    return result.data["filtered_calendar"]
+    return {"success": True, "filtered_calendar": result.data["filtered_calendar"]}
 
 
 @app.put("/api/filtered-calendars/{filtered_calendar_id}")
@@ -469,6 +435,28 @@ async def update_filtered_calendar(
     return {
         "success": True,
         "message": "Filtered calendar updated successfully"
+    }
+
+
+@app.delete("/api/filtered-calendars/{filtered_calendar_id}")
+async def delete_filtered_calendar(
+    filtered_calendar_id: str,
+    user_id: str = Depends(get_user_id),
+    filter_service: FilterService = Depends(get_filter_service)
+):
+    """Delete filtered calendar - follows OpenAPI specification exactly"""
+    
+    result = filter_service.delete_filtered_calendar_workflow(filtered_calendar_id, user_id)
+    
+    if not result.success:
+        if is_not_found_error(result.error_message):
+            raise HTTPException(status_code=404, detail=result.error_message)
+        else:
+            raise HTTPException(status_code=403, detail=result.error_message)
+    
+    return {
+        "success": True,
+        "message": "Filtered calendar deleted successfully"
     }
 
 
@@ -592,72 +580,196 @@ async def verify_community_session(
 # === PUBLIC CALENDAR ACCESS ===
 
 @app.get("/cal/{token}.ics", response_class=PlainTextResponse)
-async def get_filtered_ical_file(token: str):
+async def get_filtered_ical_file(
+    token: str,
+    filter_service: FilterService = Depends(get_filter_service),
+    event_service: EventService = Depends(get_event_service)
+):
     """Get filtered iCal file by public token - follows OpenAPI specification exactly"""
     
-    # TODO: Use filter_service to look up filtered calendar by token
-    
-    # Validate token format (simple validation for now)
+    # Validate token format
     if not token or len(token) < 8:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    # Stub implementation for contract compliance
-    ical_content = """BEGIN:VCALENDAR
+    # Get filtered calendar by token
+    result = filter_service.get_filtered_calendar_by_token(token)
+    if not result.success:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+    
+    filtered_calendar = result.data["filtered_calendar"]
+    source_calendar_id = filtered_calendar.source_calendar_id
+    user_id = filtered_calendar.user_id
+    filter_config = filtered_calendar.filter_config
+    
+    # Generate filtered calendar content
+    try:
+        filtered_result = event_service.generate_filtered_calendar(
+            calendar_id=source_calendar_id,
+            user_id=user_id,
+            selected_categories=filter_config.get("include_categories", []),
+            filter_mode=filter_config.get("filter_mode", "include"),
+            date_range_start=filter_config.get("date_range_start"),
+            date_range_end=filter_config.get("date_range_end")
+        )
+        
+        if not filtered_result.success:
+            raise HTTPException(status_code=500, detail="Failed to generate filtered calendar")
+        
+        ical_content = filtered_result.data["ical_content"]
+        
+    except Exception as e:
+        # Fallback to empty calendar if generation fails
+        ical_content = f"""BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//iCal Viewer//Public Filter//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:Filtered Calendar
-X-WR-CALDESC:Public filtered calendar
+X-WR-CALNAME:{filtered_calendar.name}
+X-WR-CALDESC:Filtered calendar - Error loading events
 X-WR-TIMEZONE:UTC
-BEGIN:VEVENT
-UID:sample-event-123@filter-ical.de
-DTSTART:20240917T090000Z
-DTEND:20240917T100000Z
-SUMMARY:Sample Event
-DESCRIPTION:This is a sample filtered event
-LOCATION:Sample Location
-CATEGORIES:Sample
-STATUS:CONFIRMED
-END:VEVENT
 END:VCALENDAR"""
     
-    return PlainTextResponse(content=ical_content, media_type="text/calendar")
+    return PlainTextResponse(
+        content=ical_content, 
+        media_type="text/calendar; charset=utf-8",
+        headers={
+            "Cache-Control": "public, max-age=3600, must-revalidate",
+            "Content-Disposition": f'attachment; filename="{filtered_calendar.name.replace(" ", "-").lower()}.ics"',
+            "X-Content-Generated": datetime.utcnow().isoformat() + "Z"
+        }
+    )
 
 
 @app.get("/cal/{token}")
-async def preview_filtered_calendar(token: str):
+async def preview_filtered_calendar(
+    token: str,
+    filter_service: FilterService = Depends(get_filter_service),
+    event_service: EventService = Depends(get_event_service)
+):
     """Preview filtered calendar by public token - follows OpenAPI specification exactly"""
     
-    # TODO: Use filter_service to look up filtered calendar by token
-    
-    # Validate token format (simple validation for now)
+    # Validate token format
     if not token or len(token) < 8:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    # Stub implementation for contract compliance
+    # Get filtered calendar by token
+    result = filter_service.get_filtered_calendar_by_token(token)
+    if not result.success:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+    
+    filtered_calendar = result.data["filtered_calendar"]
+    ics_url = f"https://filter-ical.de/cal/{token}.ics"
+    
+    # Try to get preview of events
+    try:
+        events_result = event_service.get_calendar_events(
+            filtered_calendar.source_calendar_id,
+            filtered_calendar.user_id,
+            include_past=False
+        )
+        
+        total_events = 0
+        preview_events = []
+        
+        if events_result.success:
+            events_data = events_result.data.get("events", [])
+            # Apply filtering for preview
+            filter_config = filtered_calendar.filter_config
+            include_categories = filter_config.get("include_categories", [])
+            filter_mode = filter_config.get("filter_mode", "include")
+            
+            if include_categories:
+                if filter_mode == "include":
+                    filtered_events = [
+                        event for event in events_data 
+                        if any(cat.lower() in [c.lower() for c in event.get("categories", [])] 
+                              for cat in include_categories)
+                    ]
+                else:
+                    filtered_events = [
+                        event for event in events_data 
+                        if not any(cat.lower() in [c.lower() for c in event.get("categories", [])] 
+                                  for cat in include_categories)
+                    ]
+            else:
+                filtered_events = events_data
+            
+            total_events = len(filtered_events)
+            preview_events = filtered_events[:10]  # Show first 10 events
+        
+    except Exception:
+        total_events = 0
+        preview_events = []
+    
+    # Build HTML preview
+    events_html = ""
+    for event in preview_events:
+        events_html += f"""
+        <div class="event">
+            <h3>{event.get('summary', 'No Title')}</h3>
+            <p><strong>Start:</strong> {event.get('dtstart', 'Unknown')}</p>
+            {f"<p><strong>Location:</strong> {event.get('location')}</p>" if event.get('location') else ""}
+            {f"<p><strong>Categories:</strong> {', '.join(event.get('categories', []))}</p>" if event.get('categories') else ""}
+        </div>"""
+    
+    if not events_html:
+        events_html = "<p>No events found with current filter criteria.</p>"
+    
     preview_html = f"""<!DOCTYPE html>
 <html>
 <head>
-    <title>Filtered Calendar Preview</title>
+    <title>{filtered_calendar.name} - iCal Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; }}
-        .calendar-header {{ background: #f5f5f5; padding: 15px; border-radius: 5px; }}
-        .event {{ margin: 10px 0; padding: 10px; border-left: 3px solid #007acc; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }}
+        .container {{ max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #007acc, #0056b3); color: white; padding: 30px; border-radius: 10px 10px 0 0; }}
+        .content {{ padding: 30px; }}
+        .stats {{ display: flex; gap: 20px; margin: 20px 0; }}
+        .stat {{ background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; flex: 1; }}
+        .download-btn {{ display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; }}
+        .download-btn:hover {{ background: #218838; }}
+        .event {{ margin: 15px 0; padding: 20px; border-left: 4px solid #007acc; background: #f8f9fa; border-radius: 0 8px 8px 0; }}
+        .filter-info {{ background: #e9ecef; padding: 15px; border-radius: 8px; margin: 20px 0; }}
     </style>
 </head>
 <body>
-    <div class="calendar-header">
-        <h1>Filtered Calendar Preview</h1>
-        <p>Token: {token}</p>
-        <p><a href="/cal/{token}.ics">Download iCal file</a></p>
-    </div>
-    <div class="event">
-        <h3>Sample Event</h3>
-        <p>Date: September 17, 2024</p>
-        <p>Time: 09:00 - 10:00 UTC</p>
-        <p>Location: Sample Location</p>
+    <div class="container">
+        <div class="header">
+            <h1>{filtered_calendar.name}</h1>
+            <p>Public Filtered Calendar</p>
+        </div>
+        <div class="content">
+            <div class="stats">
+                <div class="stat">
+                    <h3>{total_events}</h3>
+                    <p>Events</p>
+                </div>
+                <div class="stat">
+                    <h3>{filtered_calendar.access_count}</h3>
+                    <p>Downloads</p>
+                </div>
+            </div>
+            
+            <p><a href="{ics_url}" class="download-btn">📅 Subscribe to Calendar</a></p>
+            
+            <div class="filter-info">
+                <h4>Filter Configuration:</h4>
+                <p><strong>Mode:</strong> {filtered_calendar.filter_config.get('filter_mode', 'include').title()}</p>
+                {f"<p><strong>Categories:</strong> {', '.join(filtered_calendar.filter_config.get('include_categories', []))}</p>" if filtered_calendar.filter_config.get('include_categories') else ""}
+            </div>
+            
+            <h3>Preview Events:</h3>
+            {events_html}
+            
+            {f"<p><em>Showing first 10 of {total_events} events. <a href='{ics_url}'>Download full calendar</a> to see all events.</em></p>" if total_events > 10 else ""}
+            
+            <hr style="margin: 30px 0;">
+            <p style="color: #666; font-size: 14px; text-align: center;">
+                Generated by <a href="https://filter-ical.de">iCal Viewer</a> • 
+                Last updated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC
+            </p>
+        </div>
     </div>
 </body>
 </html>"""

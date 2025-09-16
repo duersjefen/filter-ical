@@ -92,6 +92,22 @@ class SubscriptionData:
     last_accessed: str
 
 
+@dataclass(frozen=True)
+class FilteredCalendarData:
+    """Pure filtered calendar information"""
+    id: str
+    name: str
+    source_calendar_id: str
+    filter_config: Dict[str, Any]
+    public_token: Optional[str]
+    user_id: str
+    created_at: str
+    updated_at: str
+    last_accessed: Optional[str]
+    access_count: int
+    is_active: bool
+
+
 # State containers - immutable collections
 @dataclass(frozen=True)
 class AppState:
@@ -101,6 +117,7 @@ class AppState:
     groups: Dict[str, GroupData]
     filters: Dict[str, FilterData]
     subscriptions: Dict[str, SubscriptionData]
+    filtered_calendars: Dict[str, FilteredCalendarData]
     events_cache: Dict[str, List[EventData]]
     version: int = 0  # For optimistic locking
 

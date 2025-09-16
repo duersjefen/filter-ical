@@ -23,7 +23,7 @@ class TestCommunityCreation:
         # Given: Empty state
         empty_state = AppState(
             calendars={}, communities={}, groups={}, 
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         # When: Creating a community
@@ -70,7 +70,7 @@ class TestCommunityCreation:
         )
         state_with_community = AppState(
             calendars={}, communities={"exter": existing_community}, groups={},
-            filters={}, subscriptions={}, events_cache={}, version=1
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}, version=1
         )
         
         # When: Trying to create duplicate community
@@ -159,7 +159,7 @@ class TestCommunityUpdates:
         )
         state = AppState(
             calendars={}, communities={"exter": existing_community}, groups={},
-            filters={}, subscriptions={}, events_cache={}, version=1
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}, version=1
         )
         
         # When: Updating calendar URL
@@ -192,7 +192,7 @@ class TestCommunityUpdates:
         """Test updating non-existent community fails"""
         empty_state = AppState(
             calendars={}, communities={}, groups={}, 
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         result = update_community_calendar_url(
@@ -221,7 +221,7 @@ class TestCommunityQueries:
         )
         state = AppState(
             calendars={}, communities={"exter": community}, groups={},
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         # When: Finding community by path
@@ -236,7 +236,7 @@ class TestCommunityQueries:
         """Test community lookup fails for non-existent path"""
         empty_state = AppState(
             calendars={}, communities={}, groups={}, 
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         result = find_community_by_path(empty_state, "/nonexistent")
@@ -277,7 +277,7 @@ class TestCommunityQueries:
         state = AppState(
             calendars={}, communities={"exter": community}, 
             groups={"football": group1, "youth": group2, "other": other_group},
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         # When: Getting community groups
@@ -295,7 +295,7 @@ class TestCommunityQueries:
         """Test getting groups for non-existent community"""
         empty_state = AppState(
             calendars={}, communities={}, groups={}, 
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         result = get_community_groups(empty_state, "nonexistent")
@@ -319,7 +319,7 @@ class TestGroupAddition:
         )
         state = AppState(
             calendars={}, communities={"exter": community}, groups={},
-            filters={}, subscriptions={}, events_cache={}, version=1
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}, version=1
         )
         
         # Default groups to add
@@ -358,7 +358,7 @@ class TestGroupAddition:
         """Test adding groups to non-existent community fails"""
         empty_state = AppState(
             calendars={}, communities={}, groups={}, 
-            filters={}, subscriptions={}, events_cache={}
+            filters={}, subscriptions={}, filtered_calendars={}, events_cache={}
         )
         
         result = add_default_groups_to_community(empty_state, "nonexistent", [])
