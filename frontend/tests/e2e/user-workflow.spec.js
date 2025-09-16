@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Complete User Workflow', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the application
-    await page.goto('http://localhost:8000');
+    await page.goto('/');
     
     // Wait for the app to load
     await page.waitForLoadState('networkidle');
@@ -16,30 +16,33 @@ test.describe('Complete User Workflow', () => {
     console.log('Step 1: Checking login page...');
     await expect(page.locator('h2')).toContainText('Login');
     
-    // Step 2: Login with username "Martijn"
-    console.log('Step 2: Logging in with username "Martijn"...');
+    // Step 2: Login with unique username to avoid calendar conflicts
+    const uniqueUser = `TestUser_${Date.now()}`;
+    console.log(`Step 2: Logging in with username "${uniqueUser}"...`);
     const usernameInput = page.locator('input[id="username"]');
-    await usernameInput.fill('Martijn');
+    await usernameInput.fill(uniqueUser);
     
     const loginButton = page.locator('button[type="submit"]');
     await loginButton.click();
     
-    // Wait for navigation to home page
-    await page.waitForURL('**/home');
+    // Wait for navigation to home page (root domain)
+    await page.waitForURL('/');
     console.log('✅ Successfully navigated to home page');
 
     // Step 3: Verify username display
     console.log('Step 3: Verifying username display...');
-    const welcomeText = page.locator('text=/Welcome.*Martijn/');
+    const welcomeText = page.locator(`text=/Welcome.*${uniqueUser}/`);
     await expect(welcomeText).toBeVisible();
-    console.log('✅ Username "Martijn" is displayed correctly');
+    console.log(`✅ Username "${uniqueUser}" is displayed correctly`);
 
     // Step 4: Add a calendar
     console.log('Step 4: Adding a calendar...');
     const calendarNameInput = page.locator('input[id="calendar-name"]');
-    await calendarNameInput.fill('Norwegian Test Calendar');
+    const uniqueName = `Test Calendar ${Date.now()}`;
+    await calendarNameInput.fill(uniqueName);
     
     const calendarUrlInput = page.locator('input[id="calendar-url"]');
+    // Use real iCal URL that will work (new user won't have this URL yet)
     await calendarUrlInput.fill('https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics');
     
     const addCalendarButton = page.locator('button[type="submit"]');
@@ -57,10 +60,10 @@ test.describe('Complete User Workflow', () => {
     
     // Debug: Check what's visible
     const pageContent = await page.locator('body').textContent();
-    console.log('Page content includes Norwegian:', pageContent.includes('Norwegian Test Calendar'));
+    console.log(`Page content includes calendar:`, pageContent.includes(uniqueName));
     
     // Look for the calendar in the desktop table layout (which should be visible)
-    const calendarInTable = page.locator('table').locator('text=Norwegian Test Calendar').first();
+    const calendarInTable = page.locator('table').locator(`text=${uniqueName}`).first();
     await expect(calendarInTable).toBeVisible({ timeout: 10000 });
     console.log('✅ Calendar appears in the list correctly');
 
@@ -96,7 +99,7 @@ test.describe('Complete User Workflow', () => {
     const loginButton = page.locator('button[type="submit"]');
     await loginButton.click();
     
-    await page.waitForURL('**/home');
+    await page.waitForURL('**/');
 
     // This should trigger fetchCalendars API call
     await page.waitForTimeout(2000); // Allow time for API calls

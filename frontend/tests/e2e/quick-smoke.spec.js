@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test('App works and login doesn\'t infinite loop', async ({ page }) => {
   test.setTimeout(15000); // 15 second max
   
-  await page.goto('http://localhost:8000');
+  await page.goto('/');
   await page.waitForTimeout(2000);
   
   // Basic smoke test - app loaded

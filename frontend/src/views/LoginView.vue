@@ -41,7 +41,7 @@
 <script setup>
 import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
 import { useRouter } from 'vue-router'
-import { watch, onMounted } from 'vue'
+import { watch, onMounted, nextTick } from 'vue'
 import AppHeader from '../components/shared/AppHeader.vue'
 import { useDarkMode } from '../composables/useDarkMode'
 
@@ -53,9 +53,13 @@ const { isDarkMode, toggleDarkMode } = useDarkMode()
 
 const handleLogin = async () => {
   const result = await appStore.login()
-  // Explicitly redirect after successful login
+  // Wait for Vue reactivity system to process the state change
   if (result && appStore.isLoggedIn) {
-    router.push('/home')
+    await nextTick()
+    // Add small delay to ensure all reactive updates are complete
+    setTimeout(() => {
+      router.push('/')
+    }, 100)
   }
 }
 </script>

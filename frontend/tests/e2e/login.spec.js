@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Login Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Start from the homepage
-    await page.goto('http://localhost:8000');
+    await page.goto('/');
   });
 
   test('should navigate to login page and back', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Login Flow', () => {
 
   test('should be able to use app without login (anonymous)', async ({ page }) => {
     // App should work without login
-    await page.goto('http://localhost:8000');
+    await page.goto('/');
     
     // Should see calendars or some content
     await page.waitForTimeout(2000);
@@ -67,17 +67,29 @@ test.describe('Login Flow', () => {
       }
     });
 
-    await page.goto('http://localhost:8000');
+    // First go to home (will redirect to login)
+    await page.goto('/');
+    await page.waitForTimeout(1000);
+    
+    // Should be on login page now
+    const usernameInput = page.locator('input[id="username"]');
+    const loginButton = page.locator('button[type="submit"]');
+    
+    // Login
+    await usernameInput.fill('TestUser');
+    await loginButton.click();
+    
+    // Wait for login to complete and redirect to home
     await page.waitForTimeout(3000);
 
-    // Should make API calls to get calendars
+    // Should make API calls to get calendars after login
     expect(apiCalls.some(url => url.includes('/api/calendars'))).toBeTruthy();
   });
 });
 
 test.describe('Calendar Functionality', () => {
   test('should display calendars', async ({ page }) => {
-    await page.goto('http://localhost:8000');
+    await page.goto('/');
     
     // Wait for app to load
     await page.waitForTimeout(3000);

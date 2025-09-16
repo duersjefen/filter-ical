@@ -31,6 +31,7 @@
   "calendar": {
     "filterTitle": "Filter: {name}",
     "subtitle": "Event-Typen auswählen, um zu filtern und benutzerdefinierte Abonnements zu erstellen",
+    "events": "Events",
     "eventCategories": "Event-Kategorien",
     "eventCount": "{count} Event | {count} Events",
     "categoryCount": "{count} Kategorie | {count} Kategorien",
@@ -165,5 +166,17 @@
     "categories": "Kategorien",
     "mode": "Modus",
     "loadingCalendars": "Lade gefilterte Kalender..."
+  },
+  "community": {
+    "title": "BCC Community Kalender",
+    "subtitle": "Geben Sie Ihren Zugangscode ein, um fortzufahren",
+    "accessCode": "Zugangscode",
+    "accessCodePlaceholder": "Geben Sie Ihren Zugangscode ein",
+    "authenticating": "Authentifizierung...",
+    "accessButton": "Auf Community Kalender zugreifen",
+    "secureAccess": "Sicherer Zugang zu BCC Community-Events und Aktivitäten",
+    "needHelp": "Benötigen Sie Hilfe? Kontaktieren Sie Ihren Community-Administrator",
+    "welcomeBack": "Willkommen zurück! Weiterleitung...",
+    "welcomeTo": "Willkommen zu {name}! Weiterleitung..."
   }
 }

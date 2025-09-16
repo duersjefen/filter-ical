@@ -1,7 +1,7 @@
 // UI constants and configuration
 export const ROUTES = {
   LOGIN: '/login',
-  HOME: '/home', 
+  HOME: '/', 
   CALENDAR: '/calendar',
   CALENDAR_DETAIL: (id) => `/calendar/${id}`
 }

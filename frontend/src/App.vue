@@ -26,7 +26,7 @@ onMounted(async () => {
   
   // If user session was restored and we're on login page, redirect to home
   if (wasRestored && router.currentRoute.value.path === '/login') {
-    await router.push('/home')
+    await router.push('/')
   }
 })
 </script>

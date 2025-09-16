@@ -210,7 +210,7 @@ const clearError = () => {
 }
 
 const navigateHome = () => {
-  router.push('/home')
+  router.push('/')
 }
 
 const navigateToCalendar = () => {

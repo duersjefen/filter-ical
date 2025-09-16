@@ -44,8 +44,8 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
 
     // Calendar state (reactive delegation) 
     calendars: computed({
-      get() { return calendarStore.calendars },
-      set(value) { calendarStore.calendars = value }
+      get() { return calendarStore.calendars.value },
+      set(value) { calendarStore.calendars.value = value }
     }),
 
     selectedCalendar: computed({
@@ -54,8 +54,22 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
     }),
 
     newCalendar: computed({
-      get() { return calendarStore.newCalendar },
-      set(value) { calendarStore.newCalendar = value }
+      get() { 
+        // Ensure the calendar store newCalendar is always initialized
+        if (!calendarStore.newCalendar?.value) {
+          // This will initialize it in the calendar store
+          if (calendarStore.newCalendar) {
+            calendarStore.newCalendar.value = { name: '', url: '' }
+          }
+        }
+        return calendarStore.newCalendar?.value || { name: '', url: '' }
+      },
+      set(value) { 
+        // Ensure the calendar store newCalendar exists before setting
+        if (calendarStore.newCalendar) {
+          calendarStore.newCalendar.value = value 
+        }
+      }
     }),
 
     // Events state (reactive delegation)
@@ -125,25 +139,26 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
         const response = await axios.get('/api/calendars', {
           headers: this.getUserHeaders()
         })
-        return response.data.calendars
+        // Backend returns array directly, not wrapped in {calendars: [...]}
+        return Array.isArray(response.data) ? response.data : response.data.calendars || []
       })
 
       if (result.success) {
-        calendarStore.calendars = result.data
+        calendarStore.calendars.value = result.data
       }
       
       return result
     },
     async addCalendar() { 
       // Override calendar store to use proper user headers  
-      if (!calendarStore.newCalendar.name.trim() || !calendarStore.newCalendar.url.trim()) {
+      if (!calendarStore.newCalendar?.value?.name?.trim() || !calendarStore.newCalendar?.value?.url?.trim()) {
         return { success: false, error: 'Please provide both calendar name and URL' }
       }
 
       const result = await api.safeExecute(async () => {
         const response = await axios.post('/api/calendars', {
-          name: calendarStore.newCalendar.name,
-          url: calendarStore.newCalendar.url
+          name: calendarStore.newCalendar.value.name,
+          url: calendarStore.newCalendar.value.url
         }, {
           headers: this.getUserHeaders()
         })
@@ -151,9 +166,11 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
       })
 
       if (result.success) {
-        // Reset form
-        calendarStore.newCalendar.name = ''
-        calendarStore.newCalendar.url = ''
+        // Reset form after successful creation
+        if (calendarStore.newCalendar?.value) {
+          calendarStore.newCalendar.value.name = ''
+          calendarStore.newCalendar.value.url = ''
+        }
         
         // Refresh calendars list
         await this.fetchCalendars()
@@ -199,7 +216,7 @@ export const useCompatibilityStore = defineStore('compatibility', () => {
       return appStore.initializeApp()
     },
 
-    // navigateHome removed - components should use router.push('/home') directly
+    // navigateHome removed - components should use router.push('/') directly
 
     // Helper methods
     getUserHeaders() {

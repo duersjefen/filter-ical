@@ -57,13 +57,13 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
       <h2 class="mb-8 text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $t('home.yourCalendars') }}</h2>
       
-      <div v-if="appStore.loading && appStore.calendars.length === 0" class="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
+      <div v-if="isLoadingInitialCalendars" class="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-6"></div>
         <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">{{ $t('common.loadingEvents') }}</div>
         <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">{{ $t('common.pleaseWait') }}</div>
       </div>
 
-      <div v-else-if="appStore.calendars.length === 0" class="text-center bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border-2 border-yellow-300 dark:border-yellow-600 rounded-xl py-12 px-8 shadow-lg">
+      <div v-else-if="hasNoCalendars" class="text-center bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border-2 border-yellow-300 dark:border-yellow-600 rounded-xl py-12 px-8 shadow-lg">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-yellow-800 dark:text-yellow-200 font-semibold text-lg">{{ $t('home.noCalendarsFound') }}</p>
       </div>
@@ -71,7 +71,7 @@
       <div v-else>
         <!-- Mobile: Card Layout -->
         <div class="sm:hidden space-y-4">
-          <div v-for="calendar in appStore.calendars" :key="calendar.id" class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm p-4">
+          <div v-for="calendar in calendars" :key="calendar.id" class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm p-4">
             <div class="flex flex-col space-y-3">
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base">{{ calendar.name }}</h3>
@@ -107,7 +107,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="calendar in appStore.calendars" :key="calendar.id" class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-200 border-b border-gray-100 dark:border-gray-600">
+              <tr v-for="calendar in calendars" :key="calendar.id" class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-200 border-b border-gray-100 dark:border-gray-600">
                 <td class="px-6 py-4">
                   <strong class="text-gray-900 dark:text-gray-100 font-semibold text-base">{{ calendar.name }}</strong>
                 </td>
@@ -154,7 +154,7 @@
 <script setup>
 import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
 import { useRouter } from 'vue-router'
-import { onMounted, watch, ref } from 'vue'
+import { onMounted, watch, ref, computed } from 'vue'
 import AppHeader from '../components/shared/AppHeader.vue'
 import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import { useDarkMode } from '../composables/useDarkMode'
@@ -169,40 +169,65 @@ const { isDarkMode, toggleDarkMode } = useDarkMode()
 const confirmDialog = ref(null)
 const calendarToDelete = ref(null)
 
+// Track if calendars have been fetched to avoid multiple calls
+const calendarsFetched = ref(false)
+
+// Computed properties for cleaner templates
+const calendars = computed(() => appStore.calendars || [])
+const calendarsCount = computed(() => calendars.value.length)
+const isLoadingInitialCalendars = computed(() => appStore.loading && calendarsCount.value === 0)
+const hasNoCalendars = computed(() => !appStore.loading && calendarsCount.value === 0)
+const hasCalendars = computed(() => calendarsCount.value > 0)
+// Ensure newCalendar is always initialized (fallback safety)
+watch(() => appStore.newCalendar, (newCalendar) => {
+  if (!newCalendar) {
+    // Initialize if undefined
+    appStore.newCalendar = { name: '', url: '' }
+  }
+}, { immediate: true })
+
+// Watch for login state changes to handle timing issues  
+watch(() => appStore.isLoggedIn, (isLoggedIn) => {
+  if (isLoggedIn && appStore.user?.username && !calendarsFetched.value) {
+    calendarsFetched.value = true
+    appStore.fetchCalendars()
+  }
+}, { immediate: true })
+
 onMounted(() => {
-  console.log('HomeView mounted. User state:', appStore.user)
-  console.log('Is logged in:', appStore.isLoggedIn)
-  
+  // If not logged in, navigation guard should handle redirect
+  // But let's be defensive and check again
   if (!appStore.isLoggedIn) {
-    console.log('Not logged in, redirecting to login')
     router.push('/login')
     return
   }
-  
-  console.log('User is logged in, fetching calendars')
-  appStore.fetchCalendars()
 })
 
 const handleAddCalendar = async () => {
+  // Guard against empty form fields
+  if (!appStore.newCalendar?.name?.trim() || !appStore.newCalendar?.url?.trim()) {
+    appStore.setError('Please provide both calendar name and URL')
+    return
+  }
+  
   const result = await appStore.addCalendar()
-  if (!result.success && result.error) {
-    // Set error in app store for display
+  
+  if (result.success) {
+    // Clear any previous errors
+    appStore.setError('')
+  } else if (result.error) {
     appStore.setError(result.error)
   }
 }
 
 const viewCalendar = async (calendarId) => {
-  console.log('viewCalendar called with ID:', calendarId)
   router.push(`/calendar/${calendarId}`)
 }
 
 const deleteCalendar = async (calendarId) => {
-  console.log('Delete calendar called with ID:', calendarId)
-  
   // Find the calendar to show its name in the confirmation
-  const calendar = appStore.calendars.find(c => c.id === calendarId)
+  const calendar = calendars.value.find(c => c.id === calendarId)
   if (!calendar) {
-    console.error('Calendar not found for deletion')
     return
   }
   
@@ -217,12 +242,10 @@ const deleteCalendar = async (calendarId) => {
 const confirmDelete = async () => {
   if (!calendarToDelete.value) return
   
-  console.log('User confirmed deletion')
   try {
-    const result = await appStore.deleteCalendar(calendarToDelete.value.id)
-    console.log('Delete result:', result)
+    await appStore.deleteCalendar(calendarToDelete.value.id)
   } catch (error) {
-    console.error('Error during deletion:', error)
+    appStore.setError('Failed to delete calendar')
   } finally {
     calendarToDelete.value = null
   }
@@ -230,7 +253,6 @@ const confirmDelete = async () => {
 
 // Handle cancellation  
 const cancelDelete = () => {
-  console.log('User cancelled deletion')
   calendarToDelete.value = null
 }
 

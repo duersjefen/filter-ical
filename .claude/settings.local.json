@@ -50,7 +50,8 @@
       "WebSearch",
       "WebFetch(domain:filter-ical.de)",
       "Read(//home/martijn/.claude-notifications/**)",
-      "Read(//home/martijn/**)"
+      "Read(//home/martijn/**)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

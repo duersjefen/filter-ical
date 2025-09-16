@@ -31,6 +31,7 @@
   "calendar": {
     "filterTitle": "Filter: {name}",
     "subtitle": "Select event types to filter and create custom subscriptions",
+    "events": "Events",
     "eventCategories": "Event Categories",
     "eventCount": "{count} event | {count} events",
     "categoryCount": "{count} category | {count} categories",

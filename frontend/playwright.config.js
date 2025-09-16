@@ -9,8 +9,14 @@ export default defineConfig({
   reporter: 'html',
   
   use: {
-    baseURL: 'http://localhost:8000',
+    baseURL: process.env.FRONTEND_URL || 'http://localhost:8000',
     trace: 'on-first-retry',
+  },
+  
+  // Environment variables for tests
+  env: {
+    FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:8000',
+    BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:3000',
   },
 
   projects: [
