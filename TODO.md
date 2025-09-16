@@ -3,31 +3,19 @@
 ## ⚡ Quick Capture
 > **Drop new ideas here without thinking about priority - sort later!**
 
-- I don't like the design of the renaming icon, and does it make sense to rename it where it is, without a toast notification?
-- Add data-testid attributes to key UI elements for better E2E testing
 
 ## 🚨 NEXT UP (Pick One & Focus)
 > **Most impactful items that solve real user problems**
 
-- [ ] **Fix "Create Calendar" functionality** - Currently not working and showing individual files instead of clear inclusion logic
-- [ ] **Fix filter logic display** - "🔍 Filter Logic:📋 ALL EVENTS" must be precise and clear
 
 ## 🎯 HIGH PRIORITY (After Current Focus)
 > **Core functionality improvements - high user impact**
 
-- [ ] **Generate working iCal links** - Ensure filtered calendars produce functional iCal URLs
-- [ ] **Individual events inclusion logic** - Clear UX for whether new events are included, with granular control
-- [ ] **Fix double loading cards** in the calendar view  
-- [ ] **User Experience**: Add calendar sync status indicators (last sync, errors)
-- [ ] Allow multiple saved filters per calendar with simple UX
-- [ ] Implement proper server setup for real-time filtered iCal serving
-- [ ] **Simple default calendar UX**: Create `exter.filter-ical.de` for users who only need the default calendar (better UX for most people)
-- [ ] Support calendar sharing between users
+
 
 ## 🔧 MEDIUM PRIORITY (Polish & Quality)
 > **Important improvements when core features are stable**
 
-- [ ] **Improve filter/calendar editing UX** - Combine preview and edit mode, clear "edit mode" indicators
 - [ ] **Refactor main.py** - Assess complexity and break down if needed
 - [ ] **Improve naming consistency** - "Filtered calendars" vs "filters" - clarify terminology
 - [ ] Create API.md and DEVELOPMENT.md documentation
@@ -71,3 +59,19 @@
 - Clean up completed items immediately to maintain focus
 - Review priorities weekly to keep aligned with user needs
 - Keep "Future Ideas" collapsed to avoid distraction
+
+The big overview: We want to be able to create community calenders which are customizable by admins. They get there own url (i.e. 
+  /exter) and a password to protect it. On these community websites, there is 1 calender available, which the user can create filters 
+  for. The user must be able to subscribe to groups (which are created partially automatically, and adjusted by the admins), which 
+  contain categories (which mainly are the single events, grouped by name). The user must also be able to indiviudally subsribe or 
+  unsubscribe from categories (i.e. he wants all new football categories, but explicitly unsubscribes for U16 and Girls U23). One 
+  category will be in different groups, but that doesn't matter. If he unsubscribes from a category, it will show as unsubscribed in all 
+  groups. We still have an include and exclude mode, as some users want "all events, but not youth events", and some want "only football 
+  and youth events". This combination of mode, groups and categories can be used by the user to create a filter, just as we have on the 
+  normal website, with the small adition that we know also must show the user which groups he is subscribed to. \
+  \
+  When new categories are added to the calender, it will be automatically (or by an admin) added to a group in the database, and the 
+  users that are either "not unsubscribed to that group or category", or which are "subscribed to that group", will get all the events in
+   that category in his personal ICAL link.\
+  \
+  Does that make sense?

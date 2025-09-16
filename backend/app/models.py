@@ -137,3 +137,82 @@ class AccessLog:
     request_path: str              # Full request path
     response_size_bytes: int       # Size of response
     cache_hit: bool                # Whether response was served from cache
+
+
+# === COMMUNITY CALENDAR MODELS ===
+
+@dataclass(frozen=True)
+class Community:
+    """Immutable community calendar definition"""
+    id: str                        # 'exter', 'football-club', etc.
+    name: str                      # 'BCC Community Calendar'
+    description: str               # Community description
+    url_path: str                  # '/exter' (URL path for access)
+    password_hash: str             # Hashed password for access
+    calendar_url: str              # Source calendar URL (e.g., BCC calendar)
+    is_active: bool                # Can be disabled
+    created_at: str                # ISO timestamp
+    updated_at: str                # ISO timestamp
+    # Admin settings
+    admin_emails: List[str]        # Admins who can manage this community
+    auto_assign_rules: List[str]   # JSON rules for auto-assigning categories to groups
+
+
+@dataclass(frozen=True)
+class Group:
+    """Immutable group definition within a community"""
+    id: str                        # 'football', 'youth', etc.
+    community_id: str              # Which community this belongs to
+    name: str                      # 'Football', 'Youth & Children'
+    description: str               # Group description
+    icon: str                      # Emoji or icon identifier
+    color: str                     # Hex color for UI
+    assignment_rules: List[str]    # Keywords/patterns for auto-assignment
+    is_active: bool                # Can be disabled
+    created_at: str                # ISO timestamp
+    updated_at: str                # ISO timestamp
+
+
+@dataclass(frozen=True)
+class CategoryGroupAssignment:
+    """Immutable assignment of category to group"""
+    id: str
+    community_id: str              # Which community
+    group_id: str                  # Which group
+    category_name: str             # Category name from calendar
+    assignment_type: str           # 'auto', 'manual', 'admin'
+    assigned_by: Optional[str]     # User ID who assigned (if manual)
+    assigned_at: str               # ISO timestamp
+    is_active: bool                # Can be disabled without deletion
+
+
+@dataclass(frozen=True)
+class UserSubscription:
+    """Immutable user subscription to community groups/categories"""
+    id: str
+    user_id: str                   # Community user identifier
+    community_id: str              # Which community
+    # Group subscriptions
+    subscribed_groups: List[str]   # Group IDs user is subscribed to
+    # Category overrides (higher priority than group subscriptions)
+    explicitly_subscribed_categories: List[str]    # Categories explicitly included
+    explicitly_unsubscribed_categories: List[str]  # Categories explicitly excluded
+    # Filter mode
+    filter_mode: str               # 'include' or 'exclude'
+    # Personal iCal
+    personal_token: str            # Unique token for personal iCal URL
+    created_at: str                # ISO timestamp
+    updated_at: str                # ISO timestamp
+    last_accessed: str             # Last time personal iCal was accessed
+
+
+@dataclass(frozen=True)
+class CommunitySession:
+    """Immutable community user session"""
+    session_id: str                # Unique session identifier
+    user_id: str                   # Community user identifier
+    community_id: str              # Which community
+    created_at: str                # ISO timestamp
+    expires_at: str                # Session expiration
+    last_accessed: str             # Last activity timestamp
+    is_active: bool                # Can be invalidated

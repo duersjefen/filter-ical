@@ -1,12 +1,41 @@
 openapi: 3.0.3
 info:
   title: iCal Viewer API
-  version: 1.0.0
-  description: REST API for managing iCal calendars with filtering capabilities
+  version: 2.0.0
+  description: |
+    **Production-ready REST API for managing iCal calendars with advanced filtering and community features**
+    
+    ## Architecture
+    
+    This API follows **Rich Hickey's functional programming principles**:
+    - **Functional Core**: Pure business logic with immutable data transformations
+    - **Imperative Shell**: I/O orchestration and HTTP boundary management
+    - **Explicit Error Handling**: Clear, predictable error responses
+    - **Immutable State**: All data transformations return new state objects
+    
+    ## Key Features
+    
+    - **Personal Calendar Management**: Import, filter, and export iCal calendars
+    - **Community Calendars**: Multi-tenant community calendar systems
+    - **Advanced Filtering**: Keyword, category, date range, and custom filters
+    - **Public Sharing**: Secure token-based public calendar access
+    - **Subscription Management**: User preferences and subscription controls
+    - **Real-time Sync**: Dynamic content generation from source calendars
+    
+    ## API Design Principles
+    
+    - **API-First**: Complete contract-driven development
+    - **Frontend Abstraction**: Frontend works purely from this specification
+    - **Immutable Operations**: All state changes are explicit and atomic
+    - **Rich Error Context**: Detailed error messages with clear resolution paths
+    - **Industry Standards**: OpenAPI 3.0.3 compliance with comprehensive examples
+    
   contact:
-    name: iCal Viewer
+    name: iCal Viewer Support
+    url: https://filter-ical.de
   license:
     name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:3000
@@ -16,16 +45,19 @@ servers:
 
 security:
   - UserIdHeader: []
+  - CommunitySession: []
 
 paths:
+  # === SYSTEM ENDPOINTS ===
   /health:
     get:
-      summary: Health check endpoint
+      summary: System health check
       operationId: healthCheck
       tags: [System]
+      security: []
       responses:
         '200':
-          description: Service is healthy
+          description: Service is operational
           content:
             application/json:
               schema:
@@ -37,15 +69,29 @@ paths:
                   service:
                     type: string
                     example: ical-viewer
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "2.0.0"
 
+  # === PERSONAL CALENDAR MANAGEMENT ===
   /api/calendars:
     get:
       summary: List user calendars
+      description: |
+        Retrieve all calendars owned by the authenticated user.
+        
+        **Functional Architecture**: 
+        - Pure query function with no side effects
+        - Immutable data structures returned
+        - User isolation enforced at boundary layer
       operationId: listCalendars
-      tags: [Calendars]
+      tags: [Personal Calendars]
       responses:
         '200':
-          description: List of calendars
+          description: User calendars retrieved successfully
           content:
             application/json:
               schema:
@@ -55,10 +101,30 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Calendar'
+              example:
+                calendars:
+                  - id: "cal-123e4567-e89b-12d3-a456-426614174000"
+                    name: "Work Calendar"
+                    url: "https://outlook.com/calendar.ics"
+                    user_id: "user-456"
+                    created_at: "2024-09-16T10:00:00Z"
+                    updated_at: "2024-09-16T10:00:00Z"
+                    is_active: true
+
     post:
       summary: Add new calendar
+      description: |
+        Create a new personal calendar by importing from an iCal URL.
+        
+        **Validation Pipeline**:
+        1. Input data validation (pure functions)
+        2. URL accessibility validation (I/O boundary)
+        3. State transformation (pure functions)  
+        4. Persistence (I/O boundary)
+        
+        **Error Handling**: Atomic operation - either succeeds completely or fails with no side effects
       operationId: addCalendar
-      tags: [Calendars]
+      tags: [Personal Calendars]
       requestBody:
         required: true
         content:
@@ -69,11 +135,18 @@ paths:
               properties:
                 name:
                   type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Display name for the calendar
                   example: "My Work Calendar"
                 url:
                   type: string
                   format: uri
-                  example: "https://example.com/calendar.ics"
+                  description: Public iCal (.ics) URL
+                  example: "https://outlook.office365.com/owa/calendar/abc123/calendar.ics"
+            example:
+              name: "Team Events"
+              url: "https://calendar.google.com/calendar/ical/team%40company.com/public/basic.ics"
       responses:
         '200':
           description: Calendar added successfully
@@ -84,6 +157,7 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   calendar:
                     $ref: '#/components/schemas/Calendar'
         '400':
@@ -94,8 +168,15 @@ paths:
   /api/calendars/{calendarId}:
     delete:
       summary: Delete calendar
+      description: |
+        Remove a calendar from user's collection.
+        
+        **Functional Architecture**:
+        - Ownership verification (pure function)
+        - Immutable state transformation (pure function)
+        - Atomic deletion with audit trail
       operationId: deleteCalendar
-      tags: [Calendars]
+      tags: [Personal Calendars]
       parameters:
         - $ref: '#/components/parameters/CalendarId'
       responses:
@@ -108,72 +189,38 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   message:
                     type: string
+                    example: "Calendar deleted successfully"
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/calendars/{calendarId}/preferences:
-    get:
-      summary: Get user preferences for specific calendar
-      operationId: getCalendarPreferences
-      tags: [User Preferences]
-      parameters:
-        - $ref: '#/components/parameters/CalendarId'
-      responses:
-        '200':
-          description: Calendar preferences retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  preferences:
-                    $ref: '#/components/schemas/UserPreferences'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    put:
-      summary: Update user preferences for specific calendar
-      operationId: updateCalendarPreferences
-      tags: [User Preferences]
-      parameters:
-        - $ref: '#/components/parameters/CalendarId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserPreferences'
-      responses:
-        '200':
-          description: Preferences updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Preferences saved successfully"
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
+  # === EVENT DATA RETRIEVAL ===
   /api/calendar/{calendarId}/events:
     get:
       summary: Get calendar events
+      description: |
+        Retrieve events from a specific calendar with intelligent caching.
+        
+        **Caching Strategy**:
+        - Memory cache checked first (pure function)
+        - Fresh fetch if cache miss (I/O boundary)
+        - Automatic cache update (pure function)
+        - Past events filtered out (pure function)
       operationId: getCalendarEvents
       tags: [Events]
       parameters:
         - $ref: '#/components/parameters/CalendarId'
+        - name: include_past
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include past events in response
       responses:
         '200':
-          description: List of events
+          description: Events retrieved successfully
           content:
             application/json:
               schema:
@@ -183,6 +230,24 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Event'
+                  total_count:
+                    type: integer
+                    description: Total number of events
+                  cache_status:
+                    type: string
+                    enum: [hit, miss, refreshed]
+                    description: Cache performance indicator
+              example:
+                events:
+                  - uid: "event-123@company.com"
+                    summary: "Weekly Team Standup"
+                    description: "Weekly sync meeting for development team"
+                    dtstart: "2024-09-17T09:00:00Z"
+                    dtend: "2024-09-17T09:30:00Z"
+                    location: "Conference Room A"
+                    categories: ["Work", "Meeting"]
+                total_count: 1
+                cache_status: "hit"
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -191,13 +256,20 @@ paths:
   /api/calendar/{calendarId}/categories:
     get:
       summary: Get event categories with counts
+      description: |
+        Extract all unique categories from calendar events with occurrence counts.
+        
+        **Category Extraction**: 
+        - Intelligent parsing of event summaries and categories
+        - Statistical analysis of category frequency  
+        - User-friendly category name normalization
       operationId: getCalendarCategories
       tags: [Events]
       parameters:
         - $ref: '#/components/parameters/CalendarId'
       responses:
         '200':
-          description: Categories with event counts
+          description: Categories retrieved successfully  
           content:
             application/json:
               schema:
@@ -207,16 +279,34 @@ paths:
                     type: object
                     additionalProperties:
                       type: integer
-                    example:
-                      Work: 15
-                      Meeting: 8
-                      Personal: 3
+                    description: Category names mapped to event counts
+                  total_events:
+                    type: integer
+                    description: Total number of events analyzed
+              example:
+                categories:
+                  Work: 15
+                  Meeting: 8
+                  Personal: 3
+                  Travel: 2
+                total_events: 28
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # === ADVANCED FILTERING SYSTEM ===
   /api/calendar/{calendarId}/generate:
     post:
       summary: Generate filtered iCal file
+      description: |
+        Create a filtered iCal file based on category selection and filter mode.
+        
+        **Filter Processing Pipeline**:
+        1. Event retrieval (cached or fresh fetch)
+        2. Category-based filtering (pure function)
+        3. iCal content generation (pure function)
+        4. Content sanitization (pure function)
+        
+        **Output Format**: RFC 5545 compliant iCal content ready for calendar import
       operationId: generateFilteredCalendar
       tags: [Filtering]
       parameters:
@@ -233,45 +323,479 @@ paths:
                   type: array
                   items:
                     type: string
+                  description: Categories to include or exclude
                   example: ["Work", "Meeting"]
                 filter_mode:
                   type: string
                   enum: [include, exclude]
                   default: include
+                  description: Whether to include or exclude selected categories
+                date_range:
+                  type: object
+                  properties:
+                    start:
+                      type: string
+                      format: date
+                      description: Start date for filtering (inclusive)
+                    end:
+                      type: string
+                      format: date
+                      description: End date for filtering (inclusive)
+            example:
+              selected_categories: ["Work", "Meeting"]
+              filter_mode: "include"
+              date_range:
+                start: "2024-09-16"
+                end: "2024-12-31"
       responses:
         '200':
-          description: Generated iCal file
+          description: Filtered iCal file generated successfully
           content:
             text/calendar:
               schema:
                 type: string
-                example: |
-                  BEGIN:VCALENDAR
-                  VERSION:2.0
-                  PRODID:-//iCal Viewer//EN
-                  BEGIN:VEVENT
-                  UID:event-123
-                  SUMMARY:Work Meeting
-                  DTSTART:20250913T100000Z
-                  DTEND:20250913T110000Z
-                  END:VEVENT
-                  END:VCALENDAR
+                format: ical
+                description: RFC 5545 compliant iCal content
+              example: |
+                BEGIN:VCALENDAR
+                VERSION:2.0
+                PRODID:-//iCal Viewer//Filter System//EN
+                CALSCALE:GREGORIAN
+                METHOD:PUBLISH
+                X-WR-CALNAME:Work Events Only
+                BEGIN:VEVENT
+                UID:event-123@company.com
+                DTSTART:20240917T090000Z
+                DTEND:20240917T093000Z
+                SUMMARY:Weekly Team Standup
+                DESCRIPTION:Weekly sync meeting for development team
+                LOCATION:Conference Room A
+                CATEGORIES:Work,Meeting
+                STATUS:CONFIRMED
+                SEQUENCE:0
+                END:VEVENT
+                END:VCALENDAR
           headers:
             Content-Disposition:
               schema:
                 type: string
-              example: 'attachment; filename="filtered-calendar.ics"'
+              example: 'attachment; filename="work-events-filtered.ics"'
+            Cache-Control:
+              schema:
+                type: string
+              example: 'private, max-age=3600'
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # === COMMUNITY CALENDAR SYSTEM ===
+  /api/v1/communities/{communityId}/init:
+    post:
+      summary: Initialize a new community
+      description: |
+        Create a new community calendar system with complete setup.
+        
+        **Initialization Workflow** (Rich Hickey Functional Architecture):
+        1. **Input Validation** (Pure Functions):
+           - Community data validation
+           - Password strength verification  
+           - URL accessibility validation
+        2. **State Transformation** (Pure Functions):
+           - Community creation with immutable data
+           - Default group setup (Football, Youth, Events, etc.)
+           - Access control initialization
+        3. **Persistence** (I/O Boundary):
+           - Atomic state save operation
+           - Audit trail creation
+        
+        **Default Groups Created**: Football, Youth, Events, General, Announcements
+        
+        **Security**: Password is hashed using SHA-256 with unique salt per community
+      operationId: initializeCommunity
+      tags: [Community Management]
+      parameters:
+        - name: communityId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            minLength: 2
+            maxLength: 50
+          description: Unique identifier for the community (URL-safe)
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityCreateRequest'
+            example:
+              name: "BCC Community Calendar"
+              description: "Community calendar for BCC events and activities"
+              url_path: "/exter"
+              password: "bcc2024"
+              calendar_url: "https://widgets.bcc.no/ical-xyz/Portal-Calendar.ics"
+              admin_emails: ["admin@bcc.no", "events@bcc.no"]
+      responses:
+        '201':
+          description: Community created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  community:
+                    $ref: '#/components/schemas/CommunityResponse'
+                  groups_created:
+                    type: integer
+                    description: Number of default groups created
+                    example: 5
+                  initialization_events:
+                    type: array
+                    items:
+                      type: string
+                    description: Audit trail of initialization steps
+                    example: ["community_created", "groups_initialized", "access_controls_set"]
+        '409':
+          description: Community already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Community 'exter' already exists"
+                error_code: "COMMUNITY_EXISTS"
+                suggested_action: "Use a different community identifier or update existing community"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/v1/communities/{communityId}/info:
+    get:
+      summary: Get community information
+      description: |
+        Retrieve detailed information about a specific community.
+        
+        **Read-Only Operation**: 
+        - No side effects or state changes
+        - Immutable data return
+        - Efficient caching for frequent access
+        
+        **Public Information**: Safe to call without authentication for basic community details
+      operationId: getCommunityInfo
+      tags: [Community Management]
+      security: []
+      parameters:
+        - name: communityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Community identifier
+          example: "exter"
+      responses:
+        '200':
+          description: Community information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityResponse'
+              example:
+                id: "exter"
+                name: "BCC Community Calendar"
+                description: "Community calendar for BCC events and activities"
+                url_path: "/exter"
+                calendar_url: "https://widgets.bcc.no/ical-xyz/Portal-Calendar.ics"
+                admin_emails: ["admin@bcc.no"]
+                is_active: true
+                created_at: "2024-09-16T10:00:00Z"
+                updated_at: "2024-09-16T10:00:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/communities/{communityId}/calendar-url:
+    put:
+      summary: Update community calendar URL
+      description: |
+        Update the source calendar URL for a community.
+        
+        **Atomic Operation**:
+        - URL validation before update
+        - Immutable state transformation
+        - Automatic cache invalidation
+        - Complete rollback on failure
+        
+        **Use Cases**:
+        - Calendar provider URL changes
+        - Migration to different calendar systems  
+        - Permission updates on source calendar
+      operationId: updateCommunityCalendarUrl
+      tags: [Community Management]
+      parameters:
+        - name: communityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Community identifier
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityUpdateRequest'
+            example:
+              calendar_url: "https://widgets.bcc.no/ical-new/Portal-Calendar.ics"
+      responses:
+        '200':
+          description: Calendar URL updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  community:
+                    $ref: '#/components/schemas/CommunityResponse'
+                  update_events:
+                    type: array
+                    items:
+                      type: string
+                    description: Audit trail of update operations
+                    example: ["url_validated", "calendar_updated", "cache_invalidated"]
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid calendar URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/v1/communities/{communityId}/groups:
+    get:
+      summary: Get community groups
+      description: |
+        Retrieve all active groups for a community with their configuration.
+        
+        **Group Information**:
+        - Group metadata (name, description, visual styling)
+        - Assignment rules for automatic event categorization
+        - User subscription statistics
+        - Activity status and permissions
+        
+        **Performance**: Optimized for frequent access with intelligent caching
+      operationId: getCommunityGroups
+      tags: [Community Groups]
+      parameters:
+        - name: communityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Community identifier
+          example: "exter"
+      responses:
+        '200':
+          description: Groups retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommunityGroup'
+              example:
+                groups:
+                  - id: "football"
+                    community_id: "exter"
+                    name: "Football"
+                    description: "All football-related events and matches"
+                    icon: "⚽"
+                    color: "#22C55E"
+                    assignment_rules: ["football", "soccer", "match", "training"]
+                    is_active: true
+                    created_at: "2024-09-16T10:00:00Z"
+                    updated_at: "2024-09-16T10:00:00Z"
+                  - id: "youth"
+                    community_id: "exter"
+                    name: "Youth Activities"
+                    description: "Events and activities for youth members"
+                    icon: "👥"
+                    color: "#3B82F6"
+                    assignment_rules: ["youth", "junior", "kids", "children"]
+                    is_active: true
+                    created_at: "2024-09-16T10:00:00Z"
+                    updated_at: "2024-09-16T10:00:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # === COMMUNITY AUTHENTICATION ===
+  /api/v1/auth/{communityPath}/login:
+    post:
+      summary: Community authentication
+      description: |
+        Authenticate user for community calendar access.
+        
+        **Authentication Flow**:
+        1. Password validation against community hash
+        2. Session creation with unique user ID
+        3. Secure session token generation
+        4. Session persistence for future requests
+        
+        **Security Features**:
+        - SHA-256 password hashing with salt
+        - Session expiration management
+        - Rate limiting protection
+        - Audit logging for access attempts
+      operationId: communityLogin
+      tags: [Community Authentication]
+      security: []
+      parameters:
+        - name: communityPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Community URL path (without leading slash)
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  minLength: 1
+                  description: Community access password
+                  example: "bcc2024"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  session_id:
+                    type: string
+                    description: Session token for subsequent requests
+                    example: "sess_abc123def456"
+                  user_id:
+                    type: string
+                    description: Unique user identifier for this session
+                    example: "user_789xyz"
+                  community_name:
+                    type: string
+                    description: Community display name
+                    example: "BCC Community Calendar"
+                  expires_at:
+                    type: string
+                    format: date-time
+                    description: Session expiration timestamp
+                    example: "2024-09-17T10:00:00Z"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Invalid password"
+                error_code: "AUTH_FAILED"
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/auth/{communityPath}/verify:
+    get:
+      summary: Verify community session
+      description: |
+        Verify if community session is still valid and active.
+        
+        **Session Validation**:
+        - Session existence verification
+        - Expiration time checking
+        - Community membership validation
+        - Access time update for session extension
+      operationId: verifyCommunitySession
+      tags: [Community Authentication]
+      parameters:
+        - name: communityPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Community URL path
+          example: "exter"
+        - name: session-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Session token from login response
+          example: "sess_abc123def456"
+      responses:
+        '200':
+          description: Session is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  user_id:
+                    type: string
+                    example: "user_789xyz"
+                  community_name:
+                    type: string
+                    example: "BCC Community Calendar"
+                  session_expires_at:
+                    type: string
+                    format: date-time
+                    example: "2024-09-17T10:00:00Z"
+        '401':
+          description: Session invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # === PERSONAL FILTER MANAGEMENT ===
   /api/filters:
     get:
       summary: List saved filters
+      description: |
+        Retrieve all saved filters for the authenticated user.
+        
+        **Filter Information**:
+        - Filter metadata and configuration
+        - Associated calendar references
+        - Usage statistics and last access
+        - Performance impact indicators
       operationId: listFilters
-      tags: [Filters]
+      tags: [Personal Filters]
       responses:
         '200':
-          description: List of saved filters
+          description: Filters retrieved successfully
           content:
             application/json:
               schema:
@@ -281,10 +805,29 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Filter'
+              example:
+                filters:
+                  - id: "filter-123"
+                    name: "Work Events Only"
+                    calendar_id: "cal-456"
+                    selected_categories: ["Work", "Meeting"]
+                    filter_mode: "include"
+                    user_id: "user-789"
+                    created_at: "2024-09-16T10:00:00Z"
+                    updated_at: "2024-09-16T10:00:00Z"
+
     post:
       summary: Create saved filter
+      description: |
+        Create a new saved filter configuration for reuse.
+        
+        **Filter Creation Pipeline**:
+        1. Filter configuration validation
+        2. Calendar ownership verification
+        3. Filter effectiveness analysis
+        4. Optimized storage with indexing
       operationId: createFilter
-      tags: [Filters]
+      tags: [Personal Filters]
       requestBody:
         required: true
         content:
@@ -295,15 +838,25 @@ paths:
               properties:
                 name:
                   type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Display name for the filter
                   example: "Work Events Only"
                 calendar_id:
                   type: string
                   format: uuid
+                  description: Target calendar identifier
                 selected_categories:
                   type: array
                   items:
                     type: string
+                  description: Categories to filter by
                   example: ["Work", "Meeting"]
+                filter_mode:
+                  type: string
+                  enum: [include, exclude]
+                  default: include
+                  description: Filter mode
       responses:
         '200':
           description: Filter created successfully
@@ -314,17 +867,27 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   filter:
                     $ref: '#/components/schemas/Filter'
 
+  # === ADVANCED FILTERED CALENDARS ===
   /api/filtered-calendars:
     get:
       summary: List user's filtered calendars
+      description: |
+        Retrieve all filtered calendars with public sharing capabilities.
+        
+        **Advanced Features**:
+        - Public URL generation with secure tokens
+        - Access analytics and usage statistics
+        - Cache performance indicators
+        - Subscription-ready calendar endpoints
       operationId: listFilteredCalendars
       tags: [Filtered Calendars]
       responses:
         '200':
-          description: List of filtered calendars
+          description: Filtered calendars retrieved successfully
           content:
             application/json:
               schema:
@@ -334,10 +897,36 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/FilteredCalendar'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+              example:
+                filtered_calendars:
+                  - id: "filtered-abc123"
+                    name: "Work Events Only"
+                    source_calendar_id: "cal-456"
+                    public_token: "tok_xyz789"
+                    calendar_url: "https://filter-ical.de/cal/tok_xyz789.ics"
+                    preview_url: "https://filter-ical.de/cal/tok_xyz789"
+                    filter_config:
+                      include_categories: ["Work", "Meeting"]
+                      filter_mode: "include"
+                    user_id: "user-789"
+                    created_at: "2024-09-16T10:00:00Z"
+                    last_accessed: "2024-09-16T15:30:00Z"
+                    access_count: 42
+                    is_active: true
+
     post:
       summary: Create new filtered calendar
+      description: |
+        Create a filtered calendar with persistent public URL for sharing.
+        
+        **Creation Workflow**:
+        1. Source calendar validation and access verification
+        2. Filter configuration validation and optimization
+        3. Secure token generation for public access
+        4. Dynamic content generation and caching setup
+        5. Public URL creation with subscription capabilities
+        
+        **Public Sharing**: Generated calendars can be subscribed to in any calendar application
       operationId: createFilteredCalendar
       tags: [Filtered Calendars]
       requestBody:
@@ -351,12 +940,25 @@ paths:
                 source_calendar_id:
                   type: string
                   format: uuid
-                  example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+                  description: Source calendar to filter
+                  example: "cal-456"
                 name:
                   type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Display name for filtered calendar
                   example: "Work Events Only"
                 filter_config:
                   $ref: '#/components/schemas/FilterConfiguration'
+            example:
+              source_calendar_id: "cal-456"
+              name: "Important Work Events"
+              filter_config:
+                include_categories: ["Work", "Meeting", "Important"]
+                exclude_keywords: ["cancelled", "optional"]
+                filter_mode: "include"
+                date_range_type: "rolling"
+                min_duration_minutes: 15
       responses:
         '200':
           description: Filtered calendar created successfully
@@ -367,18 +969,25 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   filtered_calendar:
                     $ref: '#/components/schemas/FilteredCalendar'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
 
   /api/filtered-calendars/{filteredCalendarId}:
     put:
       summary: Update filtered calendar
+      description: |
+        Update an existing filtered calendar's configuration.
+        
+        **Update Process**:
+        - Atomic configuration updates
+        - Automatic cache invalidation
+        - Public URL preservation
+        - Filter effectiveness re-analysis
       operationId: updateFilteredCalendar
       tags: [Filtered Calendars]
       parameters:
@@ -398,6 +1007,8 @@ paths:
                 name:
                   type: string
                   example: "Updated Work Events"
+                filter_config:
+                  $ref: '#/components/schemas/FilterConfiguration'
       responses:
         '200':
           description: Filtered calendar updated successfully
@@ -408,14 +1019,23 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   message:
                     type: string
+                    example: "Filtered calendar updated successfully"
         '404':
           $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+
     delete:
       summary: Delete filtered calendar
+      description: |
+        Delete (deactivate) a filtered calendar.
+        
+        **Soft Delete Process**:
+        - Calendar marked as inactive (preserves audit trail)
+        - Public URLs become inaccessible
+        - Data retained for recovery if needed
+        - Automatic cleanup after retention period
       operationId: deleteFilteredCalendar
       tags: [Filtered Calendars]
       parameters:
@@ -435,51 +1055,109 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   message:
                     type: string
+                    example: "Filtered calendar deleted successfully"
         '404':
           $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
 
+  # === PUBLIC CALENDAR ACCESS ===
   /cal/{token}.ics:
     get:
       summary: Get filtered iCal file by public token
+      description: |
+        Serve filtered iCal content via public URL with real-time generation.
+        
+        **Dynamic Generation Process**:
+        1. Token validation and filtered calendar lookup
+        2. Fresh source calendar data retrieval
+        3. Real-time filter application with latest events
+        4. RFC 5545 compliant iCal generation
+        5. Content sanitization for public consumption
+        6. Optimized caching headers for performance
+        
+        **Subscription Ready**: Output is compatible with all major calendar applications
+        **Security**: Content is sanitized and safe for public consumption
       operationId: getFilteredICalFile
       tags: [Public Access]
+      security: []
       parameters:
         - name: token
           in: path
           required: true
           schema:
             type: string
+            pattern: '^[a-zA-Z0-9_-]+$'
           description: Public access token
+          example: "tok_xyz789"
       responses:
         '200':
-          description: Filtered iCal file
+          description: Filtered iCal file served successfully
           content:
             text/calendar:
               schema:
                 type: string
-                example: |
-                  BEGIN:VCALENDAR
-                  VERSION:2.0
-                  PRODID:-//iCal Viewer//EN
-                  BEGIN:VEVENT
-                  UID:event-123
-                  SUMMARY:Work Meeting
-                  DTSTART:20250913T100000Z
-                  DTEND:20250913T110000Z
-                  END:VEVENT
-                  END:VCALENDAR
+                format: ical
+                description: RFC 5545 compliant iCal content
+              example: |
+                BEGIN:VCALENDAR
+                VERSION:2.0
+                PRODID:-//iCal Viewer//Public Filter//EN
+                CALSCALE:GREGORIAN
+                METHOD:PUBLISH
+                X-WR-CALNAME:Work Events Only
+                X-WR-CALDESC:Filtered calendar with work-related events
+                X-WR-TIMEZONE:UTC
+                BEGIN:VEVENT
+                UID:work-event-123@company.com
+                DTSTART:20240917T090000Z
+                DTEND:20240917T100000Z
+                SUMMARY:Team Meeting
+                DESCRIPTION:Weekly team sync
+                LOCATION:Conference Room
+                CATEGORIES:Work,Meeting
+                STATUS:CONFIRMED
+                END:VEVENT
+                END:VCALENDAR
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              example: 'public, max-age=3600, must-revalidate'
+            Content-Type:
+              schema:
+                type: string
+              example: 'text/calendar; charset=utf-8'
+            X-Content-Generated:
+              schema:
+                type: string
+                format: date-time
+              description: Timestamp when content was generated
         '404':
           $ref: '#/components/responses/NotFound'
+        '400':
+          description: Invalid token format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /cal/{token}:
     get:
       summary: Preview filtered calendar by public token
+      description: |
+        Browser-friendly preview of filtered calendar content.
+        
+        **Preview Features**:
+        - Event summary with key details
+        - Filter configuration display
+        - Public iCal URL for subscription
+        - Calendar statistics and analytics
+        - Mobile-responsive HTML interface
       operationId: previewFilteredCalendar
       tags: [Public Access]
+      security: []
       parameters:
         - name: token
           in: path
@@ -487,15 +1165,192 @@ paths:
           schema:
             type: string
           description: Public access token
+          example: "tok_xyz789"
       responses:
         '200':
-          description: Filtered calendar preview (HTML)
+          description: Calendar preview data
           content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  calendar_name:
+                    type: string
+                    example: "Work Events Only"
+                  total_events:
+                    type: integer
+                    example: 15
+                  ics_url:
+                    type: string
+                    format: uri
+                    example: "https://filter-ical.de/cal/tok_xyz789.ics"
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        summary:
+                          type: string
+                        start:
+                          type: string
+                          format: date-time
+                        end:
+                          type: string
+                          format: date-time
+                        location:
+                          type: string
+                    description: Preview of upcoming events (limited to 10)
+                  filter_summary:
+                    type: object
+                    properties:
+                      include_categories:
+                        type: array
+                        items:
+                          type: string
+                      exclude_categories:
+                        type: array
+                        items:
+                          type: string
+                      keywords:
+                        type: array
+                        items:
+                          type: string
+                    description: Applied filter configuration
             text/html:
               schema:
                 type: string
+                description: HTML preview page for browser display
         '404':
           $ref: '#/components/responses/NotFound'
+
+  # === USER PREFERENCES SYSTEM ===
+  /api/calendars/{calendarId}/preferences:
+    get:
+      summary: Get user preferences for specific calendar
+      description: |
+        Retrieve user's saved filter preferences for a calendar.
+        
+        **Preference Types**:
+        - Default category selections
+        - Filter mode preferences
+        - UI state and view settings
+        - Notification preferences
+        - Sharing permissions
+      operationId: getCalendarPreferences
+      tags: [User Preferences]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      responses:
+        '200':
+          description: Preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  preferences:
+                    $ref: '#/components/schemas/UserPreferences'
+              example:
+                success: true
+                preferences:
+                  selected_categories: ["Work", "Meeting"]
+                  filter_mode: "include"
+                  saved_at: "2024-09-16T10:30:00Z"
+                  notification_enabled: true
+                  default_view: "week"
+
+    put:
+      summary: Update user preferences for specific calendar
+      description: |
+        Save user's filter preferences for a calendar.
+        
+        **Atomic Updates**:
+        - Complete preference replacement or partial updates
+        - Automatic validation of preference values
+        - Optimistic locking to prevent conflicts
+        - Audit trail of preference changes
+      operationId: updateCalendarPreferences
+      tags: [User Preferences]
+      parameters:
+        - $ref: '#/components/parameters/CalendarId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+            example:
+              selected_categories: ["Work", "Meeting", "Important"]
+              filter_mode: "include"
+              notification_enabled: false
+              default_view: "month"
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Preferences saved successfully"
+
+  # === SERVICE HEALTH & MONITORING ===
+  /api/v1/communities/health:
+    get:
+      summary: Community service health check
+      description: |
+        Specialized health check for community subsystem.
+        
+        **Health Indicators**:
+        - Service operational status
+        - Database connectivity
+        - External calendar accessibility
+        - Performance metrics
+        - Functional architecture verification
+      operationId: communityHealthCheck
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: Community service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-09-16T10:00:00Z"
+                  version:
+                    type: string
+                    example: "2.0.0"
+                  architecture:
+                    type: string
+                    example: "functional_core_imperative_shell"
+                  subsystems:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        example: "operational"
+                      cache:
+                        type: string
+                        example: "operational"
+                      external_apis:
+                        type: string
+                        example: "operational"
 
 components:
   securitySchemes:
@@ -503,7 +1358,19 @@ components:
       type: apiKey
       in: header
       name: x-user-id
-      description: User identifier (defaults to 'anonymous')
+      description: |
+        User identifier for personal calendar operations.
+        Defaults to 'anonymous' if not provided.
+        Used for user isolation and data ownership verification.
+
+    CommunitySession:
+      type: apiKey
+      in: header
+      name: session-id
+      description: |
+        Session token for community calendar access.
+        Obtained through community authentication endpoint.
+        Required for all community-specific operations.
 
   parameters:
     CalendarId:
@@ -514,148 +1381,347 @@ components:
         type: string
         format: uuid
       description: Calendar identifier
+      example: "cal-123e4567-e89b-12d3-a456-426614174000"
 
   schemas:
+    # === CORE DATA MODELS ===
     Calendar:
       type: object
-      required: [id, name, url, user_id]
+      required: [id, name, url, user_id, created_at, updated_at]
+      description: Personal calendar entity with immutable properties
       properties:
         id:
           type: string
           format: uuid
-          example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+          description: Unique calendar identifier
+          example: "cal-123e4567-e89b-12d3-a456-426614174000"
         name:
           type: string
+          minLength: 1
+          maxLength: 100
+          description: User-defined calendar name
           example: "My Work Calendar"
         url:
           type: string
           format: uri
-          example: "https://example.com/calendar.ics"
+          description: Source iCal URL
+          example: "https://outlook.com/calendar.ics"
         user_id:
           type: string
-          example: "anonymous"
+          description: Owner's user identifier
+          example: "user-456"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-09-16T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-09-16T10:00:00Z"
+        is_active:
+          type: boolean
+          description: Whether calendar is active
+          example: true
 
     Event:
       type: object
       required: [uid, summary, dtstart]
+      description: Calendar event with rich metadata
       properties:
         uid:
           type: string
-          example: "event-123@example.com"
+          description: Unique event identifier (from iCal)
+          example: "event-123@company.com"
         summary:
           type: string
-          example: "Team Meeting"
+          description: Event title/summary
+          example: "Weekly Team Meeting"
         description:
           type: string
-          example: "Weekly team sync meeting"
+          description: Detailed event description
+          example: "Weekly sync meeting for development team to discuss progress and blockers"
         dtstart:
           type: string
           format: date-time
-          example: "2025-09-13T10:00:00Z"
+          description: Event start time (ISO 8601)
+          example: "2024-09-17T09:00:00Z"
         dtend:
           type: string
           format: date-time
-          example: "2025-09-13T11:00:00Z"
+          description: Event end time (ISO 8601)
+          example: "2024-09-17T09:30:00Z"
         location:
           type: string
+          description: Event location
           example: "Conference Room A"
         categories:
           type: array
           items:
             type: string
-          example: ["Work", "Meeting"]
+          description: Event categories/tags
+          example: ["Work", "Meeting", "Development"]
+        organizer:
+          type: string
+          description: Event organizer
+          example: "manager@company.com"
+        attendees:
+          type: array
+          items:
+            type: string
+          description: Event attendees
+          example: ["dev1@company.com", "dev2@company.com"]
         rrule:
           type: string
-          example: "FREQ=WEEKLY;BYDAY=FR"
+          description: Recurrence rule (RFC 5545 format)
+          example: "FREQ=WEEKLY;BYDAY=MO"
 
+    # === COMMUNITY SYSTEM MODELS ===
+    CommunityCreateRequest:
+      type: object
+      required: [name, description, url_path, password, calendar_url, admin_emails]
+      description: Request payload for community creation
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Community display name
+          example: "BCC Community Calendar"
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Community description
+          example: "Community calendar for BCC events and activities"
+        url_path:
+          type: string
+          pattern: '^/[a-z0-9-]+$'
+          description: Unique URL path for community access
+          example: "/exter"
+        password:
+          type: string
+          minLength: 6
+          description: Community access password
+          example: "bcc2024"
+        calendar_url:
+          type: string
+          format: uri
+          description: Source calendar URL for community events
+          example: "https://widgets.bcc.no/ical-xyz/Portal-Calendar.ics"
+        admin_emails:
+          type: array
+          items:
+            type: string
+            format: email
+          minItems: 1
+          description: Administrator email addresses
+          example: ["admin@bcc.no", "events@bcc.no"]
+
+    CommunityUpdateRequest:
+      type: object
+      required: [calendar_url]
+      description: Request payload for community updates
+      properties:
+        calendar_url:
+          type: string
+          format: uri
+          description: New source calendar URL
+          example: "https://widgets.bcc.no/ical-new/Portal-Calendar.ics"
+
+    CommunityResponse:
+      type: object
+      required: [id, name, description, url_path, calendar_url, admin_emails, is_active, created_at, updated_at]
+      description: Community entity with complete metadata
+      properties:
+        id:
+          type: string
+          description: Community identifier
+          example: "exter"
+        name:
+          type: string
+          description: Community display name
+          example: "BCC Community Calendar"
+        description:
+          type: string
+          description: Community description
+          example: "Community calendar for BCC events and activities"
+        url_path:
+          type: string
+          description: URL path for community access
+          example: "/exter"
+        calendar_url:
+          type: string
+          format: uri
+          description: Source calendar URL
+          example: "https://widgets.bcc.no/ical-xyz/Portal-Calendar.ics"
+        admin_emails:
+          type: array
+          items:
+            type: string
+            format: email
+          description: Administrator email addresses
+          example: ["admin@bcc.no"]
+        is_active:
+          type: boolean
+          description: Whether community is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-09-16T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-09-16T10:00:00Z"
+
+    CommunityGroup:
+      type: object
+      required: [id, community_id, name, description, icon, color, assignment_rules, is_active, created_at, updated_at]
+      description: Community group for event categorization
+      properties:
+        id:
+          type: string
+          description: Group identifier
+          example: "football"
+        community_id:
+          type: string
+          description: Parent community identifier
+          example: "exter"
+        name:
+          type: string
+          description: Group display name
+          example: "Football"
+        description:
+          type: string
+          description: Group description
+          example: "All football-related events and matches"
+        icon:
+          type: string
+          description: Unicode emoji icon
+          example: "⚽"
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code for UI styling
+          example: "#22C55E"
+        assignment_rules:
+          type: array
+          items:
+            type: string
+          description: Keywords for automatic event assignment
+          example: ["football", "soccer", "match", "training"]
+        is_active:
+          type: boolean
+          description: Whether group is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-09-16T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-09-16T10:00:00Z"
+
+    # === FILTERING SYSTEM MODELS ===
     Filter:
       type: object
-      required: [id, name, calendar_id, selected_categories, user_id]
+      required: [id, name, calendar_id, selected_categories, user_id, created_at, updated_at]
+      description: Saved filter configuration
       properties:
         id:
           type: string
           format: uuid
-          example: "filter-uuid-123"
+          description: Filter identifier
+          example: "filter-123e4567-e89b-12d3-a456-426614174000"
         name:
           type: string
+          description: User-defined filter name
           example: "Work Events Only"
         calendar_id:
           type: string
           format: uuid
-          example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+          description: Target calendar identifier
+          example: "cal-456"
         selected_categories:
           type: array
           items:
             type: string
-          example: ["Work", "Meeting"]
-        user_id:
-          type: string
-          example: "anonymous"
-
-    UserPreferences:
-      type: object
-      description: User preferences for calendar filtering
-      properties:
-        selected_categories:
-          type: array
-          items:
-            type: string
-          description: Categories selected by user
+          description: Categories to filter by
           example: ["Work", "Meeting"]
         filter_mode:
           type: string
           enum: [include, exclude]
-          description: Filter mode (include or exclude selected categories)
+          description: Filter mode
           example: "include"
-        saved_at:
+        user_id:
+          type: string
+          description: Owner's user identifier
+          example: "user-789"
+        created_at:
           type: string
           format: date-time
-          description: When preferences were saved
-          example: "2025-09-13T10:30:00Z"
+          description: Creation timestamp
+          example: "2024-09-16T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-09-16T10:00:00Z"
 
     FilterConfiguration:
       type: object
-      description: Advanced filter configuration for filtered calendars
+      description: Advanced filter configuration with multiple criteria
       properties:
         include_categories:
           type: array
           items:
             type: string
-          description: Categories to include
-          example: ["Work", "Meeting"]
+          description: Categories to include in results
+          example: ["Work", "Meeting", "Important"]
         exclude_categories:
           type: array
           items:
             type: string
-          description: Categories to exclude
-          example: ["Personal"]
+          description: Categories to exclude from results
+          example: ["Personal", "Optional"]
         include_keywords:
           type: array
           items:
             type: string
-          description: Keywords to include in summary/description
-          example: ["urgent", "important"]
+          description: Keywords that must be present in summary/description
+          example: ["urgent", "critical", "deadline"]
         exclude_keywords:
           type: array
           items:
             type: string
-          description: Keywords to exclude from summary/description
-          example: ["cancelled", "optional"]
+          description: Keywords that must not be present
+          example: ["cancelled", "postponed", "optional"]
         date_range_start:
           type: string
           format: date
-          description: Start date for filtering (optional)
-          example: "2025-09-01"
+          description: Start date for filtering (inclusive)
+          example: "2024-09-16"
         date_range_end:
           type: string
           format: date
-          description: End date for filtering (optional)
-          example: "2025-12-31"
+          description: End date for filtering (inclusive)
+          example: "2024-12-31"
         date_range_type:
           type: string
           enum: [absolute, relative, rolling]
           default: absolute
-          description: Type of date range filtering
+          description: |
+            Type of date range filtering:
+            - absolute: Fixed start and end dates
+            - relative: Days from now (e.g., next 30 days)
+            - rolling: Moving window (e.g., always next 2 weeks)
         location_filter:
           type: string
           description: Filter by location (contains match)
@@ -663,33 +1729,35 @@ components:
         attendee_filter:
           type: string
           description: Filter by attendee (contains match)
-          example: "john@example.com"
+          example: "team@company.com"
         organizer_filter:
           type: string
           description: Filter by organizer (contains match)
-          example: "admin@company.com"
+          example: "manager@company.com"
         min_duration_minutes:
           type: integer
+          minimum: 1
           description: Minimum event duration in minutes
-          example: 30
+          example: 15
         max_duration_minutes:
           type: integer
+          minimum: 1
           description: Maximum event duration in minutes
           example: 480
         filter_mode:
           type: string
           enum: [include, exclude]
           default: include
-          description: Overall filter mode
+          description: Overall filter mode for category matching
         match_all:
           type: boolean
           default: false
-          description: Whether to match all criteria (AND) or any (OR)
+          description: Whether all criteria must match (AND) or any (OR)
 
     FilteredCalendar:
       type: object
-      required: [id, name, source_calendar_id, public_token, user_id, created_at]
-      description: A filtered calendar with public access
+      required: [id, name, source_calendar_id, public_token, calendar_url, preview_url, user_id, created_at]
+      description: Filtered calendar with public sharing capabilities
       properties:
         id:
           type: string
@@ -704,63 +1772,157 @@ components:
           type: string
           format: uuid
           description: Reference to source calendar
-          example: "e4a42942-0a49-42e4-8a98-e535fd6ea1e2"
+          example: "cal-456"
         filter_config:
           $ref: '#/components/schemas/FilterConfiguration'
         public_token:
           type: string
-          description: Public access token for sharing
-          example: "abc123def456"
+          description: Secure token for public access
+          example: "tok_abc123def456"
         calendar_url:
           type: string
           format: uri
-          description: Public iCal URL
-          example: "https://filter-ical.de/cal/abc123def456.ics"
+          description: Public iCal subscription URL
+          example: "https://filter-ical.de/cal/tok_abc123def456.ics"
         preview_url:
           type: string
           format: uri
-          description: Public preview URL
-          example: "https://filter-ical.de/cal/abc123def456"
+          description: Public preview URL for browser viewing
+          example: "https://filter-ical.de/cal/tok_abc123def456"
         user_id:
           type: string
           description: Owner of the filtered calendar
-          example: "anonymous"
+          example: "user-789"
         created_at:
           type: string
           format: date-time
-          description: When filtered calendar was created
-          example: "2025-09-13T10:00:00Z"
+          description: Creation timestamp
+          example: "2024-09-16T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-09-16T10:00:00Z"
         last_accessed:
           type: string
           format: date-time
-          description: Last access timestamp
-          example: "2025-09-13T15:30:00Z"
+          description: Last public access timestamp
+          example: "2024-09-16T15:30:00Z"
         access_count:
           type: integer
-          description: Number of times accessed
+          minimum: 0
+          description: Number of times publicly accessed
           example: 42
         is_active:
           type: boolean
           description: Whether the filtered calendar is active
           example: true
 
+    UserPreferences:
+      type: object
+      description: User preferences for calendar filtering and UI settings
+      properties:
+        selected_categories:
+          type: array
+          items:
+            type: string
+          description: Default selected categories
+          example: ["Work", "Meeting"]
+        filter_mode:
+          type: string
+          enum: [include, exclude]
+          description: Default filter mode
+          example: "include"
+        saved_at:
+          type: string
+          format: date-time
+          description: When preferences were last saved
+          example: "2024-09-16T10:30:00Z"
+        notification_enabled:
+          type: boolean
+          description: Whether notifications are enabled
+          example: true
+        default_view:
+          type: string
+          enum: [day, week, month, agenda]
+          description: Default calendar view
+          example: "week"
+        timezone:
+          type: string
+          description: User's preferred timezone
+          example: "Europe/Oslo"
+
+    # === ERROR HANDLING MODELS ===
     Error:
       type: object
       required: [detail]
+      description: Standard error response with rich context
       properties:
         detail:
           type: string
+          description: Human-readable error message
           example: "Calendar not found"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "CALENDAR_NOT_FOUND"
+        suggested_action:
+          type: string
+          description: Suggested resolution action
+          example: "Verify the calendar ID and ensure you have access to this calendar"
+        request_id:
+          type: string
+          description: Unique request identifier for debugging
+          example: "req_abc123def456"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error occurrence timestamp
+          example: "2024-09-16T10:00:00Z"
+
+    ValidationError:
+      type: object
+      required: [detail, validation_errors]
+      description: Validation error with field-specific details
+      properties:
+        detail:
+          type: string
+          example: "Validation failed"
+        validation_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field name that failed validation
+                example: "calendar_url"
+              message:
+                type: string
+                description: Validation error message
+                example: "URL must be accessible and return valid iCal content"
+              code:
+                type: string
+                description: Validation error code
+                example: "INVALID_ICAL_URL"
+          description: Detailed validation errors by field
 
   responses:
     BadRequest:
-      description: Bad request
+      description: Bad request - invalid input data
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ValidationError'
           example:
-            detail: "Invalid calendar URL format"
+            detail: "Validation failed"
+            validation_errors:
+              - field: "calendar_url"
+                message: "URL must be accessible and return valid iCal content"
+                code: "INVALID_ICAL_URL"
+              - field: "name"
+                message: "Name cannot be empty"
+                code: "REQUIRED_FIELD"
 
     NotFound:
       description: Resource not found
@@ -770,6 +1932,8 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             detail: "Calendar not found"
+            error_code: "CALENDAR_NOT_FOUND"
+            suggested_action: "Verify the calendar ID and ensure you have access to this calendar"
 
     InternalServerError:
       description: Internal server error
@@ -779,21 +1943,130 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             detail: "Error fetching events: Connection timeout"
+            error_code: "EXTERNAL_SERVICE_ERROR"
+            suggested_action: "Try again later or contact support if the problem persists"
 
 tags:
   - name: System
-    description: System health and status endpoints
-  - name: Calendars
-    description: Calendar management operations
+    description: |
+      System health monitoring and operational endpoints.
+      
+      **Monitoring Features**:
+      - Service health verification
+      - Performance metrics
+      - Subsystem status checks
+      - Architecture validation
+
+  - name: Personal Calendars
+    description: |
+      Personal calendar management with iCal import capabilities.
+      
+      **Core Features**:
+      - Import calendars from any iCal URL
+      - User isolation and ownership
+      - Automatic validation and error handling
+      - Rich metadata management
+
   - name: Events
-    description: Event data retrieval
+    description: |
+      Event data retrieval with intelligent caching and category analysis.
+      
+      **Advanced Features**:
+      - Smart caching with cache status indicators
+      - Automatic category extraction and counting
+      - Past event filtering
+      - Performance optimization
+
   - name: Filtering
-    description: Event filtering and iCal generation
-  - name: Filters
-    description: Saved filter management
-  - name: User Preferences
-    description: Calendar-specific user preferences stored in SQLite
+    description: |
+      Advanced event filtering with multiple criteria and export capabilities.
+      
+      **Filter Types**:
+      - Category-based filtering (include/exclude)
+      - Keyword-based filtering
+      - Date range filtering
+      - Duration-based filtering
+      - Location and attendee filtering
+
+  - name: Personal Filters
+    description: |
+      Saved filter management for reusable configurations.
+      
+      **Filter Management**:
+      - Save and reuse filter configurations
+      - Filter effectiveness analysis
+      - Performance impact monitoring
+      - User-specific filter isolation
+
   - name: Filtered Calendars
-    description: Advanced filtered calendar management with public sharing
+    description: |
+      Advanced filtered calendar system with public sharing capabilities.
+      
+      **Public Sharing Features**:
+      - Secure token-based access
+      - Real-time content generation
+      - Subscription-ready iCal output
+      - Access analytics and monitoring
+      - Mobile-responsive preview interface
+
   - name: Public Access
-    description: Public access to filtered calendars via tokens
+    description: |
+      Public calendar access with security and performance optimization.
+      
+      **Security Features**:
+      - Token-based authentication
+      - Content sanitization
+      - Rate limiting protection
+      - Audit logging
+      
+      **Performance Features**:
+      - Intelligent caching
+      - CDN-ready headers
+      - Optimized content delivery
+
+  - name: Community Management
+    description: |
+      Multi-tenant community calendar system with functional architecture.
+      
+      **Rich Hickey Functional Design**:
+      - Pure function business logic
+      - Immutable state transformations
+      - Explicit error handling
+      - Atomic operations
+      
+      **Community Features**:
+      - Multi-tenant isolation
+      - Group-based organization
+      - Administrative controls
+      - Audit trails
+
+  - name: Community Groups
+    description: |
+      Group management for automatic event categorization.
+      
+      **Group Features**:
+      - Automatic event assignment using rules
+      - Visual styling with icons and colors
+      - User subscription preferences
+      - Statistical analysis
+
+  - name: Community Authentication
+    description: |
+      Secure authentication system for community access.
+      
+      **Security Features**:
+      - Password-based authentication
+      - Session management
+      - Rate limiting
+      - Audit logging
+      - Automatic session expiration
+
+  - name: User Preferences
+    description: |
+      Persistent user preference management with calendar-specific settings.
+      
+      **Preference Types**:
+      - Filter defaults and UI state
+      - Notification settings
+      - Display preferences
+      - Privacy controls
