@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
+import { useAppStore } from '../stores/app'
 import { useRouter } from 'vue-router'
 import { watch, onMounted } from 'vue'
 import AppHeader from '../components/shared/AppHeader.vue'

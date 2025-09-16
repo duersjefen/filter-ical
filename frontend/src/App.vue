@@ -6,7 +6,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { useCompatibilityStore as useAppStore } from './stores/compatibility'
+import { useAppStore } from './stores/app'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from './composables/useDarkMode'
 import { useActivityTracker } from './composables/useActivityTracker'

@@ -5,7 +5,7 @@
 
 import { ref } from 'vue'
 import axios from 'axios'
-import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
+import { useAppStore } from '../stores/app'
 
 export function useUserPreferences() {
   const appStore = useAppStore()

@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
+import { useAppStore } from '../stores/app'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
 import { useUserPreferences } from './useUserPreferences'
 

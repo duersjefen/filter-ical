@@ -98,7 +98,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
+import { useAppStore } from '../stores/app'
 import { useAPI } from '../composables/useAPI'
 import { useCalendar } from '../composables/useCalendar'
 import axios from 'axios'

@@ -6,7 +6,7 @@
 import { ref, reactive } from 'vue'
 import axios from 'axios'
 import { useAPI } from './useAPI'
-import { useCompatibilityStore as useAppStore } from '../stores/compatibility'
+import { useAppStore } from '../stores/app'
 
 export function useFilteredCalendarAPI() {
   // State

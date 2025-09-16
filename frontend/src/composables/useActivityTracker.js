@@ -3,7 +3,7 @@
  * Tracks user activity to keep sessions fresh
  */
 import { onMounted, onUnmounted } from 'vue'
-import { useAppStore } from '../stores/appStore'
+import { useAppStore } from '../stores/app'
 
 export function useActivityTracker() {
   const appStore = useAppStore()
