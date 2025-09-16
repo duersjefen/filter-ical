@@ -148,10 +148,11 @@ paths:
   # Calendar Data APIs
   # ===============================================
 
+
   /api/calendar/{calendar_id}/events:
     get:
-      summary: Get calendar events
-      description: Retrieve all events from a specific calendar
+      summary: Get calendar recurring event types
+      description: Retrieve recurring event types (grouped by identical titles) with full event objects, filtered to show only future events from today forward
       tags:
         - Calendar Data
       security:
@@ -175,52 +176,6 @@ paths:
                   - events
                 properties:
                   events:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Event'
-              example:
-                events:
-                  - id: "evt_001"
-                    title: "Team Meeting"
-                    start: "2024-01-18T10:00:00Z"
-                    end: "2024-01-18T11:00:00Z"
-                    category: "Work"
-                    description: "Weekly team sync"
-                    location: "Conference Room A"
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/calendar/{calendar_id}/categories:
-    get:
-      summary: Get calendar categories
-      description: Retrieve event categories with counts for a specific calendar
-      tags:
-        - Calendar Data
-      security:
-        - UserAuth: []
-      parameters:
-        - name: calendar_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique calendar identifier
-          example: "cal_001"
-      responses:
-        '200':
-          description: Successfully retrieved categories
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - categories
-                properties:
-                  categories:
                     type: object
                     additionalProperties:
                       type: object
@@ -231,20 +186,41 @@ paths:
                         count:
                           type: integer
                           minimum: 0
-                          description: Number of events in this category
+                          description: Number of future event instances in this recurring event type
                         events:
                           type: array
                           items:
-                            type: string
-                          description: Array of event IDs in this category
+                            $ref: '#/components/schemas/Event'
+                          description: Array of full event objects in this recurring event type
               example:
-                categories:
-                  "Work":
-                    count: 5
-                    events: ["evt_001", "evt_003", "evt_005", "evt_007", "evt_009"]
-                  "Personal":
+                events:
+                  "Weekly Team Meeting":
                     count: 3
-                    events: ["evt_002", "evt_004", "evt_006"]
+                    events:
+                      - id: "evt_001"
+                        title: "Weekly Team Meeting"
+                        start: "2025-09-20T10:00:00Z"
+                        end: "2025-09-20T11:00:00Z"
+                        category: "Work"
+                        description: "Weekly team sync meeting"
+                        location: "Conference Room A"
+                      - id: "evt_008"
+                        title: "Weekly Team Meeting"
+                        start: "2025-09-27T10:00:00Z"
+                        end: "2025-09-27T11:00:00Z"
+                        category: "Work"
+                        description: "Weekly team sync meeting"
+                        location: "Conference Room A"
+                  "Daily Standup":
+                    count: 2
+                    events:
+                      - id: "evt_002"
+                        title: "Daily Standup"
+                        start: "2025-09-17T09:00:00Z"
+                        end: "2025-09-17T09:15:00Z"
+                        category: "Work"
+                        description: "Daily team standup"
+                        location: null
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -287,8 +263,8 @@ paths:
                     preview_url: "https://filter-ical.de/preview/abc123def456"
                     source_calendar_id: "cal_001"
                     filter_config:
-                      include_categories: ["Work", "Meeting"]
-                      exclude_categories: []
+                      include_events: ["Work", "Meeting"]
+                      exclude_events: []
                       filter_mode: "include"
                     created_at: "2024-01-18T09:00:00Z"
                     updated_at: "2024-01-18T09:00:00Z"
@@ -331,8 +307,8 @@ paths:
               source_calendar_id: "cal_001"
               name: "Work Events Only"
               filter_config:
-                include_categories: ["Work", "Meeting"]
-                exclude_categories: []
+                include_events: ["Work", "Meeting"]
+                exclude_events: []
                 filter_mode: "include"
       responses:
         '201':
@@ -384,8 +360,8 @@ paths:
             example:
               name: "Updated Work Events"
               filter_config:
-                include_categories: ["Work", "Meeting", "Training"]
-                exclude_categories: []
+                include_events: ["Work", "Meeting", "Training"]
+                exclude_events: []
                 filter_mode: "include"
       responses:
         '200':
@@ -769,14 +745,14 @@ paths:
             schema:
               type: object
               required:
-                - selected_categories
+                - selected_events
                 - filter_mode
               properties:
-                selected_categories:
+                selected_events:
                   type: array
                   items:
                     type: string
-                  description: Categories to include or exclude
+                  description: Event types to include or exclude
                   example: ["Work", "Meeting"]
                 filter_mode:
                   type: string
@@ -901,17 +877,17 @@ components:
       required:
         - filter_mode
       properties:
-        include_categories:
+        include_events:
           type: array
           items:
             type: string
-          description: Categories to include (when filter_mode is 'include')
+          description: Event types to include (when filter_mode is 'include')
           example: ["Work", "Meeting"]
-        exclude_categories:
+        exclude_events:
           type: array
           items:
             type: string
-          description: Categories to exclude (when filter_mode is 'exclude')
+          description: Event types to exclude (when filter_mode is 'exclude')
           example: []
         filter_mode:
           type: string
@@ -974,38 +950,38 @@ components:
     CalendarPreferences:
       type: object
       properties:
-        selected_categories:
+        selected_events:
           type: array
           items:
             type: string
-          description: Currently selected categories
+          description: Currently selected event types
           example: ["Work", "Meeting"]
         filter_mode:
           type: string
           enum: [include, exclude]
           description: Current filter mode
           example: "include"
-        expanded_categories:
+        expanded_events:
           type: array
           items:
             type: string
-          description: Expanded categories in UI
+          description: Expanded event types in UI
           example: ["Work"]
         show_single_events:
           type: boolean
           description: Whether to show individual events
           example: true
-        show_categories_section:
+        show_events_section:
           type: boolean
-          description: Whether categories section is visible
+          description: Whether event types section is visible
           example: true
         show_selected_only:
           type: boolean
-          description: Show only selected categories
+          description: Show only selected event types
           example: false
-        category_search:
+        event_search:
           type: string
-          description: Current category search term
+          description: Current event search term
           example: ""
         preview_group:
           type: string

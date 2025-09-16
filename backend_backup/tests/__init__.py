@@ -1,1 +1,0 @@
-# Test package for functional architecture

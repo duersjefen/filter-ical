@@ -6,17 +6,21 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run types:generate && vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "types:generate": "openapi-typescript ../backend/openapi.yaml --output src/types/api.ts",
+    "types:watch": "chokidar ../backend/openapi.yaml -c \"npm run types:generate\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@mswjs/data": "^0.16.2",
     "axios": "^1.11.0",
+    "msw": "^2.11.2",
     "pinia": "^3.0.3",
     "vue": "^3.5.21",
     "vue-i18n": "^9.14.5",
@@ -27,8 +31,15 @@
     "@tailwindcss/vite": "^4.0.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/test-utils": "^2.4.6",
+    "chokidar-cli": "^3.0.0",
     "jsdom": "^25.0.0",
+    "openapi-typescript": "^7.9.1",
     "vite": "^7.1.5",
     "vitest": "^3.2.4"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
