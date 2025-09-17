@@ -277,7 +277,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Successfully retrieved individual events */
+                /** @description Successfully retrieved unique events */
                 200: {
                     headers: {
                         [name: string]: unknown;

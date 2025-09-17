@@ -30,8 +30,8 @@ export function useFilteredCalendarAPI() {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
       filter_config: {
-        include_event_types: filterConfig.include_categories || [],
-        exclude_event_types: filterConfig.exclude_categories || [],
+        include_event_types: filterConfig.include_event_types || [],
+        exclude_event_types: filterConfig.exclude_event_types || [],
         filter_mode: filterConfig.filter_mode || 'include'
       }
     }

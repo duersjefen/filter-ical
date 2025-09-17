@@ -212,7 +212,7 @@ const loadCalendarData = async (calendarId) => {
         eventTypeNames: Object.keys(eventTypes.value)
       })
       
-      // Extract individual events from all event types
+      // Extract unique events from all event types
       const allEvents = []
       Object.values(eventTypes.value).forEach(eventType => {
         if (eventType.events && Array.isArray(eventType.events)) {

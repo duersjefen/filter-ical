@@ -125,7 +125,7 @@
                 <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
               </div>
               <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
-                {{ $t('eventTypes.eventsCount', { count: group.events.length }) }}
+                {{ group.events.length }}
               </span>
             </div>
             <div v-if="expandedGroups.has(group.name)" class="p-4">
@@ -174,7 +174,7 @@
                 <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
               </div>
               <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
-                {{ $t('eventTypes.eventsCount', { count: group.events.length }) }}
+                {{ group.events.length }}
               </span>
             </div>
             <div v-if="expandedGroups.has(group.name)" class="p-4">

@@ -140,33 +140,44 @@ def parse_calendar_events(ical_content: str, calendar_id: str) -> tuple[List[Dic
         if error:
             return [], error
             
-        events = []
-        
-        # Process all VEVENT components
-        for component in calendar.walk():
-            if component.name == "VEVENT":
-                event_data = extract_event_data(component, calendar_id)
-                if event_data:
-                    events.append(event_data)
-        
-        # Handle recurring events (expand them)
+        # Use recurring-ical-events library to handle all events (including recurring ones)
+        # This avoids processing the same events twice
         try:
-            # Use recurring-ical-events for proper recurrence handling
             start_date = datetime.now().replace(day=1, month=1) 
             end_date = datetime.now().replace(year=datetime.now().year + 2)
             
             recurring_events = recurring_ical_events.of(calendar).between(start_date, end_date)
             
-            # Convert recurring events to our format
+            events = []
+            seen_events = set()  # Track processed events to avoid duplicates
+            
+            # Convert events to our format with deduplication
             for event in recurring_events:
                 if hasattr(event, 'get'):
                     event_data = extract_event_data(event, calendar_id)
-                    if event_data and event_data not in events:
-                        events.append(event_data)
+                    if event_data:
+                        # Create a unique key based on event content (not ID)
+                        event_key = (
+                            event_data['title'],
+                            event_data['start'],
+                            event_data['end'],
+                            event_data['description'],
+                            event_data['location']
+                        )
                         
+                        # Only add if we haven't seen this exact event before
+                        if event_key not in seen_events:
+                            seen_events.add(event_key)
+                            events.append(event_data)
+                            
         except Exception:
-            # If recurring event processing fails, just use basic events
-            pass
+            # Fallback: Process all VEVENT components if recurring events fail
+            events = []
+            for component in calendar.walk():
+                if component.name == "VEVENT":
+                    event_data = extract_event_data(component, calendar_id)
+                    if event_data:
+                        events.append(event_data)
             
         return events, None
         

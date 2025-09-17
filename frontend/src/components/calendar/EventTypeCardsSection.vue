@@ -170,7 +170,7 @@
       </div>
       
       <!-- Multi-Event Types -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 items-start">
         <div 
           v-for="eventType in filteredMainEventTypes" 
           :key="eventType.name"
@@ -202,8 +202,7 @@
               <div class="flex items-center justify-between gap-2">
                 <span class="font-medium text-gray-800 dark:text-gray-200 text-xs leading-tight truncate">{{ eventType.name }}</span>
                 <span class="flex-shrink-0 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">
-                  <span class="hidden sm:inline">{{ $t('eventTypes.eventsCount', { count: eventType.count }) }}</span>
-                  <span class="sm:hidden">{{ eventType.count }}</span>
+                  {{ eventType.count }}
                 </span>
               </div>
             </div>
@@ -238,7 +237,7 @@
                 :key="event.uid"
                 class="py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0"
               >
-                <div class="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{{ event.title }}</div>
+                <div v-if="event.title !== eventType.name" class="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{{ event.title }}</div>
                 <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
                   <span>📅 {{ formatDateRange(event) }}</span>
                   <span v-if="event.location" class="break-words">📍 {{ event.location }}</span>
@@ -265,7 +264,7 @@
         </p>
       </div>
 
-      <!-- Individual Events Section -->
+      <!-- Unique Events Section -->
       <div 
         v-if="filteredSingleEventTypes.length > 0" 
         class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl border-2 border-purple-200 dark:border-purple-700 overflow-hidden"
@@ -308,7 +307,7 @@
 
         <!-- Singles List (when expanded) -->
         <div v-if="showSingleEvents" class="border-t border-purple-200 dark:border-purple-700 p-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
           <div 
             v-for="eventType in filteredSingleEventTypes"
             :key="eventType.name"

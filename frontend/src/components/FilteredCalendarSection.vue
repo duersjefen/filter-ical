@@ -36,13 +36,13 @@
       v-show="isExpanded" 
       class="transition-all duration-300 ease-in-out"
       :class="{
-        'opacity-100 max-h-screen': isExpanded,
+        'opacity-100': isExpanded,
         'opacity-0 max-h-0 overflow-hidden': !isExpanded
       }"
     >
       <div class="p-4 sm:p-6">
       <!-- Create/Update Form - Auto-show when event types selected -->
-      <div v-if="selectedEventTypes.length > 0" class="mb-6 p-4 rounded-lg border" 
+      <div v-if="selectedEventTypes.length > 0 || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
              : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
@@ -141,11 +141,11 @@
           {{ $t('filteredCalendar.yourFiltered') }} ({{ filteredCalendars.length }})
         </h4>
         
-        <div class="space-y-3">
+        <div class="space-y-2">
           <div
             v-for="calendar in filteredCalendars"
             :key="calendar.id"
-            class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+            class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
           >
             <div class="flex items-start justify-between">
               <div class="flex-1">
@@ -164,79 +164,50 @@
                   </button>
                 </div>
                 
-                <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <div class="flex flex-wrap gap-4 mb-1 text-xs">
-                    <div>
-                      📅 {{ $t('filteredCalendar.created') }}: {{ formatCreatedDate(calendar.created_at) }}
-                    </div>
-                    <div v-if="calendar.updated_at && calendar.updated_at !== calendar.created_at">
-                      ✏️ Last edited: {{ formatCreatedDate(calendar.updated_at) }}
-                    </div>
-                    <div v-else-if="calendar.last_accessed">
-                      👁️ Last accessed: {{ formatCreatedDate(calendar.last_accessed) }}
-                    </div>
-                    <div v-if="calendar.access_count > 0">
-                      📊 {{ calendar.access_count }} {{ calendar.access_count === 1 ? 'access' : 'accesses' }}
-                    </div>
+                <!-- Compact Filter Summary -->
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <!-- Single line with filter info and date -->
+                  <div class="flex items-center gap-3 text-xs mb-2">
+                    <!-- Filter badge -->
+                    <span v-if="calendar.filter_config?.include_event_types?.length > 0" 
+                          class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded font-medium">
+                      ✅ {{ calendar.filter_config.include_event_types.length }} included
+                    </span>
+                    <span v-else-if="calendar.filter_config?.exclude_event_types?.length > 0" 
+                          class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-2 py-1 rounded font-medium">
+                      ❌ {{ calendar.filter_config.exclude_event_types.length }} excluded
+                    </span>
+                    <span v-else-if="calendar.filter_config?.filter_mode" 
+                          class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-medium">
+                      📋 All events
+                    </span>
+                    
+                    <!-- Date info -->
+                    <span class="text-gray-500 dark:text-gray-400">
+                      <span v-if="calendar.updated_at && calendar.updated_at !== calendar.created_at">
+                        Updated {{ formatCreatedDate(calendar.updated_at) }}
+                      </span>
+                      <span v-else>
+                        Created {{ formatCreatedDate(calendar.created_at) }}
+                      </span>
+                    </span>
                   </div>
                   
-                  <!-- Filter Logic Summary -->
-                  <div v-if="calendar.filter_config" class="bg-gray-100 dark:bg-gray-600 rounded-lg p-3 mb-2">
-                    <div class="font-medium text-gray-800 dark:text-gray-200 mb-2">
-                      🔍 {{ $t('filteredCalendar.filterLogic') }}:
-                    </div>
-                    
-                    <!-- Include Mode Display -->
-                    <div v-if="hasIncludeEventTypes(calendar.filter_config)" class="mb-2">
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs font-medium">
-                          ✅ {{ $t('filteredCalendar.includeOnly') }}
-                        </span>
-                        <span class="text-xs text-gray-600 dark:text-gray-400">
-                          {{ getIncludeEventTypesCount(calendar.filter_config) }} {{ $t('filteredCalendar.eventTypes') }}
-                        </span>
-                      </div>
-                      <div class="text-xs text-gray-700 dark:text-gray-300">
-                        {{ getSmartEventTypeDisplay(getIncludeEventTypes(calendar.filter_config)) }}
-                      </div>
-                    </div>
-                    
-                    <!-- Exclude Mode Display -->
-                    <div v-else-if="hasExcludeEventTypes(calendar.filter_config)" class="mb-2">
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-2 py-1 rounded text-xs font-medium">
-                          ❌ {{ $t('filteredCalendar.excludeOnly') }}
-                        </span>
-                        <span class="text-xs text-gray-600 dark:text-gray-400">
-                          {{ getExcludeEventTypesCount(calendar.filter_config) }} {{ $t('filteredCalendar.eventTypes') }}
-                        </span>
-                      </div>
-                      <div class="text-xs text-gray-700 dark:text-gray-300">
-                        {{ getSmartEventTypeDisplay(getExcludeEventTypes(calendar.filter_config)) }}
-                      </div>
-                    </div>
-                    
-                    <!-- No Event Type Filter Display -->
-                    <div v-else class="mb-2">
-                      <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded text-xs font-medium">
-                        ⚠️ {{ calendar.filter_config?.filter_mode ? 'Filter event types missing' : 'No event type filter applied' }}
-                      </span>
-                      <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        {{ calendar.filter_config?.filter_mode ? 'Event types may have been deleted or filter corrupted' : 'This calendar contains the original events' }}
-                      </div>
-                    </div>
-                    
-                    <!-- Additional Filter Info -->
-                    <div v-if="calendar.filter_config.filter_mode" class="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-500 pt-2 mt-2">
-                      {{ $t('filteredCalendar.mode') }}: {{ calendar.filter_config.filter_mode === 'include' ? $t('filteredCalendar.includeMode') : $t('filteredCalendar.excludeMode') }}
-                    </div>
+                  <!-- Event types list (only if specific types selected) -->
+                  <div v-if="calendar.filter_config?.include_event_types?.length > 0 || calendar.filter_config?.exclude_event_types?.length > 0" 
+                       class="text-xs text-gray-600 dark:text-gray-300">
+                    {{ getSmartEventTypeDisplay(
+                      calendar.filter_config?.include_event_types?.length > 0 
+                        ? calendar.filter_config.include_event_types 
+                        : calendar.filter_config.exclude_event_types || []
+                    ) }}
                   </div>
                 </div>
 
-                <div class="flex flex-wrap gap-3 mt-3">
+                <div class="flex flex-wrap gap-2 mt-2">
                   <button
                     @click="copyToClipboard(calendar.calendar_url)"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
                     :class="copySuccess === calendar.calendar_url 
                       ? 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-800' 
                       : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'"
@@ -250,7 +221,7 @@
                   
                   <button
                     @click="loadFilterIntoPage(calendar)"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
                   >
                     <span>🔄</span>
                     <span>Update Filter</span>
@@ -258,7 +229,7 @@
                   
                   <button
                     @click="deleteFilteredCalendar(calendar.id)"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-rose-500 dark:bg-rose-600 text-white hover:bg-rose-600 dark:hover:bg-rose-700 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 dark:bg-rose-600 text-white hover:bg-rose-600 dark:hover:bg-rose-700 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
                     @click.stop
                   >
                     <span>🗑️</span>
@@ -546,9 +517,19 @@ const cancelEditForm = () => {
 
 const updateFilteredCalendar = async () => {
   try {
+    // Create filter config based on current event type selection
+    const filterConfig = {
+      include_event_types: props.filterMode === 'include' ? props.selectedEventTypes : [],
+      exclude_event_types: props.filterMode === 'exclude' ? props.selectedEventTypes : [],
+      filter_mode: props.filterMode
+    }
+    
     const success = await apiUpdateFiltered(
       editForm.value.id,
-      { name: editForm.value.name }
+      { 
+        name: editForm.value.name,
+        filter_config: filterConfig
+      }
     )
 
     if (success) {
@@ -751,7 +732,7 @@ const getSmartEventTypeDisplay = (selectedEventTypes) => {
   
   // Add single events summary if any
   if (selectedSingleEvents.length > 0) {
-    const eventSummary = selectedSingleEvents.length === 1 ? '1 individual event' : `${selectedSingleEvents.length} individual events`
+    const eventSummary = selectedSingleEvents.length === 1 ? '1 unique event' : `${selectedSingleEvents.length} unique events`
     display = display ? `${display} + ${eventSummary}` : eventSummary
   }
   
@@ -783,9 +764,15 @@ watch([() => props.selectedEventTypes, () => props.filterMode], () => {
     hasEverHadEventTypes.value = true
   }
   
-  // Exit update mode if no event types are selected
+  // Exit update mode if no event types are selected (with delay to allow parent to update props)
   if (props.selectedEventTypes.length === 0 && isUpdateMode.value) {
-    exitUpdateMode()
+    // Use nextTick to allow parent component to process the load-filter event first
+    setTimeout(() => {
+      // Only exit if still no event types after allowing time for parent to update
+      if (props.selectedEventTypes.length === 0 && isUpdateMode.value) {
+        exitUpdateMode()
+      }
+    }, 100)
   }
 }, { immediate: true })
 

@@ -163,7 +163,7 @@ async def create_calendar(
                     event = Event(**event_data)
                     session.add(event)
                 session.commit()
-                print(f"Successfully parsed {len(events_data)} events with {len(events_to_categories(events_data))} categories")
+                print(f"Successfully parsed {len(events_data)} events with {len(events_to_recurring_types(events_data))} event types")
     except Exception as e:
         print(f"Warning: Could not process calendar events: {e}")
     
@@ -210,6 +210,7 @@ async def get_calendar_events(
     session: Session = Depends(get_session)
 ):
     """Get calendar event types (grouped) - matches OpenAPI spec exactly"""
+    print("🚨 DEDUPLICATION FIX IS ACTIVE!")
     # Verify calendar ownership
     user_id = get_user_id(username)
     calendar = session.exec(
@@ -240,8 +241,22 @@ async def get_calendar_events(
             "location": event.location
         })
     
+    # KISS: Simple deduplication using string-based event fingerprint
+    seen_events = set()
+    deduplicated_events = []
+    
+    for event in events_data:
+        # Create simple string fingerprint: title + start time + end time
+        fingerprint = f"{event['title']}-{event['start']}-{event['end']}"
+        
+        if fingerprint not in seen_events:
+            seen_events.add(fingerprint)
+            deduplicated_events.append(event)
+    
+    print(f"🔍 Deduplication: {len(events_data)} → {len(deduplicated_events)} events")
+    
     # Use pure function to group events by recurring types (identical titles)
-    grouped_events = events_to_recurring_types(events_data)
+    grouped_events = events_to_recurring_types(deduplicated_events)
     
     return {"events": grouped_events}
 
