@@ -34,7 +34,9 @@ export function useEventFiltering(events, filters) {
     if (!dateRange || (!dateRange.start && !dateRange.end)) return eventList
     
     return eventList.filter(event => {
-      const eventDate = new Date(event.dtstart)
+      // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
+      const startField = event.start || event.dtstart
+      const eventDate = new Date(startField)
       if (dateRange.start && eventDate < dateRange.start) return false
       if (dateRange.end && eventDate > dateRange.end) return false
       return true
@@ -49,8 +51,11 @@ export function useEventFiltering(events, filters) {
     
     if (sortBy === 'date') {
       sorted.sort((a, b) => {
-        const dateA = new Date(a.dtstart)
-        const dateB = new Date(b.dtstart)
+        // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
+        const startFieldA = a.start || a.dtstart
+        const startFieldB = b.start || b.dtstart
+        const dateA = new Date(startFieldA)
+        const dateB = new Date(startFieldB)
         return sortDirection === 'asc' ? dateA - dateB : dateB - dateA
       })
     } else if (sortBy === 'title') {
@@ -90,9 +95,11 @@ export function useEventFiltering(events, filters) {
   const statistics = computed(() => {
     const totalEvents = events.value?.length || 0
     const filteredCount = filteredEvents.value?.length || 0
-    const upcomingEvents = events.value?.filter(event => 
-      new Date(event.dtstart) > new Date()
-    ).length || 0
+    const upcomingEvents = events.value?.filter(event => {
+      // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
+      const startField = event.start || event.dtstart
+      return new Date(startField) > new Date()
+    }).length || 0
     
     return {
       total: totalEvents,

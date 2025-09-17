@@ -14,16 +14,22 @@ export function parseIcalDate(dateString) {
   try {
     let date
     
-    // Handle iCal format dates (YYYYMMDDTHHMMSSZ or YYYYMMDD)
     if (typeof dateString === 'string') {
-      if (dateString.match(/^\d{8}T\d{6}Z?$/)) {
+      // Primary: Handle ISO 8601 format (web API standard)
+      if (dateString.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/)) {
+        // Format: 2024-01-18T10:00:00Z or 2024-01-18T10:00:00.000Z
+        date = new Date(dateString)
+      }
+      // Secondary: Handle iCal format dates (YYYYMMDDTHHMMSSZ or YYYYMMDD)
+      else if (dateString.match(/^\d{8}T\d{6}Z?$/)) {
         // Format: 20231215T140000Z
         const year = dateString.substring(0, 4)
         const month = dateString.substring(4, 6)
         const day = dateString.substring(6, 8)
         const hour = dateString.substring(9, 11)
         const minute = dateString.substring(11, 13)
-        date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`)
+        const second = dateString.substring(13, 15)
+        date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`)
       } else if (dateString.match(/^\d{8}$/)) {
         // Format: 20231215 (date only)
         const year = dateString.substring(0, 4)
@@ -31,10 +37,11 @@ export function parseIcalDate(dateString) {
         const day = dateString.substring(6, 8)
         date = new Date(`${year}-${month}-${day}`)
       } else {
-        // Try parsing as regular date string
+        // Fallback: Try parsing as any date string
         date = new Date(dateString)
       }
     } else {
+      // Handle Date objects or other types
       date = new Date(dateString)
     }
     
@@ -95,22 +102,56 @@ export function formatDateTime(dateString) {
 export function formatDateRange(event) {
   if (!event) return 'No event'
   
-  const startDate = parseIcalDate(event.dtstart)
-  const endDate = parseIcalDate(event.dtend)
+  // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
+  const startField = event.start || event.dtstart
+  const endField = event.end || event.dtend
+  
+  const startDate = parseIcalDate(startField)
+  const endDate = parseIcalDate(endField)
   
   if (!startDate) return 'No start date'
   
-  // If no end date or same day, show single date
-  if (!endDate || startDate.toDateString() === endDate.toDateString()) {
-    return formatDateTime(event.dtstart)
+  // If no end date, show single date/time
+  if (!endDate) {
+    return formatDateTime(startField)
+  }
+  
+  // Check if it's the same day (comparing just the date part)
+  const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+  const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+  const isSameDay = startDateOnly.getTime() === endDateOnly.getTime()
+  
+  // If same day, show single date with time range if applicable
+  if (isSameDay) {
+    const hasTime = startField && (startField.includes('T') || startField.includes(':'))
+    
+    if (hasTime && startDate.getTime() !== endDate.getTime()) {
+      // Same day with different times - show time range
+      const startTimeStr = startDate.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      })
+      const endTimeStr = endDate.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      })
+      const dateStr = startDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short', 
+        day: 'numeric'
+      })
+      return `${dateStr}, ${startTimeStr}–${endTimeStr}`
+    } else {
+      // Same day, show single date
+      return formatDateTime(startField)
+    }
   }
   
   // Multi-day event - show date range
-  const hasStartTime = event.dtstart && (event.dtstart.includes('T') || event.dtstart.includes(':'))
-  const hasEndTime = event.dtend && (event.dtend.includes('T') || event.dtend.includes(':'))
-  
   try {
-    // For multi-day events, typically we want just dates without times
     const startStr = startDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -118,19 +159,14 @@ export function formatDateRange(event) {
     })
     
     const endStr = endDate.toLocaleDateString('en-US', {
-      month: 'short',
+      month: 'short', 
       day: 'numeric',
       year: 'numeric'
     })
     
-    // If both have times and it's not an all-day event
-    if (hasStartTime && hasEndTime) {
-      return `${startStr} → ${endStr}`
-    }
-    
     return `${startStr} – ${endStr}`
   } catch (error) {
     console.warn('Date range formatting error:', error, 'for event:', event)
-    return formatDateTime(event.dtstart)
+    return formatDateTime(startField)
   }
 }
