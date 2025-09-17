@@ -1,10 +1,8 @@
 <template>
   <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden dark:bg-gray-900 min-h-screen">
     <HeaderSection 
-      :user="appStore.user"
       :selected-calendar="selectedCalendar"
       :error="error"
-      @logout="appStore.logout()"
       @navigate-home="navigateHome"
       @clear-error="clearError"
     />
@@ -150,8 +148,7 @@ const {
   selectAllSingleEvents,
   clearAllSingleEvents,
   switchFilterMode,
-  loadFilterState,
-  preferencesLoaded
+  // No preferences loading needed
 } = useCalendar(events, categories, props.id)
 
 // Simple, direct data loading
@@ -161,7 +158,6 @@ const loadCalendarData = async (calendarId) => {
   error.value = null
   
   try {
-    const userHeaders = appStore.getUserHeaders()
     
     // Load calendar info
     if (appStore.calendars.length === 0) {
@@ -176,11 +172,11 @@ const loadCalendarData = async (calendarId) => {
     // Load events and categories directly
     const [eventsResult, categoriesResult] = await Promise.all([
       api.safeExecute(async () => {
-        const response = await axios.get(`/api/calendar/${calendarId}/events`, { headers: userHeaders })
+        const response = await axios.get(`/api/calendar/${calendarId}/events`)
         return response.data.events
       }),
       api.safeExecute(async () => {
-        const response = await axios.get(`/api/calendar/${calendarId}/categories`, { headers: userHeaders })
+        const response = await axios.get(`/api/calendar/${calendarId}/categories`)
         return response.data.categories
       })
     ])
@@ -236,28 +232,17 @@ const loadFilterIntoPage = (filterData) => {
 }
 
 onMounted(async () => {
-  console.log('Simple CalendarView mounted')
-  console.log('User state:', appStore.user)
-  console.log('Is logged in:', appStore.isLoggedIn)
+  console.log('CalendarView mounted with public-first access')
   
-  // Initialize app state first (handles saved login)
-  await appStore.initializeApp()
-  console.log('After init - User state:', appStore.user)
-  console.log('After init - Is logged in:', appStore.isLoggedIn)
-  
-  if (!appStore.isLoggedIn) {
-    console.log('Not logged in, redirecting to login')
-    router.push('/login')
-    return
-  }
+  // Initialize app state (loads calendars from localStorage)
+  appStore.initializeApp()
 
   const calendarId = props.id || route.params.id
   console.log('Calendar ID from route:', calendarId)
   
   if (calendarId) {
     await loadCalendarData(calendarId)
-    // Load saved filter state after calendar data is loaded
-    await loadFilterState()
+    // Using default filter state - no persistence needed
   }
 })
 

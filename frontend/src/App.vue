@@ -21,11 +21,11 @@ const { isDarkMode, toggleDarkMode } = useDarkMode()
 const { trackActivity } = useActivityTracker()
 
 onMounted(async () => {
-  // Initialize the app and restore user session if available
-  const wasRestored = appStore.initializeApp()
+  // Initialize the app for public access
+  appStore.initializeApp()
   
-  // If user session was restored and we're on login page, redirect to home
-  if (wasRestored && router.currentRoute.value.path === '/login') {
+  // Default routing - redirect to home if on login page
+  if (router.currentRoute.value.path === '/login') {
     await router.push('/home')
   }
 })

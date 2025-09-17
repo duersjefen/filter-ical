@@ -9,21 +9,19 @@ export function useApiCall() {
   const api = useAPI()
 
   /**
-   * Make an authenticated API call with standardized error handling
+   * Make an API call with standardized error handling (public access)
    * @param {string} endpoint - API endpoint path
    * @param {Object} options - Request options
    * @param {string} options.method - HTTP method (GET, POST, PUT, DELETE)
    * @param {Object} options.data - Request body data
    * @param {Object} options.headers - Additional headers
-   * @param {Function} options.getUserHeaders - Function to get user auth headers
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   const apiCall = async (endpoint, options = {}) => {
     const {
       method = 'GET',
       data = null,
-      headers = {},
-      getUserHeaders = null
+      headers = {}
     } = options
 
     return await api.safeExecute(async () => {
@@ -31,8 +29,8 @@ export function useApiCall() {
         method,
         url: endpoint,
         headers: {
-          ...headers,
-          ...(getUserHeaders ? getUserHeaders() : {})
+          'Content-Type': 'application/json',
+          ...headers
         }
       }
 
@@ -48,26 +46,26 @@ export function useApiCall() {
   /**
    * GET request helper
    */
-  const get = (endpoint, getUserHeaders) => 
-    apiCall(endpoint, { method: 'GET', getUserHeaders })
+  const get = (endpoint, headers = {}) => 
+    apiCall(endpoint, { method: 'GET', headers })
 
   /**
    * POST request helper
    */
-  const post = (endpoint, data, getUserHeaders) => 
-    apiCall(endpoint, { method: 'POST', data, getUserHeaders })
+  const post = (endpoint, data, headers = {}) => 
+    apiCall(endpoint, { method: 'POST', data, headers })
 
   /**
    * PUT request helper
    */
-  const put = (endpoint, data, getUserHeaders) => 
-    apiCall(endpoint, { method: 'PUT', data, getUserHeaders })
+  const put = (endpoint, data, headers = {}) => 
+    apiCall(endpoint, { method: 'PUT', data, headers })
 
   /**
    * DELETE request helper
    */
-  const del = (endpoint, getUserHeaders) => 
-    apiCall(endpoint, { method: 'DELETE', getUserHeaders })
+  const del = (endpoint, headers = {}) => 
+    apiCall(endpoint, { method: 'DELETE', headers })
 
   return {
     // Main API call function

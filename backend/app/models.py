@@ -14,10 +14,6 @@ class FilterMode(str, Enum):
     exclude = "exclude"
 
 
-class SortDirection(str, Enum):
-    asc = "asc"
-    desc = "desc"
-
 
 # Core Calendar Model
 class Calendar(SQLModel, table=True):
@@ -84,55 +80,4 @@ class FilteredCalendar(SQLModel, table=True):
         return f"https://filter-ical.de/preview/{self.public_token}"
 
 
-class UserPreference(SQLModel, table=True):
-    """User preferences matching OpenAPI user preferences schema"""
-    __tablename__ = "user_preferences"
-    
-    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
-    user_id: str = Field(unique=True, index=True)
-    preferences_json: str = Field(default="{}")  # JSON blob for flexible preferences
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-
-class CalendarPreference(SQLModel, table=True):
-    """Calendar-specific preferences matching OpenAPI CalendarPreferences schema"""
-    __tablename__ = "calendar_preferences"
-    
-    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
-    user_id: str = Field(index=True)
-    calendar_id: str = Field(foreign_key="calendars.id")
-    
-    # Preference fields matching OpenAPI spec exactly
-    selected_events: str = Field(default="[]")  # JSON array
-    filter_mode: FilterMode = Field(default=FilterMode.include)
-    expanded_events: str = Field(default="[]")  # JSON array
-    show_single_events: bool = Field(default=False)
-    show_events_section: bool = Field(default=True)
-    show_selected_only: bool = Field(default=False)
-    event_search: str = Field(default="")
-    preview_group: str = Field(default="none")
-    saved_at: datetime = Field(default_factory=datetime.utcnow)
-    
-    # Composite unique constraint on user + calendar  
-    __table_args__ = (
-        {"sqlite_autoincrement": True},
-    )
-
-
-class SavedFilter(SQLModel, table=True):
-    """Saved filter configurations matching OpenAPI SavedFilter schema"""
-    __tablename__ = "saved_filters"
-    
-    id: str = Field(default_factory=lambda: f"sf_{uuid.uuid4().hex[:8]}", primary_key=True)
-    user_id: str = Field(index=True)
-    name: str = Field(min_length=3, max_length=100)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    
-    # Filter configuration matching OpenAPI SavedFilterConfig
-    selected_event_types: str = Field(default="[]")  # JSON array
-    keyword_filter: str = Field(default="")
-    date_range_start: Optional[str] = Field(default=None)  # ISO date string
-    date_range_end: Optional[str] = Field(default=None)  # ISO date string
-    sort_by: str = Field(default="date")
-    sort_direction: SortDirection = Field(default=SortDirection.asc)
+# Preferences models removed - using default filter state only

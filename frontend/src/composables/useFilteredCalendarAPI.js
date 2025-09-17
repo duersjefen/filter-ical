@@ -16,9 +16,8 @@ export function useFilteredCalendarAPI() {
   const updating = ref(false)
   const error = ref(null)
   
-  // Get user authentication headers
+  // No authentication required for public access
   const appStore = useAppStore()
-  const getUserHeaders = () => appStore.getUserHeaders()
 
   // Use axios directly for HTTP calls
 
@@ -81,7 +80,7 @@ export function useFilteredCalendarAPI() {
     
     try {
       const response = await axios.get('/api/filtered-calendars', {
-        headers: getUserHeaders()
+        headers: {}
       })
       
       if (response.data && response.data.filtered_calendars) {
@@ -107,7 +106,7 @@ export function useFilteredCalendarAPI() {
     try {
       const payload = createFilteredCalendarPayload(sourceCalendarId, name, filterConfig)
       const response = await axios.post('/api/filtered-calendars', payload, {
-        headers: getUserHeaders()
+        headers: {}
       })
       
       if (response.data) {
@@ -147,7 +146,7 @@ export function useFilteredCalendarAPI() {
       })
 
       const response = await axios.put(`/api/filtered-calendars/${calendarId}`, payload, {
-        headers: getUserHeaders()
+        headers: {}
       })
       
       if (response.data) {
@@ -178,7 +177,7 @@ export function useFilteredCalendarAPI() {
 
     try {
       await axios.delete(`/api/filtered-calendars/${calendarId}`, {
-        headers: getUserHeaders()
+        headers: {}
       })
       
       filteredCalendars.value = removeFilteredCalendarFromList(
@@ -198,7 +197,7 @@ export function useFilteredCalendarAPI() {
   const getPublicCalendar = async (token) => {
     try {
       const response = await axios.get(`/cal/${token}`, {
-        headers: getUserHeaders()
+        headers: {}
       })
       return response.data
     } catch (err) {

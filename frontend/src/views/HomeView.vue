@@ -3,9 +3,6 @@
     <AppHeader 
       title="🗓️ iCal Filter & Subscribe"
       subtitle="Easily filter your iCal feeds and create custom subscriptions"
-      :user="appStore.user"
-      :show-user-info="appStore.isLoggedIn"
-      @logout="handleLogout"
     />
 
     <!-- Add Calendar Form -->
@@ -228,8 +225,4 @@ const cancelDelete = () => {
   calendarToDelete.value = null
 }
 
-const handleLogout = () => {
-  appStore.logout()
-  router.push('/login')
-}
 </script>

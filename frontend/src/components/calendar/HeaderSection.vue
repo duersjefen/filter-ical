@@ -4,11 +4,9 @@
     <AppHeader 
       :title="$t('calendar.filterTitle', { name: selectedCalendar?.name || $t('common.loading') })"
       :subtitle="$t('calendar.subtitle')"
-      :user="user"
-      :show-user-info="true"
+      :show-user-info="false"
       :show-back-button="true"
       :back-button-text="$t('navigation.backToCalendars')"
-      @logout="$emit('logout')"
       @navigate-back="$emit('navigate-home')"
     />
 
@@ -30,10 +28,9 @@
 import AppHeader from '../shared/AppHeader.vue'
 
 defineProps({
-  user: Object,
   selectedCalendar: Object,
   error: String
 })
 
-defineEmits(['logout', 'navigate-home', 'clear-error'])
+defineEmits(['navigate-home', 'clear-error'])
 </script>

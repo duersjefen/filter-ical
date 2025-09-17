@@ -182,7 +182,7 @@ export function transformApiError(error) {
     case 400:
       return message || 'Invalid request. Please check your input.'
     case 401:
-      return 'Authentication required. Please log in.'
+      return 'Access denied. Please try again.'
     case 404:
       return 'Resource not found.'
     case 429:
@@ -199,12 +199,9 @@ export function transformApiError(error) {
  * @param {string} userId - User ID
  * @returns {Object} - Request headers
  */
-export function createApiHeaders(userId) {
-  if (!userId) {
-    throw new Error('User ID is required for API calls - authentication needed')
-  }
+export function createApiHeaders() {
+  // Public access - no user headers needed
   return {
-    'x-user-id': userId,
     'Content-Type': 'application/json'
   }
 }

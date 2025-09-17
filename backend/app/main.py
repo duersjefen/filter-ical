@@ -15,8 +15,7 @@ import json
 # Import database and models
 from .database import get_session, create_db_and_tables
 from .models import (
-    Calendar, Event, FilteredCalendar, UserPreference, 
-    CalendarPreference, SavedFilter, FilterMode
+    Calendar, Event, FilteredCalendar, FilterMode
 )
 
 # Import pure functions (Functional Core)
@@ -76,12 +75,9 @@ def startup_event():
     print("🚀 iCal Viewer API starting with functional architecture")
     print("📋 Contract-driven development with OpenAPI compliance")
 
-# Optional authentication dependency for public-first access
-def get_user_id(x_user_id: Optional[str] = Header(None)) -> str:
-    """Extract user ID from x-user-id header, use default 'public' user if none provided"""
-    if not x_user_id or x_user_id.strip() == '':
-        return 'public'  # Default user for public access
-    return x_user_id.strip()
+# Public access - no authentication required
+# All calendars are stored under 'public' user
+PUBLIC_USER_ID = 'public'
 
 # Utility function for error responses
 def create_error_response(detail: str) -> Dict[str, str]:
@@ -94,12 +90,11 @@ def create_error_response(detail: str) -> Dict[str, str]:
 
 @app.get("/api/calendars")
 async def get_calendars(
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
-    """Get user's calendars - matches OpenAPI spec exactly"""
+    """Get public calendars - matches OpenAPI spec exactly"""
     calendars = session.exec(
-        select(Calendar).where(Calendar.user_id == user_id)
+        select(Calendar).where(Calendar.user_id == PUBLIC_USER_ID)
     ).all()
     
     # Transform to OpenAPI response format
@@ -118,7 +113,6 @@ async def get_calendars(
 @app.post("/api/calendars", status_code=201)
 async def create_calendar(
     calendar_data: dict,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Create new calendar - matches OpenAPI spec exactly"""
@@ -138,7 +132,7 @@ async def create_calendar(
     new_calendar = Calendar(
         name=name,
         url=url,
-        user_id=user_id
+        user_id=PUBLIC_USER_ID
     )
     
     session.add(new_calendar)
@@ -174,14 +168,13 @@ async def create_calendar(
 @app.delete("/api/calendars/{calendar_id}")
 async def delete_calendar(
     calendar_id: str,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Delete calendar - matches OpenAPI spec exactly"""
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == user_id
+            Calendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     
@@ -200,7 +193,6 @@ async def delete_calendar(
 @app.get("/api/calendar/{calendar_id}/events")
 async def get_calendar_events(
     calendar_id: str,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Get calendar event types (grouped) - matches OpenAPI spec exactly"""
@@ -208,7 +200,7 @@ async def get_calendar_events(
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == user_id
+            Calendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     
@@ -241,7 +233,6 @@ async def get_calendar_events(
 @app.get("/api/calendar/{calendar_id}/raw-events")
 async def get_calendar_raw_events(
     calendar_id: str,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Get individual calendar events as flat array - utility endpoint"""
@@ -249,7 +240,7 @@ async def get_calendar_raw_events(
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == user_id
+            Calendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     
@@ -279,7 +270,6 @@ async def get_calendar_raw_events(
 @app.get("/api/calendar/{calendar_id}/categories")
 async def get_calendar_categories(
     calendar_id: str,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Get calendar categories - matches OpenAPI spec exactly"""
@@ -287,7 +277,7 @@ async def get_calendar_categories(
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == user_id
+            Calendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     
@@ -318,12 +308,11 @@ async def get_calendar_categories(
 
 @app.get("/api/filtered-calendars")
 async def get_filtered_calendars(
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Get filtered calendars - matches OpenAPI spec exactly"""
     filtered_calendars = session.exec(
-        select(FilteredCalendar).where(FilteredCalendar.user_id == user_id)
+        select(FilteredCalendar).where(FilteredCalendar.user_id == PUBLIC_USER_ID)
     ).all()
     
     # Transform to OpenAPI response format
@@ -350,7 +339,6 @@ async def get_filtered_calendars(
 @app.post("/api/filtered-calendars") 
 async def create_filtered_calendar(
     request_data: dict,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Create filtered calendar - matches OpenAPI spec exactly"""
@@ -369,7 +357,7 @@ async def create_filtered_calendar(
     source_calendar = session.exec(
         select(Calendar).where(
             Calendar.id == source_calendar_id,
-            Calendar.user_id == user_id
+            Calendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     
@@ -380,7 +368,7 @@ async def create_filtered_calendar(
     filtered_calendar = FilteredCalendar(
         name=name,
         source_calendar_id=source_calendar_id,
-        user_id=user_id,
+        user_id=PUBLIC_USER_ID,
         include_categories=serialize_json_field(filter_config.get('include_categories', [])),
         exclude_categories=serialize_json_field(filter_config.get('exclude_categories', [])),
         filter_mode=FilterMode(filter_config.get('filter_mode', 'include'))
@@ -411,7 +399,6 @@ async def create_filtered_calendar(
 async def update_filtered_calendar(
     filtered_calendar_id: str,
     request_data: dict,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Update filtered calendar - matches OpenAPI spec exactly"""
@@ -419,7 +406,7 @@ async def update_filtered_calendar(
     filtered_calendar = session.exec(
         select(FilteredCalendar).where(
             FilteredCalendar.id == filtered_calendar_id,
-            FilteredCalendar.user_id == user_id
+            FilteredCalendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     
@@ -475,14 +462,13 @@ async def update_filtered_calendar(
 @app.delete("/api/filtered-calendars/{filtered_calendar_id}")
 async def delete_filtered_calendar(
     filtered_calendar_id: str,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Delete filtered calendar - matches OpenAPI spec exactly"""
     filtered_calendar = session.exec(
         select(FilteredCalendar).where(
             FilteredCalendar.id == filtered_calendar_id,
-            FilteredCalendar.user_id == user_id
+            FilteredCalendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     
@@ -550,274 +536,9 @@ async def get_public_filtered_calendar(
         headers={"Content-Disposition": f"attachment; filename={filtered_calendar.name.replace(' ', '_')}.ics"}
     )
 
-# ==============================================
-# USER PREFERENCES ENDPOINTS
-# ==============================================
+# Preferences endpoints removed - using default filter state only
 
-@app.get("/api/user/preferences")
-async def get_user_preferences(
-    user_id: str = Depends(get_user_id),
-    session: Session = Depends(get_session)
-):
-    """Get user preferences - matches OpenAPI spec exactly"""
-    user_pref = session.exec(
-        select(UserPreference).where(UserPreference.user_id == user_id)
-    ).first()
-    
-    preferences = {}
-    if user_pref:
-        preferences = parse_json_field(user_pref.preferences_json, {})
-    
-    return {
-        "success": True,
-        "preferences": preferences
-    }
-
-@app.put("/api/user/preferences")
-async def save_user_preferences(
-    preferences: dict,
-    user_id: str = Depends(get_user_id),
-    session: Session = Depends(get_session)
-):
-    """Save user preferences - matches OpenAPI spec exactly"""
-    user_pref = session.exec(
-        select(UserPreference).where(UserPreference.user_id == user_id)
-    ).first()
-    
-    if user_pref:
-        user_pref.preferences_json = serialize_json_field(preferences)
-        user_pref.updated_at = datetime.utcnow()
-    else:
-        user_pref = UserPreference(
-            user_id=user_id,
-            preferences_json=serialize_json_field(preferences)
-        )
-    
-    session.add(user_pref)
-    session.commit()
-    
-    return {"success": True}
-
-@app.get("/api/calendars/{calendar_id}/preferences")
-async def get_calendar_preferences(
-    calendar_id: str,
-    user_id: str = Depends(get_user_id),
-    session: Session = Depends(get_session)
-):
-    """Get calendar preferences - matches OpenAPI spec exactly"""
-    # Verify calendar ownership
-    calendar = session.exec(
-        select(Calendar).where(
-            Calendar.id == calendar_id,
-            Calendar.user_id == user_id
-        )
-    ).first()
-    
-    if not calendar:
-        raise HTTPException(status_code=404, detail="Calendar not found")
-    
-    # Get calendar preferences
-    cal_pref = session.exec(
-        select(CalendarPreference).where(
-            CalendarPreference.calendar_id == calendar_id,
-            CalendarPreference.user_id == user_id
-        )
-    ).first()
-    
-    if cal_pref:
-        preferences = {
-            "selected_categories": parse_json_field(cal_pref.selected_categories, []),
-            "filter_mode": cal_pref.filter_mode,
-            "expanded_categories": parse_json_field(cal_pref.expanded_categories, []),
-            "show_single_events": cal_pref.show_single_events,
-            "show_categories_section": cal_pref.show_categories_section,
-            "show_selected_only": cal_pref.show_selected_only,
-            "category_search": cal_pref.category_search,
-            "preview_group": cal_pref.preview_group,
-            "saved_at": cal_pref.saved_at.isoformat() + "Z"
-        }
-    else:
-        # Return default preferences
-        preferences = {
-            "selected_categories": [],
-            "filter_mode": "include",
-            "expanded_categories": [],
-            "show_single_events": False,
-            "show_categories_section": True,
-            "show_selected_only": False,
-            "category_search": "",
-            "preview_group": "none"
-        }
-    
-    return {
-        "success": True,
-        "preferences": preferences
-    }
-
-@app.put("/api/calendars/{calendar_id}/preferences")
-async def save_calendar_preferences(
-    calendar_id: str,
-    preferences: dict,
-    user_id: str = Depends(get_user_id),
-    session: Session = Depends(get_session)
-):
-    """Save calendar preferences - matches OpenAPI spec exactly"""
-    # Verify calendar ownership
-    calendar = session.exec(
-        select(Calendar).where(
-            Calendar.id == calendar_id,
-            Calendar.user_id == user_id
-        )
-    ).first()
-    
-    if not calendar:
-        raise HTTPException(status_code=404, detail="Calendar not found")
-    
-    # Find or create calendar preferences
-    cal_pref = session.exec(
-        select(CalendarPreference).where(
-            CalendarPreference.calendar_id == calendar_id,
-            CalendarPreference.user_id == user_id
-        )
-    ).first()
-    
-    if cal_pref:
-        # Update existing preferences
-        cal_pref.selected_categories = serialize_json_field(preferences.get("selected_categories", []))
-        cal_pref.filter_mode = FilterMode(preferences.get("filter_mode", "include"))
-        cal_pref.expanded_categories = serialize_json_field(preferences.get("expanded_categories", []))
-        cal_pref.show_single_events = preferences.get("show_single_events", False)
-        cal_pref.show_categories_section = preferences.get("show_categories_section", True)
-        cal_pref.show_selected_only = preferences.get("show_selected_only", False)
-        cal_pref.category_search = preferences.get("category_search", "")
-        cal_pref.preview_group = preferences.get("preview_group", "none")
-        cal_pref.saved_at = datetime.utcnow()
-    else:
-        # Create new preferences
-        cal_pref = CalendarPreference(
-            user_id=user_id,
-            calendar_id=calendar_id,
-            selected_categories=serialize_json_field(preferences.get("selected_categories", [])),
-            filter_mode=FilterMode(preferences.get("filter_mode", "include")),
-            expanded_categories=serialize_json_field(preferences.get("expanded_categories", [])),
-            show_single_events=preferences.get("show_single_events", False),
-            show_categories_section=preferences.get("show_categories_section", True),
-            show_selected_only=preferences.get("show_selected_only", False),
-            category_search=preferences.get("category_search", ""),
-            preview_group=preferences.get("preview_group", "none")
-        )
-    
-    session.add(cal_pref)
-    session.commit()
-    
-    return {"success": True}
-
-# ==============================================
-# SAVED FILTERS ENDPOINTS  
-# ==============================================
-
-@app.get("/api/filters")
-async def get_saved_filters(
-    user_id: str = Depends(get_user_id),
-    session: Session = Depends(get_session)
-):
-    """Get saved filters - matches OpenAPI spec exactly"""
-    saved_filters = session.exec(
-        select(SavedFilter).where(SavedFilter.user_id == user_id)
-    ).all()
-    
-    filters_list = []
-    for sf in saved_filters:
-        config = {
-            "selectedEventTypes": parse_json_field(sf.selected_event_types, []),
-            "keywordFilter": sf.keyword_filter,
-            "dateRange": {},
-            "sortBy": sf.sort_by,
-            "sortDirection": sf.sort_direction
-        }
-        
-        if sf.date_range_start:
-            config["dateRange"]["start"] = sf.date_range_start
-        if sf.date_range_end:
-            config["dateRange"]["end"] = sf.date_range_end
-        
-        filters_list.append({
-            "id": sf.id,
-            "name": sf.name,
-            "config": config
-        })
-    
-    return {"filters": filters_list}
-
-@app.post("/api/filters")
-async def save_new_filter(
-    request_data: dict,
-    user_id: str = Depends(get_user_id),
-    session: Session = Depends(get_session)
-):
-    """Save new filter - matches OpenAPI spec exactly"""
-    name = request_data.get('name', '').strip()
-    config = request_data.get('config', {})
-    
-    if not name or len(name) < 3:
-        raise HTTPException(
-            status_code=400,
-            detail="Name is required and must be at least 3 characters"
-        )
-    
-    # Create saved filter
-    saved_filter = SavedFilter(
-        user_id=user_id,
-        name=name,
-        selected_event_types=serialize_json_field(config.get("selectedEventTypes", [])),
-        keyword_filter=config.get("keywordFilter", ""),
-        date_range_start=config.get("dateRange", {}).get("start"),
-        date_range_end=config.get("dateRange", {}).get("end"),
-        sort_by=config.get("sortBy", "date"),
-        sort_direction=config.get("sortDirection", "asc")
-    )
-    
-    session.add(saved_filter)
-    session.commit()
-    session.refresh(saved_filter)
-    
-    # Return response
-    return {
-        "id": saved_filter.id,
-        "name": saved_filter.name,
-        "config": {
-            "selectedEventTypes": parse_json_field(saved_filter.selected_event_types, []),
-            "keywordFilter": saved_filter.keyword_filter,
-            "dateRange": {
-                "start": saved_filter.date_range_start,
-                "end": saved_filter.date_range_end
-            },
-            "sortBy": saved_filter.sort_by,
-            "sortDirection": saved_filter.sort_direction
-        }
-    }
-
-@app.delete("/api/filters/{filter_id}")
-async def delete_saved_filter(
-    filter_id: str,
-    user_id: str = Depends(get_user_id),
-    session: Session = Depends(get_session)
-):
-    """Delete saved filter - matches OpenAPI spec exactly"""
-    saved_filter = session.exec(
-        select(SavedFilter).where(
-            SavedFilter.id == filter_id,
-            SavedFilter.user_id == user_id
-        )
-    ).first()
-    
-    if not saved_filter:
-        raise HTTPException(status_code=404, detail="Filter not found")
-    
-    session.delete(saved_filter)
-    session.commit()
-    
-    return Response(status_code=204)
+# Saved filters endpoints removed - using default filter state only
 
 # ==============================================
 # ICAL GENERATION ENDPOINT
@@ -827,7 +548,6 @@ async def delete_saved_filter(
 async def generate_filtered_ical(
     calendar_id: str,
     request_data: dict,
-    user_id: str = Depends(get_user_id),
     session: Session = Depends(get_session)
 ):
     """Generate filtered iCal content - matches OpenAPI spec exactly"""
@@ -835,7 +555,7 @@ async def generate_filtered_ical(
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == user_id
+            Calendar.user_id == PUBLIC_USER_ID
         )
     ).first()
     

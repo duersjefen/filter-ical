@@ -1,57 +1,21 @@
 /**
  * Activity Tracker Composable
- * Tracks user activity to keep sessions fresh
+ * No-op for public access mode - no session tracking needed
  */
 import { onMounted, onUnmounted } from 'vue'
-import { useAppStore } from '../stores/app'
 
 export function useActivityTracker() {
-  const appStore = useAppStore()
-  let activityTimeout = null
-
+  // No activity tracking needed for public access
   const trackActivity = () => {
-    // Clear existing timeout
-    if (activityTimeout) {
-      clearTimeout(activityTimeout)
-    }
-
-    // Update activity immediately if user is logged in
-    if (appStore.isLoggedIn) {
-      appStore.updateActivity()
-    }
-
-    // Set timeout to update activity every 5 minutes of continuous use
-    activityTimeout = setTimeout(() => {
-      if (appStore.isLoggedIn) {
-        appStore.updateActivity()
-      }
-    }, 5 * 60 * 1000) // 5 minutes
+    // No-op - public access doesn't need session tracking
   }
 
-  const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
-
   onMounted(() => {
-    // Track initial activity
-    if (appStore.isLoggedIn) {
-      trackActivity()
-    }
-
-    // Add event listeners for user activity
-    events.forEach(event => {
-      document.addEventListener(event, trackActivity, { passive: true })
-    })
+    // No activity tracking setup needed for public access
   })
 
   onUnmounted(() => {
-    // Clean up event listeners
-    events.forEach(event => {
-      document.removeEventListener(event, trackActivity)
-    })
-
-    // Clear timeout
-    if (activityTimeout) {
-      clearTimeout(activityTimeout)
-    }
+    // No cleanup needed for public access
   })
 
   return {

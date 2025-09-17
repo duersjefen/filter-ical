@@ -16,92 +16,12 @@ export const useAppStore = defineStore('app', () => {
   const { get, post, put, del, loading, error, clearError } = useApiCall()
 
   // ===============================================
-  // USER AUTHENTICATION SECTION
+  // PUBLIC ACCESS - NO AUTHENTICATION REQUIRED
   // ===============================================
   
-  const user = ref({
-    username: null,
-    loggedIn: false,
-    loginTime: null,
-    lastActivity: null
-  })
-
-  const isLoggedIn = computed(() => user.value.loggedIn)
-
-  const getUserHeaders = () => {
-    // Optional authentication - provide user ID if available
-    if (user.value.loggedIn && user.value.username) {
-      return { 'x-user-id': user.value.username }
-    }
-    return {}
-  }
-
-  const login = async (username) => {
-    if (!username || username.trim() === '' || username.trim().toLowerCase() === 'anonymous') {
-      throw new Error('Please enter a valid username')
-    }
-    
-    const userData = {
-      username: username.trim(),
-      loggedIn: true,
-      loginTime: new Date().getTime(),
-      lastActivity: new Date().getTime()
-    }
-    
-    user.value = userData
-    localStorage.setItem('icalViewer_user', JSON.stringify(userData))
-    
-    return { success: true, data: userData }
-  }
-
-  const logout = () => {
-    user.value = {
-      username: null,
-      loggedIn: false,
-      loginTime: null,
-      lastActivity: null
-    }
-    localStorage.removeItem('icalViewer_user')
-  }
-
   const initializeApp = () => {
     // Load calendars from localStorage immediately
     loadCalendarsFromLocalStorage()
-    
-    // Initialize user session if available
-    try {
-      const savedUser = localStorage.getItem('icalViewer_user')
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser)
-        
-        if (parsed && parsed.username && parsed.loggedIn) {
-          const now = new Date().getTime()
-          const sessionAge = now - (parsed.loginTime || now)
-          const maxSessionAge = 7 * 24 * 60 * 60 * 1000 // 7 days
-          
-          if (sessionAge < maxSessionAge) {
-            parsed.lastActivity = now
-            user.value = parsed
-            localStorage.setItem('icalViewer_user', JSON.stringify(parsed))
-            return true
-          } else {
-            logout()
-            return false
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('Error loading saved user:', error)
-      logout()
-    }
-    return false
-  }
-
-  const updateActivity = () => {
-    if (user.value.loggedIn) {
-      user.value.lastActivity = new Date().getTime()
-      localStorage.setItem('icalViewer_user', JSON.stringify(user.value))
-    }
   }
 
   // ===============================================
@@ -153,7 +73,7 @@ export const useAppStore = defineStore('app', () => {
     
     // Try to sync with API in background
     try {
-      const result = await get('/api/calendars', getUserHeaders())
+      const result = await get('/api/calendars')
       
       if (result.success) {
         // Merge local and server data, preferring server data for conflicts
@@ -189,7 +109,7 @@ export const useAppStore = defineStore('app', () => {
       id: generateLocalCalendarId(),
       name: newCalendar.value.name.trim(),
       url: newCalendar.value.url.trim(),
-      user_id: user.value.loggedIn ? user.value.username : 'public',
+      user_id: 'public', // Always public in no-auth system
       created_at: new Date().toISOString(),
       source: 'local' // Mark as locally created
     }
@@ -209,7 +129,7 @@ export const useAppStore = defineStore('app', () => {
       const result = await post('/api/calendars', {
         name: localCalendar.name,
         url: localCalendar.url
-      }, getUserHeaders())
+      })
 
       if (result.success) {
         // Replace local calendar with server calendar
@@ -243,7 +163,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Try to delete from server in background
     try {
-      await del(`/api/calendars/${calendarId}`, getUserHeaders())
+      await del(`/api/calendars/${calendarId}`)
       // If server deletion succeeds, return success
       return { success: true }
     } catch (error) {
@@ -303,7 +223,7 @@ export const useAppStore = defineStore('app', () => {
   const statistics = eventFiltering.statistics
 
   const loadCalendarEvents = async (calendarId) => {
-    const result = await get(`/api/calendar/${calendarId}/events`, getUserHeaders())
+    const result = await get(`/api/calendar/${calendarId}/events`)
 
     if (result.success) {
       events.value = result.data.events
@@ -313,7 +233,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const loadCalendarCategories = async (calendarId) => {
-    const result = await get(`/api/calendar/${calendarId}/categories`, getUserHeaders())
+    const result = await get(`/api/calendar/${calendarId}/categories`)
 
     if (result.success) {
       categories.value = result.data.categories
@@ -365,7 +285,7 @@ export const useAppStore = defineStore('app', () => {
   const savedFilters = ref([])
 
   const fetchFilters = async () => {
-    const result = await get('/api/filters', getUserHeaders())
+    const result = await get('/api/filters', )
 
     if (result.success) {
       savedFilters.value = result.data.filters
@@ -380,7 +300,7 @@ export const useAppStore = defineStore('app', () => {
     const result = await post('/api/filters', {
       name: filterName,
       config: config
-    }, getUserHeaders())
+    }, )
 
     if (result.success) {
       // Refresh filters list
@@ -391,7 +311,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const deleteFilter = async (filterId) => {
-    const result = await del(`/api/filters/${filterId}`, getUserHeaders())
+    const result = await del(`/api/filters/${filterId}`, )
 
     if (result.success) {
       // Refresh filters list
@@ -428,7 +348,7 @@ export const useAppStore = defineStore('app', () => {
   const filteredCalendars = ref([])
 
   const loadFilteredCalendars = async () => {
-    const result = await get('/api/filtered-calendars', getUserHeaders())
+    const result = await get('/api/filtered-calendars', )
     
     if (result.success) {
       filteredCalendars.value = result.data.filtered_calendars
@@ -446,7 +366,7 @@ export const useAppStore = defineStore('app', () => {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
       filter_config: filterConfig
-    }, getUserHeaders())
+    }, )
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -461,7 +381,7 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Calendar ID is required' }
     }
 
-    const result = await put(`/api/filtered-calendars/${calendarId}`, updates, getUserHeaders())
+    const result = await put(`/api/filtered-calendars/${calendarId}`, updates, )
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -476,7 +396,7 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Calendar ID is required' }
     }
 
-    const result = await del(`/api/filtered-calendars/${calendarId}`, getUserHeaders())
+    const result = await del(`/api/filtered-calendars/${calendarId}`, )
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -491,19 +411,19 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   
   const getUserPreferences = async () => {
-    return await get('/api/user/preferences', getUserHeaders())
+    return await get('/api/user/preferences')
   }
 
   const saveUserPreferences = async (preferences) => {
-    return await put('/api/user/preferences', preferences, getUserHeaders())
+    return await put('/api/user/preferences', preferences)
   }
 
   const getCalendarPreferences = async (calendarId) => {
-    return await get(`/api/calendars/${calendarId}/preferences`, getUserHeaders())
+    return await get(`/api/calendars/${calendarId}/preferences`)
   }
 
   const saveCalendarPreferences = async (calendarId, preferences) => {
-    return await put(`/api/calendars/${calendarId}/preferences`, preferences, getUserHeaders())
+    return await put(`/api/calendars/${calendarId}/preferences`, preferences)
   }
 
   // ===============================================
@@ -514,48 +434,15 @@ export const useAppStore = defineStore('app', () => {
     return await post(`/api/calendar/${calendarId}/generate`, {
       selected_categories: selectedCategories,
       filter_mode: filterMode
-    }, getUserHeaders())
+    })
   }
 
-  // ===============================================
-  // COMPATIBILITY LAYER METHODS
-  // ===============================================
-  
-  // Login form state for compatibility
-  const loginForm = ref({
-    username: ''
-  })
-
-  // Compatibility login method that uses form state
-  const loginWithForm = async () => {
-    const username = loginForm.value.username?.trim()
-    if (!username) {
-      return { success: false, error: 'Please enter a username' }
-    }
-    const result = await login(username)
-    if (result.success) {
-      loginForm.value.username = ''
-    }
-    return result
-  }
-
-  // Utility method compatibility
-  const setError = (errorMessage) => {
-    // The error is automatically set by the useApiCall composable
-    // This method exists for compatibility with components
-  }
 
   return {
     // ===============================================
-    // USER AUTHENTICATION
+    // APP INITIALIZATION
     // ===============================================
-    user,
-    isLoggedIn,
-    login: loginWithForm, // Form-aware login method
-    logout,
     initializeApp,
-    updateActivity,
-    loginForm,
 
     // ===============================================
     // CALENDARS
@@ -627,7 +514,6 @@ export const useAppStore = defineStore('app', () => {
     // ===============================================
     loading,
     error,
-    clearError,
-    setError
+    clearError
   }
 })
