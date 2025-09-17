@@ -65,6 +65,10 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const initializeApp = () => {
+    // Load calendars from localStorage immediately
+    loadCalendarsFromLocalStorage()
+    
+    // Initialize user session if available
     try {
       const savedUser = localStorage.getItem('icalViewer_user')
       if (savedUser) {
@@ -111,14 +115,68 @@ export const useAppStore = defineStore('app', () => {
     url: ''
   })
 
+  // localStorage persistence for calendars
+  const CALENDARS_STORAGE_KEY = 'icalViewer_calendars'
+
+  const generateLocalCalendarId = () => {
+    // Generate a local calendar ID with 'local_' prefix
+    return 'local_' + Math.random().toString(36).substring(2, 11)
+  }
+
+  const saveCalendarsToLocalStorage = () => {
+    try {
+      localStorage.setItem(CALENDARS_STORAGE_KEY, JSON.stringify(calendars.value))
+    } catch (error) {
+      console.warn('Failed to save calendars to localStorage:', error)
+    }
+  }
+
+  const loadCalendarsFromLocalStorage = () => {
+    try {
+      const saved = localStorage.getItem(CALENDARS_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          calendars.value = parsed
+          return true
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load calendars from localStorage:', error)
+    }
+    return false
+  }
+
   const fetchCalendars = async () => {
-    const result = await get('/api/calendars', getUserHeaders())
+    // Load from localStorage first for immediate display
+    const hasLocalData = loadCalendarsFromLocalStorage()
     
-    if (result.success) {
-      calendars.value = result.data.calendars
+    // Try to sync with API in background
+    try {
+      const result = await get('/api/calendars', getUserHeaders())
+      
+      if (result.success) {
+        // Merge local and server data, preferring server data for conflicts
+        const serverCalendars = result.data.calendars
+        const localCalendars = calendars.value
+        
+        // For now, just use server data if available, fall back to local
+        calendars.value = serverCalendars.length > 0 ? serverCalendars : localCalendars
+        
+        // Save updated calendars to localStorage
+        saveCalendarsToLocalStorage()
+        
+        return result
+      }
+    } catch (error) {
+      console.warn('API sync failed, using localStorage data:', error)
     }
     
-    return result
+    // Return success if we have local data, even if API failed
+    return { 
+      success: hasLocalData || calendars.value.length > 0, 
+      data: { calendars: calendars.value }
+    }
   }
 
   const addCalendar = async () => {
@@ -126,34 +184,83 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Please provide both calendar name and URL' }
     }
 
-    const result = await post('/api/calendars', {
-      name: newCalendar.value.name,
-      url: newCalendar.value.url
-    }, getUserHeaders())
-
-    if (result.success) {
-      // Reset form
-      newCalendar.value = {
-        name: '',
-        url: ''
-      }
-      
-      // Refresh calendars list
-      await fetchCalendars()
+    // Create calendar object for localStorage
+    const localCalendar = {
+      id: generateLocalCalendarId(),
+      name: newCalendar.value.name.trim(),
+      url: newCalendar.value.url.trim(),
+      user_id: user.value.loggedIn ? user.value.username : 'public',
+      created_at: new Date().toISOString(),
+      source: 'local' // Mark as locally created
     }
 
-    return result
+    // Add to local storage immediately for instant feedback
+    calendars.value.push(localCalendar)
+    saveCalendarsToLocalStorage()
+
+    // Reset form immediately
+    newCalendar.value = {
+      name: '',
+      url: ''
+    }
+
+    // Try to sync with API in background
+    try {
+      const result = await post('/api/calendars', {
+        name: localCalendar.name,
+        url: localCalendar.url
+      }, getUserHeaders())
+
+      if (result.success) {
+        // Replace local calendar with server calendar
+        const serverCalendar = result.data
+        const localIndex = calendars.value.findIndex(cal => cal.id === localCalendar.id)
+        if (localIndex !== -1) {
+          calendars.value[localIndex] = {
+            ...serverCalendar,
+            source: 'server' // Mark as server synced
+          }
+          saveCalendarsToLocalStorage()
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to sync calendar with server, keeping local copy:', error)
+    }
+
+    return { success: true, data: localCalendar }
   }
 
   const deleteCalendar = async (calendarId) => {
-    const result = await del(`/api/calendars/${calendarId}`, getUserHeaders())
-
-    if (result.success) {
-      // Refresh calendars list
-      await fetchCalendars()
+    // Remove from localStorage immediately for instant feedback
+    const calendarIndex = calendars.value.findIndex(cal => cal.id === calendarId)
+    let deletedCalendar = null
+    
+    if (calendarIndex !== -1) {
+      deletedCalendar = calendars.value[calendarIndex]
+      calendars.value.splice(calendarIndex, 1)
+      saveCalendarsToLocalStorage()
     }
 
-    return result
+    // Try to delete from server in background
+    try {
+      await del(`/api/calendars/${calendarId}`, getUserHeaders())
+      // If server deletion succeeds, return success
+      return { success: true }
+    } catch (error) {
+      // If server deletion fails but it was a local calendar, that's OK
+      if (deletedCalendar?.source === 'local') {
+        console.log('Local calendar deleted successfully (no server sync needed)')
+        return { success: true }
+      } else {
+        // If server deletion failed for a server calendar, restore it
+        console.warn('Failed to delete calendar from server, restoring locally:', error)
+        if (deletedCalendar && calendarIndex !== -1) {
+          calendars.value.splice(calendarIndex, 0, deletedCalendar)
+          saveCalendarsToLocalStorage()
+        }
+        return { success: false, error: 'Failed to delete calendar from server' }
+      }
+    }
   }
 
   const selectCalendar = (calendar) => {
