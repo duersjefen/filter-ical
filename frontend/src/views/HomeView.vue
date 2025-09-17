@@ -2,7 +2,7 @@
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
     <AppHeader 
       title="🗓️ iCal Filter & Subscribe"
-      subtitle="Easily filter your iCal feeds and create custom subscriptions"
+      subtitle="Filter your calendars and create custom feeds"
       page-context="home"
     />
 

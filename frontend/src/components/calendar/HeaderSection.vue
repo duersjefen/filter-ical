@@ -8,6 +8,7 @@
       :show-back-button="true"
       :back-button-text="$t('navigation.backToCalendars')"
       page-context="calendar"
+      hide-subtitle
       @navigate-back="$emit('navigate-home')"
     />
 
