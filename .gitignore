@@ -70,6 +70,12 @@ backend/data/store.pkl
 backend/data/user-calendars.edn
 backend/data/user-filters.edn
 
+# SQLite database files (never commit these!)
+*.db-shm
+*.db-wal
+backend/data/*.db-shm
+backend/data/*.db-wal
+
 # Development calendar URLs (NEVER commit!)
 .dev-calendars.local
 *.dev-calendars.local
