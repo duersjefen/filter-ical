@@ -20,7 +20,7 @@ from .models import (
 
 # Import pure functions (Functional Core)
 from .core.ical_parser import (
-    fetch_ical_content, parse_calendar_events, events_to_categories,
+    fetch_ical_content, parse_calendar_events,
     events_to_recurring_types, filter_future_events, create_ical_from_events
 )
 from .core.filters import (
@@ -267,40 +267,6 @@ async def get_calendar_raw_events(
     
     return {"events": events_list}
 
-@app.get("/api/calendar/{calendar_id}/categories")
-async def get_calendar_categories(
-    calendar_id: str,
-    session: Session = Depends(get_session)
-):
-    """Get calendar categories - matches OpenAPI spec exactly"""
-    # Verify calendar ownership
-    calendar = session.exec(
-        select(Calendar).where(
-            Calendar.id == calendar_id,
-            Calendar.user_id == PUBLIC_USER_ID
-        )
-    ).first()
-    
-    if not calendar:
-        raise HTTPException(status_code=404, detail="Calendar not found")
-    
-    # Get events and transform to categories using pure function
-    events = session.exec(
-        select(Event).where(Event.calendar_id == calendar_id)
-    ).all()
-    
-    # Convert to dict format for pure function
-    events_data = []
-    for event in events:
-        events_data.append({
-            "id": event.id,
-            "category": event.category
-        })
-    
-    # Use pure function to generate categories
-    categories = events_to_categories(events_data)
-    
-    return {"categories": categories}
 
 # ==============================================
 # FILTERED CALENDARS ENDPOINTS

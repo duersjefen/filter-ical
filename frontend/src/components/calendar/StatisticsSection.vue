@@ -15,7 +15,7 @@
           <div class="text-sm text-gray-600 font-medium">Selected Events</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">{{ categories.length }}</div>
+          <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">{{ eventTypes.length }}</div>
           <div class="text-sm text-gray-600 font-medium">Available Categories</div>
         </div>
         <div class="text-center">

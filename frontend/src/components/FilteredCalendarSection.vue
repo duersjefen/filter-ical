@@ -94,7 +94,7 @@
             <div class="text-sm text-gray-600 dark:text-gray-400">
               <div v-if="filterMode === 'include'" class="mb-1">
                 ✅ <strong>{{ $t('filteredCalendar.includeMode') }}</strong>: 
-                {{ getSmartCategoryDisplay(selectedCategories) || $t('filteredCalendar.allCategories') }}
+                {{ getSmartCategoryDisplay(selectedCategories) || $t('filteredCalendar.allEventTypes') }}
               </div>
               <div v-else class="mb-1">
                 ❌ <strong>{{ $t('filteredCalendar.excludeMode') }}</strong>: 
@@ -216,13 +216,13 @@
                       </div>
                     </div>
                     
-                    <!-- No Category Filter Display -->
+                    <!-- No Event Type Filter Display -->
                     <div v-else class="mb-2">
                       <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded text-xs font-medium">
-                        ⚠️ {{ calendar.filter_config?.filter_mode ? 'Filter categories missing' : 'No category filter applied' }}
+                        ⚠️ {{ calendar.filter_config?.filter_mode ? 'Filter event types missing' : 'No event type filter applied' }}
                       </span>
                       <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        {{ calendar.filter_config?.filter_mode ? 'Categories may have been deleted or filter corrupted' : 'This calendar contains the original events' }}
+                        {{ calendar.filter_config?.filter_mode ? 'Event types may have been deleted or filter corrupted' : 'This calendar contains the original events' }}
                       </div>
                     </div>
                     
@@ -704,11 +704,11 @@ const getFilterCategories = (filterConfig) => {
 
 // New helper functions for improved UX
 const hasIncludeCategories = (filterConfig) => {
-  return filterConfig?.include_categories && filterConfig.include_categories.length > 0
+  return filterConfig?.include_categories && filterConfig.include_eventTypes.length > 0
 }
 
 const hasExcludeCategories = (filterConfig) => {
-  return filterConfig?.exclude_categories && filterConfig.exclude_categories.length > 0
+  return filterConfig?.exclude_categories && filterConfig.exclude_eventTypes.length > 0
 }
 
 const getIncludeCategories = (filterConfig) => {
@@ -745,7 +745,7 @@ const getSmartCategoryDisplay = (selectedCategories) => {
     if (selectedMainCats.length <= 3) {
       display = selectedMainCats.join(', ')
     } else {
-      display = `${selectedMainCats.slice(0, 2).join(', ')} and ${selectedMainCats.length - 2} more categories`
+      display = `${selectedMainCats.slice(0, 2).join(', ')} and ${selectedMainCats.length - 2} more event types`
     }
   }
   
@@ -760,16 +760,16 @@ const getSmartCategoryDisplay = (selectedCategories) => {
 
 // Keep the old function for backward compatibility in existing calendars display
 const getConciseCategories = (categories) => {
-  if (!categories || categories.length === 0) return ''
+  if (!categories || eventTypes.length === 0) return ''
   
   // For 1-2 items, show all
-  if (categories.length <= 2) {
-    return categories.join(', ')
+  if (eventTypes.length <= 2) {
+    return eventTypes.join(', ')
   }
   
   // For 3+ items, be more aggressive with truncation to avoid UI clutter
   const firstCategory = categories[0]
-  const remaining = categories.length - 1
+  const remaining = eventTypes.length - 1
   
   return `${firstCategory} and ${remaining} more...`
 }
