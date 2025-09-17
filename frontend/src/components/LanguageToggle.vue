@@ -1,16 +1,25 @@
 <template>
-  <div class="relative">
-    <button
-      @click="toggleLanguage"
-      class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 dark:bg-gray-700/50 hover:bg-white/20 dark:hover:bg-gray-700/70 transition-colors duration-200 text-white dark:text-gray-200 border border-white/20 dark:border-gray-600"
-      :title="$t('language.switch')"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-      </svg>
-      <span class="text-sm font-medium">{{ currentLanguageLabel }}</span>
-    </button>
-  </div>
+  <!-- Desktop version -->
+  <button
+    @click="toggleLanguage"
+    class="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-md items-center justify-center group"
+    :title="$t('language.switch')"
+  >
+    <span class="text-white text-xs sm:text-sm font-bold group-hover:text-white/90 transition-colors duration-300">
+      {{ currentLanguageLabel }}
+    </span>
+  </button>
+  
+  <!-- Mobile version with better touch targets -->
+  <button
+    @click="toggleLanguage"
+    class="flex sm:hidden w-16 h-8 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg items-center justify-center group touch-manipulation"
+    :title="$t('language.switch')"
+  >
+    <span class="text-white text-base font-bold group-hover:text-white/90 transition-colors duration-200">
+      {{ currentLanguageLabel }}
+    </span>
+  </button>
 </template>
 
 <script setup>

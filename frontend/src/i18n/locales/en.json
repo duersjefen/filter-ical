@@ -48,7 +48,7 @@
     "navigateHome": "Navigate Home"
   },
   "calendar": {
-    "filterTitle": "Filter: {name}",
+    "filterTitle": "Calendar: {name}",
     "subtitle": "Select event types to filter and create custom subscriptions",
     "events": "Events",
     "eventTypes": "Event Types",

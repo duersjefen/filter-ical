@@ -48,7 +48,7 @@
     "navigateHome": "Zur Startseite"
   },
   "calendar": {
-    "filterTitle": "Filter: {name}",
+    "filterTitle": "Kalender: {name}",
     "subtitle": "Event-Typen auswählen, um zu filtern und benutzerdefinierte Abonnements zu erstellen",
     "events": "Events",
     "eventTypes": "Event-Typen",
