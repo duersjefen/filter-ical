@@ -17,7 +17,7 @@
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>
-        <!-- Chevron icon with background circle (consistent with CategoryCardsSection) -->
+        <!-- Chevron icon with background circle (consistent with EventTypeCardsSection) -->
         <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 pointer-events-none">
           <svg 
             class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
@@ -41,8 +41,8 @@
       }"
     >
       <div class="p-4 sm:p-6">
-      <!-- Create/Update Form - Auto-show when categories selected -->
-      <div v-if="selectedCategories.length > 0" class="mb-6 p-4 rounded-lg border" 
+      <!-- Create/Update Form - Auto-show when event types selected -->
+      <div v-if="selectedEventTypes.length > 0" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
              : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
@@ -94,11 +94,11 @@
             <div class="text-sm text-gray-600 dark:text-gray-400">
               <div v-if="filterMode === 'include'" class="mb-1">
                 ✅ <strong>{{ $t('filteredCalendar.includeMode') }}</strong>: 
-                {{ getSmartCategoryDisplay(selectedCategories) || $t('filteredCalendar.allEventTypes') }}
+                {{ getSmartEventTypeDisplay(selectedEventTypes) || $t('filteredCalendar.allEventTypes') }}
               </div>
               <div v-else class="mb-1">
                 ❌ <strong>{{ $t('filteredCalendar.excludeMode') }}</strong>: 
-                {{ getSmartCategoryDisplay(selectedCategories) || $t('filteredCalendar.noExclusions') }}
+                {{ getSmartEventTypeDisplay(selectedEventTypes) || $t('filteredCalendar.noExclusions') }}
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-500">
                 {{ $t('filteredCalendar.filterInfo') }}
@@ -187,32 +187,32 @@
                     </div>
                     
                     <!-- Include Mode Display -->
-                    <div v-if="hasIncludeCategories(calendar.filter_config)" class="mb-2">
+                    <div v-if="hasIncludeEventTypes(calendar.filter_config)" class="mb-2">
                       <div class="flex items-center gap-2 mb-1">
                         <span class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs font-medium">
                           ✅ {{ $t('filteredCalendar.includeOnly') }}
                         </span>
                         <span class="text-xs text-gray-600 dark:text-gray-400">
-                          {{ getIncludeCategoriesCount(calendar.filter_config) }} {{ $t('filteredCalendar.categories') }}
+                          {{ getIncludeEventTypesCount(calendar.filter_config) }} {{ $t('filteredCalendar.eventTypes') }}
                         </span>
                       </div>
                       <div class="text-xs text-gray-700 dark:text-gray-300">
-                        {{ getSmartCategoryDisplay(getIncludeCategories(calendar.filter_config)) }}
+                        {{ getSmartEventTypeDisplay(getIncludeEventTypes(calendar.filter_config)) }}
                       </div>
                     </div>
                     
                     <!-- Exclude Mode Display -->
-                    <div v-else-if="hasExcludeCategories(calendar.filter_config)" class="mb-2">
+                    <div v-else-if="hasExcludeEventTypes(calendar.filter_config)" class="mb-2">
                       <div class="flex items-center gap-2 mb-1">
                         <span class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-2 py-1 rounded text-xs font-medium">
                           ❌ {{ $t('filteredCalendar.excludeOnly') }}
                         </span>
                         <span class="text-xs text-gray-600 dark:text-gray-400">
-                          {{ getExcludeCategoriesCount(calendar.filter_config) }} {{ $t('filteredCalendar.categories') }}
+                          {{ getExcludeEventTypesCount(calendar.filter_config) }} {{ $t('filteredCalendar.eventTypes') }}
                         </span>
                       </div>
                       <div class="text-xs text-gray-700 dark:text-gray-300">
-                        {{ getSmartCategoryDisplay(getExcludeCategories(calendar.filter_config)) }}
+                        {{ getSmartEventTypeDisplay(getExcludeEventTypes(calendar.filter_config)) }}
                       </div>
                     </div>
                     
@@ -271,8 +271,8 @@
         </div>
       </div>
 
-      <!-- Empty state - only show if no existing calendars and no categories selected -->
-      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedCategories.length === 0" class="text-center py-6">
+      <!-- Empty state - only show if no existing calendars and no event types selected -->
+      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedEventTypes.length === 0" class="text-center py-6">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
           {{ $t('filteredCalendar.noFiltered') }}
@@ -392,7 +392,7 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  selectedCategories: {
+  selectedEventTypes: {
     type: Array,
     required: true
   },
@@ -400,11 +400,11 @@ const props = defineProps({
     type: String,
     required: true
   },
-  mainCategories: {
+  mainEventTypes: {
     type: Array,
     default: () => []
   },
-  singleEventCategories: {
+  singleEventTypes: {
     type: Array,
     default: () => []
   }
@@ -429,7 +429,7 @@ const {
 // Reactive state
 const isExpanded = ref(true) // Start expanded by default
 const showEditModal = ref(false)
-const hasEverHadCategories = ref(false) // Track if user has ever selected categories
+const hasEverHadEventTypes = ref(false) // Track if user has ever selected event types
 const isUpdateMode = ref(false) // Track if user is updating an existing filter
 const updateModeCalendar = ref(null) // Store the calendar being updated
 const createForm = ref({
@@ -449,31 +449,31 @@ const editNameInput = ref(null) // Reference to edit input for focus
 const formatDateTime = computed(() => formatDateTimeUtil)
 const formatDateRange = computed(() => formatDateRangeUtil)
 
-// Show section if there are existing filtered calendars OR if categories are selected
-// OR if user has ever interacted with categories (to prevent disappearing during search/filter workflows)
+// Show section if there are existing filtered calendars OR if event types are selected
+// OR if user has ever interacted with event types (to prevent disappearing during search/filter workflows)
 const shouldShowSection = computed(() => {
   // Always show if there are existing filtered calendars
   if (filteredCalendars.value.length > 0) {
     return true
   }
   
-  // Show if categories are currently selected
-  if (props.selectedCategories.length > 0) {
+  // Show if event types are currently selected
+  if (props.selectedEventTypes.length > 0) {
     return true
   }
   
-  // Show if user has ever selected categories in this session
+  // Show if user has ever selected event types in this session
   // This prevents the section from disappearing during search/filter operations
-  if (hasEverHadCategories.value) {
+  if (hasEverHadEventTypes.value) {
     return true
   }
   
   return false
 })
 
-// Auto-populate form name when categories selected
+// Auto-populate form name when event types selected
 const updateFormName = () => {
-  if (props.selectedCategories.length > 0 && !createForm.value.name.trim()) {
+  if (props.selectedEventTypes.length > 0 && !createForm.value.name.trim()) {
     createForm.value.name = `${props.selectedCalendar.name} - ${props.filterMode === 'include' ? t('filteredCalendar.includeMode') : t('filteredCalendar.excludeMode')}`
   }
 }
@@ -488,8 +488,8 @@ const toggleExpanded = () => {
 
 const createFilteredCalendar = async () => {
   const filterConfig = {
-    include_categories: props.filterMode === 'include' ? props.selectedCategories : [],
-    exclude_categories: props.filterMode === 'exclude' ? props.selectedCategories : [],
+    include_event_types: props.filterMode === 'include' ? props.selectedEventTypes : [],
+    exclude_event_types: props.filterMode === 'exclude' ? props.selectedEventTypes : [],
     filter_mode: props.filterMode
   }
 
@@ -603,10 +603,10 @@ const loadFilterIntoPage = (calendar) => {
   const filterConfig = calendar.filter_config
   if (!filterConfig) return
   
-  // Determine the categories to select and the filter mode
-  const categoriesToSelect = filterConfig.filter_mode === 'include' 
-    ? filterConfig.include_categories || []
-    : filterConfig.exclude_categories || []
+  // Determine the event types to select and the filter mode
+  const eventTypesToSelect = filterConfig.filter_mode === 'include' 
+    ? filterConfig.include_event_types || []
+    : filterConfig.exclude_event_types || []
   
   const filterMode = filterConfig.filter_mode || 'include'
   
@@ -617,7 +617,7 @@ const loadFilterIntoPage = (calendar) => {
   
   // Emit to parent component to load the filter
   emit('load-filter', {
-    categories: categoriesToSelect,
+    eventTypes: eventTypesToSelect,
     mode: filterMode,
     calendarName: calendar.name
   })
@@ -689,9 +689,9 @@ const copyToClipboard = async (url) => {
   }
 }
 
-const getFilterCategories = (filterConfig) => {
-  const include = filterConfig?.include_categories || []
-  const exclude = filterConfig?.exclude_categories || []
+const getFilterEventTypes = (filterConfig) => {
+  const include = filterConfig?.include_event_types || []
+  const exclude = filterConfig?.exclude_event_types || []
   
   if (include.length > 0) {
     return include
@@ -703,49 +703,49 @@ const getFilterCategories = (filterConfig) => {
 }
 
 // New helper functions for improved UX
-const hasIncludeCategories = (filterConfig) => {
-  return filterConfig?.include_categories && filterConfig.include_eventTypes.length > 0
+const hasIncludeEventTypes = (filterConfig) => {
+  return filterConfig?.include_event_types && filterConfig.include_event_types.length > 0
 }
 
-const hasExcludeCategories = (filterConfig) => {
-  return filterConfig?.exclude_categories && filterConfig.exclude_eventTypes.length > 0
+const hasExcludeEventTypes = (filterConfig) => {
+  return filterConfig?.exclude_event_types && filterConfig.exclude_event_types.length > 0
 }
 
-const getIncludeCategories = (filterConfig) => {
-  return filterConfig?.include_categories || []
+const getIncludeEventTypes = (filterConfig) => {
+  return filterConfig?.include_event_types || []
 }
 
-const getExcludeCategories = (filterConfig) => {
-  return filterConfig?.exclude_categories || []
+const getExcludeEventTypes = (filterConfig) => {
+  return filterConfig?.exclude_event_types || []
 }
 
-const getIncludeCategoriesCount = (filterConfig) => {
-  return filterConfig?.include_categories?.length || 0
+const getIncludeEventTypesCount = (filterConfig) => {
+  return filterConfig?.include_event_types?.length || 0
 }
 
-const getExcludeCategoriesCount = (filterConfig) => {
-  return filterConfig?.exclude_categories?.length || 0
+const getExcludeEventTypesCount = (filterConfig) => {
+  return filterConfig?.exclude_event_types?.length || 0
 }
 
-const getSmartCategoryDisplay = (selectedCategories) => {
-  if (!selectedCategories || selectedCategories.length === 0) return ''
+const getSmartEventTypeDisplay = (selectedEventTypes) => {
+  if (!selectedEventTypes || selectedEventTypes.length === 0) return ''
   
-  // Use proper category data to distinguish main vs single categories
-  const mainCategoryNames = props.mainCategories.map(cat => cat.name)
-  const singleEventCategoryNames = props.singleEventCategories.map(cat => cat.name)
+  // Use proper event type data to distinguish main vs single event types
+  const mainEventTypeNames = props.mainEventTypes.map(eventType => eventType.name)
+  const singleEventTypeNames = props.singleEventTypes.map(eventType => eventType.name)
   
-  // Separate selected categories by their actual type (not name length heuristic)
-  const selectedMainCats = selectedCategories.filter(cat => mainCategoryNames.includes(cat))
-  const selectedSingleEvents = selectedCategories.filter(cat => singleEventCategoryNames.includes(cat))
+  // Separate selected event types by their actual type (not name length heuristic)
+  const selectedMainTypes = selectedEventTypes.filter(cat => mainEventTypeNames.includes(cat))
+  const selectedSingleEvents = selectedEventTypes.filter(cat => singleEventTypeNames.includes(cat))
   
   let display = ''
   
-  // Show main categories first
-  if (selectedMainCats.length > 0) {
-    if (selectedMainCats.length <= 3) {
-      display = selectedMainCats.join(', ')
+  // Show main event types first
+  if (selectedMainTypes.length > 0) {
+    if (selectedMainTypes.length <= 3) {
+      display = selectedMainTypes.join(', ')
     } else {
-      display = `${selectedMainCats.slice(0, 2).join(', ')} and ${selectedMainCats.length - 2} more event types`
+      display = `${selectedMainTypes.slice(0, 2).join(', ')} and ${selectedMainTypes.length - 2} more event types`
     }
   }
   
@@ -759,8 +759,8 @@ const getSmartCategoryDisplay = (selectedCategories) => {
 }
 
 // Keep the old function for backward compatibility in existing calendars display
-const getConciseCategories = (categories) => {
-  if (!categories || eventTypes.length === 0) return ''
+const getConciseEventTypes = (eventTypes) => {
+  if (!eventTypes || eventTypes.length === 0) return ''
   
   // For 1-2 items, show all
   if (eventTypes.length <= 2) {
@@ -768,32 +768,35 @@ const getConciseCategories = (categories) => {
   }
   
   // For 3+ items, be more aggressive with truncation to avoid UI clutter
-  const firstCategory = categories[0]
+  const firstEventType = eventTypes[0]
   const remaining = eventTypes.length - 1
   
-  return `${firstCategory} and ${remaining} more...`
+  return `${firstEventType} and ${remaining} more...`
 }
 
-// Watch for category changes to auto-populate form name and track user interaction
-watch([() => props.selectedCategories, () => props.filterMode], () => {
+// Watch for event type changes to auto-populate form name and track user interaction
+watch([() => props.selectedEventTypes, () => props.filterMode], () => {
   updateFormName()
   
-  // Track if user has ever selected categories to prevent section from disappearing
-  if (props.selectedCategories.length > 0) {
-    hasEverHadCategories.value = true
+  // Track if user has ever selected event types to prevent section from disappearing
+  if (props.selectedEventTypes.length > 0) {
+    hasEverHadEventTypes.value = true
   }
   
-  // Exit update mode if no categories are selected
-  if (props.selectedCategories.length === 0 && isUpdateMode.value) {
+  // Exit update mode if no event types are selected
+  if (props.selectedEventTypes.length === 0 && isUpdateMode.value) {
     exitUpdateMode()
   }
 }, { immediate: true })
 
 // Lifecycle
 onMounted(async () => {
+  // Always load filtered calendars since they are global, not specific to one source calendar
+  await loadFilteredCalendars()
+  
+  // Only auto-populate form name if we have a selected calendar
   if (props.selectedCalendar?.id) {
-    await loadFilteredCalendars()
-    updateFormName() // Auto-populate form name on mount
+    updateFormName()
   }
 })
 </script>

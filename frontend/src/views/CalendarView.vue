@@ -15,49 +15,49 @@
     </div>
 
     <!-- Main Content -->
-    <template v-else-if="events.length > 0 && categories && Object.keys(categories).length > 0">
-      <CategoryCardsSection
-        :categories="mainCategories"
-        :main-categories="mainCategories"
-        :single-categories="singleEventCategories"
-        :all-categories="categoriesSortedByCount"
-        :selected-categories="selectedCategories"
-        :expanded-categories="expandedCategories"
+    <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
+      <EventTypeCardsSection
+        :event-types="mainEventTypes"
+        :main-event-types="mainEventTypes"
+        :single-event-types="singleEventTypes"
+        :all-event-types="eventTypesSortedByCount"
+        :selected-event-types="selectedEventTypes"
+        :expanded-event-types="expandedEventTypes"
         :show-single-events="showSingleEvents"
-        :show-categories-section="showCategoriesSection"
+        :show-event-types-section="showEventTypesSection"
         :show-selected-only="showSelectedOnly"
-        :search-term="categorySearch"
+        :search-term="eventTypeSearch"
         :filter-mode="filterMode"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
-        @clear-all="clearAllCategories"
-        @select-all="selectAllCategories"
-        @update:search-term="categorySearch = $event"
-        @toggle-category="toggleCategory"
-        @toggle-expansion="toggleCategoryExpansion"
+        @clear-all="clearAllEventTypes"
+        @select-all="selectAllEventTypes"
+        @update:search-term="eventTypeSearch = $event"
+        @toggle-event-type="toggleEventType"
+        @toggle-expansion="toggleEventTypeExpansion"
         @toggle-singles-visibility="showSingleEvents = !showSingleEvents"
         @select-all-singles="selectAllSingleEvents"
         @clear-all-singles="clearAllSingleEvents"
-        @toggle-categories-section="showCategoriesSection = !showCategoriesSection"
+        @toggle-event-types-section="showEventTypesSection = !showEventTypesSection"
         @toggle-selected-only="showSelectedOnly = !showSelectedOnly"
         @switch-filter-mode="switchFilterMode"
       />
 
-
       <!-- Filtered Calendar Section -->
-      <!-- Always show if categories selected OR if existing filtered calendars exist -->
+      <!-- Always show filtered calendars section - independent of current calendar's events/event types -->
+      <!-- This manages global filtered calendars that may exist from any source calendar -->
       <FilteredCalendarSection
         :selected-calendar="selectedCalendar"
-        :selected-categories="selectedCategories"
+        :selected-event-types="selectedEventTypes"
         :filter-mode="filterMode"
-        :main-categories="mainCategories"
-        :single-event-categories="singleEventCategories"
+        :main-event-types="mainEventTypes"
+        :single-event-types="singleEventTypes"
         @navigate-to-calendar="navigateToCalendar"
         @load-filter="loadFilterIntoPage"
       />
 
       <PreviewEventsSection
-        :selected-categories="selectedCategories"
+        :selected-event-types="selectedEventTypes"
         :sorted-preview-events="sortedPreviewEvents"
         :preview-group="previewGroup"
         :grouped-preview-events="groupedPreviewEvents"
@@ -68,9 +68,11 @@
         :getEventTypeKey="getEventTypeKey"
         @update:preview-group="previewGroup = $event"
       />
+    </template>
 
-      <!-- Event types not loaded fallback -->
-      <div v-if="Object.keys(categories).length === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
+    <!-- Event types not loaded fallback -->
+    <template v-else-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length === 0">
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
         <div class="text-6xl mb-4">📂</div>
         <p class="text-amber-800 dark:text-amber-200 mb-3 font-semibold text-lg">
           {{ $t('calendar.loadingEventTypesOrNotFound') }}
@@ -82,14 +84,28 @@
     </template>
 
     <!-- No Events Found -->
-    <div v-else-if="!loading" class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
-      <div class="text-6xl mb-4">📅</div>
-      <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">{{ $t('calendar.noEventsFound') }}</h3>
-      <p class="text-red-700 dark:text-red-300 mb-6 font-medium">{{ $t('calendar.noEventsFoundDescription') }}</p>
-      <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
-        {{ $t('navigation.backToCalendars') }}
-      </button>
-    </div>
+    <template v-else-if="!loading && events.length === 0">
+      <div class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
+        <div class="text-6xl mb-4">📅</div>
+        <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">{{ $t('calendar.noEventsFound') }}</h3>
+        <p class="text-red-700 dark:text-red-300 mb-6 font-medium">{{ $t('calendar.noEventsFoundDescription') }}</p>
+        <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
+          {{ $t('navigation.backToCalendars') }}
+        </button>
+      </div>
+    </template>
+
+    <!-- Event Types not loaded fallback -->
+    <template v-else-if="!loading && !eventTypes">
+      <div class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
+        <div class="text-6xl mb-4">📅</div>
+        <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">{{ $t('calendar.noEventsFound') }}</h3>
+        <p class="text-red-700 dark:text-red-300 mb-6 font-medium">{{ $t('calendar.noEventsFoundDescription') }}</p>
+        <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
+          {{ $t('navigation.backToCalendars') }}
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -102,7 +118,7 @@ import { useCalendar } from '../composables/useCalendar'
 import axios from 'axios'
 import {
   HeaderSection,
-  CategoryCardsSection,
+  EventTypeCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
 import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
@@ -116,7 +132,7 @@ const api = useAPI()
 const loading = ref(false)
 const error = ref(null)
 const events = ref([])
-const categories = ref({})
+const eventTypes = ref({})
 const selectedCalendar = ref(null)
 
 // Define props first
@@ -124,38 +140,44 @@ const props = defineProps(['id'])
 
 // Use calendar composable with local data and calendar ID for persistence
 const {
-  selectedCategories,
-  expandedCategories,
+  selectedEventTypes,
+  expandedEventTypes,
   showSingleEvents,
-  showCategoriesSection,
+  showEventTypesSection,
   showSelectedOnly,
-  categorySearch,
+  eventTypeSearch,
   filterMode,
   previewGroup,
-  categoriesSortedByCount,
-  mainCategories,
-  singleEventCategories,
-  selectedCategoriesCount,
+  eventTypesSortedByCount,
+  mainEventTypes,
+  singleEventTypes,
+  selectedEventTypesCount,
   sortedPreviewEvents,
   groupedPreviewEvents,
   getEventTypeKey,
   formatDateTime,
   formatDateRange,
-  toggleCategory,
-  toggleCategoryExpansion,
-  selectAllCategories,
-  clearAllCategories,
+  toggleEventType,
+  toggleEventTypeExpansion,
+  selectAllEventTypes,
+  clearAllEventTypes,
   selectAllSingleEvents,
   clearAllSingleEvents,
   switchFilterMode,
   // No preferences loading needed
-} = useCalendar(events, categories, props.id)
+} = useCalendar(events, eventTypes, props.id)
 
 // Simple, direct data loading
 const loadCalendarData = async (calendarId) => {
-  console.log('Loading calendar data for:', calendarId)
+  console.log('🔄 Loading calendar data for:', calendarId)
   loading.value = true
   error.value = null
+  
+  console.log('🔄 Initial state:', {
+    loading: loading.value,
+    eventsLength: events.value.length,
+    eventTypesKeys: eventTypes.value ? Object.keys(eventTypes.value).length : 'null'
+  })
   
   try {
     
@@ -169,28 +191,50 @@ const loadCalendarData = async (calendarId) => {
       selectedCalendar.value = calendar
     }
     
-    // Load events and event types directly
-    const [eventsResult, eventTypesResult] = await Promise.all([
-      api.safeExecute(async () => {
-        const response = await axios.get(`/api/calendar/${calendarId}/raw-events`)
-        return response.data.events
-      }),
-      api.safeExecute(async () => {
-        const response = await axios.get(`/api/calendar/${calendarId}/events`)
-        return response.data.events
-      })
-    ])
+    // Load events and event types from single endpoint
+    const eventsResult = await api.safeExecute(async () => {
+      const response = await axios.get(`/api/calendar/${calendarId}/events`)
+      return response.data.events
+    })
     
     if (eventsResult.success) {
-      // Backend returns {events: [...]} - extract the events array
-      events.value = eventsResult.data.events || eventsResult.data
-      console.log('Loaded events:', events.value.length)
-    }
-    
-    if (eventTypesResult.success) {
-      // Backend returns {events: {...}} - extract the event types object
-      categories.value = eventTypesResult.data.events || eventTypesResult.data
-      console.log('Loaded event types:', Object.keys(categories.value).length)
+      // Backend returns {events: {eventTypeName: {count: N, events: [...]}, ...}}
+      console.log('✅ API response received. Raw data structure:', {
+        hasData: !!eventsResult.data,
+        dataKeys: eventsResult.data ? Object.keys(eventsResult.data) : 'null',
+        firstEventType: eventsResult.data ? Object.keys(eventsResult.data)[0] : 'null'
+      })
+      
+      // Extract event types object
+      eventTypes.value = eventsResult.data
+      console.log('✅ EventTypes assigned:', {
+        eventTypesKeys: Object.keys(eventTypes.value).length,
+        eventTypeNames: Object.keys(eventTypes.value)
+      })
+      
+      // Extract individual events from all event types
+      const allEvents = []
+      Object.values(eventTypes.value).forEach(eventType => {
+        if (eventType.events && Array.isArray(eventType.events)) {
+          allEvents.push(...eventType.events)
+        }
+      })
+      events.value = allEvents
+      console.log('✅ Events extracted:', {
+        eventsLength: events.value.length,
+        sampleEventTitle: events.value[0]?.title
+      })
+      
+      // Debug the conditional rendering requirements
+      console.log('🎯 Conditional rendering check:', {
+        loading: loading.value,
+        eventsLength: events.value.length,
+        eventTypesExists: !!eventTypes.value,
+        eventTypesKeysLength: Object.keys(eventTypes.value).length,
+        shouldShow: !loading.value && events.value.length > 0 && eventTypes.value && Object.keys(eventTypes.value).length > 0
+      })
+    } else {
+      console.error('❌ API call failed:', eventsResult)
     }
     
   } catch (err) {
@@ -198,6 +242,12 @@ const loadCalendarData = async (calendarId) => {
     error.value = 'Failed to load calendar data'
   } finally {
     loading.value = false
+    console.log('🏁 Loading complete. Final state:', {
+      loading: loading.value,
+      eventsLength: events.value.length,
+      eventTypesKeys: eventTypes.value ? Object.keys(eventTypes.value).length : 'null',
+      shouldShow: !loading.value && events.value.length > 0 && eventTypes.value && Object.keys(eventTypes.value).length > 0
+    })
   }
 }
 
@@ -216,19 +266,19 @@ const navigateToCalendar = () => {
 
 const loadFilterIntoPage = (filterData) => {
   // Clear current selection
-  clearAllCategories()
+  clearAllEventTypes()
   
   // Set the filter mode
   if (filterData.mode !== filterMode.value) {
     switchFilterMode(filterData.mode)
   }
   
-  // Select the categories from the filter
-  filterData.categories.forEach(categoryName => {
-    toggleCategory(categoryName)
+  // Select the event types from the filter
+  filterData.eventTypes.forEach(eventTypeName => {
+    toggleEventType(eventTypeName)
   })
   
-  console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.categories.length} categories in ${filterData.mode} mode`)
+  console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.eventTypes.length} event types in ${filterData.mode} mode`)
 }
 
 onMounted(async () => {

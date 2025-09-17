@@ -3,7 +3,7 @@
  * 
  * Tests the complete recurring events workflow from user perspective:
  * - Calendar creation with recurring events
- * - Event categorization and grouping
+ * - Event type classification and grouping
  * - Filtering by recurring event types
  * - UI display and interaction
  */
@@ -75,7 +75,7 @@ test.describe('Recurring Events E2E Tests', () => {
     }
   })
 
-  test('should filter recurring events by category', async ({ page }) => {
+  test('should filter recurring events by event type', async ({ page }) => {
     // Prerequisite: Add a calendar (simplified for this test)
     await addTestCalendar(page, 'Filtered Recurring Calendar')
     
@@ -87,9 +87,9 @@ test.describe('Recurring Events E2E Tests', () => {
     await page.click('[data-testid="filter-toggle-button"]')
     await expect(page.locator('[data-testid="filter-section"]')).toBeVisible()
     
-    // Test Step 2: Apply category filter
-    const categoryFilter = page.locator('[data-testid="category-filter"]')
-    await categoryFilter.selectOption('work')
+    // Test Step 2: Apply event type filter
+    const eventTypeFilter = page.locator('[data-testid="event-type-filter"]')
+    await eventTypeFilter.selectOption('work')
     
     // Apply filter
     await page.click('[data-testid="apply-filter-button"]')
@@ -107,8 +107,8 @@ test.describe('Recurring Events E2E Tests', () => {
       
       for (let j = 0; j < eventCount; j++) {
         const event = events.nth(j)
-        const category = await event.getAttribute('data-category')
-        expect(category).toBe('work')
+        const eventType = await event.getAttribute('data-event-type')
+        expect(eventType).toBe('work')
       }
     }
   })

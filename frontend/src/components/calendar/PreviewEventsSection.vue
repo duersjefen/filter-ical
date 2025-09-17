@@ -1,6 +1,6 @@
 <template>
   <!-- Event Preview Section -->
-  <div v-if="selectedCategories.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+  <div v-if="selectedEventTypes.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
     <!-- Collapsible Header -->
     <div 
       class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -211,7 +211,7 @@
 import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
-  selectedCategories: { type: Array, default: () => [] },
+  selectedEventTypes: { type: Array, default: () => [] },
   sortedPreviewEvents: { type: Array, default: () => [] },
   previewGroup: { type: String, default: 'none' },
   previewOrder: { type: String, default: 'asc' },

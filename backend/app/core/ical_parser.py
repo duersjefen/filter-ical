@@ -110,8 +110,8 @@ def extract_event_data(component: icalendar.Event, calendar_id: str) -> Optional
             else:
                 category = str(categories).split(',')[0].strip()
         else:
-            # Use event title as category fallback
-            category = title.split(' ')[0] if title else 'Event'
+            # Use full event title as category fallback (for proper filtering/grouping)
+            category = title if title else 'Event'
         
         return {
             'id': f"evt_{uuid.uuid4().hex[:8]}",

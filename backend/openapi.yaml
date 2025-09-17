@@ -2,26 +2,26 @@ openapi: 3.0.3
 info:
   title: iCal Viewer API
   description: |
-    **Perfect OpenAPI specification based on actual frontend requirements.**
+    **Simplified iCal filtering and management API with public-first access.**
     
-    This specification was created by analyzing the clean frontend codebase after 
-    architectural rollback to remove community features. It defines the minimal, 
-    exact API surface needed for the core iCal viewer functionality.
+    This specification defines the minimal API surface for core iCal viewer functionality:
+    - Import calendar sources from iCal URLs
+    - View and filter events by event types
+    - Create shareable filtered calendar links
+    - Generate filtered iCal exports
     
     ## Key Features:
     - **Contract-driven**: Implementation must match this spec exactly
-    - **Frontend-driven**: Every endpoint and field is used by the frontend  
-    - **Minimal surface**: No unused endpoints or fields
-    - **Consistent errors**: Standardized error response format
-    - **Simple auth**: Header-based user identification
-    
-    ## Authentication:
-    All authenticated endpoints require `x-user-id` header with user identifier.
+    - **Public-first**: No authentication required - all data is public
+    - **Event type filtering**: Filter events by their type/category
+    - **Shareable links**: Create permanent URLs for filtered calendars
+    - **Simple architecture**: Focused on core functionality only
     
   version: "2.0.0"
   contact:
     name: iCal Viewer API
     url: https://filter-ical.de
+
 servers:
   - url: http://localhost:3000
     description: Development server
@@ -35,12 +35,10 @@ paths:
   
   /api/calendars:
     get:
-      summary: Get user's calendars
-      description: Fetch all calendars owned by the authenticated user
+      summary: Get calendars
+      description: Fetch all imported calendar sources
       tags:
         - Calendars
-      security:
-        - UserAuth: []
       responses:
         '200':
           description: Successfully retrieved calendars
@@ -60,20 +58,16 @@ paths:
                   - id: "cal_001"
                     name: "Work Calendar"
                     url: "https://example.com/work.ics"
-                    user_id: "user123"
+                    user_id: "public"
                     created_at: "2024-01-15T10:30:00Z"
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
     
     post:
       summary: Create new calendar
-      description: Add a new calendar for the authenticated user
+      description: Import a new calendar from an iCal URL
       tags:
         - Calendars
-      security:
-        - UserAuth: []
       requestBody:
         required: true
         content:
@@ -109,12 +103,10 @@ paths:
                 id: "cal_003"
                 name: "Team Events"
                 url: "https://example.com/team.ics"
-                user_id: "user123"
+                user_id: "public"
                 created_at: "2024-01-17T09:15:00Z"
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -124,8 +116,6 @@ paths:
       description: Remove a calendar and all associated data
       tags:
         - Calendars
-      security:
-        - UserAuth: []
       parameters:
         - name: calendar_id
           in: path
@@ -137,8 +127,6 @@ paths:
       responses:
         '204':
           description: Calendar deleted successfully
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -148,15 +136,12 @@ paths:
   # Calendar Data APIs
   # ===============================================
 
-
   /api/calendar/{calendar_id}/events:
     get:
-      summary: Get calendar recurring event types
-      description: Retrieve recurring event types (grouped by identical titles) with full event objects, filtered to show only future events from today forward
+      summary: Get calendar event types
+      description: Retrieve event types grouped by identical titles, showing only future events
       tags:
         - Calendar Data
-      security:
-        - UserAuth: []
       parameters:
         - name: calendar_id
           in: path
@@ -167,7 +152,7 @@ paths:
           example: "cal_001"
       responses:
         '200':
-          description: Successfully retrieved events
+          description: Successfully retrieved event types
           content:
             application/json:
               schema:
@@ -186,12 +171,12 @@ paths:
                         count:
                           type: integer
                           minimum: 0
-                          description: Number of future event instances in this recurring event type
+                          description: Number of future event instances in this event type
                         events:
                           type: array
                           items:
                             $ref: '#/components/schemas/Event'
-                          description: Array of full event objects in this recurring event type
+                          description: Array of full event objects in this event type
               example:
                 events:
                   "Weekly Team Meeting":
@@ -201,14 +186,14 @@ paths:
                         title: "Weekly Team Meeting"
                         start: "2025-09-20T10:00:00Z"
                         end: "2025-09-20T11:00:00Z"
-                        category: "Work"
+                        event_type: "Work"
                         description: "Weekly team sync meeting"
                         location: "Conference Room A"
                       - id: "evt_008"
                         title: "Weekly Team Meeting"
                         start: "2025-09-27T10:00:00Z"
                         end: "2025-09-27T11:00:00Z"
-                        category: "Work"
+                        event_type: "Work"
                         description: "Weekly team sync meeting"
                         location: "Conference Room A"
                   "Daily Standup":
@@ -218,28 +203,73 @@ paths:
                         title: "Daily Standup"
                         start: "2025-09-17T09:00:00Z"
                         end: "2025-09-17T09:15:00Z"
-                        category: "Work"
+                        event_type: "Work"
                         description: "Daily team standup"
                         location: null
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/calendar/{calendar_id}/raw-events:
+    get:
+      summary: Get individual calendar events
+      description: Retrieve all events as a flat array for detailed processing
+      tags:
+        - Calendar Data
+      parameters:
+        - name: calendar_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique calendar identifier
+          example: "cal_001"
+      responses:
+        '200':
+          description: Successfully retrieved individual events
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - events
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+              example:
+                events:
+                  - id: "evt_001"
+                    title: "Team Meeting"
+                    start: "2025-09-20T10:00:00Z"
+                    end: "2025-09-20T11:00:00Z"
+                    event_type: "Work"
+                    description: "Weekly sync"
+                    location: "Room A"
+                  - id: "evt_002"
+                    title: "Project Review"
+                    start: "2025-09-21T14:00:00Z"
+                    end: "2025-09-21T15:00:00Z"
+                    event_type: "Meeting"
+                    description: "Quarterly review"
+                    location: "Room B"
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
 
   # ===============================================
-  # Filtered Calendar APIs
+  # Filtered Calendars APIs
   # ===============================================
 
   /api/filtered-calendars:
     get:
       summary: Get filtered calendars
-      description: Retrieve all filtered calendars created by the authenticated user
+      description: Retrieve all created filtered calendar links
       tags:
         - Filtered Calendars
-      security:
-        - UserAuth: []
       responses:
         '200':
           description: Successfully retrieved filtered calendars
@@ -263,23 +293,19 @@ paths:
                     preview_url: "https://filter-ical.de/preview/abc123def456"
                     source_calendar_id: "cal_001"
                     filter_config:
-                      include_events: ["Work", "Meeting"]
-                      exclude_events: []
+                      include_event_types: ["Work", "Meeting"]
+                      exclude_event_types: []
                       filter_mode: "include"
                     created_at: "2024-01-18T09:00:00Z"
                     updated_at: "2024-01-18T09:00:00Z"
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
     
     post:
       summary: Create filtered calendar
-      description: Create a new filtered calendar with specified filter configuration
+      description: Create a new filtered calendar with shareable link
       tags:
         - Filtered Calendars
-      security:
-        - UserAuth: []
       requestBody:
         required: true
         content:
@@ -307,8 +333,8 @@ paths:
               source_calendar_id: "cal_001"
               name: "Work Events Only"
               filter_config:
-                include_events: ["Work", "Meeting"]
-                exclude_events: []
+                include_event_types: ["Work", "Meeting"]
+                exclude_event_types: []
                 filter_mode: "include"
       responses:
         '201':
@@ -319,8 +345,6 @@ paths:
                 $ref: '#/components/schemas/FilteredCalendar'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -332,8 +356,6 @@ paths:
       description: Update an existing filtered calendar's name or filter configuration
       tags:
         - Filtered Calendars
-      security:
-        - UserAuth: []
       parameters:
         - name: filtered_calendar_id
           in: path
@@ -360,8 +382,8 @@ paths:
             example:
               name: "Updated Work Events"
               filter_config:
-                include_events: ["Work", "Meeting", "Training"]
-                exclude_events: []
+                include_event_types: ["Work", "Meeting", "Training"]
+                exclude_event_types: []
                 filter_mode: "include"
       responses:
         '200':
@@ -372,8 +394,6 @@ paths:
                 $ref: '#/components/schemas/FilteredCalendar'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -381,11 +401,9 @@ paths:
     
     delete:
       summary: Delete filtered calendar
-      description: Remove a filtered calendar and its public access
+      description: Remove a filtered calendar and its public access link
       tags:
         - Filtered Calendars
-      security:
-        - UserAuth: []
       parameters:
         - name: filtered_calendar_id
           in: path
@@ -397,8 +415,6 @@ paths:
       responses:
         '204':
           description: Filtered calendar deleted successfully
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -441,278 +457,6 @@ paths:
                   CATEGORIES:Work
                   END:VEVENT
                   END:VCALENDAR
-            application/json:
-              schema:
-                type: object
-                properties:
-                  name:
-                    type: string
-                    description: Filtered calendar name
-                  events:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Event'
-                    description: Filtered events
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # ===============================================
-  # User Preferences APIs
-  # ===============================================
-
-  /api/user/preferences:
-    get:
-      summary: Get user preferences
-      description: Load user-wide preferences and settings
-      tags:
-        - Preferences
-      security:
-        - UserAuth: []
-      responses:
-        '200':
-          description: Successfully retrieved user preferences
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - success
-                  - preferences
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  preferences:
-                    type: object
-                    description: User-specific preferences object
-                    additionalProperties: true
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
-    
-    put:
-      summary: Save user preferences
-      description: Update user-wide preferences and settings
-      tags:
-        - Preferences
-      security:
-        - UserAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: User preferences to save
-              additionalProperties: true
-      responses:
-        '200':
-          description: Preferences saved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - success
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/calendars/{calendar_id}/preferences:
-    get:
-      summary: Get calendar-specific preferences
-      description: Load filter state and UI preferences for a specific calendar
-      tags:
-        - Preferences
-      security:
-        - UserAuth: []
-      parameters:
-        - name: calendar_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique calendar identifier
-          example: "cal_001"
-      responses:
-        '200':
-          description: Successfully retrieved calendar preferences
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - success
-                  - preferences
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  preferences:
-                    $ref: '#/components/schemas/CalendarPreferences'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-    
-    put:
-      summary: Save calendar-specific preferences
-      description: Update filter state and UI preferences for a specific calendar
-      tags:
-        - Preferences
-      security:
-        - UserAuth: []
-      parameters:
-        - name: calendar_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique calendar identifier
-          example: "cal_001"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CalendarPreferences'
-      responses:
-        '200':
-          description: Calendar preferences saved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - success
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # ===============================================
-  # Saved Filters APIs
-  # ===============================================
-
-  /api/filters:
-    get:
-      summary: Get saved filters
-      description: Retrieve all saved filter configurations for the authenticated user
-      tags:
-        - Saved Filters
-      security:
-        - UserAuth: []
-      responses:
-        '200':
-          description: Successfully retrieved saved filters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - filters
-                properties:
-                  filters:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/SavedFilter'
-              example:
-                filters:
-                  - id: "sf_001"
-                    name: "Work Events This Week"
-                    config:
-                      selectedEventTypes: ["Work", "Meeting"]
-                      keywordFilter: ""
-                      dateRange:
-                        start: "2024-01-15"
-                        end: "2024-01-21"
-                      sortBy: "date"
-                      sortDirection: "asc"
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
-    
-    post:
-      summary: Save new filter
-      description: Create a new saved filter configuration
-      tags:
-        - Saved Filters
-      security:
-        - UserAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - config
-              properties:
-                name:
-                  type: string
-                  minLength: 3
-                  maxLength: 100
-                  description: Name for the saved filter
-                  example: "Work Events This Week"
-                config:
-                  $ref: '#/components/schemas/SavedFilterConfig'
-      responses:
-        '201':
-          description: Filter saved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SavedFilter'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/filters/{filter_id}:
-    delete:
-      summary: Delete saved filter
-      description: Remove a saved filter configuration
-      tags:
-        - Saved Filters
-      security:
-        - UserAuth: []
-      parameters:
-        - name: filter_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique saved filter identifier
-          example: "sf_001"
-      responses:
-        '204':
-          description: Filter deleted successfully
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -725,11 +469,9 @@ paths:
   /api/calendar/{calendar_id}/generate:
     post:
       summary: Generate filtered iCal content
-      description: Create filtered iCal content from a calendar based on category filters
+      description: Create filtered iCal content from a calendar based on event type filters
       tags:
         - iCal Generation
-      security:
-        - UserAuth: []
       parameters:
         - name: calendar_id
           in: path
@@ -745,10 +487,10 @@ paths:
             schema:
               type: object
               required:
-                - selected_events
+                - selected_event_types
                 - filter_mode
               properties:
-                selected_events:
+                selected_event_types:
                   type: array
                   items:
                     type: string
@@ -757,7 +499,7 @@ paths:
                 filter_mode:
                   type: string
                   enum: [include, exclude]
-                  description: Whether to include or exclude the selected categories
+                  description: Whether to include or exclude the selected event types
                   example: "include"
       responses:
         '200':
@@ -780,25 +522,41 @@ paths:
                   END:VCALENDAR
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+
+  # ===============================================
+  # Health Check
+  # ===============================================
+
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API is running
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  message:
+                    type: string
+                    example: "iCal Viewer API is running"
 
 # ===============================================
 # Component Definitions
 # ===============================================
 
 components:
-  securitySchemes:
-    UserAuth:
-      type: apiKey
-      in: header
-      name: x-user-id
-      description: User identifier for authentication
-
   schemas:
     Calendar:
       type: object
@@ -824,8 +582,8 @@ components:
           example: "https://example.com/work.ics"
         user_id:
           type: string
-          description: Owner user identifier
-          example: "user123"
+          description: Always 'public' for public-first access
+          example: "public"
         created_at:
           type: string
           format: date-time
@@ -839,7 +597,7 @@ components:
         - title
         - start
         - end
-        - category
+        - event_type
       properties:
         id:
           type: string
@@ -859,9 +617,9 @@ components:
           format: date-time
           description: Event end time (ISO 8601)
           example: "2024-01-18T11:00:00Z"
-        category:
+        event_type:
           type: string
-          description: Primary event category
+          description: Event type/category
           example: "Work"
         description:
           type: string
@@ -877,13 +635,13 @@ components:
       required:
         - filter_mode
       properties:
-        include_events:
+        include_event_types:
           type: array
           items:
             type: string
           description: Event types to include (when filter_mode is 'include')
           example: ["Work", "Meeting"]
-        exclude_events:
+        exclude_event_types:
           type: array
           items:
             type: string
@@ -892,7 +650,7 @@ components:
         filter_mode:
           type: string
           enum: [include, exclude]
-          description: Filter mode - include or exclude selected categories
+          description: Filter mode - include or exclude selected event types
           example: "include"
 
     FilteredCalendar:
@@ -947,110 +705,6 @@ components:
           description: Last update timestamp
           example: "2024-01-18T15:30:00Z"
 
-    CalendarPreferences:
-      type: object
-      properties:
-        selected_events:
-          type: array
-          items:
-            type: string
-          description: Currently selected event types
-          example: ["Work", "Meeting"]
-        filter_mode:
-          type: string
-          enum: [include, exclude]
-          description: Current filter mode
-          example: "include"
-        expanded_events:
-          type: array
-          items:
-            type: string
-          description: Expanded event types in UI
-          example: ["Work"]
-        show_single_events:
-          type: boolean
-          description: Whether to show individual events
-          example: true
-        show_events_section:
-          type: boolean
-          description: Whether event types section is visible
-          example: true
-        show_selected_only:
-          type: boolean
-          description: Show only selected event types
-          example: false
-        event_search:
-          type: string
-          description: Current event search term
-          example: ""
-        preview_group:
-          type: string
-          description: Currently previewed group
-          example: ""
-        saved_at:
-          type: string
-          format: date-time
-          description: When preferences were last saved
-          example: "2024-01-18T14:20:00Z"
-
-    SavedFilter:
-      type: object
-      required:
-        - id
-        - name
-        - config
-      properties:
-        id:
-          type: string
-          description: Unique saved filter identifier
-          example: "sf_001"
-        name:
-          type: string
-          description: Filter display name
-          example: "Work Events This Week"
-        config:
-          $ref: '#/components/schemas/SavedFilterConfig'
-
-    SavedFilterConfig:
-      type: object
-      required:
-        - selectedEventTypes
-        - sortBy
-        - sortDirection
-      properties:
-        selectedEventTypes:
-          type: array
-          items:
-            type: string
-          description: Selected event type categories
-          example: ["Work", "Meeting"]
-        keywordFilter:
-          type: string
-          description: Keyword search filter
-          example: ""
-        dateRange:
-          type: object
-          properties:
-            start:
-              type: string
-              format: date
-              description: Filter start date
-              example: "2024-01-15"
-            end:
-              type: string
-              format: date
-              description: Filter end date
-              example: "2024-01-21"
-        sortBy:
-          type: string
-          description: Sort field
-          example: "date"
-        sortDirection:
-          type: string
-          enum: [asc, desc]
-          description: Sort direction
-          example: "asc"
-
     Error:
       type: object
       required:
@@ -1078,17 +732,8 @@ components:
               value:
                 detail: "Calendar URL must be a valid HTTP/HTTPS URL"
 
-    Unauthorized:
-      description: Unauthorized - Missing or invalid x-user-id header
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            detail: "Authentication required - please log in"
-
     NotFound:
-      description: Not Found - Resource does not exist or access denied
+      description: Not Found - Resource does not exist
       content:
         application/json:
           schema:
@@ -1118,16 +763,14 @@ components:
 
 tags:
   - name: Calendars
-    description: Basic calendar CRUD operations
+    description: Basic calendar import and management operations
   - name: Calendar Data
-    description: Event and category data from calendars
+    description: Event data retrieval and event type information
   - name: Filtered Calendars
-    description: Create and manage filtered calendar views
+    description: Create and manage filtered calendar views with shareable links
   - name: Public Access
-    description: Public access to filtered calendars
-  - name: Preferences
-    description: User and calendar-specific preferences
-  - name: Saved Filters
-    description: Save and manage filter configurations
+    description: Public access to filtered calendars via tokens
   - name: iCal Generation
-    description: Generate filtered iCal content
+    description: Generate filtered iCal content for export
+  - name: Health
+    description: API health check endpoint

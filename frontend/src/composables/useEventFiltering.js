@@ -7,7 +7,7 @@ import { computed } from 'vue'
 
 export function useEventFiltering(events, filters) {
   /**
-   * Filter events by selected types/categories
+   * Filter events by selected types/event types
    */
   const filterByTypes = (eventList, selectedTypes) => {
     if (!selectedTypes || selectedTypes.size === 0) return eventList
@@ -105,7 +105,7 @@ export function useEventFiltering(events, filters) {
       total: totalEvents,
       filtered: filteredCount,
       upcoming: upcomingEvents,
-      categories: filters.categories ? Object.keys(filters.categories).length : 0
+      eventTypes: filters.eventTypes ? Object.keys(filters.eventTypes).length : 0
     }
   })
 

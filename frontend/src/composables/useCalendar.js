@@ -2,20 +2,20 @@ import { ref, computed, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
 
-export function useCalendar(eventsData = null, categoriesData = null, calendarId = null) {
+export function useCalendar(eventsData = null, eventTypesData = null, calendarId = null) {
   const appStore = useAppStore()
   
   // Use provided data or fall back to store
   const events = eventsData || computed(() => appStore.events)
-  const categories = categoriesData || computed(() => appStore.categories)
+  const eventTypes = eventTypesData || computed(() => appStore.eventTypes)
   
   // Reactive state - these will be loaded from backend preferences
-  const selectedCategories = ref([])
-  const expandedCategories = ref([])
+  const selectedEventTypes = ref([])
+  const expandedEventTypes = ref([])
   const showSingleEvents = ref(false)
-  const showCategoriesSection = ref(true)
+  const showEventTypesSection = ref(true)
   const showSelectedOnly = ref(false)
-  const categorySearch = ref('')
+  const eventTypeSearch = ref('')
   const filterMode = ref(FILTER_MODES.INCLUDE)
   const showPreview = ref(false)
   const previewGroup = ref(PREVIEW_GROUPS.NONE)
@@ -24,20 +24,20 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
   
   // No preferences loading needed - using default state only
 
-  // Watch for when selectedCategories becomes empty and auto-turn off showSelectedOnly
-  watch(selectedCategories, (newCategories) => {
-    if (newCategories.length === 0 && showSelectedOnly.value) {
+  // Watch for when selectedEventTypes becomes empty and auto-turn off showSelectedOnly
+  watch(selectedEventTypes, (newEventTypes) => {
+    if (newEventTypes.length === 0 && showSelectedOnly.value) {
       showSelectedOnly.value = false
     }
   }, { deep: true })
 
   // Convert event types object to sorted array with events
-  const categoriesSortedByCount = computed(() => {
-    if (!categories.value) return []
-    if (Array.isArray(categories.value)) return categories.value
+  const eventTypesSortedByCount = computed(() => {
+    if (!eventTypes.value) return []
+    if (Array.isArray(eventTypes.value)) return eventTypes.value
     
-    // Convert object to array format - categories.value now contains event types from /events endpoint
-    return Object.entries(categories.value).map(([name, eventTypeData]) => {
+    // Convert object to array format - eventTypes.value now contains event types from /events endpoint
+    return Object.entries(eventTypes.value).map(([name, eventTypeData]) => {
       // eventTypeData has structure: { count: number, events: [event objects] }
       const count = eventTypeData.count || 0
       const typeEvents = eventTypeData.events || []
@@ -51,36 +51,36 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
   })
 
   // Computed properties
-  const filteredCategories = computed(() => {
-    if (!categorySearch.value.trim()) {
-      return categoriesSortedByCount.value
+  const filteredEventTypes = computed(() => {
+    if (!eventTypeSearch.value.trim()) {
+      return eventTypesSortedByCount.value
     }
     
-    const searchTerm = categorySearch.value.toLowerCase()
-    return categoriesSortedByCount.value.filter(category => 
-      category.name.toLowerCase().includes(searchTerm)
+    const searchTerm = eventTypeSearch.value.toLowerCase()
+    return eventTypesSortedByCount.value.filter(eventType => 
+      eventType.name.toLowerCase().includes(searchTerm)
     )
   })
 
   // Recurring events: event types that occur multiple times (count > 1)
-  const mainCategories = computed(() => {
-    return filteredCategories.value.filter(category => category.count > 1)
+  const mainEventTypes = computed(() => {
+    return filteredEventTypes.value.filter(eventType => eventType.count > 1)
   })
 
   // Alias for backwards compatibility and clearer naming
-  const recurringEventTypes = computed(() => mainCategories.value)
+  const recurringEventTypes = computed(() => mainEventTypes.value)
 
   // Unique events: event types that occur only once (count === 1)
-  const singleEventCategories = computed(() => {
-    return filteredCategories.value.filter(category => category.count === 1)
+  const singleEventTypes = computed(() => {
+    return filteredEventTypes.value.filter(eventType => eventType.count === 1)
   })
 
   // Alias for more accurate naming
-  const uniqueEventTypes = computed(() => singleEventCategories.value)
+  const uniqueEventTypes = computed(() => singleEventTypes.value)
 
-  const unifiedCategories = computed(() => {
-    // Combine and sort all categories by count (highest first), then alphabetically
-    return filteredCategories.value.sort((a, b) => {
+  const unifiedEventTypes = computed(() => {
+    // Combine and sort all event types by count (highest first), then alphabetically
+    return filteredEventTypes.value.sort((a, b) => {
       if (a.count !== b.count) {
         return b.count - a.count // Higher count first
       }
@@ -88,37 +88,37 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     })
   })
 
-  const selectedCategoriesCount = computed(() => {
-    return categoriesSortedByCount.value
-      .filter(cat => selectedCategories.value.includes(cat.name))
-      .reduce((sum, cat) => sum + cat.count, 0)
+  const selectedEventTypesCount = computed(() => {
+    return eventTypesSortedByCount.value
+      .filter(eventType => selectedEventTypes.value.includes(eventType.name))
+      .reduce((sum, eventType) => sum + eventType.count, 0)
   })
 
   const selectedEventsCount = computed(() => {
-    if (selectedCategories.value.length === 0) return 0
+    if (selectedEventTypes.value.length === 0) return 0
 
-    const selectedCategoryNames = new Set(selectedCategories.value)
+    const selectedEventTypeNames = new Set(selectedEventTypes.value)
     return events.value.filter(event => {
-      const eventCategory = getEventTypeKey(event)
-      const isInSelectedCategory = selectedCategoryNames.has(eventCategory)
+      const eventType = getEventTypeKey(event)
+      const isInSelectedEventType = selectedEventTypeNames.has(eventType)
       
       return filterMode.value === FILTER_MODES.INCLUDE 
-        ? isInSelectedCategory 
-        : !isInSelectedCategory
+        ? isInSelectedEventType 
+        : !isInSelectedEventType
     }).length
   })
 
   const previewEvents = computed(() => {
-    if (selectedCategories.value.length === 0) return []
+    if (selectedEventTypes.value.length === 0) return []
 
-    const selectedCategoryNames = new Set(selectedCategories.value)
+    const selectedEventTypeNames = new Set(selectedEventTypes.value)
     return events.value.filter(event => {
-      const eventCategory = getEventTypeKey(event)
-      const isInSelectedCategory = selectedCategoryNames.has(eventCategory)
+      const eventType = getEventTypeKey(event)
+      const isInSelectedEventType = selectedEventTypeNames.has(eventType)
       
       return filterMode.value === FILTER_MODES.INCLUDE 
-        ? isInSelectedCategory 
-        : !isInSelectedCategory
+        ? isInSelectedEventType 
+        : !isInSelectedEventType
     })
   })
 
@@ -146,8 +146,8 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
       let groupKey
       let sortKey
       
-      if (previewGroup.value === PREVIEW_GROUPS.CATEGORY) {
-        groupKey = getEventTypeKey(event)
+      if (previewGroup.value === PREVIEW_GROUPS.EVENT_TYPE) {
+        groupKey = getEventGroupKey(event)
         sortKey = groupKey
       } else if (previewGroup.value === PREVIEW_GROUPS.MONTH) {
         // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
@@ -167,8 +167,8 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     // Sort groups and events within groups
     const groupedArray = Object.values(groups)
 
-    if (previewGroup.value === PREVIEW_GROUPS.CATEGORY) {
-      // Sort category groups by event count (descending)
+    if (previewGroup.value === PREVIEW_GROUPS.EVENT_TYPE) {
+      // Sort event type groups by event count (descending)
       groupedArray.sort((a, b) => b.events.length - a.events.length)
     } else if (previewGroup.value === PREVIEW_GROUPS.MONTH) {
       // Sort month groups chronologically
@@ -194,11 +194,11 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
   // Three-tier event system analytics
   const eventTypeStats = computed(() => {
     const stats = {
-      totalEventTypes: categoriesSortedByCount.value.length,
+      totalEventTypes: eventTypesSortedByCount.value.length,
       recurringEventTypes: recurringEventTypes.value.length,
       uniqueEventTypes: uniqueEventTypes.value.length,
-      totalEvents: categoriesSortedByCount.value.reduce((sum, cat) => sum + cat.count, 0),
-      recurringEvents: recurringEventTypes.value.reduce((sum, cat) => sum + cat.count, 0),
+      totalEvents: eventTypesSortedByCount.value.reduce((sum, eventType) => sum + eventType.count, 0),
+      recurringEvents: recurringEventTypes.value.reduce((sum, eventType) => sum + eventType.count, 0),
       uniqueEvents: uniqueEventTypes.value.length // Each unique type has exactly 1 event
     }
     return stats
@@ -206,7 +206,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
 
   // Event type classification helper
   function classifyEventType(eventTypeName) {
-    const eventType = categoriesSortedByCount.value.find(cat => cat.name === eventTypeName)
+    const eventType = eventTypesSortedByCount.value.find(et => et.name === eventTypeName)
     if (!eventType) return 'unknown'
     
     return eventType.count === 1 ? 'unique' : 'recurring'
@@ -214,8 +214,14 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
 
   // Methods
   function getEventTypeKey(event) {
-    // Get the key used for grouping events by type (identical titles)
+    // Get the key used for filtering events (by title - what users select)
     return event.title || event.summary || 'Untitled Event'
+  }
+
+  function getEventGroupKey(event) {
+    // Get the key used for grouping events by type in preview
+    // Use event title for proper grouping (same as filtering key)
+    return event.title || event.summary || 'Unknown Event Type'
   }
 
   function parseIcalDate(dateString) {
@@ -371,45 +377,45 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     }
   }
 
-  function toggleCategory(categoryName) {
-    const index = selectedCategories.value.indexOf(categoryName)
+  function toggleEventType(eventTypeName) {
+    const index = selectedEventTypes.value.indexOf(eventTypeName)
     if (index === -1) {
-      selectedCategories.value.push(categoryName)
+      selectedEventTypes.value.push(eventTypeName)
     } else {
-      selectedCategories.value.splice(index, 1)
+      selectedEventTypes.value.splice(index, 1)
     }
   }
 
-  function toggleCategoryExpansion(categoryName) {
-    const index = expandedCategories.value.indexOf(categoryName)
+  function toggleEventTypeExpansion(eventTypeName) {
+    const index = expandedEventTypes.value.indexOf(eventTypeName)
     if (index === -1) {
-      expandedCategories.value.push(categoryName)
+      expandedEventTypes.value.push(eventTypeName)
     } else {
-      expandedCategories.value.splice(index, 1)
+      expandedEventTypes.value.splice(index, 1)
     }
   }
 
-  function selectAllCategories() {
-    selectedCategories.value = filteredCategories.value.map(cat => cat.name)
+  function selectAllEventTypes() {
+    selectedEventTypes.value = filteredEventTypes.value.map(eventType => eventType.name)
   }
 
-  function clearAllCategories() {
-    selectedCategories.value = []
+  function clearAllEventTypes() {
+    selectedEventTypes.value = []
     showPreview.value = false
   }
 
   function selectAllSingleEvents() {
-    const singleEventNames = singleEventCategories.value.map(cat => cat.name)
+    const singleEventNames = singleEventTypes.value.map(eventType => eventType.name)
     singleEventNames.forEach(name => {
-      if (!selectedCategories.value.includes(name)) {
-        selectedCategories.value.push(name)
+      if (!selectedEventTypes.value.includes(name)) {
+        selectedEventTypes.value.push(name)
       }
     })
   }
 
   function clearAllSingleEvents() {
-    const singleEventNames = singleEventCategories.value.map(cat => cat.name)
-    selectedCategories.value = selectedCategories.value.filter(name => !singleEventNames.includes(name))
+    const singleEventNames = singleEventTypes.value.map(eventType => eventType.name)
+    selectedEventTypes.value = selectedEventTypes.value.filter(name => !singleEventNames.includes(name))
   }
 
   function switchFilterMode(newMode) {
@@ -428,7 +434,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     try {
       const result = await appStore.generateIcal({
         calendarId: appStore.selectedCalendar.id,
-        selectedCategories: selectedCategories.value,
+        selectedEventTypes: selectedEventTypes.value,
         filterMode: filterMode.value
       })
       
@@ -455,12 +461,12 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
 
   return {
     // State
-    selectedCategories,
-    expandedCategories,
+    selectedEventTypes,
+    expandedEventTypes,
     showSingleEvents,
-    showCategoriesSection,
+    showEventTypesSection,
     showSelectedOnly,
-    categorySearch,
+    eventTypeSearch,
     filterMode,
     showPreview,
     previewGroup,
@@ -468,15 +474,15 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     previewLimit,
     
     // Computed
-    categoriesSortedByCount,
-    filteredCategories,
-    mainCategories,
-    singleEventCategories,
+    eventTypesSortedByCount,
+    filteredEventTypes,
+    mainEventTypes,
+    singleEventTypes,
     recurringEventTypes,
     uniqueEventTypes,
-    unifiedCategories,
+    unifiedEventTypes,
     eventTypeStats,
-    selectedCategoriesCount,
+    selectedEventTypesCount,
     selectedEventsCount,
     previewEvents,
     sortedPreviewEvents,
@@ -484,13 +490,14 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     
     // Methods
     getEventTypeKey,
+    getEventGroupKey,
     classifyEventType,
     formatDateTime,
     formatDateRange,
-    toggleCategory,
-    toggleCategoryExpansion,
-    selectAllCategories,
-    clearAllCategories,
+    toggleEventType,
+    toggleEventTypeExpansion,
+    selectAllEventTypes,
+    clearAllEventTypes,
     selectAllSingleEvents,
     clearAllSingleEvents,
     switchFilterMode,

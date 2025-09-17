@@ -13,7 +13,7 @@ export const FILTER_MODES = {
 
 export const PREVIEW_GROUPS = {
   NONE: 'none',
-  CATEGORY: 'category', 
+  EVENT_TYPE: 'event_type', 
   MONTH: 'month'
 }
 
@@ -25,8 +25,8 @@ export const SORT_ORDERS = {
 export const EVENT_LIMITS = {
   PREVIEW_DEFAULT: 10,
   PREVIEW_INCREMENT: 10,
-  CATEGORY_EVENTS: 5,
-  MAX_CATEGORIES: 50
+  EVENT_TYPE_EVENTS: 5,
+  MAX_EVENT_TYPES: 50
 }
 
 export const VALIDATION_RULES = {

@@ -32,7 +32,7 @@ const mockEvents = {
         title: 'Team Standup',
         start: '2024-01-20T09:00:00Z',
         end: '2024-01-20T09:30:00Z',
-        category: 'work_meetings',
+        event_type: 'work_meetings',
         description: 'Daily team sync',
         location: 'Conference Room A'
       },
@@ -41,7 +41,7 @@ const mockEvents = {
         title: 'Project Review',
         start: '2024-01-22T14:00:00Z', 
         end: '2024-01-22T15:00:00Z',
-        category: 'work_meetings',
+        event_type: 'work_meetings',
         description: 'Quarterly project review',
         location: 'Virtual'
       }
@@ -55,7 +55,7 @@ const mockEvents = {
         title: 'Dentist Appointment',
         start: '2024-01-25T16:00:00Z',
         end: '2024-01-25T17:00:00Z',
-        category: 'personal',
+        event_type: 'personal',
         description: 'Regular checkup'
       }
     ]
@@ -68,7 +68,7 @@ const mockFilteredCalendars = [
     name: 'Work Only',
     source_calendar_id: 'cal_001',
     filter_config: {
-      categories: ['work_meetings'],
+      event_types: ['work_meetings'],
       exclude_keywords: ['personal']
     },
     user_id: 'user123',
@@ -189,8 +189,8 @@ export const handlers = [
       )
     }
 
-    // Flatten events from all categories for raw endpoint
-    const allEvents = Object.values(mockEvents).flatMap(category => category.events)
+    // Flatten events from all event types for raw endpoint
+    const allEvents = Object.values(mockEvents).flatMap(eventType => eventType.events)
     
     return HttpResponse.json({
       events: allEvents

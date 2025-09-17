@@ -196,7 +196,7 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   
   const events = ref([])
-  const categories = ref({})
+  const eventTypes = ref({})
   
   // Event filtering state
   const selectedEventTypes = ref(new Set())
@@ -215,7 +215,7 @@ export const useAppStore = defineStore('app', () => {
     dateRange,
     sortBy,
     sortDirection,
-    categories
+    eventTypes
   })
 
   // Use filtered events and statistics from the composable
@@ -232,11 +232,11 @@ export const useAppStore = defineStore('app', () => {
     return result
   }
 
-  const loadCalendarCategories = async (calendarId) => {
-    const result = await get(`/api/calendar/${calendarId}/categories`)
+  const loadCalendarEventTypes = async (calendarId) => {
+    const result = await get(`/api/calendar/${calendarId}/event_types`)
 
     if (result.success) {
-      categories.value = result.data.categories
+      eventTypes.value = result.data.event_types
     }
 
     return result
@@ -275,7 +275,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const selectAllEventTypes = () => {
-    selectedEventTypes.value = new Set(Object.keys(categories.value))
+    selectedEventTypes.value = new Set(Object.keys(eventTypes.value))
   }
 
   // ===============================================
@@ -430,9 +430,9 @@ export const useAppStore = defineStore('app', () => {
   // ICAL GENERATION SECTION
   // ===============================================
   
-  const generateIcal = async (calendarId, selectedCategories, filterMode) => {
+  const generateIcal = async ({ calendarId, selectedEventTypes, filterMode }) => {
     return await post(`/api/calendar/${calendarId}/generate`, {
-      selected_categories: selectedCategories,
+      selected_event_types: selectedEventTypes,
       filter_mode: filterMode
     })
   }
@@ -460,7 +460,7 @@ export const useAppStore = defineStore('app', () => {
     // EVENTS & FILTERING
     // ===============================================
     events,
-    categories,
+    eventTypes,
     filteredEvents,
     statistics,
     selectedEventTypes,
@@ -469,7 +469,7 @@ export const useAppStore = defineStore('app', () => {
     sortBy,
     sortDirection,
     loadCalendarEvents,
-    loadCalendarCategories,
+    loadCalendarEventTypes,
     toggleEventType,
     setKeywordFilter,
     setDateRange,

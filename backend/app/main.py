@@ -217,7 +217,7 @@ async def get_calendar_events(
     for event in events:
         events_data.append({
             "id": event.id,
-            "category": event.category,
+            "event_type": event.title,
             "title": event.title,
             "start": event.start,
             "end": event.end,
@@ -260,7 +260,7 @@ async def get_calendar_raw_events(
             "title": event.title,
             "start": event.start.isoformat() + "Z",
             "end": event.end.isoformat() + "Z", 
-            "category": event.category,
+            "event_type": event.title,
             "description": event.description,
             "location": event.location
         })
@@ -292,8 +292,8 @@ async def get_filtered_calendars(
             "preview_url": fc.preview_url,
             "source_calendar_id": fc.source_calendar_id,
             "filter_config": {
-                "include_categories": parse_json_field(fc.include_categories, []),
-                "exclude_categories": parse_json_field(fc.exclude_categories, []),
+                "include_event_types": parse_json_field(fc.include_events, []),
+                "exclude_event_types": parse_json_field(fc.exclude_events, []),
                 "filter_mode": fc.filter_mode
             },
             "created_at": fc.created_at.isoformat() + "Z",
@@ -335,8 +335,8 @@ async def create_filtered_calendar(
         name=name,
         source_calendar_id=source_calendar_id,
         user_id=PUBLIC_USER_ID,
-        include_categories=serialize_json_field(filter_config.get('include_categories', [])),
-        exclude_categories=serialize_json_field(filter_config.get('exclude_categories', [])),
+        include_events=serialize_json_field(filter_config.get('include_event_types', [])),
+        exclude_events=serialize_json_field(filter_config.get('exclude_event_types', [])),
         filter_mode=FilterMode(filter_config.get('filter_mode', 'include'))
     )
     
@@ -353,8 +353,8 @@ async def create_filtered_calendar(
         "preview_url": filtered_calendar.preview_url,
         "source_calendar_id": filtered_calendar.source_calendar_id,
         "filter_config": {
-            "include_categories": parse_json_field(filtered_calendar.include_categories, []),
-            "exclude_categories": parse_json_field(filtered_calendar.exclude_categories, []),
+            "include_event_types": parse_json_field(filtered_calendar.include_events, []),
+            "exclude_event_types": parse_json_field(filtered_calendar.exclude_events, []),
             "filter_mode": filtered_calendar.filter_mode
         },
         "created_at": filtered_calendar.created_at.isoformat() + "Z",
@@ -391,11 +391,11 @@ async def update_filtered_calendar(
     
     if 'filter_config' in request_data:
         filter_config = request_data['filter_config']
-        filtered_calendar.include_categories = serialize_json_field(
-            filter_config.get('include_categories', [])
+        filtered_calendar.include_events = serialize_json_field(
+            filter_config.get('include_event_types', [])
         )
-        filtered_calendar.exclude_categories = serialize_json_field(
-            filter_config.get('exclude_categories', [])
+        filtered_calendar.exclude_events = serialize_json_field(
+            filter_config.get('exclude_event_types', [])
         )
         filtered_calendar.filter_mode = FilterMode(
             filter_config.get('filter_mode', 'include')
@@ -417,8 +417,8 @@ async def update_filtered_calendar(
         "preview_url": filtered_calendar.preview_url,
         "source_calendar_id": filtered_calendar.source_calendar_id,
         "filter_config": {
-            "include_categories": parse_json_field(filtered_calendar.include_categories, []),
-            "exclude_categories": parse_json_field(filtered_calendar.exclude_categories, []),
+            "include_event_types": parse_json_field(filtered_calendar.include_events, []),
+            "exclude_event_types": parse_json_field(filtered_calendar.exclude_events, []),
             "filter_mode": filtered_calendar.filter_mode
         },
         "created_at": filtered_calendar.created_at.isoformat() + "Z",
@@ -477,14 +477,14 @@ async def get_public_filtered_calendar(
             "title": event.title,
             "start": event.start,
             "end": event.end,
-            "category": event.category,
+            "event_type": event.title,
             "description": event.description,
             "location": event.location
         })
     
     # Apply filters using pure functions
-    include_categories = parse_json_field(filtered_calendar.include_categories, [])
-    exclude_categories = parse_json_field(filtered_calendar.exclude_categories, [])
+    include_categories = parse_json_field(filtered_calendar.include_events, [])
+    exclude_categories = parse_json_field(filtered_calendar.exclude_events, [])
     
     filtered_events = filter_events_by_categories(
         events_data,
@@ -529,7 +529,7 @@ async def generate_filtered_ical(
         raise HTTPException(status_code=404, detail="Calendar not found")
     
     # Get request parameters
-    selected_categories = request_data.get('selected_categories', [])
+    selected_event_types = request_data.get('selected_event_types', [])
     filter_mode = request_data.get('filter_mode', 'include')
     
     if filter_mode not in ['include', 'exclude']:
@@ -548,19 +548,19 @@ async def generate_filtered_ical(
             "title": event.title,
             "start": event.start,
             "end": event.end,
-            "category": event.category,
+            "event_type": event.title,
             "description": event.description,
             "location": event.location
         })
     
-    # Apply category filter using pure function
+    # Apply event type filter using pure function
     if filter_mode == 'include':
         filtered_events = filter_events_by_categories(
-            events_data, selected_categories, [], filter_mode
+            events_data, selected_event_types, [], filter_mode
         )
     else:
         filtered_events = filter_events_by_categories(
-            events_data, [], selected_categories, filter_mode
+            events_data, [], selected_event_types, filter_mode
         )
     
     # Generate iCal content using pure function

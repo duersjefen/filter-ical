@@ -12,8 +12,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get user's calendars
-         * @description Fetch all calendars owned by the authenticated user
+         * Get calendars
+         * @description Fetch all imported calendar sources
          */
         get: {
             parameters: {
@@ -36,7 +36,7 @@ export interface paths {
                          *           "id": "cal_001",
                          *           "name": "Work Calendar",
                          *           "url": "https://example.com/work.ics",
-                         *           "user_id": "user123",
+                         *           "user_id": "public",
                          *           "created_at": "2024-01-15T10:30:00Z"
                          *         }
                          *       ]
@@ -46,14 +46,13 @@ export interface paths {
                         };
                     };
                 };
-                401: components["responses"]["Unauthorized"];
                 500: components["responses"]["InternalError"];
             };
         };
         put?: never;
         /**
          * Create new calendar
-         * @description Add a new calendar for the authenticated user
+         * @description Import a new calendar from an iCal URL
          */
         post: {
             parameters: {
@@ -94,14 +93,13 @@ export interface paths {
                          *       "id": "cal_003",
                          *       "name": "Team Events",
                          *       "url": "https://example.com/team.ics",
-                         *       "user_id": "user123",
+                         *       "user_id": "public",
                          *       "created_at": "2024-01-17T09:15:00Z"
                          *     } */
                         "application/json": components["schemas"]["Calendar"];
                     };
                 };
                 400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
                 500: components["responses"]["InternalError"];
             };
         };
@@ -147,7 +145,6 @@ export interface paths {
                     };
                     content?: never;
                 };
-                401: components["responses"]["Unauthorized"];
                 404: components["responses"]["NotFound"];
                 500: components["responses"]["InternalError"];
             };
@@ -165,8 +162,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get calendar recurring event types
-         * @description Retrieve recurring event types (grouped by identical titles) with full event objects, filtered to show only future events from today forward
+         * Get calendar event types
+         * @description Retrieve event types grouped by identical titles, showing only future events
          */
         get: {
             parameters: {
@@ -183,7 +180,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Successfully retrieved events */
+                /** @description Successfully retrieved event types */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -199,7 +196,7 @@ export interface paths {
                          *               "title": "Weekly Team Meeting",
                          *               "start": "2025-09-20T10:00:00Z",
                          *               "end": "2025-09-20T11:00:00Z",
-                         *               "category": "Work",
+                         *               "event_type": "Work",
                          *               "description": "Weekly team sync meeting",
                          *               "location": "Conference Room A"
                          *             },
@@ -208,7 +205,7 @@ export interface paths {
                          *               "title": "Weekly Team Meeting",
                          *               "start": "2025-09-27T10:00:00Z",
                          *               "end": "2025-09-27T11:00:00Z",
-                         *               "category": "Work",
+                         *               "event_type": "Work",
                          *               "description": "Weekly team sync meeting",
                          *               "location": "Conference Room A"
                          *             }
@@ -222,7 +219,7 @@ export interface paths {
                          *               "title": "Daily Standup",
                          *               "start": "2025-09-17T09:00:00Z",
                          *               "end": "2025-09-17T09:15:00Z",
-                         *               "category": "Work",
+                         *               "event_type": "Work",
                          *               "description": "Daily team standup",
                          *               "location": null
                          *             }
@@ -233,16 +230,86 @@ export interface paths {
                         "application/json": {
                             events: {
                                 [key: string]: {
-                                    /** @description Number of future event instances in this recurring event type */
+                                    /** @description Number of future event instances in this event type */
                                     count: number;
-                                    /** @description Array of full event objects in this recurring event type */
+                                    /** @description Array of full event objects in this event type */
                                     events: components["schemas"]["Event"][];
                                 };
                             };
                         };
                     };
                 };
-                401: components["responses"]["Unauthorized"];
+                404: components["responses"]["NotFound"];
+                500: components["responses"]["InternalError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calendar/{calendar_id}/raw-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get individual calendar events
+         * @description Retrieve all events as a flat array for detailed processing
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description Unique calendar identifier
+                     * @example cal_001
+                     */
+                    calendar_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successfully retrieved individual events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "events": [
+                         *         {
+                         *           "id": "evt_001",
+                         *           "title": "Team Meeting",
+                         *           "start": "2025-09-20T10:00:00Z",
+                         *           "end": "2025-09-20T11:00:00Z",
+                         *           "event_type": "Work",
+                         *           "description": "Weekly sync",
+                         *           "location": "Room A"
+                         *         },
+                         *         {
+                         *           "id": "evt_002",
+                         *           "title": "Project Review",
+                         *           "start": "2025-09-21T14:00:00Z",
+                         *           "end": "2025-09-21T15:00:00Z",
+                         *           "event_type": "Meeting",
+                         *           "description": "Quarterly review",
+                         *           "location": "Room B"
+                         *         }
+                         *       ]
+                         *     } */
+                        "application/json": {
+                            events: components["schemas"]["Event"][];
+                        };
+                    };
+                };
                 404: components["responses"]["NotFound"];
                 500: components["responses"]["InternalError"];
             };
@@ -264,7 +331,7 @@ export interface paths {
         };
         /**
          * Get filtered calendars
-         * @description Retrieve all filtered calendars created by the authenticated user
+         * @description Retrieve all created filtered calendar links
          */
         get: {
             parameters: {
@@ -291,11 +358,11 @@ export interface paths {
                          *           "preview_url": "https://filter-ical.de/preview/abc123def456",
                          *           "source_calendar_id": "cal_001",
                          *           "filter_config": {
-                         *             "include_events": [
+                         *             "include_event_types": [
                          *               "Work",
                          *               "Meeting"
                          *             ],
-                         *             "exclude_events": [],
+                         *             "exclude_event_types": [],
                          *             "filter_mode": "include"
                          *           },
                          *           "created_at": "2024-01-18T09:00:00Z",
@@ -308,14 +375,13 @@ export interface paths {
                         };
                     };
                 };
-                401: components["responses"]["Unauthorized"];
                 500: components["responses"]["InternalError"];
             };
         };
         put?: never;
         /**
          * Create filtered calendar
-         * @description Create a new filtered calendar with specified filter configuration
+         * @description Create a new filtered calendar with shareable link
          */
         post: {
             parameters: {
@@ -330,11 +396,11 @@ export interface paths {
                      *       "source_calendar_id": "cal_001",
                      *       "name": "Work Events Only",
                      *       "filter_config": {
-                     *         "include_events": [
+                     *         "include_event_types": [
                      *           "Work",
                      *           "Meeting"
                      *         ],
-                     *         "exclude_events": [],
+                     *         "exclude_event_types": [],
                      *         "filter_mode": "include"
                      *       }
                      *     } */
@@ -364,7 +430,6 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
                 404: components["responses"]["NotFound"];
                 500: components["responses"]["InternalError"];
             };
@@ -405,12 +470,12 @@ export interface paths {
                     /** @example {
                      *       "name": "Updated Work Events",
                      *       "filter_config": {
-                     *         "include_events": [
+                     *         "include_event_types": [
                      *           "Work",
                      *           "Meeting",
                      *           "Training"
                      *         ],
-                     *         "exclude_events": [],
+                     *         "exclude_event_types": [],
                      *         "filter_mode": "include"
                      *       }
                      *     } */
@@ -435,7 +500,6 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
                 404: components["responses"]["NotFound"];
                 500: components["responses"]["InternalError"];
             };
@@ -443,7 +507,7 @@ export interface paths {
         post?: never;
         /**
          * Delete filtered calendar
-         * @description Remove a filtered calendar and its public access
+         * @description Remove a filtered calendar and its public access link
          */
         delete: {
             parameters: {
@@ -467,7 +531,6 @@ export interface paths {
                     };
                     content?: never;
                 };
-                401: components["responses"]["Unauthorized"];
                 404: components["responses"]["NotFound"];
                 500: components["responses"]["InternalError"];
             };
@@ -510,12 +573,6 @@ export interface paths {
                     };
                     content: {
                         "text/calendar": string;
-                        "application/json": {
-                            /** @description Filtered calendar name */
-                            name?: string;
-                            /** @description Filtered events */
-                            events?: components["schemas"]["Event"][];
-                        };
                     };
                 };
                 404: components["responses"]["NotFound"];
@@ -525,328 +582,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/user/preferences": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get user preferences
-         * @description Load user-wide preferences and settings
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Successfully retrieved user preferences */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success: boolean;
-                            /** @description User-specific preferences object */
-                            preferences: {
-                                [key: string]: unknown;
-                            };
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                500: components["responses"]["InternalError"];
-            };
-        };
-        /**
-         * Save user preferences
-         * @description Update user-wide preferences and settings
-         */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            responses: {
-                /** @description Preferences saved successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success: boolean;
-                        };
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
-                500: components["responses"]["InternalError"];
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/calendars/{calendar_id}/preferences": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get calendar-specific preferences
-         * @description Load filter state and UI preferences for a specific calendar
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Unique calendar identifier
-                     * @example cal_001
-                     */
-                    calendar_id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Successfully retrieved calendar preferences */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success: boolean;
-                            preferences: components["schemas"]["CalendarPreferences"];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                404: components["responses"]["NotFound"];
-                500: components["responses"]["InternalError"];
-            };
-        };
-        /**
-         * Save calendar-specific preferences
-         * @description Update filter state and UI preferences for a specific calendar
-         */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Unique calendar identifier
-                     * @example cal_001
-                     */
-                    calendar_id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CalendarPreferences"];
-                };
-            };
-            responses: {
-                /** @description Calendar preferences saved successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success: boolean;
-                        };
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
-                404: components["responses"]["NotFound"];
-                500: components["responses"]["InternalError"];
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/filters": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get saved filters
-         * @description Retrieve all saved filter configurations for the authenticated user
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Successfully retrieved saved filters */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /** @example {
-                         *       "filters": [
-                         *         {
-                         *           "id": "sf_001",
-                         *           "name": "Work Events This Week",
-                         *           "config": {
-                         *             "selectedEventTypes": [
-                         *               "Work",
-                         *               "Meeting"
-                         *             ],
-                         *             "keywordFilter": "",
-                         *             "dateRange": {
-                         *               "start": "2024-01-15",
-                         *               "end": "2024-01-21"
-                         *             },
-                         *             "sortBy": "date",
-                         *             "sortDirection": "asc"
-                         *           }
-                         *         }
-                         *       ]
-                         *     } */
-                        "application/json": {
-                            filters: components["schemas"]["SavedFilter"][];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                500: components["responses"]["InternalError"];
-            };
-        };
-        put?: never;
-        /**
-         * Save new filter
-         * @description Create a new saved filter configuration
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Name for the saved filter
-                         * @example Work Events This Week
-                         */
-                        name: string;
-                        config: components["schemas"]["SavedFilterConfig"];
-                    };
-                };
-            };
-            responses: {
-                /** @description Filter saved successfully */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SavedFilter"];
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
-                500: components["responses"]["InternalError"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/filters/{filter_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete saved filter
-         * @description Remove a saved filter configuration
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Unique saved filter identifier
-                     * @example sf_001
-                     */
-                    filter_id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Filter deleted successfully */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                404: components["responses"]["NotFound"];
-                500: components["responses"]["InternalError"];
-            };
-        };
         options?: never;
         head?: never;
         patch?: never;
@@ -863,7 +598,7 @@ export interface paths {
         put?: never;
         /**
          * Generate filtered iCal content
-         * @description Create filtered iCal content from a calendar based on category filters
+         * @description Create filtered iCal content from a calendar based on event type filters
          */
         post: {
             parameters: {
@@ -888,9 +623,9 @@ export interface paths {
                          *       "Meeting"
                          *     ]
                          */
-                        selected_events: string[];
+                        selected_event_types: string[];
                         /**
-                         * @description Whether to include or exclude the selected categories
+                         * @description Whether to include or exclude the selected event types
                          * @example include
                          * @enum {string}
                          */
@@ -909,11 +644,54 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
                 404: components["responses"]["NotFound"];
                 500: components["responses"]["InternalError"];
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health check
+         * @description Check if the API is running
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description API is healthy */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example healthy */
+                            status?: string;
+                            /** @example iCal Viewer API is running */
+                            message?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -942,8 +720,8 @@ export interface components {
              */
             url: string;
             /**
-             * @description Owner user identifier
-             * @example user123
+             * @description Always 'public' for public-first access
+             * @example public
              */
             user_id: string;
             /**
@@ -977,10 +755,10 @@ export interface components {
              */
             end: string;
             /**
-             * @description Primary event category
+             * @description Event type/category
              * @example Work
              */
-            category: string;
+            event_type: string;
             /**
              * @description Event description (optional)
              * @example Weekly team sync meeting
@@ -1000,14 +778,14 @@ export interface components {
              *       "Meeting"
              *     ]
              */
-            include_events?: string[];
+            include_event_types?: string[];
             /**
              * @description Event types to exclude (when filter_mode is 'exclude')
              * @example []
              */
-            exclude_events?: string[];
+            exclude_event_types?: string[];
             /**
-             * @description Filter mode - include or exclude selected categories
+             * @description Filter mode - include or exclude selected event types
              * @example include
              * @enum {string}
              */
@@ -1060,113 +838,6 @@ export interface components {
              */
             updated_at: string;
         };
-        CalendarPreferences: {
-            /**
-             * @description Currently selected event types
-             * @example [
-             *       "Work",
-             *       "Meeting"
-             *     ]
-             */
-            selected_events?: string[];
-            /**
-             * @description Current filter mode
-             * @example include
-             * @enum {string}
-             */
-            filter_mode?: "include" | "exclude";
-            /**
-             * @description Expanded event types in UI
-             * @example [
-             *       "Work"
-             *     ]
-             */
-            expanded_events?: string[];
-            /**
-             * @description Whether to show individual events
-             * @example true
-             */
-            show_single_events?: boolean;
-            /**
-             * @description Whether event types section is visible
-             * @example true
-             */
-            show_events_section?: boolean;
-            /**
-             * @description Show only selected event types
-             * @example false
-             */
-            show_selected_only?: boolean;
-            /**
-             * @description Current event search term
-             * @example
-             */
-            event_search?: string;
-            /**
-             * @description Currently previewed group
-             * @example
-             */
-            preview_group?: string;
-            /**
-             * Format: date-time
-             * @description When preferences were last saved
-             * @example 2024-01-18T14:20:00Z
-             */
-            saved_at?: string;
-        };
-        SavedFilter: {
-            /**
-             * @description Unique saved filter identifier
-             * @example sf_001
-             */
-            id: string;
-            /**
-             * @description Filter display name
-             * @example Work Events This Week
-             */
-            name: string;
-            config: components["schemas"]["SavedFilterConfig"];
-        };
-        SavedFilterConfig: {
-            /**
-             * @description Selected event type categories
-             * @example [
-             *       "Work",
-             *       "Meeting"
-             *     ]
-             */
-            selectedEventTypes: string[];
-            /**
-             * @description Keyword search filter
-             * @example
-             */
-            keywordFilter?: string;
-            dateRange?: {
-                /**
-                 * Format: date
-                 * @description Filter start date
-                 * @example 2024-01-15
-                 */
-                start?: string;
-                /**
-                 * Format: date
-                 * @description Filter end date
-                 * @example 2024-01-21
-                 */
-                end?: string;
-            };
-            /**
-             * @description Sort field
-             * @example date
-             */
-            sortBy: string;
-            /**
-             * @description Sort direction
-             * @example asc
-             * @enum {string}
-             */
-            sortDirection: "asc" | "desc";
-        };
         Error: {
             /**
              * @description Human-readable error message
@@ -1185,19 +856,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description Unauthorized - Missing or invalid x-user-id header */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                /** @example {
-                 *       "detail": "Authentication required - please log in"
-                 *     } */
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Not Found - Resource does not exist or access denied */
+        /** @description Not Found - Resource does not exist */
         NotFound: {
             headers: {
                 [name: string]: unknown;

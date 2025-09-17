@@ -16,11 +16,11 @@
         </div>
         <div class="text-center">
           <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">{{ eventTypes.length }}</div>
-          <div class="text-sm text-gray-600 font-medium">Available Categories</div>
+          <div class="text-sm text-gray-600 font-medium">Available Event Types</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl sm:text-3xl font-bold text-orange-600 mb-1">{{ selectedCategoriesCount }}</div>
-          <div class="text-sm text-gray-600 font-medium">Selected Categories</div>
+          <div class="text-2xl sm:text-3xl font-bold text-orange-600 mb-1">{{ selectedEventTypesCount }}</div>
+          <div class="text-sm text-gray-600 font-medium">Selected Event Types</div>
         </div>
       </div>
     </div>
@@ -30,8 +30,8 @@
 <script setup>
 defineProps({
   statistics: Object,
-  categories: Array,
+  eventTypes: Array,
   selectedEventsCount: Number,
-  selectedCategoriesCount: Number
+  selectedEventTypesCount: Number
 })
 </script>

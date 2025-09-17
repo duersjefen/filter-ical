@@ -30,8 +30,8 @@ export function useFilteredCalendarAPI() {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
       filter_config: {
-        include_categories: filterConfig.include_categories || [],
-        exclude_categories: filterConfig.exclude_categories || [],
+        include_event_types: filterConfig.include_categories || [],
+        exclude_event_types: filterConfig.exclude_categories || [],
         filter_mode: filterConfig.filter_mode || 'include'
       }
     }
@@ -225,8 +225,8 @@ export function useFilteredCalendarAPI() {
       errors.push('Valid filter mode (include/exclude) is required')
     }
 
-    const hasIncludeCategories = filterConfig.include_categories?.length > 0
-    const hasExcludeCategories = filterConfig.exclude_categories?.length > 0
+    const hasIncludeCategories = filterConfig.include_event_types?.length > 0
+    const hasExcludeCategories = filterConfig.exclude_event_types?.length > 0
     const hasKeywords = filterConfig.include_keywords?.length > 0 || filterConfig.exclude_keywords?.length > 0
 
     if (!hasIncludeCategories && !hasExcludeCategories && !hasKeywords) {
