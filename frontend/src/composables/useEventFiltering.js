@@ -11,7 +11,7 @@ export function useEventFiltering(events, filters) {
    */
   const filterByTypes = (eventList, selectedTypes) => {
     if (!selectedTypes || selectedTypes.size === 0) return eventList
-    return eventList.filter(event => selectedTypes.has(event.summary))
+    return eventList.filter(event => selectedTypes.has(event.title))
   }
 
   /**
@@ -22,7 +22,7 @@ export function useEventFiltering(events, filters) {
     
     const searchTerm = keyword.toLowerCase()
     return eventList.filter(event => {
-      const searchText = `${event.summary} ${event.description || ''} ${event.location || ''}`.toLowerCase()
+      const searchText = `${event.title} ${event.description || ''} ${event.location || ''}`.toLowerCase()
       return searchText.includes(searchTerm)
     })
   }

@@ -99,7 +99,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
 
     const selectedCategoryNames = new Set(selectedCategories.value)
     return events.value.filter(event => {
-      const eventCategory = getCategoryForEvent(event)
+      const eventCategory = getEventTypeKey(event)
       const isInSelectedCategory = selectedCategoryNames.has(eventCategory)
       
       return filterMode.value === FILTER_MODES.INCLUDE 
@@ -113,7 +113,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
 
     const selectedCategoryNames = new Set(selectedCategories.value)
     return events.value.filter(event => {
-      const eventCategory = getCategoryForEvent(event)
+      const eventCategory = getEventTypeKey(event)
       const isInSelectedCategory = selectedCategoryNames.has(eventCategory)
       
       return filterMode.value === FILTER_MODES.INCLUDE 
@@ -147,7 +147,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
       let sortKey
       
       if (previewGroup.value === PREVIEW_GROUPS.CATEGORY) {
-        groupKey = getCategoryForEvent(event)
+        groupKey = getEventTypeKey(event)
         sortKey = groupKey
       } else if (previewGroup.value === PREVIEW_GROUPS.MONTH) {
         // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
@@ -213,8 +213,8 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
   }
 
   // Methods
-  function getCategoryForEvent(event) {
-    // In the new system, the "category" is the event title (for event type grouping)
+  function getEventTypeKey(event) {
+    // Get the key used for grouping events by type (identical titles)
     return event.title || event.summary || 'Untitled Event'
   }
 
@@ -483,7 +483,7 @@ export function useCalendar(eventsData = null, categoriesData = null, calendarId
     groupedPreviewEvents,
     
     // Methods
-    getCategoryForEvent,
+    getEventTypeKey,
     classifyEventType,
     formatDateTime,
     formatDateRange,

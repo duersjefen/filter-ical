@@ -351,7 +351,7 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   mainCategories: { type: Array, default: () => [] },
   singleCategories: { type: Array, default: () => [] },
-  allCategories: { type: Array, default: () => [] }, // Unfiltered categories for visibility check
+  allCategories: { type: Array, default: () => [] }, // Unfiltered event types for visibility check
   selectedCategories: { type: Array, default: () => [] },
   expandedCategories: { type: Array, default: () => [] },
   showSingleEvents: { type: Boolean, default: false },
@@ -375,7 +375,7 @@ const filteredMainCategories = computed(() => {
   
   // Filter by selection if showSelectedOnly is true
   if (props.showSelectedOnly) {
-    categories = categories.filter(category => 
+    categories = eventTypes.filter(category => 
       props.selectedCategories.includes(category.name)
     )
   }
@@ -383,7 +383,7 @@ const filteredMainCategories = computed(() => {
   // Filter by search term
   if (props.searchTerm.trim()) {
     const searchTerm = props.searchTerm.toLowerCase()
-    categories = categories.filter(category => 
+    categories = eventTypes.filter(category => 
       category.name.toLowerCase().includes(searchTerm)
     )
   }
@@ -396,7 +396,7 @@ const filteredSingleCategories = computed(() => {
   
   // Filter by selection if showSelectedOnly is true
   if (props.showSelectedOnly) {
-    categories = categories.filter(category => 
+    categories = eventTypes.filter(category => 
       props.selectedCategories.includes(category.name)
     )
   }
@@ -404,7 +404,7 @@ const filteredSingleCategories = computed(() => {
   // Filter by search term
   if (props.searchTerm.trim()) {
     const searchTerm = props.searchTerm.toLowerCase()
-    categories = categories.filter(category => 
+    categories = eventTypes.filter(category => 
       category.name.toLowerCase().includes(searchTerm)
     )
   }

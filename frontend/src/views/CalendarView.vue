@@ -65,18 +65,18 @@
         :all-events="events"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
-        :getCategoryForEvent="getCategoryForEvent"
+        :getEventTypeKey="getEventTypeKey"
         @update:preview-group="previewGroup = $event"
       />
 
-      <!-- Categories not loaded fallback -->
+      <!-- Event types not loaded fallback -->
       <div v-if="Object.keys(categories).length === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
         <div class="text-6xl mb-4">📂</div>
         <p class="text-amber-800 dark:text-amber-200 mb-3 font-semibold text-lg">
-          {{ $t('calendar.loadingCategoriesOrNotFound') }}
+          {{ $t('calendar.loadingEventTypesOrNotFound') }}
         </p>
         <p class="text-amber-700 dark:text-amber-300 text-sm font-medium">
-          {{ $t('calendar.loadingCategoriesDescription') }}
+          {{ $t('calendar.loadingEventTypesDescription') }}
         </p>
       </div>
     </template>
@@ -138,7 +138,7 @@ const {
   selectedCategoriesCount,
   sortedPreviewEvents,
   groupedPreviewEvents,
-  getCategoryForEvent,
+  getEventTypeKey,
   formatDateTime,
   formatDateRange,
   toggleCategory,
@@ -169,15 +169,15 @@ const loadCalendarData = async (calendarId) => {
       selectedCalendar.value = calendar
     }
     
-    // Load events and categories directly
-    const [eventsResult, categoriesResult] = await Promise.all([
+    // Load events and event types directly
+    const [eventsResult, eventTypesResult] = await Promise.all([
       api.safeExecute(async () => {
-        const response = await axios.get(`/api/calendar/${calendarId}/events`)
+        const response = await axios.get(`/api/calendar/${calendarId}/raw-events`)
         return response.data.events
       }),
       api.safeExecute(async () => {
-        const response = await axios.get(`/api/calendar/${calendarId}/categories`)
-        return response.data.categories
+        const response = await axios.get(`/api/calendar/${calendarId}/events`)
+        return response.data.events
       })
     ])
     
@@ -187,10 +187,10 @@ const loadCalendarData = async (calendarId) => {
       console.log('Loaded events:', events.value.length)
     }
     
-    if (categoriesResult.success) {
-      // Backend returns {categories: {...}} - extract the categories object
-      categories.value = categoriesResult.data.categories || categoriesResult.data
-      console.log('Loaded categories:', Object.keys(categories.value).length)
+    if (eventTypesResult.success) {
+      // Backend returns {events: {...}} - extract the event types object
+      categories.value = eventTypesResult.data.events || eventTypesResult.data
+      console.log('Loaded event types:', Object.keys(categories.value).length)
     }
     
   } catch (err) {

@@ -64,7 +64,7 @@
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
             :class="previewGroup === 'category' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
-            <span class="hidden sm:inline">📂 {{ $t('preview.byCategory') }}</span>
+            <span class="hidden sm:inline">📂 {{ $t('preview.byEventType') }}</span>
             <span class="sm:hidden">📂</span>
           </button>
           <button 
@@ -89,13 +89,13 @@
             :key="event.uid"
             class="event-item border-b border-gray-100 dark:border-gray-600 pb-3 last:border-b-0 last:pb-0"
           >
-            <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.summary }}</div>
+            <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.title }}</div>
             <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
             <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
               📍 {{ event.location }}
             </div>
-            <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
-              📂 {{ getCategoryForEvent(event) }}
+            <div v-if="getEventTypeKey(event) !== event.title" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              📂 {{ getEventTypeKey(event) }}
             </div>
           </div>
         </div>
@@ -125,7 +125,7 @@
                 <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
               </div>
               <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
-                {{ $t('categories.eventsCount', { count: group.events.length }) }}
+                {{ $t('eventTypes.eventsCount', { count: group.events.length }) }}
               </span>
             </div>
             <div v-if="expandedGroups.has(group.name)" class="p-4">
@@ -135,7 +135,7 @@
                   :key="event.uid"
                   class="event-item border-b border-gray-100 dark:border-gray-600 pb-3 last:border-b-0 last:pb-0"
                 >
-                  <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.summary }}</div>
+                  <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.title }}</div>
                   <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
                   <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     📍 {{ event.location }}
@@ -174,7 +174,7 @@
                 <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
               </div>
               <span class="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
-                {{ $t('categories.eventsCount', { count: group.events.length }) }}
+                {{ $t('eventTypes.eventsCount', { count: group.events.length }) }}
               </span>
             </div>
             <div v-if="expandedGroups.has(group.name)" class="p-4">
@@ -184,13 +184,13 @@
                   :key="event.uid"
                   class="event-item border-b border-gray-100 dark:border-gray-600 pb-3 last:border-b-0 last:pb-0"
                 >
-                  <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.summary }}</div>
+                  <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm leading-tight mb-1">{{ event.title }}</div>
                   <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">📅 {{ formatDateRange(event) }}</div>
                   <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
                     📍 {{ event.location }}
                   </div>
-                  <div v-if="getCategoryForEvent(event) !== event.summary" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                    📂 {{ getCategoryForEvent(event) }}
+                  <div v-if="getEventTypeKey(event) !== event.title" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                    📂 {{ getEventTypeKey(event) }}
                   </div>
                 </div>
                 <div v-if="group.events.length > 10" class="text-center text-gray-500 dark:text-gray-400 italic p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium mt-3">
@@ -220,7 +220,7 @@ const props = defineProps({
   allEvents: { type: Array, default: () => [] },
   formatDateTime: { type: Function, required: true },
   formatDateRange: { type: Function, required: true },
-  getCategoryForEvent: { type: Function, required: true }
+  getEventTypeKey: { type: Function, required: true }
 })
 
 const emit = defineEmits([
