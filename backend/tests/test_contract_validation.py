@@ -80,6 +80,7 @@ class TestOpenAPIContract:
                 validate(instance=response_data, schema=schema)
 
     # Test Calendar Management Endpoints
+    @pytest.mark.unit
     def test_get_calendars_contract(self):
         """Test GET /api/calendars conforms to contract"""
         response = self.client.get("/api/calendars", headers=self.test_user_headers)
@@ -94,6 +95,7 @@ class TestOpenAPIContract:
         # Validate against OpenAPI schema
         self.validate_endpoint_response("/api/calendars", "GET", 200, data)
     
+    @pytest.mark.unit
     def test_create_calendar_contract(self):
         """Test POST /api/calendars conforms to contract"""
         calendar_data = {
@@ -123,6 +125,7 @@ class TestOpenAPIContract:
         # Clean up
         self.client.delete(f"/api/calendars/{data['id']}", headers=self.test_user_headers)
     
+    @pytest.mark.unit
     def test_delete_calendar_contract(self):
         """Test DELETE /api/calendars/{calendar_id} conforms to contract"""
         # Create a calendar first
@@ -147,6 +150,7 @@ class TestOpenAPIContract:
         # 204 responses should have no content
         assert response.content == b''
     
+    @pytest.mark.unit
     def test_get_calendar_events_contract(self):
         """Test GET /api/calendar/{calendar_id}/events conforms to contract"""
         # Create a calendar first
@@ -509,6 +513,7 @@ class TestOpenAPIContract:
         # 204 responses should have no content
         assert response.content == b''
     
+    @pytest.mark.unit
     def test_generate_ical_contract(self):
         """Test POST /api/calendar/{calendar_id}/generate conforms to contract"""
         # Create a calendar first
@@ -577,6 +582,7 @@ class TestOpenAPIContract:
             assert "detail" in data
             assert isinstance(data["detail"], str)
 
+    @pytest.mark.unit
     def test_health_endpoint_exists(self):
         """Test health endpoint is available (not in OpenAPI but required)"""
         response = self.client.get("/health")

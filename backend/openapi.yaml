@@ -528,6 +528,70 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   # ===============================================
+  # Domain Configuration APIs
+  # ===============================================
+
+  /api/domains:
+    get:
+      summary: Get available domains
+      description: Retrieve list of all configured domains with their calendar configurations
+      tags:
+        - Domains
+      responses:
+        '200':
+          description: Successfully retrieved available domains
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - domains
+                properties:
+                  domains:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Domain'
+              example:
+                domains:
+                  - id: "exter"
+                    name: "Exter Portal"
+                    calendar_name: "Portal Calendar"
+                    calendar_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/domains/{domain_id}:
+    get:
+      summary: Get domain configuration
+      description: Retrieve configuration for a specific domain including its default calendar
+      tags:
+        - Domains
+      parameters:
+        - name: domain_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique domain identifier
+          example: "exter"
+      responses:
+        '200':
+          description: Successfully retrieved domain configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Domain'
+              example:
+                id: "exter"
+                name: "Exter Portal"
+                calendar_name: "Portal Calendar"
+                calendar_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ===============================================
   # Health Check
   # ===============================================
 
@@ -705,6 +769,27 @@ components:
           description: Last update timestamp
           example: "2024-01-18T15:30:00Z"
 
+    Domain:
+      type: object
+      required:
+        - id
+        - name
+        - calendar_url
+      properties:
+        id:
+          type: string
+          description: Unique domain identifier
+          example: "exter"
+        name:
+          type: string
+          description: Name of the calendar for this domain
+          example: "Portal Calendar"
+        calendar_url:
+          type: string
+          format: uri
+          description: iCal URL for the domain's calendar
+          example: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+
     Error:
       type: object
       required:
@@ -772,5 +857,7 @@ tags:
     description: Public access to filtered calendars via tokens
   - name: iCal Generation
     description: Generate filtered iCal content for export
+  - name: Domains
+    description: Domain-specific calendar configurations
   - name: Health
     description: API health check endpoint

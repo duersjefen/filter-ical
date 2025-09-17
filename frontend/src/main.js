@@ -8,6 +8,7 @@ import './styles/tailwind.css'
 import LoginView from './views/LoginView.vue'
 import HomeView from './views/HomeView.vue'
 import CalendarView from './views/CalendarView.vue'
+import DomainView from './views/DomainView.vue'
 
 const routes = [
   { 
@@ -26,6 +27,11 @@ const routes = [
     path: '/calendar/:id', 
     component: CalendarView, 
     props: true
+  },
+  { 
+    path: '/exter', 
+    component: DomainView, 
+    props: { domain: 'exter' }
   }
 ]
 

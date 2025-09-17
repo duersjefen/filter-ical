@@ -129,6 +129,16 @@
     "tryAgain": "Please try again later",
     "clearError": "Clear error"
   },
+  "domain": {
+    "goToPersonalCalendars": "Go to Personal Calendars",
+    "loadingDomainCalendar": "Loading domain calendar...",
+    "notFound": "Domain Not Found",
+    "domainNotConfigured": "The domain '{domain}' is not configured.",
+    "calendar": "calendar",
+    "eventsAvailable": "events available",
+    "noEvents": "No Events Available",
+    "noEventsDescription": "This domain calendar doesn't have any events at the moment."
+  },
   "home": {
     "addNewCalendar": "Add New Calendar",
     "calendarName": "Calendar Name",

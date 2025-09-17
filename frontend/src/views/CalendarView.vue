@@ -3,6 +3,7 @@
     <HeaderSection 
       :selected-calendar="selectedCalendar"
       :error="error"
+      :domain-context="props.domainContext"
       @navigate-home="navigateHome"
       @clear-error="clearError"
     />
@@ -136,7 +137,13 @@ const eventTypes = ref({})
 const selectedCalendar = ref(null)
 
 // Define props first
-const props = defineProps(['id'])
+const props = defineProps({
+  id: String,
+  domainContext: {
+    type: Object,
+    default: null
+  }
+})
 
 // Use calendar composable with local data and calendar ID for persistence
 const {

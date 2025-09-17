@@ -27,6 +27,10 @@ from .core.filters import (
     filter_events_by_categories, apply_saved_filter_config,
     parse_json_field, serialize_json_field
 )
+from .core.domains import (
+    load_domains_config, get_available_domains as get_domains_list, get_domain_config,
+    validate_domain_config, is_valid_domain_id
+)
 from .middleware.schema_validation import create_validation_middleware
 import os
 
@@ -606,6 +610,82 @@ async def generate_filtered_ical(
         content=ical_content,
         media_type="text/calendar"
     )
+
+# ==============================================
+# DOMAIN CONFIGURATION ENDPOINTS
+# ==============================================
+
+@app.get("/api/domains")
+async def list_available_domains():
+    """Get available domains - matches OpenAPI spec exactly"""
+    try:
+        # Load domain configuration from file
+        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        domains_config = load_domains_config(str(config_path))
+        
+        # Get available domains using pure function
+        domains = get_domains_list(domains_config)
+        
+        return {"domains": domains}
+    
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=500, 
+            detail="Domain configuration file not found"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load domain configuration: {str(e)}"
+        )
+
+@app.get("/api/domains/{domain_id}")
+async def get_domain_configuration(domain_id: str):
+    """Get domain configuration - matches OpenAPI spec exactly"""
+    # Validate domain ID format
+    if not is_valid_domain_id(domain_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid domain ID format"
+        )
+    
+    try:
+        # Load domain configuration from file
+        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        domains_config = load_domains_config(str(config_path))
+        
+        # Get specific domain configuration using pure function
+        domain_config = get_domain_config(domains_config, domain_id)
+        
+        if not domain_config:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Domain '{domain_id}' not found"
+            )
+        
+        # Validate domain configuration
+        is_valid, error_message = validate_domain_config(domain_config)
+        if not is_valid:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Invalid domain configuration: {error_message}"
+            )
+        
+        return domain_config
+    
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=500,
+            detail="Domain configuration file not found"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load domain configuration: {str(e)}"
+        )
 
 # ==============================================
 # HEALTH CHECK ENDPOINT

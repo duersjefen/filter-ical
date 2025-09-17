@@ -2,14 +2,14 @@
   <div>
     <!-- Page Header with Gradient -->
     <AppHeader 
-      :title="$t('calendar.filterTitle', { name: selectedCalendar?.name || $t('common.loading') })"
-      :subtitle="$t('calendar.subtitle')"
+      :title="domainContext ? `🌐 ${domainContext.name}` : $t('calendar.filterTitle', { name: selectedCalendar?.name || $t('common.loading') })"
+      :subtitle="domainContext ? 'Domain Calendar' : $t('calendar.subtitle')"
       :show-user-info="false"
       :show-back-button="true"
-      :back-button-text="$t('navigation.backToCalendars')"
+      :back-button-text="domainContext ? $t('domain.goToPersonalCalendars') : $t('navigation.backToCalendars')"
       page-context="calendar"
       hide-subtitle
-      @navigate-back="$emit('navigate-home')"
+      @navigate-back="domainContext ? $router.push('/home') : $emit('navigate-home')"
     />
 
     <!-- Error Message -->
@@ -27,11 +27,18 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import AppHeader from '../shared/AppHeader.vue'
+
+const router = useRouter()
 
 defineProps({
   selectedCalendar: Object,
-  error: String
+  error: String,
+  domainContext: {
+    type: Object,
+    default: null
+  }
 })
 
 defineEmits(['navigate-home', 'clear-error'])
