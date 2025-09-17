@@ -7,12 +7,14 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useApiCall } from '../composables/useApiCall'
 import { useEventFiltering } from '../composables/useEventFiltering'
+import { useUsername } from '../composables/useUsername'
 
 export const useAppStore = defineStore('app', () => {
   // ===============================================
-  // API Helper - Reusable across all sections
+  // USERNAME & API INTEGRATION
   // ===============================================
   
+  const { getUserId } = useUsername()
   const { get, post, put, del, loading, error, clearError } = useApiCall()
 
   // ===============================================
@@ -35,8 +37,8 @@ export const useAppStore = defineStore('app', () => {
     url: ''
   })
 
-  // localStorage persistence for calendars
-  const CALENDARS_STORAGE_KEY = 'icalViewer_calendars'
+  // localStorage persistence for calendars - dynamic based on username
+  const getCalendarsStorageKey = () => `icalViewer_calendars_${getUserId()}`
 
   const generateLocalCalendarId = () => {
     // Generate a local calendar ID with 'local_' prefix
@@ -45,7 +47,9 @@ export const useAppStore = defineStore('app', () => {
 
   const saveCalendarsToLocalStorage = () => {
     try {
-      localStorage.setItem(CALENDARS_STORAGE_KEY, JSON.stringify(calendars.value))
+      const storageKey = getCalendarsStorageKey()
+      localStorage.setItem(storageKey, JSON.stringify(calendars.value))
+      console.log(`Calendars saved to ${storageKey}`)
     } catch (error) {
       console.warn('Failed to save calendars to localStorage:', error)
     }
@@ -53,14 +57,17 @@ export const useAppStore = defineStore('app', () => {
 
   const loadCalendarsFromLocalStorage = () => {
     try {
-      const saved = localStorage.getItem(CALENDARS_STORAGE_KEY)
+      const storageKey = getCalendarsStorageKey()
+      const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed)) {
           calendars.value = parsed
+          console.log(`Calendars loaded from ${storageKey}: ${parsed.length} calendars`)
           return true
         }
       }
+      console.log(`No calendars found in ${storageKey}`)
     } catch (error) {
       console.warn('Failed to load calendars from localStorage:', error)
     }
@@ -73,7 +80,7 @@ export const useAppStore = defineStore('app', () => {
     
     // Try to sync with API in background
     try {
-      const result = await get('/api/calendars')
+      const result = await get(`/api/calendars?username=${getUserId()}`)
       
       if (result.success) {
         // Merge local and server data, preferring server data for conflicts
@@ -109,7 +116,7 @@ export const useAppStore = defineStore('app', () => {
       id: generateLocalCalendarId(),
       name: newCalendar.value.name.trim(),
       url: newCalendar.value.url.trim(),
-      user_id: 'public', // Always public in no-auth system
+      user_id: getUserId(), // Use current username
       created_at: new Date().toISOString(),
       source: 'local' // Mark as locally created
     }
@@ -126,7 +133,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Try to sync with API in background
     try {
-      const result = await post('/api/calendars', {
+      const result = await post(`/api/calendars?username=${getUserId()}`, {
         name: localCalendar.name,
         url: localCalendar.url
       })
@@ -163,7 +170,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Try to delete from server in background
     try {
-      await del(`/api/calendars/${calendarId}`)
+      await del(`/api/calendars/${calendarId}?username=${getUserId()}`)
       // If server deletion succeeds, return success
       return { success: true }
     } catch (error) {

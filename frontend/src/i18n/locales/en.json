@@ -22,6 +22,25 @@
     "select": "Select",
     "deselect": "Deselect"
   },
+  "username": {
+    "placeholder": "Enter your name...",
+    "tooltip": "Set your name to save personal calendars and filters",
+    "invalid": "Username must be 3-20 characters (letters, numbers, - and _ only)",
+    "cleared": "Switched to public mode",
+    "set": "Switched to {username}'s data",
+    "publicMode": "Public Mode",
+    "personalMode": "Personal: {name}",
+    "setName": "Set Name",
+    "switchPublic": "Switch to Public",
+    "switchToPublic": "Switch to public mode (shared data)",
+    "enterName": "Enter Your Name",
+    "edit": "Edit username",
+    "anonymousMode": "Anonymous Mode",
+    "loginToSave": "Login to save your filters",
+    "loginToSaveCalendars": "Login to save calendars",
+    "loginToSaveFilters": "Login to save filters",
+    "logout": "Logout"
+  },
   "navigation": {
     "home": "Home",
     "logout": "Logout",

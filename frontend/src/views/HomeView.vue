@@ -3,6 +3,7 @@
     <AppHeader 
       title="🗓️ iCal Filter & Subscribe"
       subtitle="Easily filter your iCal feeds and create custom subscriptions"
+      page-context="home"
     />
 
     <!-- Add Calendar Form -->

@@ -22,6 +22,25 @@
     "select": "Auswählen",
     "deselect": "Abwählen"
   },
+  "username": {
+    "placeholder": "Namen eingeben...",
+    "tooltip": "Geben Sie Ihren Namen ein, um persönliche Kalender und Filter zu speichern",
+    "invalid": "Benutzername muss 3-20 Zeichen lang sein (nur Buchstaben, Zahlen, - und _)",
+    "cleared": "Zu öffentlichem Modus gewechselt",
+    "set": "Zu {username}'s Daten gewechselt",
+    "publicMode": "Öffentlicher Modus",
+    "personalMode": "Persönlich: {name}",
+    "setName": "Name setzen",
+    "switchPublic": "Zu Öffentlich",
+    "switchToPublic": "Zu öffentlichem Modus wechseln (geteilte Daten)",
+    "enterName": "Geben Sie Ihren Namen ein",
+    "edit": "Benutzername bearbeiten",
+    "anonymousMode": "Anonymer Modus",
+    "loginToSave": "Anmelden, um Filter zu speichern",
+    "loginToSaveCalendars": "Anmelden, um Kalender zu speichern",
+    "loginToSaveFilters": "Anmelden, um Filter zu speichern",
+    "logout": "Abmelden"
+  },
   "navigation": {
     "home": "Startseite",
     "logout": "Abmelden",

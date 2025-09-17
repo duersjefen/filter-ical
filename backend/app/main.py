@@ -76,8 +76,15 @@ def startup_event():
     print("📋 Contract-driven development with OpenAPI compliance")
 
 # Public access - no authentication required
-# All calendars are stored under 'public' user
+# Default user ID for backward compatibility
 PUBLIC_USER_ID = 'public'
+
+# Utility function for dynamic user ID based on username parameter
+def get_user_id(username: Optional[str] = None) -> str:
+    """Get user ID from username parameter, fallback to 'public'"""
+    if username and username.strip():
+        return username.strip()
+    return PUBLIC_USER_ID
 
 # Utility function for error responses
 def create_error_response(detail: str) -> Dict[str, str]:
@@ -90,11 +97,13 @@ def create_error_response(detail: str) -> Dict[str, str]:
 
 @app.get("/api/calendars")
 async def get_calendars(
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
-    """Get public calendars - matches OpenAPI spec exactly"""
+    """Get calendars for user - matches OpenAPI spec exactly"""
+    user_id = get_user_id(username)
     calendars = session.exec(
-        select(Calendar).where(Calendar.user_id == PUBLIC_USER_ID)
+        select(Calendar).where(Calendar.user_id == user_id)
     ).all()
     
     # Transform to OpenAPI response format
@@ -113,11 +122,13 @@ async def get_calendars(
 @app.post("/api/calendars", status_code=201)
 async def create_calendar(
     calendar_data: dict,
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Create new calendar - matches OpenAPI spec exactly"""
     name = calendar_data.get('name', '').strip()
     url = calendar_data.get('url', '').strip()
+    user_id = get_user_id(username)
     
     # Validation
     if not name or len(name) < 3:
@@ -132,7 +143,7 @@ async def create_calendar(
     new_calendar = Calendar(
         name=name,
         url=url,
-        user_id=PUBLIC_USER_ID
+        user_id=user_id
     )
     
     session.add(new_calendar)
@@ -168,13 +179,15 @@ async def create_calendar(
 @app.delete("/api/calendars/{calendar_id}")
 async def delete_calendar(
     calendar_id: str,
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Delete calendar - matches OpenAPI spec exactly"""
+    user_id = get_user_id(username)
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == PUBLIC_USER_ID
+            Calendar.user_id == user_id
         )
     ).first()
     
@@ -193,14 +206,16 @@ async def delete_calendar(
 @app.get("/api/calendar/{calendar_id}/events")
 async def get_calendar_events(
     calendar_id: str,
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Get calendar event types (grouped) - matches OpenAPI spec exactly"""
     # Verify calendar ownership
+    user_id = get_user_id(username)
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == PUBLIC_USER_ID
+            Calendar.user_id == user_id
         )
     ).first()
     
@@ -233,14 +248,16 @@ async def get_calendar_events(
 @app.get("/api/calendar/{calendar_id}/raw-events")
 async def get_calendar_raw_events(
     calendar_id: str,
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Get individual calendar events as flat array - utility endpoint"""
     # Verify calendar ownership
+    user_id = get_user_id(username)
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == PUBLIC_USER_ID
+            Calendar.user_id == user_id
         )
     ).first()
     
@@ -274,11 +291,13 @@ async def get_calendar_raw_events(
 
 @app.get("/api/filtered-calendars")
 async def get_filtered_calendars(
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Get filtered calendars - matches OpenAPI spec exactly"""
+    user_id = get_user_id(username)
     filtered_calendars = session.exec(
-        select(FilteredCalendar).where(FilteredCalendar.user_id == PUBLIC_USER_ID)
+        select(FilteredCalendar).where(FilteredCalendar.user_id == user_id)
     ).all()
     
     # Transform to OpenAPI response format
@@ -305,12 +324,14 @@ async def get_filtered_calendars(
 @app.post("/api/filtered-calendars") 
 async def create_filtered_calendar(
     request_data: dict,
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Create filtered calendar - matches OpenAPI spec exactly"""
     source_calendar_id = request_data.get('source_calendar_id')
     name = request_data.get('name', '').strip()
     filter_config = request_data.get('filter_config', {})
+    user_id = get_user_id(username)
     
     # Validation
     if not name or len(name) < 3:
@@ -323,7 +344,7 @@ async def create_filtered_calendar(
     source_calendar = session.exec(
         select(Calendar).where(
             Calendar.id == source_calendar_id,
-            Calendar.user_id == PUBLIC_USER_ID
+            Calendar.user_id == user_id
         )
     ).first()
     
@@ -334,7 +355,7 @@ async def create_filtered_calendar(
     filtered_calendar = FilteredCalendar(
         name=name,
         source_calendar_id=source_calendar_id,
-        user_id=PUBLIC_USER_ID,
+        user_id=user_id,
         include_events=serialize_json_field(filter_config.get('include_event_types', [])),
         exclude_events=serialize_json_field(filter_config.get('exclude_event_types', [])),
         filter_mode=FilterMode(filter_config.get('filter_mode', 'include'))

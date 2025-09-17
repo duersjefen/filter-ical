@@ -5,6 +5,83 @@
       <LanguageToggle />
     </div>
 
+    <!-- Username/Login Status - Top Center -->
+    <div class="absolute top-4 left-1/2 transform -translate-x-1/2 sm:top-6">
+      <!-- Editing Mode -->
+      <div v-if="isEditing" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
+        <div class="flex items-center gap-2">
+          <input
+            ref="usernameInputRef"
+            v-model="usernameInput"
+            @keyup.enter="saveUsername"
+            @keyup.escape="cancelEdit"
+            @blur="saveUsername"
+            type="text"
+            class="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-sm w-32 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
+            :placeholder="$t('username.placeholder')"
+            maxlength="20"
+          />
+          <button 
+            @click="saveUsername"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors duration-200"
+            :title="$t('common.save')"
+          >
+            ✓
+          </button>
+          <button 
+            @click="cancelEdit"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors duration-200"
+            :title="$t('common.cancel')"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+      
+      <!-- Anonymous Mode -->
+      <div 
+        v-else-if="!hasCustomUsername()" 
+        @click="startEdit"
+        class="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg shadow-lg border border-white/20 px-4 py-2.5 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
+      >
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse"></div>
+          <span class="text-white text-sm font-medium group-hover:text-white/90">
+            {{ contextMessage }}
+          </span>
+          <svg class="w-4 h-4 text-white/70 group-hover:text-white/90 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Personal Mode -->
+      <div v-else class="bg-white/10 backdrop-blur-sm rounded-lg shadow-lg border border-white/20 px-4 py-2.5">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-2.5 bg-green-400 rounded-full"></div>
+          <span class="text-white text-sm font-medium">
+            {{ username }}
+          </span>
+          <button 
+            @click="startEdit"
+            class="text-white/70 hover:text-white transition-colors duration-300 p-1 hover:bg-white/10 rounded"
+            :title="$t('username.edit')"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+          </button>
+          <button 
+            @click="clearUsername"
+            class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-xs font-medium transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+            :title="$t('username.logout')"
+          >
+            {{ $t('username.logout') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Dark Mode Toggle - Top Right Corner -->
     <div class="absolute top-4 right-4 sm:top-6 sm:right-6">
       <!-- Dark Mode Toggle -->
@@ -68,12 +145,71 @@
 </template>
 
 <script setup>
+import { ref, computed, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useDarkMode } from '../../composables/useDarkMode'
+import { useUsername } from '../../composables/useUsername'
 import LanguageToggle from '../LanguageToggle.vue'
 
+const { t } = useI18n()
 const { isDarkMode, toggleDarkMode } = useDarkMode()
+const { username, setUsername, clearUsername, hasCustomUsername, isValidUsername } = useUsername()
 
-defineProps({
+// Simple editing state
+const isEditing = ref(false)
+const usernameInput = ref('')
+const usernameInputRef = ref(null)
+
+// Context-aware message for anonymous mode
+const contextMessage = computed(() => {
+  if (props.pageContext === 'calendar') {
+    return t('username.loginToSaveFilters')
+  } else {
+    return t('username.loginToSaveCalendars')
+  }
+})
+
+// Current display name - simple and clear
+const currentDisplayName = computed(() => {
+  if (hasCustomUsername()) {
+    return username.value
+  }
+  return 'Public'
+})
+
+// Start editing
+const startEdit = async () => {
+  isEditing.value = true
+  usernameInput.value = username.value
+  await nextTick()
+  if (usernameInputRef.value) {
+    usernameInputRef.value.focus()
+    usernameInputRef.value.select()
+  }
+}
+
+// Save username
+const saveUsername = () => {
+  const trimmed = usernameInput.value?.trim()
+  
+  if (trimmed && isValidUsername(trimmed)) {
+    setUsername(trimmed)
+    console.log(`Username set to: ${trimmed}`)
+  } else if (!trimmed) {
+    clearUsername()
+    console.log('Username cleared - switched to public mode')
+  }
+  
+  isEditing.value = false
+}
+
+// Cancel editing
+const cancelEdit = () => {
+  isEditing.value = false
+  usernameInput.value = username.value
+}
+
+const props = defineProps({
   title: {
     type: String,
     required: true
@@ -97,6 +233,10 @@ defineProps({
   backButtonText: {
     type: String,
     default: '← Back'
+  },
+  pageContext: {
+    type: String,
+    default: 'home' // 'home' or 'calendar'
   }
 })
 
