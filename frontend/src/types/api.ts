@@ -162,12 +162,18 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get calendar event types
-         * @description Retrieve event types grouped by identical titles, showing only future events
+         * Get calendar events
+         * @description Retrieve individual events, optionally filtered by event type. If no event_type parameter is provided, returns all events grouped by type.
          */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /**
+                     * @description Optional filter to return only events of this type
+                     * @example Volleyball
+                     */
+                    event_type?: string;
+                };
                 header?: never;
                 path: {
                     /**
@@ -180,7 +186,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Successfully retrieved event types */
+                /** @description Successfully retrieved events (grouped by type if no filter, or individual events if event_type filter provided) */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -235,7 +241,7 @@ export interface paths {
                                     /** @description Array of full event objects in this event type */
                                     events: components["schemas"]["Event"][];
                                 };
-                            };
+                            } | components["schemas"]["Event"][];
                         };
                     };
                 };
@@ -277,7 +283,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Successfully retrieved unique events */
+                /** @description Successfully retrieved individual events */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -317,6 +323,283 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calendar/{calendar_id}/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get calendar events organized by groups
+         * @description Returns events grouped by admin-configured groups, or empty if no groups exist for this calendar's domain
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description Unique calendar identifier
+                     * @example cal_001
+                     */
+                    calendar_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successfully retrieved grouped events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "has_groups": true,
+                         *       "groups": {
+                         *         "grp_sports": {
+                         *           "id": "grp_sports",
+                         *           "name": "Sports",
+                         *           "description": "All sports activities",
+                         *           "color": "#3B82F6",
+                         *           "parent_group_id": null,
+                         *           "created_at": "2024-01-15T10:30:00Z",
+                         *           "children": [
+                         *             {
+                         *               "id": "grp_football",
+                         *               "name": "Football",
+                         *               "description": "Football training and matches",
+                         *               "color": "#10B981",
+                         *               "parent_group_id": "grp_sports",
+                         *               "created_at": "2024-01-15T10:35:00Z",
+                         *               "children": [],
+                         *               "events": [
+                         *                 {
+                         *                   "id": "evt_001",
+                         *                   "title": "Football Training",
+                         *                   "start": "2025-09-20T18:00:00Z",
+                         *                   "end": "2025-09-20T20:00:00Z",
+                         *                   "event_type": "Football",
+                         *                   "description": "Weekly football training",
+                         *                   "location": "Sports Field"
+                         *                 }
+                         *               ]
+                         *             },
+                         *             {
+                         *               "id": "grp_volleyball",
+                         *               "name": "Volleyball",
+                         *               "description": "Volleyball activities",
+                         *               "color": "#F59E0B",
+                         *               "parent_group_id": "grp_sports",
+                         *               "created_at": "2024-01-15T10:40:00Z",
+                         *               "children": [],
+                         *               "events": [
+                         *                 {
+                         *                   "id": "evt_002",
+                         *                   "title": "Volleyball Match",
+                         *                   "start": "2025-09-21T19:00:00Z",
+                         *                   "end": "2025-09-21T21:00:00Z",
+                         *                   "event_type": "Volleyball",
+                         *                   "description": "Weekly volleyball match",
+                         *                   "location": "Gym Hall"
+                         *                 }
+                         *               ]
+                         *             }
+                         *           ],
+                         *           "events": [
+                         *             {
+                         *               "id": "evt_003",
+                         *               "title": "General Sports Meeting",
+                         *               "start": "2025-09-22T17:00:00Z",
+                         *               "end": "2025-09-22T18:00:00Z",
+                         *               "event_type": "Meeting",
+                         *               "description": "Monthly sports committee meeting",
+                         *               "location": "Club House"
+                         *             }
+                         *           ]
+                         *         }
+                         *       },
+                         *       "ungrouped_events": [
+                         *         {
+                         *           "id": "evt_003",
+                         *           "title": "Random Meeting",
+                         *           "start": "2025-09-22T14:00:00Z",
+                         *           "end": "2025-09-22T15:00:00Z",
+                         *           "event_type": "Meeting",
+                         *           "description": "Unassigned meeting",
+                         *           "location": "TBD"
+                         *         }
+                         *       ]
+                         *     } */
+                        "application/json": {
+                            /**
+                             * @description Whether this calendar's domain has configured groups
+                             * @example true
+                             */
+                            has_groups: boolean;
+                            /** @description Root-level groups organized by group ID, with nested children */
+                            groups: {
+                                [key: string]: components["schemas"]["Group"];
+                            };
+                            /** @description Events that are not assigned to any group */
+                            ungrouped_events: components["schemas"]["Event"][];
+                        };
+                    };
+                };
+                404: components["responses"]["NotFound"];
+                500: components["responses"]["InternalError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/events/{event_id}/groups/{group_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign event to group
+         * @description Manually assign an event to a specific group for categorization
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description Unique event identifier
+                     * @example evt_001
+                     */
+                    event_id: string;
+                    /**
+                     * @description Unique group identifier
+                     * @example grp_exter01
+                     */
+                    group_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Event successfully assigned to group (or already assigned) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "message": "Event successfully assigned to group",
+                         *       "assignment_id": "evg_12345678",
+                         *       "event_title": "Fußball Training",
+                         *       "group_name": "Fußball"
+                         *     } */
+                        "application/json": {
+                            /** @description Success message */
+                            message?: string;
+                            /** @description Unique assignment identifier */
+                            assignment_id?: string;
+                            /** @description Title of the assigned event */
+                            event_title?: string;
+                            /** @description Name of the group */
+                            group_name?: string;
+                        };
+                    };
+                };
+                /** @description Event or group not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "detail": "Event not found"
+                         *     } */
+                        "application/json": {
+                            detail?: string;
+                        };
+                    };
+                };
+                500: components["responses"]["InternalError"];
+            };
+        };
+        /**
+         * Remove event from group
+         * @description Remove an event from a specific group
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description Unique event identifier
+                     * @example evt_001
+                     */
+                    event_id: string;
+                    /**
+                     * @description Unique group identifier
+                     * @example grp_exter01
+                     */
+                    group_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Event successfully removed from group */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "message": "Event successfully removed from group",
+                         *       "event_title": "Fußball Training",
+                         *       "group_name": "Fußball"
+                         *     } */
+                        "application/json": {
+                            /** @description Success message */
+                            message?: string;
+                            /** @description Title of the removed event */
+                            event_title?: string;
+                            /** @description Name of the group */
+                            group_name?: string;
+                        };
+                    };
+                };
+                /** @description Assignment not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "detail": "Event is not assigned to this group"
+                         *     } */
+                        "application/json": {
+                            detail?: string;
+                        };
+                    };
+                };
+                500: components["responses"]["InternalError"];
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -598,7 +881,7 @@ export interface paths {
         put?: never;
         /**
          * Generate filtered iCal content
-         * @description Create filtered iCal content from a calendar based on event type filters
+         * @description Create filtered iCal content from a calendar based on group and event filters
          */
         post: {
             parameters: {
@@ -617,15 +900,31 @@ export interface paths {
                 content: {
                     "application/json": {
                         /**
-                         * @description Event types to include or exclude
+                         * @description Group IDs to include or exclude
+                         * @example [
+                         *       "grp_portal",
+                         *       "grp_meetings"
+                         *     ]
+                         */
+                        selected_groups?: string[];
+                        /**
+                         * @description Individual event IDs to include or exclude
+                         * @example [
+                         *       "evt_001",
+                         *       "evt_002"
+                         *     ]
+                         */
+                        selected_events?: string[];
+                        /**
+                         * @description Event types to include or exclude (for backward compatibility)
                          * @example [
                          *       "Work",
                          *       "Meeting"
                          *     ]
                          */
-                        selected_event_types: string[];
+                        selected_event_types?: string[];
                         /**
-                         * @description Whether to include or exclude the selected event types
+                         * @description Whether to include or exclude the selected items
                          * @example include
                          * @enum {string}
                          */
@@ -648,6 +947,111 @@ export interface paths {
                 500: components["responses"]["InternalError"];
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/domains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get available domains
+         * @description Retrieve list of all configured domains with their calendar configurations
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successfully retrieved available domains */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "domains": [
+                         *         {
+                         *           "id": "exter",
+                         *           "name": "Exter Portal",
+                         *           "calendar_name": "Portal Calendar",
+                         *           "calendar_url": "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+                         *         }
+                         *       ]
+                         *     } */
+                        "application/json": {
+                            domains: components["schemas"]["Domain"][];
+                        };
+                    };
+                };
+                500: components["responses"]["InternalError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/domains/{domain_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get domain configuration
+         * @description Retrieve configuration for a specific domain including its default calendar
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description Unique domain identifier
+                     * @example exter
+                     */
+                    domain_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successfully retrieved domain configuration */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /** @example {
+                         *       "id": "exter",
+                         *       "name": "Exter Portal",
+                         *       "calendar_name": "Portal Calendar",
+                         *       "calendar_url": "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+                         *     } */
+                        "application/json": components["schemas"]["Domain"];
+                    };
+                };
+                404: components["responses"]["NotFound"];
+                500: components["responses"]["InternalError"];
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -837,6 +1241,80 @@ export interface components {
              * @example 2024-01-18T15:30:00Z
              */
             updated_at: string;
+        };
+        Group: {
+            /**
+             * @description Unique group identifier
+             * @example grp_portal
+             */
+            id: string;
+            /**
+             * @description Group display name
+             * @example Portal Events
+             */
+            name: string;
+            /**
+             * @description Optional group description
+             * @example Events related to portal activities
+             */
+            description?: string;
+            /**
+             * @description UI color for the group
+             * @example #3B82F6
+             */
+            color: string;
+            /**
+             * @description Parent group ID for nested structure (null for root groups)
+             * @example grp_department
+             */
+            parent_group_id?: string | null;
+            /** @description Child groups (recursive nested structure) */
+            children?: Record<string, never>[];
+            /** @description Events assigned to this group (legacy format for compatibility) */
+            events: components["schemas"]["Event"][];
+            /** @description Events organized by event type for multi-level selection */
+            event_types?: {
+                [key: string]: components["schemas"]["EventType"];
+            };
+            /**
+             * Format: date-time
+             * @description Group creation timestamp
+             * @example 2024-01-15T10:30:00Z
+             */
+            created_at?: string;
+        };
+        /** @description Event type with grouped individual events for multi-level selection */
+        EventType: {
+            /**
+             * @description Event type name (recurring event title)
+             * @example Volleyball
+             */
+            name: string;
+            /**
+             * @description Number of events of this type
+             * @example 24
+             */
+            count: number;
+            /** @description Individual events of this type */
+            events: components["schemas"]["Event"][];
+        };
+        Domain: {
+            /**
+             * @description Unique domain identifier
+             * @example exter
+             */
+            id: string;
+            /**
+             * @description Name of the calendar for this domain
+             * @example Portal Calendar
+             */
+            name: string;
+            /**
+             * Format: uri
+             * @description iCal URL for the domain's calendar
+             * @example https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics
+             */
+            calendar_url: string;
         };
         Error: {
             /**

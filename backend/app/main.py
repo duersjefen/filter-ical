@@ -82,11 +82,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Runtime schema validation middleware (development/testing only)
-enable_validation = os.getenv('ENABLE_SCHEMA_VALIDATION', 'false').lower() == 'true'
+# Runtime schema validation middleware (enabled by default, disabled in production)
+is_production = os.getenv('PRODUCTION', 'false').lower() == 'true'
+enable_validation = not is_production and os.getenv('DISABLE_SCHEMA_VALIDATION', 'false').lower() != 'true'
+
 if enable_validation:
     validation_middleware = create_validation_middleware(enable_validation=True)
     app.add_middleware(validation_middleware)
+    print("🔍 Schema validation middleware enabled")
+else:
+    print("⚠️ Schema validation middleware disabled (production mode)")
 
 # Create database tables and start background tasks on startup
 @app.on_event("startup")
@@ -402,7 +407,7 @@ async def get_calendar_events(
         select(Event).where(Event.calendar_id == calendar_id)
     ).all()
     
-    # Convert database events to dict format for pure function
+    # Convert database events to dict format for pure function (keep datetime objects)
     events_data = []
     for event in events:
         events_data.append({
@@ -432,6 +437,7 @@ async def get_calendar_events(
     # Use pure function to group events by recurring types (identical titles)
     grouped_events = events_to_recurring_types(deduplicated_events)
     
+    # Return with proper OpenAPI contract structure
     return {"events": grouped_events}
 
 @app.get("/api/calendar/{calendar_id}/raw-events")
@@ -564,8 +570,8 @@ async def get_calendar_groups(
         {
             'id': event.id,
             'title': event.title,
-            'start': event.start.isoformat() if hasattr(event.start, 'isoformat') else event.start,
-            'end': event.end.isoformat() if hasattr(event.end, 'isoformat') else event.end,
+            'start': event.start.isoformat() + "Z" if hasattr(event.start, 'isoformat') else event.start,
+            'end': event.end.isoformat() + "Z" if hasattr(event.end, 'isoformat') else event.end,
             'event_type': event.category,
             'description': event.description,
             'location': event.location
@@ -578,6 +584,10 @@ async def get_calendar_groups(
         "groups": nested_groups,
         "ungrouped_events": ungrouped_events_formatted
     }
+
+
+# Duplicate route removed - this conflicted with the proper grouped events endpoint
+# Individual event functionality is available via /api/calendar/{calendar_id}/raw-events
 
 
 # Manual event assignment endpoints removed - groups now contain event types, not individual events

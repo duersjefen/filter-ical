@@ -19,13 +19,12 @@
     <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
       <!-- Show Groups Interface if Domain has Groups -->
       <EventGroupsSection
-        v-if="hasGroups"
-        :has-groups="hasGroups"
-        :groups="groups"
-        :ungrouped-event-types="ungroupedEventTypes"
-        :selected-groups="selectedGroups"
+        v-if="appStore.hasGroups"
+        :has-groups="appStore.hasGroups"
+        :groups="appStore.groups"
+        :ungrouped-event-types="appStore.ungroupedEventTypes"
         :filter-mode="filterMode"
-        @toggle-group="toggleGroup"
+        @selection-changed="handleSelectionChanged"
         @switch-filter-mode="switchFilterMode"
       />
       
@@ -136,7 +135,7 @@ import {
   EventTypeCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
-import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
+import EventGroupsSection from '../components/calendar/EventGroupsSectionNew.vue'
 import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 
 const appStore = useAppStore()
@@ -151,16 +150,8 @@ const events = ref([])
 const eventTypes = ref({})
 const selectedCalendar = ref(null)
 
-// Groups data - from store
-const { 
-  groups, 
-  hasGroups, 
-  ungroupedEventTypes,
-  selectedGroups,
-  loadCalendarGroups,
-  toggleGroup,
-  generateIcal
-} = appStore
+// Groups data - from store (keep reactive by not destructuring)
+// Note: Vue 3 + Pinia - destructuring breaks reactivity, use store.property instead
 
 // Define props first
 const props = defineProps({
@@ -301,17 +292,16 @@ const loadCalendarData = async (calendarId) => {
 
       // Load groups data
       console.log('🔄 Loading groups data...')
-      await loadCalendarGroups(calendarId)
+      await appStore.loadCalendarGroups(calendarId)
       console.log('✅ Groups loaded:', {
-        hasGroups: hasGroups.value,
-        groupsCount: groups.value ? Object.keys(groups.value).length : 0
+        hasGroups: appStore.hasGroups,
+        groupsCount: appStore.groups ? Object.keys(appStore.groups).length : 0
       })
       
       // Debug: Force re-render check
       console.log('🐛 DEBUG: hasGroups reactivity check:', {
-        hasGroupsRef: hasGroups,
-        hasGroupsValue: hasGroups.value,
-        hasGroupsType: typeof hasGroups.value
+        hasGroupsValue: appStore.hasGroups,
+        hasGroupsType: typeof appStore.hasGroups
       })
     } else {
       console.error('❌ API call failed:', eventsResult)
@@ -353,7 +343,7 @@ const navigateToCalendar = () => {
 const handleAssignEventToGroup = async ({ eventId, groupId }) => {
   console.log(`🔄 Assigning event ${eventId} to group ${groupId}`)
   
-  const result = await assignEventToGroup(eventId, groupId)
+  const result = await appStore.assignEventToGroup(eventId, groupId)
   
   if (result.success) {
     console.log('✅ Event successfully assigned to group')
@@ -379,6 +369,99 @@ const loadFilterIntoPage = (filterData) => {
   })
   
   console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.eventTypes.length} event types in ${filterData.mode} mode`)
+}
+
+// Handle selection changes from the new multi-level selection system
+const handleSelectionChanged = (selection) => {
+  console.log('📊 Selection changed:', selection)
+  
+  // Resolve hierarchical group selections into a flat list of event types
+  const resolvedEventTypes = resolveGroupSelectionsToEventTypes(selection)
+  console.log('📋 Resolved event types:', resolvedEventTypes)
+  
+  // Update the selectedEventTypes to integrate with existing filter system
+  selectedEventTypes.value = resolvedEventTypes
+}
+
+// Helper function to resolve hierarchical group selections into event types
+const resolveGroupSelectionsToEventTypes = (selection) => {
+  const eventTypes = new Set()
+  
+  // Get all event types from explicit event type selections
+  selection.eventTypes.forEach(eventType => {
+    eventTypes.add(eventType)
+  })
+  
+  // Get all event types from selected groups (including nested groups)
+  if (appStore.groups) {
+    selection.groups.forEach(groupId => {
+      const eventTypesFromGroup = getEventTypesFromGroup(groupId, appStore.groups)
+      eventTypesFromGroup.forEach(eventType => {
+        eventTypes.add(eventType)
+      })
+    })
+  }
+  
+  // Add individual events (these are already event-specific, not type-specific)
+  // Individual events will be handled differently by the filter system
+  
+  return Array.from(eventTypes)
+}
+
+// Recursive helper to extract all event types from a group and its children
+const getEventTypesFromGroup = (groupId, groups) => {
+  const eventTypes = new Set()
+  
+  // Find the group
+  const group = findGroupById(groupId, groups)
+  if (!group) return eventTypes
+  
+  // Add direct event types from this group
+  if (group.event_types) {
+    Object.keys(group.event_types).forEach(eventType => {
+      eventTypes.add(eventType)
+    })
+  }
+  
+  // Recursively add event types from children
+  if (group.children) {
+    group.children.forEach(child => {
+      const childEventTypes = getEventTypesFromGroup(child.id, groups)
+      childEventTypes.forEach(eventType => {
+        eventTypes.add(eventType)
+      })
+    })
+  }
+  
+  return eventTypes
+}
+
+// Helper to find a group by ID in the hierarchical structure
+const findGroupById = (groupId, groups) => {
+  // Search in top-level groups
+  for (const group of Object.values(groups)) {
+    if (group.id === groupId) return group
+    
+    // Search in children recursively
+    const found = findGroupInChildren(group.children || [], groupId)
+    if (found) return found
+  }
+  
+  return null
+}
+
+// Recursive helper for finding groups in children
+const findGroupInChildren = (children, groupId) => {
+  for (const child of children) {
+    if (child.id === groupId) return child
+    
+    if (child.children) {
+      const found = findGroupInChildren(child.children, groupId)
+      if (found) return found
+    }
+  }
+  
+  return null
 }
 
 onMounted(async () => {

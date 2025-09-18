@@ -1,6 +1,7 @@
 /**
- * Type-safe API client generated from OpenAPI specification
- * Provides compile-time type safety for all API endpoints
+ * Contract-aware API client with TypeScript validation
+ * Provides compile-time type safety AND runtime contract validation
+ * Uses generated OpenAPI types to ensure frontend-backend contract compliance
  */
 
 import axios, { AxiosResponse } from 'axios'
@@ -15,6 +16,86 @@ type FilterConfig = components['schemas']['FilterConfig']
 type CalendarPreferences = components['schemas']['CalendarPreferences']
 type SavedFilter = components['schemas']['SavedFilter']
 type ApiError = components['schemas']['Error']
+
+// Contract validation error
+class ContractValidationError extends Error {
+  constructor(
+    message: string,
+    public endpoint: string,
+    public expectedType: string,
+    public actualData: unknown
+  ) {
+    super(`Contract violation at ${endpoint}: ${message}`)
+    this.name = 'ContractValidationError'
+  }
+}
+
+// Runtime contract validation utilities
+class ContractValidator {
+  static validateCalendar(data: unknown): data is Calendar {
+    if (!data || typeof data !== 'object') return false
+    const obj = data as Record<string, unknown>
+    
+    return (
+      typeof obj.id === 'string' &&
+      typeof obj.name === 'string' &&
+      typeof obj.url === 'string' &&
+      typeof obj.user_id === 'string' &&
+      typeof obj.created_at === 'string'
+    )
+  }
+
+  static validateEvent(data: unknown): data is Event {
+    if (!data || typeof data !== 'object') return false
+    const obj = data as Record<string, unknown>
+    
+    return (
+      typeof obj.id === 'string' &&
+      typeof obj.title === 'string' &&
+      typeof obj.start === 'string' &&
+      typeof obj.end === 'string' &&
+      typeof obj.event_type === 'string' &&
+      // ISO 8601 date format validation
+      obj.start.endsWith('Z') &&
+      obj.end.endsWith('Z') &&
+      (obj.description === undefined || typeof obj.description === 'string') &&
+      (obj.location === undefined || obj.location === null || typeof obj.location === 'string')
+    )
+  }
+
+  static validateEventsResponse(data: unknown): data is GetEventsResponse {
+    if (!data || typeof data !== 'object') return false
+    const obj = data as Record<string, unknown>
+    
+    if (!obj.events || typeof obj.events !== 'object') return false
+    const events = obj.events as Record<string, unknown>
+    
+    // Validate grouped events structure
+    for (const [eventType, eventData] of Object.entries(events)) {
+      if (!eventData || typeof eventData !== 'object') return false
+      const group = eventData as Record<string, unknown>
+      
+      if (typeof group.count !== 'number' || !Array.isArray(group.events)) return false
+      
+      // Validate each event in the group
+      for (const event of group.events) {
+        if (!ContractValidator.validateEvent(event)) return false
+      }
+    }
+    
+    return true
+  }
+
+  static validateCalendarsResponse(data: unknown): data is GetCalendarsResponse {
+    if (!data || typeof data !== 'object') return false
+    const obj = data as Record<string, unknown>
+    
+    return (
+      Array.isArray(obj.calendars) && 
+      obj.calendars.every(cal => ContractValidator.validateCalendar(cal))
+    )
+  }
+}
 
 // Extract response types from OpenAPI specification
 type GetCalendarsResponse = ApiPaths['/api/calendars']['get']['responses'][200]['content']['application/json']
@@ -35,11 +116,12 @@ export class TypedApiClient {
     this.userHeaders = userHeaders
   }
 
-  // Helper method to make requests with proper typing
+  // Helper method to make requests with proper typing and contract validation
   private async request<T>(
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     url: string,
-    data?: any
+    data?: any,
+    validator?: (data: unknown) => data is T
   ): Promise<T> {
     try {
       const response: AxiosResponse<T> = await axios({
@@ -51,8 +133,30 @@ export class TypedApiClient {
           ...this.userHeaders
         }
       })
+
+      // Runtime contract validation if validator provided
+      if (validator && !validator(response.data)) {
+        console.error('Contract validation failed:', {
+          endpoint: url,
+          method,
+          expected: 'Contract-compliant response',
+          actual: response.data
+        })
+        
+        throw new ContractValidationError(
+          'Response does not match OpenAPI schema',
+          url,
+          'Expected contract-compliant response',
+          response.data
+        )
+      }
+
       return response.data
     } catch (error) {
+      if (error instanceof ContractValidationError) {
+        throw error
+      }
+      
       if (axios.isAxiosError(error) && error.response) {
         const apiError = error.response.data as ApiError
         throw new Error(apiError.detail || 'API request failed')
@@ -63,11 +167,21 @@ export class TypedApiClient {
 
   // Calendar Management
   async getCalendars(): Promise<GetCalendarsResponse> {
-    return this.request<GetCalendarsResponse>('GET', '/api/calendars')
+    return this.request<GetCalendarsResponse>(
+      'GET', 
+      '/api/calendars',
+      undefined,
+      ContractValidator.validateCalendarsResponse
+    )
   }
 
   async createCalendar(calendar: CreateCalendarRequest): Promise<CreateCalendarResponse> {
-    return this.request<CreateCalendarResponse>('POST', '/api/calendars', calendar)
+    return this.request<CreateCalendarResponse>(
+      'POST', 
+      '/api/calendars', 
+      calendar,
+      ContractValidator.validateCalendar
+    )
   }
 
   async deleteCalendar(calendarId: string): Promise<void> {
@@ -76,7 +190,12 @@ export class TypedApiClient {
 
   // Calendar Data
   async getCalendarEvents(calendarId: string): Promise<GetEventsResponse> {
-    return this.request<GetEventsResponse>('GET', `/api/calendar/${calendarId}/events`)
+    return this.request<GetEventsResponse>(
+      'GET', 
+      `/api/calendar/${calendarId}/events`,
+      undefined,
+      ContractValidator.validateEventsResponse
+    )
   }
 
   async getCalendarRawEvents(calendarId: string): Promise<{ events: Event[] }> {
@@ -165,6 +284,9 @@ export type {
   CreateCalendarRequest,
   CreateFilteredCalendarRequest
 }
+
+// Export validation utilities
+export { ContractValidationError, ContractValidator }
 
 // Default client instance
 export const apiClient = new TypedApiClient()

@@ -34,7 +34,7 @@ def load_domain_calendar_config(domain_id: str) -> Optional[Dict[str, str]]:
         Dict with calendar configuration or None if not found
     """
     try:
-        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        config_path = Path(__file__).parent.parent.parent / "config" / "domains.yaml"
         with open(config_path, 'r') as f:
             domains_config = yaml.safe_load(f)
         
@@ -114,7 +114,7 @@ def detect_domain_from_url(calendar_url: str) -> Optional[str]:
         Domain ID if URL matches a known domain, otherwise None
     """
     try:
-        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        config_path = Path(__file__).parent.parent.parent / "config" / "domains.yaml"
         with open(config_path, 'r') as f:
             domains_config = yaml.safe_load(f)
         

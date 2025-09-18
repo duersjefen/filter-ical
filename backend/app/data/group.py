@@ -57,8 +57,21 @@ def _build_group_data(group: Any, events: List[Any]) -> Dict[str, Any]:
         events: List of events for this group
         
     Returns:
-        Dict matching OpenAPI Group schema
+        Dict matching OpenAPI Group schema with grouped event types
     """
+    # Group events by their event type (category) for multi-level selection
+    event_types = {}
+    for event in events:
+        event_type = event.category
+        if event_type not in event_types:
+            event_types[event_type] = {
+                'name': event_type,
+                'count': 0,
+                'events': []
+            }
+        event_types[event_type]['count'] += 1
+        event_types[event_type]['events'].append(_transform_event_for_group_response(event))
+    
     return {
         'id': group.id,
         'name': group.name,
@@ -67,7 +80,8 @@ def _build_group_data(group: Any, events: List[Any]) -> Dict[str, Any]:
         'parent_group_id': group.parent_group_id,
         'created_at': group.created_at.isoformat() if isinstance(group.created_at, datetime) else group.created_at,
         'children': [],  # Will be populated by recursive function
-        'events': [_transform_event_for_group_response(event) for event in events]
+        'events': [_transform_event_for_group_response(event) for event in events],  # Keep original for compatibility
+        'event_types': event_types  # New: organized by event type for selection
     }
 
 
@@ -124,8 +138,8 @@ def _transform_event_for_group_response(event: Any) -> Dict[str, Any]:
     return {
         'id': event.id,
         'title': event.title,
-        'start': event.start.isoformat() if isinstance(event.start, datetime) else event.start,
-        'end': event.end.isoformat() if isinstance(event.end, datetime) else event.end,
+        'start': event.start.isoformat() + "Z" if isinstance(event.start, datetime) else event.start,
+        'end': event.end.isoformat() + "Z" if isinstance(event.end, datetime) else event.end,
         'event_type': event.category,  # Maps to category field in database
         'description': event.description,
         'location': event.location

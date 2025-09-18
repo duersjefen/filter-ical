@@ -21,7 +21,7 @@ def ensure_domain_calendars_exist():
     print("🔍 Checking domain calendar configuration...")
     
     try:
-        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        config_path = Path(__file__).parent.parent.parent / "config" / "domains.yaml"
         if not config_path.exists():
             print("⚠️  No domains.yaml config found")
             return

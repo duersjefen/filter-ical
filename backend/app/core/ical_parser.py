@@ -12,6 +12,7 @@ import httpx
 import uuid
 
 
+
 def validate_ical_url(url: str) -> tuple[bool, Optional[str]]:
     """
     Pure function: Validate iCal URL format
@@ -101,7 +102,8 @@ def extract_event_data(component: icalendar.Event, calendar_id: str) -> Optional
         description = str(component.get('DESCRIPTION', '')) if component.get('DESCRIPTION') else None
         location = str(component.get('LOCATION', '')) if component.get('LOCATION') else None
         
-        # Extract category (use first category or summary as fallback)
+        # Extract category - use event title as the event type for group mapping
+        # The recurring event names themselves ARE the event types
         categories = component.get('CATEGORIES')
         if categories:
             # Handle icalendar vCategory objects
@@ -109,9 +111,14 @@ def extract_event_data(component: icalendar.Event, calendar_id: str) -> Optional
                 category = categories.to_ical().decode('utf-8').split(',')[0].strip()
             else:
                 category = str(categories).split(',')[0].strip()
+            
+            # For domain calendars: if category is generic "Exter", use event title as event type
+            # This makes recurring event names the actual event types for group mapping
+            if category.lower() in ['exter', 'domain'] and title:
+                category = title.strip()
         else:
-            # Use full event title as category fallback (for proper filtering/grouping)
-            category = title if title else 'Event'
+            # Use event title as category - recurring event names are the event types
+            category = title.strip() if title else 'Event'
         
         return {
             'id': f"evt_{uuid.uuid4().hex[:8]}",
@@ -254,7 +261,15 @@ def events_to_recurring_types(events: List[Dict[str, Any]], future_only: bool = 
             }
             
         recurring_types[title]['count'] += 1
-        recurring_types[title]['events'].append(event)  # Store full event object, not just ID
+        
+        # Format event for API response with proper ISO dates
+        formatted_event = dict(event)
+        if 'start' in formatted_event and hasattr(formatted_event['start'], 'isoformat'):
+            formatted_event['start'] = formatted_event['start'].isoformat() + 'Z'
+        if 'end' in formatted_event and hasattr(formatted_event['end'], 'isoformat'):
+            formatted_event['end'] = formatted_event['end'].isoformat() + 'Z'
+            
+        recurring_types[title]['events'].append(formatted_event)
     
     return recurring_types
 

@@ -80,9 +80,20 @@ export default {
     // Find or create calendar for domain
     const findOrCreateDomainCalendar = async (domainConfig) => {
       try {
-        // First, try to find existing calendar with this URL
+        // First, try to find the domain calendar with proper ID format
+        const expectedDomainCalendarId = `cal_domain_${props.domain}`
         const calendarsResult = await get('/api/calendars')
         if (calendarsResult.success) {
+          // Look for domain calendar first (preferred)
+          const domainCalendar = calendarsResult.data.calendars.find(
+            cal => cal.id === expectedDomainCalendarId
+          )
+          
+          if (domainCalendar) {
+            return domainCalendar.id
+          }
+          
+          // Fallback: look for any calendar with this URL
           const existingCalendar = calendarsResult.data.calendars.find(
             cal => cal.url === domainConfig.calendar_url
           )

@@ -27,7 +27,7 @@
       <!-- Groups Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div
-          v-for="group in groups"
+          v-for="group in Object.values(groups || {})"
           :key="group.id"
           class="border-2 rounded-lg transition-all duration-200 cursor-pointer"
           :class="selectedGroups.has(group.id)
@@ -45,7 +45,7 @@
             </div>
             <div class="flex items-center justify-between">
               <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                {{ group.event_types ? group.event_types.length : 0 }} event types
+                {{ getTotalEventCount(group) }} events
               </span>
               <div
                 class="w-5 h-5 rounded border-2 flex items-center justify-center"
@@ -61,7 +61,7 @@
           <!-- Event Types List (expandable) -->
           <div v-if="expandedGroups.has(group.id)" class="border-t border-gray-200 dark:border-gray-600 p-4">
             <div
-              v-for="eventType in group.event_types"
+              v-for="eventType in getGroupEventTypes(group)"
               :key="eventType"
               class="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-700 mb-1"
             >
@@ -73,7 +73,7 @@
           </div>
 
           <!-- Expand/Collapse Button -->
-          <div v-if="group.event_types && group.event_types.length > 0" class="border-t border-gray-200 dark:border-gray-600 p-2">
+          <div v-if="getGroupEventTypes(group).length > 0" class="border-t border-gray-200 dark:border-gray-600 p-2">
             <button
               @click.stop="toggleGroupExpansion(group.id)"
               class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
@@ -147,6 +147,49 @@ const toggleGroupExpansion = (groupId) => {
     newExpanded.add(groupId)
   }
   expandedGroups.value = newExpanded
+}
+
+// Calculate total event count for a group (including children)
+const getTotalEventCount = (group) => {
+  if (!group) return 0
+  
+  // Count events in this group
+  let totalEvents = (group.events || []).length
+  
+  // Count events in all children recursively
+  if (group.children && Array.isArray(group.children)) {
+    totalEvents += group.children.reduce((sum, child) => {
+      return sum + getTotalEventCount(child)
+    }, 0)
+  }
+  
+  return totalEvents
+}
+
+// Extract unique event types from a group and its children
+const getGroupEventTypes = (group) => {
+  if (!group) return []
+  
+  const eventTypes = new Set()
+  
+  // Add event types from this group's events
+  if (group.events && Array.isArray(group.events)) {
+    group.events.forEach(event => {
+      if (event.event_type) {
+        eventTypes.add(event.event_type)
+      }
+    })
+  }
+  
+  // Add event types from children recursively
+  if (group.children && Array.isArray(group.children)) {
+    group.children.forEach(child => {
+      const childEventTypes = getGroupEventTypes(child)
+      childEventTypes.forEach(type => eventTypes.add(type))
+    })
+  }
+  
+  return Array.from(eventTypes)
 }
 
 // Note: Manual event assignment removed - groups now contain event types, not individual events

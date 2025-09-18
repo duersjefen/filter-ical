@@ -172,7 +172,7 @@ class BackgroundTaskManager:
             # Record successful fetch
             self.calendar_fetch_circuit_breaker.on_success()
             
-            logger.info(f"✅ Calendar {calendar.id} updated, {len(filtered_calendars)} filters marked for regeneration")
+            logger.info(f"✅ Calendar {calendar.id} updated successfully")
             return True
             
         except Exception as e:

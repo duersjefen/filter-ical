@@ -138,8 +138,8 @@ paths:
 
   /api/calendar/{calendar_id}/events:
     get:
-      summary: Get calendar event types
-      description: Retrieve event types grouped by identical titles, showing only future events
+      summary: Get calendar events
+      description: Retrieve individual events, optionally filtered by event type. If no event_type parameter is provided, returns all events grouped by type.
       tags:
         - Calendar Data
       parameters:
@@ -150,9 +150,16 @@ paths:
             type: string
           description: Unique calendar identifier
           example: "cal_001"
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional filter to return only events of this type
+          example: "Volleyball"
       responses:
         '200':
-          description: Successfully retrieved event types
+          description: Successfully retrieved events (grouped by type if no filter, or individual events if event_type filter provided)
           content:
             application/json:
               schema:
@@ -161,22 +168,28 @@ paths:
                   - events
                 properties:
                   events:
-                    type: object
-                    additionalProperties:
-                      type: object
-                      required:
-                        - count
-                        - events
-                      properties:
-                        count:
-                          type: integer
-                          minimum: 0
-                          description: Number of future event instances in this event type
-                        events:
-                          type: array
-                          items:
-                            $ref: '#/components/schemas/Event'
-                          description: Array of full event objects in this event type
+                    oneOf:
+                      - type: object
+                        additionalProperties:
+                          type: object
+                          required:
+                            - count
+                            - events
+                          properties:
+                            count:
+                              type: integer
+                              minimum: 0
+                              description: Number of future event instances in this event type
+                            events:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/Event'
+                              description: Array of full event objects in this event type
+                        description: Events grouped by type (when no event_type filter)
+                      - type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                        description: Individual events list (when event_type filter is provided)
               example:
                 events:
                   "Weekly Team Meeting":
@@ -1035,12 +1048,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Event'
-          description: Events assigned to this group
+          description: Events assigned to this group (legacy format for compatibility)
+        event_types:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EventType'
+          description: Events organized by event type for multi-level selection
         created_at:
           type: string
           format: date-time
           description: Group creation timestamp
           example: "2024-01-15T10:30:00Z"
+
+    EventType:
+      type: object
+      required:
+        - name
+        - count
+        - events
+      properties:
+        name:
+          type: string
+          description: Event type name (recurring event title)
+          example: "Volleyball"
+        count:
+          type: integer
+          description: Number of events of this type
+          example: 24
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+          description: Individual events of this type
+      description: Event type with grouped individual events for multi-level selection
 
     Domain:
       type: object

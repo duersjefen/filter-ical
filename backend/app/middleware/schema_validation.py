@@ -50,13 +50,46 @@ class OpenAPISchemaValidationMiddleware(BaseHTTPMiddleware):
             logger.error(f"❌ Failed to load OpenAPI spec: {e}")
             self.enable_validation = False
     
+    def _match_path_pattern(self, actual_path: str, pattern_path: str) -> bool:
+        """
+        Match actual path against OpenAPI path pattern with parameters.
+        E.g., "/api/calendar/cal_123/events" matches "/api/calendar/{calendar_id}/events"
+        """
+        actual_parts = actual_path.split('/')
+        pattern_parts = pattern_path.split('/')
+        
+        if len(actual_parts) != len(pattern_parts):
+            return False
+            
+        for actual, pattern in zip(actual_parts, pattern_parts):
+            if pattern.startswith('{') and pattern.endswith('}'):
+                # This is a path parameter, any value matches
+                continue
+            elif actual != pattern:
+                # Literal path segment must match exactly
+                return False
+                
+        return True
+    
     def _get_endpoint_response_schema(self, path: str, method: str, status_code: int) -> Optional[Dict[str, Any]]:
         """Get the expected response schema for an endpoint"""
         if not self.openapi_spec:
             return None
             
         paths = self.openapi_spec.get('paths', {})
-        endpoint_spec = paths.get(path, {})
+        
+        # First try exact match
+        endpoint_spec = paths.get(path)
+        if not endpoint_spec:
+            # Try pattern matching for paths with parameters
+            for pattern_path, spec in paths.items():
+                if self._match_path_pattern(path, pattern_path):
+                    endpoint_spec = spec
+                    break
+        
+        if not endpoint_spec:
+            return None
+            
         method_spec = endpoint_spec.get(method.lower(), {})
         responses = method_spec.get('responses', {})
         
