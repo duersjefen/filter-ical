@@ -6,14 +6,14 @@ Override FastAPI's OpenAPI generation with our existing specification
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, col, or_
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
 from datetime import datetime
 import yaml
 import json
 
 # Import database and models
-from .database import get_session, create_db_and_tables
+from .database import get_session, get_session_sync, create_db_and_tables
 from .models import (
     Calendar, Event, FilteredCalendar, FilterMode, Group, EventGroup
 )
@@ -33,9 +33,17 @@ from .core.domains import (
 )
 from .core.domain_calendar import (
     get_domain_calendar_id, load_domain_calendar_config, is_domain_calendar,
-    extract_domain_from_calendar_id
+    extract_domain_from_calendar_id, generate_calendar_id, detect_domain_from_url,
+    get_calendar_domain_id
 )
+from .core.cache import (
+    should_update_cache, get_cached_content, create_cache_data, 
+    needs_cache_update, detect_content_change
+)
+from .core.filter_regeneration import mark_all_dependent_filters_for_regeneration
 from .middleware.schema_validation import create_validation_middleware
+from .core.background_tasks import background_manager
+from .core.domain_setup import ensure_domain_calendars_exist
 import os
 
 # Load OpenAPI specification to override FastAPI's auto-generation
@@ -76,12 +84,29 @@ if enable_validation:
     validation_middleware = create_validation_middleware(enable_validation=True)
     app.add_middleware(validation_middleware)
 
-# Create database tables on startup
+# Create database tables and start background tasks on startup
 @app.on_event("startup")
 def startup_event():
     create_db_and_tables()
+    
+    # Only start background tasks in production/development, not during testing
+    if os.getenv('TESTING') != 'true':
+        ensure_domain_calendars_exist()
+        background_manager.start()
+        print("⏰ Background calendar updates every 5 minutes")
+    else:
+        print("🧪 Running in test mode - background tasks disabled")
+    
     print("🚀 iCal Viewer API starting with functional architecture")
     print("📋 Contract-driven development with OpenAPI compliance")
+
+
+# Stop background tasks on shutdown
+@app.on_event("shutdown") 
+def shutdown_event():
+    if os.getenv('TESTING') != 'true':
+        background_manager.stop()
+    print("🛑 iCal Viewer API shutting down")
 
 # Public access - no authentication required
 # Default user ID for backward compatibility
@@ -98,6 +123,126 @@ def get_user_id(username: Optional[str] = None) -> str:
 def create_error_response(detail: str) -> Dict[str, str]:
     """Create error response matching OpenAPI Error schema"""
     return {"detail": detail}
+
+
+def create_calendar_with_smart_id(name: str, url: str, user_id: str, domain_id: Optional[str] = None) -> Calendar:
+    """
+    Create calendar with appropriate ID generation.
+    Helper function that properly handles domain calendar detection and ID generation.
+    
+    Args:
+        name: Calendar name
+        url: Calendar URL
+        user_id: User ID
+        domain_id: Optional domain ID (auto-detected if not provided)
+        
+    Returns:
+        Calendar object with appropriate ID
+    """
+    # Auto-detect domain if not provided
+    if domain_id is None:
+        domain_id = detect_domain_from_url(url)
+    
+    # Generate appropriate ID
+    calendar_id = generate_calendar_id(domain_id)
+    
+    return Calendar(
+        id=calendar_id,
+        name=name,
+        url=url,
+        user_id=user_id,
+        domain_id=domain_id
+    )
+
+
+def fetch_calendar_data_cached(calendar, session) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Fetch calendar data using cache-first approach.
+    I/O Shell function - orchestrates pure cache and fetch functions.
+    
+    Args:
+        calendar: Calendar object with cache fields
+        session: Database session for updating cache
+        
+    Returns:
+        Tuple of (ical_content, error_message)
+    """
+    # Try to get cached content first
+    cached_content = get_cached_content(calendar)
+    if cached_content:
+        print(f"📦 Using cached content for calendar {calendar.id}")
+        return cached_content, None
+    
+    # Cache miss or expired - fetch fresh content
+    print(f"🔄 Fetching fresh content for calendar {calendar.id}")
+    fresh_content, error = fetch_ical_content(calendar.url)
+    
+    if error:
+        return None, error
+    
+    # Update cache if content changed
+    if needs_cache_update(calendar, fresh_content):
+        print(f"💾 Updating cache for calendar {calendar.id}")
+        cache_data = create_cache_data(fresh_content)
+        
+        # Update calendar cache fields
+        for key, value in cache_data.items():
+            setattr(calendar, key, value)
+        
+        session.add(calendar)
+        session.commit()
+        
+        # Mark dependent filtered calendars for regeneration
+        mark_filtered_calendars_for_regeneration(calendar.id, session)
+    
+    return fresh_content, None
+
+
+def mark_filtered_calendars_for_regeneration(source_calendar_id: str, session):
+    """
+    Mark all filtered calendars that depend on source calendar for regeneration.
+    I/O Shell function - delegates to pure filter regeneration module.
+    
+    Args:
+        source_calendar_id: ID of the source calendar that changed
+        session: Database session
+    """
+    mark_all_dependent_filters_for_regeneration(source_calendar_id, session)
+
+# ==============================================
+# MONITORING ENDPOINTS
+# ==============================================
+
+@app.get("/api/system/status")
+async def get_system_status():
+    """Get system status including background tasks and cache statistics"""
+    session = get_session_sync()
+    try:
+        # Get basic statistics
+        total_calendars = len(session.exec(select(Calendar)).all())
+        domain_calendars = len(session.exec(select(Calendar).where(Calendar.domain_id != None)).all())
+        cached_calendars = len(session.exec(select(Calendar).where(Calendar.cached_ical_content != None)).all())
+        pending_regenerations = len(session.exec(select(FilteredCalendar).where(FilteredCalendar.needs_regeneration == True)).all())
+        
+        return {
+            "status": "healthy",
+            "statistics": {
+                "total_calendars": total_calendars,
+                "domain_calendars": domain_calendars,
+                "cached_calendars": cached_calendars,
+                "pending_filter_regenerations": pending_regenerations
+            },
+            "background_tasks": background_manager.get_status()
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+    finally:
+        session.close()
+
 
 # ==============================================
 # CALENDAR MANAGEMENT ENDPOINTS
@@ -154,12 +299,8 @@ async def create_calendar(
     if not url:
         raise HTTPException(status_code=400, detail="Calendar URL is required")
     
-    # Create calendar
-    new_calendar = Calendar(
-        name=name,
-        url=url,
-        user_id=user_id
-    )
+    # Create calendar with smart ID generation
+    new_calendar = create_calendar_with_smart_id(name, url, user_id)
     
     session.add(new_calendar)
     session.commit()
@@ -340,26 +481,18 @@ async def get_calendar_groups(
     if not calendar:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    # Determine domain_id for this calendar
-    domain_id = None
-    
-    # First check if calendar has domain_id field
-    if hasattr(calendar, 'domain_id') and calendar.domain_id:
-        domain_id = calendar.domain_id
-    # Or check if it's a domain calendar by ID pattern  
-    elif is_domain_calendar(calendar_id):
-        domain_id = extract_domain_from_calendar_id(calendar_id)
-    # Fallback: assume exter for testing (can be removed later)
-    else:
-        domain_id = "exter"  # Temporary fallback for existing calendars
+    # Determine domain_id for this calendar using clean logic
+    domain_id = get_calendar_domain_id(calendar)
     
     # Load domain configuration to check if groups are enabled
-    try:
-        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
-        domains_config = load_domains_config(str(config_path))
-        has_groups_enabled = domain_has_groups(domains_config, domain_id) if domain_id else False
-    except Exception:
-        has_groups_enabled = False
+    has_groups_enabled = False
+    if domain_id:
+        try:
+            config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+            domains_config = load_domains_config(str(config_path))
+            has_groups_enabled = domain_has_groups(domains_config, domain_id)
+        except Exception:
+            has_groups_enabled = False
     
     if not has_groups_enabled:
         return {"has_groups": False, "groups": {}}

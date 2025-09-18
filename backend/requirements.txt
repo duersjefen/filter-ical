@@ -12,4 +12,6 @@ requests==2.31.0
 jsonschema==4.20.0
 openapi-spec-validator==0.7.1
 prance==23.6.21
+apscheduler==3.10.4
+python-dotenv==1.0.0
 

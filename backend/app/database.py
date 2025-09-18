@@ -7,13 +7,21 @@ from sqlalchemy import event
 from pathlib import Path
 import sqlite3
 
-# SQLite database file location
-DATABASE_DIR = Path(__file__).parent.parent / "data"
-DATABASE_DIR.mkdir(exist_ok=True)
-DATABASE_FILE = DATABASE_DIR / "icalviewer.db"
+# SQLite database configuration - environment-aware
+import os
+from dotenv import load_dotenv
 
-# SQLite connection string with optimizations
-DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
+# Load environment variables
+load_dotenv()
+
+# Get database URL from environment or use default
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    # Default database location
+    DATABASE_DIR = Path(__file__).parent.parent / "data"
+    DATABASE_DIR.mkdir(exist_ok=True)
+    DATABASE_FILE = DATABASE_DIR / "icalviewer.db"
+    DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
 
 # Create engine with SQLite-specific optimizations
 engine = create_engine(
@@ -51,3 +59,11 @@ def get_session():
     """
     with Session(engine) as session:
         yield session
+
+
+def get_session_sync():
+    """
+    Get synchronous database session for background tasks
+    Returns a session that must be closed manually
+    """
+    return Session(engine)

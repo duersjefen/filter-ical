@@ -20,12 +20,18 @@ class Calendar(SQLModel, table=True):
     """Calendar model matching OpenAPI Calendar schema"""
     __tablename__ = "calendars"
     
-    id: str = Field(default_factory=lambda: f"cal_{uuid.uuid4().hex[:8]}", primary_key=True)
+    id: str = Field(primary_key=True)  # ID will be set explicitly using generate_calendar_id()
     name: str = Field(min_length=3, max_length=100)
     url: str = Field()
     user_id: str = Field(index=True)
     domain_id: Optional[str] = Field(default=None, index=True)  # e.g., "exter"
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Caching fields for external calendar data
+    cached_ical_content: Optional[str] = Field(default=None)  # Raw iCal content
+    cached_content_hash: Optional[str] = Field(default=None)  # Hash for change detection  
+    cache_updated_at: Optional[datetime] = Field(default=None, index=True)  # Cache timestamp
+    cache_expires_at: Optional[datetime] = Field(default=None, index=True)  # Cache expiry
     
     # Relationships
     events: List["Event"] = Relationship(back_populates="calendar")
@@ -93,6 +99,9 @@ class FilteredCalendar(SQLModel, table=True):
     user_id: str = Field(index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Auto-regeneration tracking
+    needs_regeneration: bool = Field(default=False, index=True)  # Flag when source calendar changes
     
     # Filter configuration stored as JSON
     include_events: str = Field(default="[]")  # JSON array of strings
