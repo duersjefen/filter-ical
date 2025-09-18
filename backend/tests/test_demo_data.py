@@ -32,29 +32,34 @@ def test_demo_data_seeding(setup_test_database):
     demo_groups = session.exec(
         select(Group).where(Group.domain_id == "exter")
     ).all()
-    assert len(demo_groups) == 7  # 3 top-level + 4 nested groups
+    assert len(demo_groups) == 12  # 5 top-level + 7 nested groups
     
     # Check specific groups exist
     group_names = [group.name for group in demo_groups]
-    assert "Meetings" in group_names
-    assert "Training & Development" in group_names
-    assert "Social Events" in group_names
-    assert "Weekly Stand-ups" in group_names
-    assert "Quarterly Reviews" in group_names
-    assert "Technical Training" in group_names
-    assert "Soft Skills" in group_names
+    assert "Music Activities" in group_names
+    assert "Sports & Recreation" in group_names
+    assert "Youth Activities" in group_names
+    assert "Senior Activities" in group_names
+    assert "Special Events" in group_names
+    assert "Bands" in group_names
+    assert "Team Sports" in group_names
+    assert "Ice Sports" in group_names
+    assert "Tweens" in group_names
     
     # Verify event type assignments exist
     event_assignments = session.exec(
         select(EventTypeGroup)
     ).all()
-    assert len(event_assignments) == 13  # Total assignments from demo data
+    assert len(event_assignments) == 14  # Total assignments from demo data
     
-    # Check specific event type assignments
+    # Check specific event type assignments (real Exter events)
     assignment_types = [assignment.event_type for assignment in event_assignments]
-    assert "Daily Standup" in assignment_types
-    assert "Sprint Planning" in assignment_types
-    assert "Team Building" in assignment_types
+    assert "Musik Band" in assignment_types
+    assert "Youngsterband" in assignment_types
+    assert "Volleyball" in assignment_types
+    assert "Eiszeit (Jugend)" in assignment_types
+    assert "Tweens" in assignment_types
+    assert "Ü60 Abend" in assignment_types
     
     session.close()
 
@@ -71,12 +76,12 @@ def test_demo_data_idempotent(setup_test_database):
     demo_groups = session.exec(
         select(Group).where(Group.domain_id == "exter")
     ).all()
-    assert len(demo_groups) == 7  # No duplicates
+    assert len(demo_groups) == 12  # No duplicates
     
     event_assignments = session.exec(
         select(EventTypeGroup)
     ).all()
-    assert len(event_assignments) == 13  # No duplicates
+    assert len(event_assignments) == 14  # No duplicates
     
     session.close()
 
@@ -95,21 +100,29 @@ def test_demo_data_group_hierarchy(setup_test_database):
     # Create lookup by ID
     groups_by_id = {group.id: group for group in demo_groups}
     
-    # Check parent-child relationships
-    meetings_group = groups_by_id["group_meetings"]
-    weekly_meetings = groups_by_id["group_meetings_weekly"]
-    quarterly_meetings = groups_by_id["group_meetings_quarterly"]
+    # Check parent-child relationships for new structure
+    music_group = groups_by_id["group_music"]
+    music_bands = groups_by_id["group_music_bands"]
+    music_youth = groups_by_id["group_music_youth"]
     
-    assert meetings_group.parent_group_id is None  # Top level
-    assert weekly_meetings.parent_group_id == "group_meetings"  # Child
-    assert quarterly_meetings.parent_group_id == "group_meetings"  # Child
+    assert music_group.parent_group_id is None  # Top level
+    assert music_bands.parent_group_id == "group_music"  # Child
+    assert music_youth.parent_group_id == "group_music"  # Child
     
-    training_group = groups_by_id["group_training"]
-    tech_training = groups_by_id["group_training_tech"]
-    soft_training = groups_by_id["group_training_soft"]
+    sports_group = groups_by_id["group_sports"]
+    sports_team = groups_by_id["group_sports_team"]
+    sports_ice = groups_by_id["group_sports_ice"]
     
-    assert training_group.parent_group_id is None  # Top level
-    assert tech_training.parent_group_id == "group_training"  # Child
-    assert soft_training.parent_group_id == "group_training"  # Child
+    assert sports_group.parent_group_id is None  # Top level
+    assert sports_team.parent_group_id == "group_sports"  # Child
+    assert sports_ice.parent_group_id == "group_sports"  # Child
+    
+    youth_group = groups_by_id["group_youth"]
+    youth_tweens = groups_by_id["group_youth_tweens"]
+    youth_teens = groups_by_id["group_youth_teens"]
+    
+    assert youth_group.parent_group_id is None  # Top level
+    assert youth_tweens.parent_group_id == "group_youth"  # Child
+    assert youth_teens.parent_group_id == "group_youth"  # Child
     
     session.close()
