@@ -39,6 +39,7 @@ runs:
         host: ${{ env.EC2_HOST }}
         username: ${{ env.EC2_USER }}
         key: ${{ env.EC2_SSH_KEY }}
+        debug: true
         script: |
           cd /opt/websites
           operation="${{ inputs.operation }}"

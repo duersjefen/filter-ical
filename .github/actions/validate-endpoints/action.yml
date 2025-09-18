@@ -35,9 +35,12 @@ runs:
     - name: 🧪 Parse Endpoints
       shell: bash
       run: |
-        # Convert comma-separated endpoints to array
-        IFS=',' read -ra ENDPOINTS <<< "${{ inputs.endpoints }}"
-        echo "endpoints_array=$(printf '%s\n' "${ENDPOINTS[@]}" | jq -R . | jq -s .)" >> $GITHUB_OUTPUT
+        # Convert comma-separated endpoints to space-separated for simpler parsing
+        endpoints="${{ inputs.endpoints }}"
+        # Replace commas with spaces and clean up
+        endpoints=$(echo "$endpoints" | tr ',' ' ' | tr -s ' ')
+        echo "endpoints_list=$endpoints" >> $GITHUB_OUTPUT
+        echo "📋 Parsed endpoints: $endpoints"
       id: parse
       
     - name: 🌐 Validate Endpoints in Parallel
@@ -54,8 +57,8 @@ runs:
         failed_endpoints=()
         declare -A response_times
         
-        # Parse endpoints from JSON array
-        endpoints=$(echo '${{ steps.parse.outputs.endpoints_array }}' | jq -r '.[]')
+        # Parse endpoints from space-separated list
+        endpoints="${{ steps.parse.outputs.endpoints_list }}"
         
         # Function to validate single endpoint
         validate_endpoint() {
@@ -93,10 +96,10 @@ runs:
         
         # Launch parallel validation (using background processes)
         pids=()
-        while IFS= read -r endpoint; do
+        for endpoint in $endpoints; do
           validate_endpoint "$endpoint" &
           pids+=($!)
-        done <<< "$endpoints"
+        done
         
         # Wait for all validations to complete
         echo "⏳ Waiting for parallel validations to complete..."
@@ -108,7 +111,7 @@ runs:
         overall_success=true
         response_times_json="{"
         
-        while IFS= read -r endpoint; do
+        for endpoint in $endpoints; do
           result_file="/tmp/result_$(echo $endpoint | tr '/' '_')"
           if [ -f "$result_file" ]; then
             result=$(cat "$result_file")
@@ -125,7 +128,7 @@ runs:
             
             rm -f "$result_file"
           fi
-        done <<< "$endpoints"
+        done
         
         # Clean up JSON (remove trailing comma)
         response_times_json="${response_times_json%,}}"
