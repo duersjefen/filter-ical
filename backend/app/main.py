@@ -47,6 +47,7 @@ from .core.filter_regeneration import mark_all_dependent_filters_for_regeneratio
 from .middleware.schema_validation import create_validation_middleware
 from .core.background_tasks import background_manager
 from .core.domain_setup import ensure_domain_calendars_exist
+from .core.demo_data import seed_demo_data, should_seed_demo_data
 import os
 
 # Load OpenAPI specification to override FastAPI's auto-generation
@@ -95,6 +96,17 @@ def startup_event():
     # Only start background tasks in production/development, not during testing
     if os.getenv('TESTING') != 'true':
         ensure_domain_calendars_exist()
+        
+        # Seed demo data if needed (for showcasing)
+        if should_seed_demo_data():
+            print("🎭 Seeding demo data for showcasing...")
+            if seed_demo_data():
+                print("✅ Demo data seeded successfully")
+            else:
+                print("❌ Failed to seed demo data")
+        else:
+            print("📋 Demo data already exists")
+        
         background_manager.start()
         print("⏰ Background calendar updates every 5 minutes")
     else:
