@@ -526,6 +526,100 @@ export function addCalendarToList(calendars, newCalendar) {
 
 ---
 
+## 🗄️ DATABASE MIGRATIONS - INDUSTRY BEST PRACTICES
+
+**MANDATORY: Use Alembic for all database schema changes - NEVER manual SQL scripts**
+
+### 🎯 ALEMBIC INTEGRATION
+
+**This project uses Alembic for production-grade database migrations following industry standards:**
+
+```python
+# /app/database.py - Automatic migration on startup
+def create_db_and_tables():
+    """Create database tables from SQLModel models and run migrations"""
+    SQLModel.metadata.create_all(engine)
+    
+    # Run Alembic migrations automatically
+    run_migrations()
+
+def run_migrations():
+    """Run Alembic migrations programmatically"""
+    from alembic.config import Config
+    from alembic import command
+    
+    backend_dir = Path(__file__).parent.parent
+    alembic_cfg = Config(backend_dir / "alembic.ini")
+    alembic_cfg.set_main_option("script_location", str(backend_dir / "alembic"))
+    alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
+    
+    command.upgrade(alembic_cfg, "head")
+```
+
+### ✅ MIGRATION WORKFLOW
+
+**1. Schema Changes:**
+```bash
+# Create new migration after model changes
+alembic revision --autogenerate -m "Add new feature columns"
+
+# Review and edit the generated migration file
+# Test locally first
+alembic upgrade head
+```
+
+**2. Production Deployment:**
+- Migrations run automatically on container startup
+- Zero-downtime deployments with schema versioning
+- Rollback capability with `alembic downgrade`
+
+### 🚫 FORBIDDEN PRACTICES
+
+**❌ NEVER DO:**
+- Manual database schema changes in production
+- Raw SQL ALTER TABLE statements in application code
+- Direct database manipulation during deployment
+- Schema changes without version control
+
+**✅ ALWAYS DO:**
+- Use `alembic revision --autogenerate` for schema changes
+- Review all generated migrations before deployment
+- Test migrations locally before production
+- Keep migrations atomic and reversible
+
+### 🔧 MIGRATION BENEFITS
+
+**Production Safety:**
+- **Automatic versioning**: Each schema change tracked and versioned
+- **Rollback capability**: Can revert problematic migrations safely
+- **Deployment integration**: Migrations run during container startup
+- **Zero-downtime**: Schema changes deployed seamlessly
+
+**Development Efficiency:**
+- **Auto-generation**: Alembic detects model changes automatically
+- **Team synchronization**: All developers have identical schemas
+- **CI/CD integration**: Automated testing of schema changes
+- **Documentation**: Migration history serves as schema changelog
+
+### 📊 REAL-WORLD EXAMPLE
+
+**Problem Solved:**
+Production API returning HTTP 500 because database schema was missing columns (`cached_ical_content`, `cached_content_hash`, etc.) that the code expected.
+
+**Solution Applied:**
+1. Created Alembic migration with `alembic revision --autogenerate`
+2. Reviewed and tested migration locally
+3. Deployed - migration ran automatically on startup
+4. API immediately worked without manual intervention
+
+**This prevented:**
+- Manual production database manipulation
+- Deployment downtime
+- Data corruption risks
+- Team coordination issues
+
+---
+
 ## 🧠 PROFESSIONAL GUIDANCE & CRITICAL THINKING
 
 **MANDATORY: Claude must think critically and provide professional guidance - NOT just execute commands**

@@ -5,7 +5,7 @@
 # When copying to a new project, adapt the language-specific commands below.
 # The universal commands (deploy, clean, etc.) work with any language.
 
-.PHONY: setup dev backend frontend stop test test-unit test-integration test-future test-all build clean help deploy deploy-force status health
+.PHONY: setup dev backend frontend stop test test-unit test-integration test-future test-all build clean help deploy deploy-force status status-detailed health
 .DEFAULT_GOAL := help
 
 ## Development Commands (Language-Specific: Python + Vue 3)
@@ -114,8 +114,12 @@ deploy: ## Deploy to production with automatic monitoring
 	@echo "👀 Monitoring deployment with GitHub CLI..."
 	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
 	@sleep 3
-	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId') && \
-	 gh run watch $$latest_run --exit-status || true
+	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "unknown") && \
+	 if [ "$$latest_run" != "unknown" ]; then \
+		 gh run watch $$latest_run --exit-status 2>/dev/null || echo "📊 Monitoring failed - check status with 'make status'"; \
+	 else \
+		 echo "📊 Could not get run ID - check status with 'make status'"; \
+	 fi
 
 deploy-force: ## Force deploy (skip dirty working tree check)  
 	@echo "🚨 Force deploying (skipping dirty working tree check)..."
@@ -123,12 +127,26 @@ deploy-force: ## Force deploy (skip dirty working tree check)
 	@echo "👀 Monitoring deployment with GitHub CLI..."
 	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
 	@sleep 3
-	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId') && \
-	 gh run watch $$latest_run --exit-status || true
+	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "unknown") && \
+	 if [ "$$latest_run" != "unknown" ]; then \
+		 gh run watch $$latest_run --exit-status 2>/dev/null || echo "📊 Monitoring failed - check status with 'make status'"; \
+	 else \
+		 echo "📊 Could not get run ID - check status with 'make status'"; \
+	 fi
 
 status: ## Check latest deployment status
 	@echo "📊 Latest deployment status:"
-	@gh run list --limit 3
+	@gh run list --limit 3 2>/dev/null || echo "❌ Could not fetch status - GitHub CLI may have connectivity issues"
+
+status-detailed: ## Check detailed deployment status with logs
+	@echo "📊 Detailed deployment status:"
+	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "unknown") && \
+	 if [ "$$latest_run" != "unknown" ]; then \
+		 echo "🔍 Latest run ID: $$latest_run"; \
+		 gh run view $$latest_run 2>/dev/null || echo "❌ Could not view run details"; \
+	 else \
+		 echo "❌ Could not get latest run ID"; \
+	 fi
 
 todos: ## Show current TODOs and project status
 	@echo "📋 Current TODOs:"

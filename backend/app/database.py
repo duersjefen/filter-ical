@@ -49,8 +49,35 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor.close()
 
 def create_db_and_tables():
-    """Create database tables from SQLModel models"""
+    """Create database tables from SQLModel models and run migrations"""
     SQLModel.metadata.create_all(engine)
+    
+    # Run Alembic migrations automatically
+    run_migrations()
+
+def run_migrations():
+    """Run Alembic migrations programmatically"""
+    try:
+        from alembic.config import Config
+        from alembic import command
+        
+        # Get the directory containing this file
+        backend_dir = Path(__file__).parent.parent
+        alembic_cfg = Config(backend_dir / "alembic.ini")
+        
+        # Set the script location to the absolute path
+        alembic_cfg.set_main_option("script_location", str(backend_dir / "alembic"))
+        
+        # Set the database URL to match our current engine
+        alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
+        
+        # Run migrations to the latest version
+        command.upgrade(alembic_cfg, "head")
+        print("✅ Database migrations completed successfully")
+        
+    except Exception as e:
+        print(f"⚠️  Migration warning: {e}")
+        # Don't fail startup on migration issues - let the app try to continue
 
 def get_session():
     """
