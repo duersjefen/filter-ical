@@ -12,6 +12,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Copy OpenAPI specification from backend for type generation
+RUN mkdir -p ./backend
+COPY ../backend/openapi.yaml ./backend/openapi.yaml
+
 # Set production API base URL (empty string means relative URLs)
 ENV VITE_API_BASE_URL=""
 
