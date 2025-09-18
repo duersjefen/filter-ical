@@ -1,4 +1,5 @@
 <template>
+  <!-- Main app container - login-free direct home access -->
   <div id="app" class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300" data-test="ci-cd-test">
     <router-view />
   </div>
