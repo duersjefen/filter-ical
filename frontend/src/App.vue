@@ -23,11 +23,6 @@ const { trackActivity } = useActivityTracker()
 onMounted(async () => {
   // Initialize the app for public access
   appStore.initializeApp()
-  
-  // Default routing - redirect to home if on login page
-  if (router.currentRoute.value.path === '/login') {
-    await router.push('/home')
-  }
 })
 </script>
 

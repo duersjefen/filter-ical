@@ -5,7 +5,6 @@ import App from './App.vue'
 import i18n from './i18n'
 import './styles/tailwind.css'
 
-import LoginView from './views/LoginView.vue'
 import HomeView from './views/HomeView.vue'
 import CalendarView from './views/CalendarView.vue'
 import DomainView from './views/DomainView.vue'
@@ -14,10 +13,6 @@ const routes = [
   { 
     path: '/', 
     redirect: '/home'
-  },
-  { 
-    path: '/login', 
-    component: LoginView
   },
   { 
     path: '/home', 
