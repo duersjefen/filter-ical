@@ -584,6 +584,52 @@ export function addCalendarToList(calendars, newCalendar) {
 - **Tailwind Styles** → Root cause: v3 syntax with v4 framework
 - **API Integration** → Root cause: Build-time vs runtime env variables
 
+### 🎯 FRONTEND DEBUGGING - BROWSER CONSOLE FIRST
+
+**MANDATORY RULE: For frontend issues, ALWAYS check browser console first**
+
+**✅ Frontend Debugging Order:**
+1. **Open Browser Dev Tools** → F12 or right-click → Inspect
+2. **Check Console Tab** → Look for red JavaScript errors
+3. **Read Error Messages** → File name, line number, exact cause
+4. **Fix Direct Issue** → Address the specific error shown
+5. **Then investigate deeper** → Only if console is clean
+
+**❌ DO NOT:**
+- Create custom debugging scripts before checking console
+- Assume backend issues when frontend shows JavaScript errors  
+- Look at server logs when browser console has errors
+- Overcomplicate debugging when console gives exact location
+
+**Example Error Analysis:**
+```
+CalendarView.vue:312  Error loading calendar data: 
+TypeError: Cannot convert undefined or null to object
+    at Object.keys (<anonymous>)
+    at loadCalendarData (CalendarView.vue:300:29)
+```
+→ **Immediate Fix**: Add null check at CalendarView.vue:300 before `Object.keys()`
+
+### 🧪 E2E TESTING REQUIREMENTS
+
+**MANDATORY: E2E tests must ALWAYS run in headless mode**
+
+**✅ Required Configuration:**
+```javascript
+// playwright.config.js - MUST have headless: true
+use: {
+  baseURL: process.env.FRONTEND_URL || 'http://localhost:8000',
+  trace: 'on-first-retry',
+  headless: true,  // ← MANDATORY: No browser pop-ups
+},
+```
+
+**❌ NEVER:**
+- Run E2E tests with `--headed` flag in development
+- Allow browser windows to pop up during automated testing
+- Override headless setting for "debugging" E2E tests
+- Use interactive browser sessions for automated tests
+
 ---
 
 

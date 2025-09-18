@@ -17,7 +17,22 @@
 
     <!-- Main Content -->
     <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
+      <!-- Show Groups Interface if Domain has Groups -->
+      <EventGroupsSection
+        v-if="hasGroups"
+        :has-groups="hasGroups"
+        :groups="groups"
+        :selected-groups="selectedGroups"
+        :selected-events="selectedEvents"
+        :filter-mode="filterMode"
+        @toggle-group="toggleGroup"
+        @toggle-event="toggleEvent"
+        @switch-filter-mode="switchFilterMode"
+      />
+      
+      <!-- Fallback to Event Types Interface if No Groups -->
       <EventTypeCardsSection
+        v-else
         :event-types="mainEventTypes"
         :main-event-types="mainEventTypes"
         :single-event-types="singleEventTypes"
@@ -111,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAPI } from '../composables/useAPI'
@@ -122,6 +137,7 @@ import {
   EventTypeCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
+import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
 import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 
 const appStore = useAppStore()
@@ -135,6 +151,18 @@ const error = ref(null)
 const events = ref([])
 const eventTypes = ref({})
 const selectedCalendar = ref(null)
+
+// Groups data - from store
+const { 
+  groups, 
+  hasGroups, 
+  selectedGroups, 
+  selectedEvents,
+  loadCalendarGroups,
+  toggleGroup,
+  toggleEvent,
+  generateIcal
+} = appStore
 
 // Define props first
 const props = defineProps({
@@ -171,6 +199,7 @@ const {
   selectAllSingleEvents,
   clearAllSingleEvents,
   switchFilterMode,
+  updateCalendarId,
   // No preferences loading needed
 } = useCalendar(events, eventTypes, props.id)
 
@@ -199,10 +228,16 @@ const loadCalendarData = async (calendarId) => {
     }
     
     // Load events and event types from single endpoint
+    console.log('🔍 About to make API call to:', `/api/calendar/${calendarId}/events`)
     const eventsResult = await api.safeExecute(async () => {
+      console.log('🔍 Inside API call, making axios request...')
       const response = await axios.get(`/api/calendar/${calendarId}/events`)
+      console.log('🔍 Raw axios response:', response)
+      console.log('🔍 Response data:', response.data)
+      console.log('🔍 Response data.events:', response.data.events)
       return response.data.events
     })
+    console.log('🔍 safeExecute result:', eventsResult)
     
     if (eventsResult.success) {
       // Backend returns {events: {eventTypeName: {count: N, events: [...]}, ...}}
@@ -213,19 +248,35 @@ const loadCalendarData = async (calendarId) => {
       })
       
       // Extract event types object
+      console.log('🔍 Raw API response:', eventsResult.data)
+      console.log('🔍 Data type:', typeof eventsResult.data)
+      console.log('🔍 Data keys:', Object.keys(eventsResult.data || {}))
+      
       eventTypes.value = eventsResult.data
       console.log('✅ EventTypes assigned:', {
-        eventTypesKeys: Object.keys(eventTypes.value).length,
-        eventTypeNames: Object.keys(eventTypes.value)
+        eventTypesKeys: eventTypes.value ? Object.keys(eventTypes.value).length : 'eventTypes is null',
+        eventTypeNames: eventTypes.value ? Object.keys(eventTypes.value) : 'eventTypes is null'
       })
       
       // Extract unique events from all event types
       const allEvents = []
-      Object.values(eventTypes.value).forEach(eventType => {
-        if (eventType.events && Array.isArray(eventType.events)) {
-          allEvents.push(...eventType.events)
+      console.log('🔍 About to process eventTypes.value:', eventTypes.value)
+      try {
+        if (eventTypes.value) {
+          Object.values(eventTypes.value).forEach(eventType => {
+            console.log('🔍 Processing eventType:', eventType)
+            if (eventType && eventType.events && Array.isArray(eventType.events)) {
+              console.log(`🔍 Adding ${eventType.events.length} events from eventType`)
+              allEvents.push(...eventType.events)
+            }
+          })
+        } else {
+          console.warn('⚠️ eventTypes.value is null or undefined')
         }
-      })
+      } catch (extractError) {
+        console.error('❌ Error extracting events:', extractError)
+        throw extractError
+      }
       events.value = allEvents
       console.log('✅ Events extracted:', {
         eventsLength: events.value.length,
@@ -240,8 +291,21 @@ const loadCalendarData = async (calendarId) => {
         eventTypesKeysLength: Object.keys(eventTypes.value).length,
         shouldShow: !loading.value && events.value.length > 0 && eventTypes.value && Object.keys(eventTypes.value).length > 0
       })
+
+      // Load groups data
+      console.log('🔄 Loading groups data...')
+      await loadCalendarGroups(calendarId)
+      console.log('✅ Groups loaded:', {
+        hasGroups: hasGroups.value,
+        groupsCount: groups.value ? Object.keys(groups.value).length : 0
+      })
     } else {
       console.error('❌ API call failed:', eventsResult)
+      console.error('❌ Error details:', {
+        success: eventsResult.success,
+        error: eventsResult.error,
+        data: eventsResult.data
+      })
     }
     
   } catch (err) {
@@ -289,7 +353,7 @@ const loadFilterIntoPage = (filterData) => {
 }
 
 onMounted(async () => {
-  console.log('CalendarView mounted with public-first access')
+  console.log('🚀 CalendarView mounted with public-first access - DEBUG MODE ACTIVE')
   
   // Initialize app state (loads calendars from localStorage)
   appStore.initializeApp()
@@ -299,9 +363,17 @@ onMounted(async () => {
   
   if (calendarId) {
     await loadCalendarData(calendarId)
-    // Using default filter state - no persistence needed
+    // Update the calendar ID in the composable for proper filter persistence
+    updateCalendarId(calendarId)
   }
 })
 
-// No watchers needed - direct navigation only
+// Watch for route changes to update calendar ID for filter persistence
+watch(() => props.id || route.params.id, (newCalendarId, oldCalendarId) => {
+  if (newCalendarId && newCalendarId !== oldCalendarId) {
+    console.log('🔄 Route changed, updating calendar ID:', newCalendarId)
+    updateCalendarId(newCalendarId)
+    loadCalendarData(newCalendarId)
+  }
+})
 </script>
