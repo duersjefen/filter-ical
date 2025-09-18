@@ -1,6 +1,8 @@
 """
 Contract validation tests - ensure API responses match OpenAPI specification exactly
 Industry standard practice: All API responses must be validated against contract
+
+Current API: Public-first access with simplified event type filtering
 """
 import json
 import yaml
@@ -39,9 +41,6 @@ class TestOpenAPIContract:
         
         # Extract schemas for validation
         cls.schemas = cls.resolved_spec.get('components', {}).get('schemas', {})
-        
-        # Test user for authenticated requests
-        cls.test_user_headers = {"x-user-id": "test_user_123"}
     
     def validate_response_schema(self, response_data: Any, schema_ref: str) -> None:
         """Validate response data against OpenAPI schema"""
@@ -79,11 +78,14 @@ class TestOpenAPIContract:
             else:
                 validate(instance=response_data, schema=schema)
 
-    # Test Calendar Management Endpoints
+    # ===============================================
+    # Calendar Management Tests
+    # ===============================================
+    
     @pytest.mark.unit
     def test_get_calendars_contract(self):
         """Test GET /api/calendars conforms to contract"""
-        response = self.client.get("/api/calendars", headers=self.test_user_headers)
+        response = self.client.get("/api/calendars")
         
         assert response.status_code == 200
         data = response.json()
@@ -103,11 +105,7 @@ class TestOpenAPIContract:
             "url": "https://example.com/test-contract.ics"
         }
         
-        response = self.client.post(
-            "/api/calendars", 
-            json=calendar_data, 
-            headers=self.test_user_headers
-        )
+        response = self.client.post("/api/calendars", json=calendar_data)
         
         assert response.status_code in [200, 201]  # Per OpenAPI spec
         data = response.json()
@@ -123,7 +121,7 @@ class TestOpenAPIContract:
         self.validate_endpoint_response("/api/calendars", "POST", response.status_code, data)
         
         # Clean up
-        self.client.delete(f"/api/calendars/{data['id']}", headers=self.test_user_headers)
+        self.client.delete(f"/api/calendars/{data['id']}")
     
     @pytest.mark.unit
     def test_delete_calendar_contract(self):
@@ -133,22 +131,19 @@ class TestOpenAPIContract:
             "name": "Test Delete Calendar",
             "url": "https://example.com/test-delete.ics"
         }
-        create_response = self.client.post(
-            "/api/calendars", 
-            json=calendar_data, 
-            headers=self.test_user_headers
-        )
+        create_response = self.client.post("/api/calendars", json=calendar_data)
         calendar_id = create_response.json()["id"]
         
         # Delete the calendar
-        response = self.client.delete(
-            f"/api/calendars/{calendar_id}", 
-            headers=self.test_user_headers
-        )
+        response = self.client.delete(f"/api/calendars/{calendar_id}")
         
         assert response.status_code == 204  # Per OpenAPI spec
         # 204 responses should have no content
         assert response.content == b''
+
+    # ===============================================
+    # Calendar Data Tests
+    # ===============================================
     
     @pytest.mark.unit
     def test_get_calendar_events_contract(self):
@@ -158,18 +153,11 @@ class TestOpenAPIContract:
             "name": "Test Events Calendar",
             "url": "https://example.com/test-events.ics"
         }
-        create_response = self.client.post(
-            "/api/calendars", 
-            json=calendar_data, 
-            headers=self.test_user_headers
-        )
+        create_response = self.client.post("/api/calendars", json=calendar_data)
         calendar_id = create_response.json()["id"]
         
         # Get events (will be empty but should follow contract)
-        response = self.client.get(
-            f"/api/calendar/{calendar_id}/events", 
-            headers=self.test_user_headers
-        )
+        response = self.client.get(f"/api/calendar/{calendar_id}/events")
         
         assert response.status_code == 200
         data = response.json()
@@ -191,7 +179,7 @@ class TestOpenAPIContract:
                 assert "title" in event
                 assert "start" in event
                 assert "end" in event
-                assert "category" in event
+                assert "event_type" in event
                 # description and location are optional
         
         # Validate against OpenAPI schema
@@ -203,334 +191,61 @@ class TestOpenAPIContract:
         )
         
         # Clean up
-        self.client.delete(f"/api/calendars/{calendar_id}", headers=self.test_user_headers)
-    
-    def test_error_responses_contract(self):
-        """Test error responses conform to contract"""
-        # Test 401 Unauthorized
-        response = self.client.get("/api/calendars")  # No headers
-        assert response.status_code == 401
-        data = response.json()
-        assert "detail" in data
-        assert isinstance(data["detail"], str)
-        
-        # Test 404 Not Found
-        response = self.client.get(
-            "/api/calendar/nonexistent/events", 
-            headers=self.test_user_headers
-        )
-        assert response.status_code == 404
-        data = response.json()
-        assert "detail" in data
-        assert isinstance(data["detail"], str)
-    
-    def test_filtered_calendars_contract(self):
-        """Test filtered calendar endpoints conform to contract"""
-        # Test GET /api/filtered-calendars
-        response = self.client.get("/api/filtered-calendars", headers=self.test_user_headers)
-        assert response.status_code == 200
-        data = response.json()
-        assert "filtered_calendars" in data
-        assert isinstance(data["filtered_calendars"], list)
-        
-        # Validate against schema
-        self.validate_endpoint_response("/api/filtered-calendars", "GET", 200, data)
-    
-    def test_user_preferences_contract(self):
-        """Test user preferences endpoints conform to contract"""
-        # Test GET /api/user/preferences
-        response = self.client.get("/api/user/preferences", headers=self.test_user_headers)
-        assert response.status_code == 200
-        data = response.json()
-        assert "success" in data
-        assert "preferences" in data
-        assert isinstance(data["success"], bool)
-        assert isinstance(data["preferences"], dict)
-        
-        # Test PUT /api/user/preferences
-        preferences_data = {"theme": "dark", "language": "en"}
-        response = self.client.put(
-            "/api/user/preferences", 
-            json=preferences_data, 
-            headers=self.test_user_headers
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert "success" in data
-        assert isinstance(data["success"], bool)
-    
-    def test_create_filtered_calendar_contract(self):
-        """Test POST /api/filtered-calendars conforms to contract"""
-        # First create a source calendar
+        self.client.delete(f"/api/calendars/{calendar_id}")
+
+    @pytest.mark.unit
+    def test_get_calendar_raw_events_contract(self):
+        """Test GET /api/calendar/{calendar_id}/raw-events conforms to contract"""
+        # Create a calendar first
         calendar_data = {
-            "name": "Source Calendar for Filter",
-            "url": "https://example.com/source.ics"
+            "name": "Test Raw Events Calendar",
+            "url": "https://example.com/test-raw-events.ics"
         }
-        create_response = self.client.post(
-            "/api/calendars", 
-            json=calendar_data, 
-            headers=self.test_user_headers
-        )
-        source_calendar_id = create_response.json()["id"]
-        
-        # Create filtered calendar
-        filtered_data = {
-            "name": "Work Only Filter",
-            "source_calendar_id": source_calendar_id,
-            "filter_config": {
-                "categories": ["work"],
-                "exclude_keywords": ["personal"]
-            }
-        }
-        
-        response = self.client.post(
-            "/api/filtered-calendars", 
-            json=filtered_data, 
-            headers=self.test_user_headers
-        )
-        
-        assert response.status_code == 201  # Per OpenAPI spec
-        data = response.json()
-        
-        # Validate required fields per contract
-        assert "id" in data
-        assert "name" in data
-        assert "source_calendar_id" in data
-        assert "filter_config" in data
-        assert "user_id" in data
-        assert "created_at" in data
-        
-        # Validate against OpenAPI schema
-        self.validate_endpoint_response("/api/filtered-calendars", "POST", 201, data)
-        
-        # Clean up
-        self.client.delete(f"/api/filtered-calendars/{data['id']}", headers=self.test_user_headers)
-        self.client.delete(f"/api/calendars/{source_calendar_id}", headers=self.test_user_headers)
-    
-    def test_update_filtered_calendar_contract(self):
-        """Test PUT /api/filtered-calendars/{filtered_calendar_id} conforms to contract"""
-        # Setup: Create source calendar and filtered calendar
-        calendar_data = {"name": "Update Test Calendar", "url": "https://example.com/update.ics"}
-        create_response = self.client.post("/api/calendars", json=calendar_data, headers=self.test_user_headers)
-        source_calendar_id = create_response.json()["id"]
-        
-        filtered_data = {
-            "name": "Original Filter",
-            "source_calendar_id": source_calendar_id,
-            "filter_config": {"categories": ["original"]}
-        }
-        create_filtered_response = self.client.post("/api/filtered-calendars", json=filtered_data, headers=self.test_user_headers)
-        filtered_calendar_id = create_filtered_response.json()["id"]
-        
-        # Update the filtered calendar
-        update_data = {
-            "name": "Updated Filter",
-            "filter_config": {"categories": ["updated", "new"], "exclude_keywords": ["exclude"]}
-        }
-        
-        response = self.client.put(
-            f"/api/filtered-calendars/{filtered_calendar_id}", 
-            json=update_data, 
-            headers=self.test_user_headers
-        )
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        # Validate updated fields
-        assert data["name"] == "Updated Filter"
-        assert "updated" in data["filter_config"]["categories"]
-        assert "new" in data["filter_config"]["categories"]
-        
-        # Validate against OpenAPI schema
-        self.validate_endpoint_response(f"/api/filtered-calendars/{filtered_calendar_id}", "PUT", 200, data)
-        
-        # Clean up
-        self.client.delete(f"/api/filtered-calendars/{filtered_calendar_id}", headers=self.test_user_headers)
-        self.client.delete(f"/api/calendars/{source_calendar_id}", headers=self.test_user_headers)
-    
-    def test_delete_filtered_calendar_contract(self):
-        """Test DELETE /api/filtered-calendars/{filtered_calendar_id} conforms to contract"""
-        # Setup: Create source calendar and filtered calendar
-        calendar_data = {"name": "Delete Test Calendar", "url": "https://example.com/delete.ics"}
-        create_response = self.client.post("/api/calendars", json=calendar_data, headers=self.test_user_headers)
-        source_calendar_id = create_response.json()["id"]
-        
-        filtered_data = {
-            "name": "Filter to Delete",
-            "source_calendar_id": source_calendar_id,
-            "filter_config": {"categories": ["test"]}
-        }
-        create_filtered_response = self.client.post("/api/filtered-calendars", json=filtered_data, headers=self.test_user_headers)
-        filtered_calendar_id = create_filtered_response.json()["id"]
-        
-        # Delete the filtered calendar
-        response = self.client.delete(
-            f"/api/filtered-calendars/{filtered_calendar_id}", 
-            headers=self.test_user_headers
-        )
-        
-        assert response.status_code == 204  # Per OpenAPI spec
-        # 204 responses should have no content
-        assert response.content == b''
-        
-        # Verify it's actually deleted
-        get_response = self.client.get(f"/api/filtered-calendars/{filtered_calendar_id}", headers=self.test_user_headers)
-        assert get_response.status_code == 404
-        
-        # Clean up source calendar
-        self.client.delete(f"/api/calendars/{source_calendar_id}", headers=self.test_user_headers)
-    
-    def test_get_calendar_preferences_contract(self):
-        """Test GET /api/calendars/{calendar_id}/preferences conforms to contract"""
-        # Create a calendar first
-        calendar_data = {"name": "Preferences Test Calendar", "url": "https://example.com/prefs.ics"}
-        create_response = self.client.post("/api/calendars", json=calendar_data, headers=self.test_user_headers)
+        create_response = self.client.post("/api/calendars", json=calendar_data)
         calendar_id = create_response.json()["id"]
         
-        # Get calendar preferences
-        response = self.client.get(
-            f"/api/calendars/{calendar_id}/preferences", 
-            headers=self.test_user_headers
-        )
+        # Get raw events
+        response = self.client.get(f"/api/calendar/{calendar_id}/raw-events")
         
         assert response.status_code == 200
         data = response.json()
         
         # Validate contract-compliant structure
-        assert "success" in data
-        assert "preferences" in data
-        assert isinstance(data["success"], bool)
-        assert isinstance(data["preferences"], dict)
+        assert "events" in data
+        assert isinstance(data["events"], list)
         
         # Validate against OpenAPI schema
-        self.validate_endpoint_response(f"/api/calendars/{calendar_id}/preferences", "GET", 200, data)
-        
-        # Clean up
-        self.client.delete(f"/api/calendars/{calendar_id}", headers=self.test_user_headers)
-    
-    def test_save_calendar_preferences_contract(self):
-        """Test PUT /api/calendars/{calendar_id}/preferences conforms to contract"""
-        # Create a calendar first
-        calendar_data = {"name": "Save Preferences Test", "url": "https://example.com/save-prefs.ics"}
-        create_response = self.client.post("/api/calendars", json=calendar_data, headers=self.test_user_headers)
-        calendar_id = create_response.json()["id"]
-        
-        # Save calendar preferences
-        preferences_data = {
-            "default_view": "month",
-            "show_weekends": True,
-            "event_color": "#3498db"
-        }
-        
-        response = self.client.put(
-            f"/api/calendars/{calendar_id}/preferences", 
-            json=preferences_data, 
-            headers=self.test_user_headers
+        self.validate_endpoint_response(
+            "/api/calendar/{calendar_id}/raw-events", 
+            "GET", 
+            200, 
+            data
         )
         
-        assert response.status_code == 200
-        data = response.json()
-        
-        # Validate response structure
-        assert "success" in data
-        assert isinstance(data["success"], bool)
-        
-        # Validate against OpenAPI schema
-        self.validate_endpoint_response(f"/api/calendars/{calendar_id}/preferences", "PUT", 200, data)
-        
         # Clean up
-        self.client.delete(f"/api/calendars/{calendar_id}", headers=self.test_user_headers)
-    
-    def test_get_saved_filters_contract(self):
-        """Test GET /api/filters conforms to contract"""
-        response = self.client.get("/api/filters", headers=self.test_user_headers)
-        assert response.status_code == 200
-        data = response.json()
-        
-        # Validate contract-compliant structure
-        assert "filters" in data
-        assert isinstance(data["filters"], list)
-        
-        # Each filter should have proper structure
-        for filter_item in data["filters"]:
-            assert "id" in filter_item
-            assert "name" in filter_item
-            assert "config" in filter_item
-            assert "user_id" in filter_item
-            assert "created_at" in filter_item
-        
-        # Validate against OpenAPI schema
-        self.validate_endpoint_response("/api/filters", "GET", 200, data)
-    
-    def test_create_saved_filter_contract(self):
-        """Test POST /api/filters conforms to contract"""
-        filter_data = {
-            "name": "Work Events Only",
-            "config": {
-                "categories": ["work", "meetings"],
-                "exclude_keywords": ["personal", "vacation"]
-            }
-        }
-        
-        response = self.client.post(
-            "/api/filters", 
-            json=filter_data, 
-            headers=self.test_user_headers
-        )
-        
-        assert response.status_code == 201  # Per OpenAPI spec
-        data = response.json()
-        
-        # Validate required fields per contract
-        assert "id" in data
-        assert "name" in data
-        assert "config" in data
-        assert "user_id" in data
-        assert "created_at" in data
-        assert data["name"] == filter_data["name"]
-        
-        # Validate against OpenAPI schema
-        self.validate_endpoint_response("/api/filters", "POST", 201, data)
-        
-        # Clean up
-        self.client.delete(f"/api/filters/{data['id']}", headers=self.test_user_headers)
-    
-    def test_delete_saved_filter_contract(self):
-        """Test DELETE /api/filters/{filter_id} conforms to contract"""
-        # Create a filter first
-        filter_data = {"name": "Filter to Delete", "config": {"categories": ["test"]}}
-        create_response = self.client.post("/api/filters", json=filter_data, headers=self.test_user_headers)
-        filter_id = create_response.json()["id"]
-        
-        # Delete the filter
-        response = self.client.delete(
-            f"/api/filters/{filter_id}", 
-            headers=self.test_user_headers
-        )
-        
-        assert response.status_code == 204  # Per OpenAPI spec
-        # 204 responses should have no content
-        assert response.content == b''
+        self.client.delete(f"/api/calendars/{calendar_id}")
+
+    # ===============================================
+    # iCal Generation Tests  
+    # ===============================================
     
     @pytest.mark.unit
     def test_generate_ical_contract(self):
         """Test POST /api/calendar/{calendar_id}/generate conforms to contract"""
         # Create a calendar first
         calendar_data = {"name": "iCal Generation Test", "url": "https://example.com/generate.ics"}
-        create_response = self.client.post("/api/calendars", json=calendar_data, headers=self.test_user_headers)
+        create_response = self.client.post("/api/calendars", json=calendar_data)
         calendar_id = create_response.json()["id"]
         
-        # Generate iCal content
+        # Generate iCal content with correct format per OpenAPI spec
         generation_data = {
-            "selected_events": ["event_1", "event_2"],
+            "selected_event_types": ["Work", "Meeting"],  # Updated to match OpenAPI
             "filter_mode": "include"
         }
         
         response = self.client.post(
             f"/api/calendar/{calendar_id}/generate", 
-            json=generation_data, 
-            headers=self.test_user_headers
+            json=generation_data
         )
         
         assert response.status_code == 200
@@ -543,45 +258,95 @@ class TestOpenAPIContract:
         assert "END:VCALENDAR" in content
         
         # Clean up
-        self.client.delete(f"/api/calendars/{calendar_id}", headers=self.test_user_headers)
+        self.client.delete(f"/api/calendars/{calendar_id}")
+
+    # ===============================================
+    # Domain Configuration Tests
+    # ===============================================
     
-    def test_comprehensive_error_responses_contract(self):
-        """Test comprehensive error response types conform to contract"""
-        # Test 400 Bad Request responses
-        # POST calendar with invalid data
-        invalid_calendar = {"name": ""}  # Missing required field
-        response = self.client.post("/api/calendars", json=invalid_calendar, headers=self.test_user_headers)
-        assert response.status_code == 400
+    @pytest.mark.unit
+    def test_get_domains_contract(self):
+        """Test GET /api/domains conforms to contract"""
+        response = self.client.get("/api/domains")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Validate contract-compliant structure
+        assert "domains" in data
+        assert isinstance(data["domains"], list)
+        
+        # Each domain should have proper structure
+        for domain in data["domains"]:
+            assert "id" in domain
+            assert "name" in domain  
+            assert "calendar_url" in domain
+        
+        # Validate against OpenAPI schema
+        self.validate_endpoint_response("/api/domains", "GET", 200, data)
+
+    @pytest.mark.unit
+    def test_get_domain_by_id_contract(self):
+        """Test GET /api/domains/{domain_id} conforms to contract"""
+        # First get available domains
+        domains_response = self.client.get("/api/domains")
+        domains_data = domains_response.json()
+        
+        if domains_data["domains"]:
+            # Test with first available domain
+            domain_id = domains_data["domains"][0]["id"]
+            response = self.client.get(f"/api/domains/{domain_id}")
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Validate required fields per contract
+            assert "id" in data
+            assert "name" in data
+            assert "calendar_url" in data
+            
+            # Validate against OpenAPI schema (use template path)
+            self.validate_endpoint_response("/api/domains/{domain_id}", "GET", 200, data)
+
+    # ===============================================
+    # Public Calendar Access Tests
+    # ===============================================
+    
+    @pytest.mark.unit  
+    def test_public_calendar_access_contract(self):
+        """Test GET /cal/{token} conforms to contract (404 expected for invalid token)"""
+        # Test with invalid token - should return 404
+        response = self.client.get("/cal/invalid_token")
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data
+        assert isinstance(data["detail"], str)
+
+    # ===============================================
+    # Error Response Tests
+    # ===============================================
+    
+    @pytest.mark.unit
+    def test_error_responses_contract(self):
+        """Test error responses conform to contract"""
+        # Test 404 Not Found
+        response = self.client.get("/api/calendar/nonexistent/events")
+        assert response.status_code == 404
         data = response.json()
         assert "detail" in data
         assert isinstance(data["detail"], str)
         
-        # POST filtered calendar with invalid source
-        invalid_filtered = {
-            "name": "Invalid Filter",
-            "source_calendar_id": "nonexistent",
-            "filter_config": {}
-        }
-        response = self.client.post("/api/filtered-calendars", json=invalid_filtered, headers=self.test_user_headers)
-        assert response.status_code == 404  # Source calendar not found
+        # Test 400 Bad Request - invalid calendar data
+        invalid_calendar = {"name": ""}  # Missing required fields
+        response = self.client.post("/api/calendars", json=invalid_calendar)
+        assert response.status_code == 400
         data = response.json()
         assert "detail" in data
-        
-        # Test various 404 scenarios
-        test_404_endpoints = [
-            f"/api/calendars/nonexistent/events",
-            f"/api/calendars/nonexistent/preferences", 
-            f"/api/filtered-calendars/nonexistent",
-            f"/api/filters/nonexistent"
-        ]
-        
-        for endpoint in test_404_endpoints:
-            response = self.client.get(endpoint, headers=self.test_user_headers)
-            assert response.status_code == 404
-            data = response.json()
-            assert "detail" in data
-            assert isinstance(data["detail"], str)
+        assert isinstance(data["detail"], str)
 
+    # ===============================================
+    # Health Check Tests
+    # ===============================================
+    
     @pytest.mark.unit
     def test_health_endpoint_exists(self):
         """Test health endpoint is available (not in OpenAPI but required)"""
@@ -590,83 +355,6 @@ class TestOpenAPIContract:
         data = response.json()
         assert "status" in data
         assert data["status"] == "healthy"
-
-
-class TestContractCompliance:
-    """Test that actual implementation matches contract exactly"""
-    
-    def setup_method(self):
-        """Setup for each test"""
-        self.client = TestClient(app)
-        self.test_user_headers = {"x-user-id": "test_user_123"}
-    
-    @pytest.mark.integration
-    def test_future_events_only_returned(self):
-        """Test that only future events are returned by default"""
-        # This test would require real calendar data with past events
-        # For now, we test the structure compliance
-        calendar_data = {
-            "name": "Future Events Test",
-            "url": "https://example.com/future-test.ics"
-        }
-        create_response = self.client.post(
-            "/api/calendars", 
-            json=calendar_data, 
-            headers=self.test_user_headers
-        )
-        calendar_id = create_response.json()["id"]
-        
-        response = self.client.get(
-            f"/api/calendar/{calendar_id}/events", 
-            headers=self.test_user_headers
-        )
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        # Contract compliance: should return grouped events structure
-        assert "events" in data
-        assert isinstance(data["events"], dict)
-        
-        # Clean up
-        self.client.delete(f"/api/calendars/{calendar_id}", headers=self.test_user_headers)
-    
-    @pytest.mark.integration
-    def test_full_event_objects_returned(self):
-        """Test that full event objects are returned, not just IDs"""
-        calendar_data = {
-            "name": "Full Events Test",
-            "url": "https://example.com/full-events-test.ics"
-        }
-        create_response = self.client.post(
-            "/api/calendars", 
-            json=calendar_data, 
-            headers=self.test_user_headers
-        )
-        calendar_id = create_response.json()["id"]
-        
-        response = self.client.get(
-            f"/api/calendar/{calendar_id}/events", 
-            headers=self.test_user_headers
-        )
-        
-        data = response.json()
-        
-        # Check contract compliance: events should be full objects
-        for event_type_name, event_type_data in data["events"].items():
-            assert "events" in event_type_data
-            events_list = event_type_data["events"]
-            
-            for event in events_list:
-                # Must be full Event objects, not string IDs
-                assert isinstance(event, dict), f"Event should be object, not {type(event)}"
-                assert "id" in event, "Event must have id field"
-                assert "title" in event, "Event must have title field"
-                assert "start" in event, "Event must have start field"
-                assert "end" in event, "Event must have end field"
-        
-        # Clean up
-        self.client.delete(f"/api/calendars/{calendar_id}", headers=self.test_user_headers)
 
 
 if __name__ == "__main__":

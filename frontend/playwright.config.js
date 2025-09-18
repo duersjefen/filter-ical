@@ -11,6 +11,8 @@ export default defineConfig({
   use: {
     baseURL: process.env.FRONTEND_URL || 'http://localhost:8000',
     trace: 'on-first-retry',
+    // Run tests in headless mode (no browser pop-up)
+    headless: true,
   },
   
   // Environment variables for tests
