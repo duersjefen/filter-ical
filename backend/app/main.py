@@ -512,14 +512,17 @@ async def create_filtered_calendar(
 async def update_filtered_calendar(
     filtered_calendar_id: str,
     request_data: dict,
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Update filtered calendar - matches OpenAPI spec exactly"""
+    user_id = get_user_id(username)
+    
     # Find filtered calendar
     filtered_calendar = session.exec(
         select(FilteredCalendar).where(
             FilteredCalendar.id == filtered_calendar_id,
-            FilteredCalendar.user_id == PUBLIC_USER_ID
+            FilteredCalendar.user_id == user_id
         )
     ).first()
     
@@ -575,13 +578,16 @@ async def update_filtered_calendar(
 @app.delete("/api/filtered-calendars/{filtered_calendar_id}")
 async def delete_filtered_calendar(
     filtered_calendar_id: str,
+    username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     """Delete filtered calendar - matches OpenAPI spec exactly"""
+    user_id = get_user_id(username)
+    
     filtered_calendar = session.exec(
         select(FilteredCalendar).where(
             FilteredCalendar.id == filtered_calendar_id,
-            FilteredCalendar.user_id == PUBLIC_USER_ID
+            FilteredCalendar.user_id == user_id
         )
     ).first()
     

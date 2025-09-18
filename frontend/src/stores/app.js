@@ -472,7 +472,7 @@ export const useAppStore = defineStore('app', () => {
   const filteredCalendars = ref([])
 
   const loadFilteredCalendars = async () => {
-    const result = await get('/api/filtered-calendars', )
+    const result = await get(`/api/filtered-calendars?username=${getUserId()}`)
     
     if (result.success) {
       filteredCalendars.value = result.data.filtered_calendars
@@ -486,11 +486,11 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Name is required' }
     }
 
-    const result = await post('/api/filtered-calendars', {
+    const result = await post(`/api/filtered-calendars?username=${getUserId()}`, {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
       filter_config: filterConfig
-    }, )
+    })
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -505,7 +505,7 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Calendar ID is required' }
     }
 
-    const result = await put(`/api/filtered-calendars/${calendarId}`, updates, )
+    const result = await put(`/api/filtered-calendars/${calendarId}?username=${getUserId()}`, updates)
     
     if (result.success) {
       // Refresh filtered calendars list
@@ -520,7 +520,7 @@ export const useAppStore = defineStore('app', () => {
       return { success: false, error: 'Calendar ID is required' }
     }
 
-    const result = await del(`/api/filtered-calendars/${calendarId}`, )
+    const result = await del(`/api/filtered-calendars/${calendarId}?username=${getUserId()}`)
     
     if (result.success) {
       // Refresh filtered calendars list
