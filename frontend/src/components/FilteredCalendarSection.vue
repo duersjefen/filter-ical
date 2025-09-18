@@ -458,6 +458,12 @@ const toggleExpanded = () => {
 }
 
 const createFilteredCalendar = async () => {
+  // Guard clause: Ensure we have a selected calendar
+  if (!props.selectedCalendar?.id) {
+    console.error('Cannot create filtered calendar: No calendar selected')
+    return false
+  }
+
   const filterConfig = {
     include_event_types: props.filterMode === 'include' ? props.selectedEventTypes : [],
     exclude_event_types: props.filterMode === 'exclude' ? props.selectedEventTypes : [],

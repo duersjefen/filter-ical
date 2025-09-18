@@ -225,6 +225,15 @@ const loadCalendarData = async (calendarId) => {
     const calendar = appStore.calendars.find(c => c.id === calendarId)
     if (calendar) {
       selectedCalendar.value = calendar
+    } else if (props.domainContext && calendarId.startsWith('cal_')) {
+      // Create virtual calendar object for domain calendars
+      selectedCalendar.value = {
+        id: calendarId,
+        name: props.domainContext.name || `Domain Calendar (${calendarId})`,
+        url: props.domainContext.ical_url || '',
+        user_id: 'domain',
+        source: 'domain'
+      }
     }
     
     // Load events and event types from single endpoint
