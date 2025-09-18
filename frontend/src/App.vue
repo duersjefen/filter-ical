@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+  <div id="app" class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300" data-test="ci-cd-test">
     <router-view />
   </div>
 </template>
