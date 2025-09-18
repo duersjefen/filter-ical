@@ -66,10 +66,10 @@
         <p class="text-yellow-800 dark:text-yellow-200 font-semibold text-lg">{{ $t('home.noCalendarsFound') }}</p>
       </div>
 
-      <div v-else>
+      <div v-else data-testid="calendar-list">
         <!-- Mobile: Card Layout -->
         <div class="sm:hidden space-y-4">
-          <div v-for="calendar in appStore.calendars" :key="calendar.id" class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm p-4">
+          <div v-for="calendar in appStore.calendars" :key="calendar.id" :data-testid="`calendar-item-${calendar.id}`" class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm p-4">
             <div class="flex flex-col space-y-3">
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base">{{ calendar.name }}</h3>
@@ -105,7 +105,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="calendar in appStore.calendars" :key="calendar.id" class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-200 border-b border-gray-100 dark:border-gray-600">
+              <tr v-for="calendar in appStore.calendars" :key="calendar.id" :data-testid="`calendar-item-${calendar.id}`" class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-200 border-b border-gray-100 dark:border-gray-600">
                 <td class="px-6 py-4">
                   <strong class="text-gray-900 dark:text-gray-100 font-semibold text-base">{{ calendar.name }}</strong>
                 </td>
@@ -169,11 +169,26 @@ const calendarToDelete = ref(null)
 
 onMounted(() => {
   console.log('HomeView mounted in public-first mode')
+  console.log('📊 Initial appStore.calendars:', {
+    length: appStore.calendars.length,
+    isReactive: !!appStore.calendars,
+    firstCalendar: appStore.calendars[0]?.name
+  })
   
   // Public-first access - always try to initialize and fetch calendars
   appStore.initializeApp()
   appStore.fetchCalendars()
 })
+
+// Watch for reactivity debugging
+watch(() => appStore.calendars, (newCalendars, oldCalendars) => {
+  console.log('🔄 appStore.calendars changed:', {
+    oldLength: oldCalendars?.length || 0,
+    newLength: newCalendars?.length || 0,
+    firstNewCalendar: newCalendars[0]?.name,
+    timestamp: new Date().toISOString()
+  })
+}, { immediate: true, deep: true })
 
 const handleAddCalendar = async () => {
   const result = await appStore.addCalendar()

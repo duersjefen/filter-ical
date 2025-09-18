@@ -75,20 +75,44 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const fetchCalendars = async () => {
+    console.log('🔄 fetchCalendars called')
+    
     // Load from localStorage first for immediate display
     const hasLocalData = loadCalendarsFromLocalStorage()
+    console.log('📦 localStorage data loaded:', { hasLocalData, count: calendars.value.length })
     
     // Try to sync with API in background
     try {
+      console.log('🌐 Making API call to /api/calendars?username=' + getUserId())
       const result = await get(`/api/calendars?username=${getUserId()}`)
+      console.log('🌐 API result received:', { 
+        success: result.success, 
+        dataType: typeof result.data,
+        dataKeys: result.data ? Object.keys(result.data) : 'null',
+        calendarsProperty: result.data?.calendars,
+        calendarsLength: result.data?.calendars?.length
+      })
       
       if (result.success) {
         // Merge local and server data, preferring server data for conflicts
         const serverCalendars = result.data.calendars
         const localCalendars = calendars.value
         
+        console.log('📊 Data comparison:', {
+          serverCalendarsLength: serverCalendars?.length || 0,
+          localCalendarsLength: localCalendars.length,
+          serverCalendarsType: typeof serverCalendars,
+          serverCalendarsArray: Array.isArray(serverCalendars)
+        })
+        
         // For now, just use server data if available, fall back to local
         calendars.value = serverCalendars.length > 0 ? serverCalendars : localCalendars
+        
+        console.log('✅ Final calendars.value set:', { 
+          length: calendars.value.length,
+          firstCalendarId: calendars.value[0]?.id,
+          firstCalendarName: calendars.value[0]?.name
+        })
         
         // Save updated calendars to localStorage
         saveCalendarsToLocalStorage()
@@ -100,6 +124,7 @@ export const useAppStore = defineStore('app', () => {
     }
     
     // Return success if we have local data, even if API failed
+    console.log('📤 Returning fallback result:', { hasLocalData, calendarsLength: calendars.value.length })
     return { 
       success: hasLocalData || calendars.value.length > 0, 
       data: { calendars: calendars.value }
@@ -215,6 +240,15 @@ export const useAppStore = defineStore('app', () => {
   const sortBy = ref('date')
   const sortDirection = ref('asc')
 
+  // ===============================================
+  // GROUPS SECTION
+  // ===============================================
+  
+  const groups = ref({})
+  const hasGroups = ref(false)
+  const selectedGroups = ref(new Set())
+  const selectedEvents = ref(new Set()) // Individual event selections
+
   // Create filtering composable with current state
   const eventFiltering = useEventFiltering(events, {
     selectedEventTypes,
@@ -283,6 +317,56 @@ export const useAppStore = defineStore('app', () => {
 
   const selectAllEventTypes = () => {
     selectedEventTypes.value = new Set(Object.keys(eventTypes.value))
+  }
+
+  // Groups methods
+  const loadCalendarGroups = async (calendarId) => {
+    const result = await get(`/api/calendar/${calendarId}/groups`)
+
+    if (result.success) {
+      hasGroups.value = result.data.has_groups
+      groups.value = result.data.groups
+
+      // Reset selections when loading new calendar
+      selectedGroups.value = new Set()
+      selectedEvents.value = new Set()
+    }
+
+    return result
+  }
+
+  const toggleGroup = (groupId) => {
+    const newGroups = new Set(selectedGroups.value)
+
+    if (newGroups.has(groupId)) {
+      newGroups.delete(groupId)
+      // Remove all events from this group from individual selections
+      const groupEvents = groups.value[groupId]?.events || []
+      const newEvents = new Set(selectedEvents.value)
+      groupEvents.forEach(event => newEvents.delete(event.id))
+      selectedEvents.value = newEvents
+    } else {
+      newGroups.add(groupId)
+      // Auto-add all events from this group
+      const groupEvents = groups.value[groupId]?.events || []
+      const newEvents = new Set(selectedEvents.value)
+      groupEvents.forEach(event => newEvents.add(event.id))
+      selectedEvents.value = newEvents
+    }
+
+    selectedGroups.value = newGroups
+  }
+
+  const toggleEvent = (eventId) => {
+    const newEvents = new Set(selectedEvents.value)
+
+    if (newEvents.has(eventId)) {
+      newEvents.delete(eventId)
+    } else {
+      newEvents.add(eventId)
+    }
+
+    selectedEvents.value = newEvents
   }
 
   // ===============================================
@@ -439,7 +523,9 @@ export const useAppStore = defineStore('app', () => {
   
   const generateIcal = async ({ calendarId, selectedEventTypes, filterMode }) => {
     return await post(`/api/calendar/${calendarId}/generate`, {
-      selected_event_types: selectedEventTypes,
+      selected_groups: Array.from(selectedGroups.value),
+      selected_events: Array.from(selectedEvents.value),
+      selected_event_types: selectedEventTypes || [], // Backward compatibility
       filter_mode: filterMode
     })
   }
@@ -483,6 +569,17 @@ export const useAppStore = defineStore('app', () => {
     setSorting,
     clearAllFilters,
     selectAllEventTypes,
+
+    // ===============================================
+    // GROUPS
+    // ===============================================
+    groups,
+    hasGroups,
+    selectedGroups,
+    selectedEvents,
+    loadCalendarGroups,
+    toggleGroup,
+    toggleEvent,
 
     // ===============================================
     // SAVED FILTERS
