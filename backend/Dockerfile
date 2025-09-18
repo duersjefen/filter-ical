@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app/ ./app/
 
+# Copy configuration files
+COPY config/ ./config/
+
 # Copy OpenAPI specification for contract validation tests
 COPY openapi.yaml ./
 
