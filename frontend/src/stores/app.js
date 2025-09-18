@@ -375,41 +375,74 @@ export const useAppStore = defineStore('app', () => {
   
   const savedFilters = ref([])
 
+  // localStorage key for saved filters
+  const getSavedFiltersKey = () => `icalViewer_savedFilters_${getUserId()}`
+
   const fetchFilters = async () => {
-    const result = await get('/api/filters', )
-
-    if (result.success) {
-      savedFilters.value = result.data.filters
+    try {
+      const storageKey = getSavedFiltersKey()
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          savedFilters.value = parsed
+          console.log(`Loaded ${parsed.length} saved filters from localStorage`)
+          return { success: true, data: { filters: parsed } }
+        }
+      }
+      console.log('No saved filters found in localStorage')
+      savedFilters.value = []
+      return { success: true, data: { filters: [] } }
+    } catch (error) {
+      console.warn('Failed to load filters from localStorage:', error)
+      savedFilters.value = []
+      return { success: false, error: 'Failed to load saved filters' }
     }
+  }
 
-    return result
+  const saveFiltersToStorage = () => {
+    try {
+      const storageKey = getSavedFiltersKey()
+      localStorage.setItem(storageKey, JSON.stringify(savedFilters.value))
+      console.log(`Saved ${savedFilters.value.length} filters to localStorage`)
+    } catch (error) {
+      console.warn('Failed to save filters to localStorage:', error)
+    }
   }
 
   const saveFilter = async (name, config) => {
     const filterName = name || `Filter ${config.selectedEventTypes?.length || 0} types`
     
-    const result = await post('/api/filters', {
+    const newFilter = {
+      id: 'filter_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
       name: filterName,
-      config: config
-    }, )
-
-    if (result.success) {
-      // Refresh filters list
-      await fetchFilters()
+      config: config,
+      created_at: new Date().toISOString()
     }
 
-    return result
+    // Add to filters list
+    savedFilters.value.push(newFilter)
+    
+    // Save to localStorage
+    saveFiltersToStorage()
+
+    return { success: true, data: newFilter }
   }
 
   const deleteFilter = async (filterId) => {
-    const result = await del(`/api/filters/${filterId}`, )
-
-    if (result.success) {
-      // Refresh filters list
-      await fetchFilters()
+    const filterIndex = savedFilters.value.findIndex(filter => filter.id === filterId)
+    
+    if (filterIndex === -1) {
+      return { success: false, error: 'Filter not found' }
     }
 
-    return result
+    // Remove from filters list
+    savedFilters.value.splice(filterIndex, 1)
+    
+    // Save to localStorage
+    saveFiltersToStorage()
+
+    return { success: true }
   }
 
   const createFilterConfig = () => {
