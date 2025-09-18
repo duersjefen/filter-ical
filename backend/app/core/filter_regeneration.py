@@ -52,6 +52,59 @@ def get_filtered_events_from_db(
     return filtered_events
 
 
+def get_cached_filtered_ical(filtered_calendar: FilteredCalendar) -> Optional[str]:
+    """
+    Pure function: Get cached iCal content if it exists and is valid.
+    Returns None if cache is empty or needs regeneration.
+    
+    Args:
+        filtered_calendar: FilteredCalendar object
+        
+    Returns:
+        Cached iCal content or None if needs regeneration
+    """
+    # Check if cache exists and calendar doesn't need regeneration
+    if (filtered_calendar.cached_ical_content and 
+        not filtered_calendar.needs_regeneration and
+        filtered_calendar.cache_updated_at):
+        return filtered_calendar.cached_ical_content
+    
+    return None
+
+
+def get_filtered_ical_cache_first(filtered_calendar: FilteredCalendar, session: Session) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Cache-first iCal content retrieval with automatic regeneration.
+    I/O Shell function - orchestrates cache check and regeneration.
+    
+    Args:
+        filtered_calendar: FilteredCalendar object to get content for
+        session: Database session
+        
+    Returns:
+        Tuple of (ical_content, error_message)
+    """
+    # Try to get cached content first
+    cached_content = get_cached_filtered_ical(filtered_calendar)
+    if cached_content:
+        print(f"📦 Using cached iCal content for filtered calendar {filtered_calendar.id}")
+        return cached_content, None
+    
+    # Cache miss or needs regeneration - generate fresh content
+    print(f"🔄 Regenerating iCal content for filtered calendar {filtered_calendar.id}")
+    fresh_content, error = regenerate_filtered_calendar_content(filtered_calendar, session)
+    
+    if error:
+        return None, error
+    
+    # Update cache with fresh content
+    success = update_filtered_calendar_cache(filtered_calendar, fresh_content, session)
+    if not success:
+        return fresh_content, "Warning: Failed to update cache"
+    
+    return fresh_content, None
+
+
 def regenerate_filtered_calendar_content(filtered_calendar: FilteredCalendar, session: Session) -> Tuple[Optional[str], Optional[str]]:
     """
     Regenerate iCal content for a filtered calendar.
@@ -97,7 +150,7 @@ def update_filtered_calendar_cache(
     session: Session
 ) -> bool:
     """
-    Update filtered calendar with new iCal content and timestamps.
+    Update filtered calendar with new iCal content and cache timestamps.
     I/O Shell function - handles database updates.
     
     Args:
@@ -109,7 +162,14 @@ def update_filtered_calendar_cache(
         True if update successful, False otherwise
     """
     try:
-        # Store regenerated content (we could add caching fields to FilteredCalendar model later)
+        import hashlib
+        
+        # Store generated iCal content in cache fields
+        filtered_calendar.cached_ical_content = ical_content
+        filtered_calendar.cached_content_hash = hashlib.sha256(ical_content.encode()).hexdigest()
+        filtered_calendar.cache_updated_at = datetime.utcnow()
+        
+        # Clear regeneration flag and update timestamps
         filtered_calendar.needs_regeneration = False
         filtered_calendar.updated_at = datetime.utcnow()
         

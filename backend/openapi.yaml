@@ -656,7 +656,7 @@ paths:
   /cal/{token}:
     get:
       summary: Get public filtered calendar
-      description: Access a filtered calendar using its public token (no authentication required)
+      description: Access a filtered calendar using its public token (no authentication required). Supports both /cal/{token} and /cal/{token}.ics URLs for calendar app compatibility.
       tags:
         - Public Access
       parameters:
@@ -665,7 +665,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Public access token for the filtered calendar
+          description: Public access token for the filtered calendar (with or without .ics extension)
           example: "abc123def456"
       responses:
         '200':
@@ -985,8 +985,8 @@ components:
         calendar_url:
           type: string
           format: uri
-          description: Public subscription URL
-          example: "https://filter-ical.de/cal/abc123def456"
+          description: Public subscription URL with .ics extension for calendar app compatibility
+          example: "https://filter-ical.de/cal/abc123def456.ics"
         preview_url:
           type: string
           format: uri

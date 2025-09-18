@@ -112,6 +112,11 @@ class FilteredCalendar(SQLModel, table=True):
     # Auto-regeneration tracking
     needs_regeneration: bool = Field(default=False, index=True)  # Flag when source calendar changes
     
+    # Cache fields for generated iCal content (similar to Calendar cache structure)
+    cached_ical_content: Optional[str] = Field(default=None)  # Generated iCal content
+    cached_content_hash: Optional[str] = Field(default=None)  # Hash for change detection
+    cache_updated_at: Optional[datetime] = Field(default=None)  # When cache was last updated
+    
     # Filter configuration stored as JSON
     include_events: str = Field(default="[]")  # JSON array of strings
     exclude_events: str = Field(default="[]")  # JSON array of strings  
@@ -122,11 +127,17 @@ class FilteredCalendar(SQLModel, table=True):
     
     @property
     def calendar_url(self) -> str:
-        return f"https://filter-ical.de/cal/{self.public_token}"
+        import os
+        # Use environment-specific domain
+        domain = os.getenv('PUBLIC_DOMAIN', 'http://localhost:3000')
+        return f"{domain}/cal/{self.public_token}.ics"
     
     @property 
     def preview_url(self) -> str:
-        return f"https://filter-ical.de/preview/{self.public_token}"
+        import os
+        # Use environment-specific domain
+        domain = os.getenv('PUBLIC_DOMAIN', 'http://localhost:3000')
+        return f"{domain}/preview/{self.public_token}"
 
 
 # Preferences models removed - using default filter state only

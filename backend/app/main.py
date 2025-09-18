@@ -43,7 +43,7 @@ from .core.cache import (
     should_update_cache, get_cached_content, create_cache_data, 
     needs_cache_update, detect_content_change
 )
-from .core.filter_regeneration import mark_all_dependent_filters_for_regeneration
+from .core.filter_regeneration import mark_all_dependent_filters_for_regeneration, get_filtered_ical_cache_first
 from .middleware.schema_validation import create_validation_middleware
 from .core.background_tasks import background_manager
 from .core.domain_setup import ensure_domain_calendars_exist
@@ -670,12 +670,17 @@ async def create_filtered_calendar(
         user_id=user_id,
         include_events=serialize_json_field(filter_config.get('include_event_types', [])),
         exclude_events=serialize_json_field(filter_config.get('exclude_event_types', [])),
-        filter_mode=FilterMode(filter_config.get('filter_mode', 'include'))
+        filter_mode=FilterMode(filter_config.get('filter_mode', 'include')),
+        needs_regeneration=True  # Flag for initial iCal generation
     )
     
     session.add(filtered_calendar)
     session.commit()
     session.refresh(filtered_calendar)
+    
+    # Generate initial cached iCal content
+    print(f"🔄 Generating initial iCal content for filtered calendar {filtered_calendar.id}")
+    ical_content, error = get_filtered_ical_cache_first(filtered_calendar, session)
     
     # Return response matching OpenAPI schema
     return {
@@ -725,6 +730,7 @@ async def update_filtered_calendar(
             )
         filtered_calendar.name = name
     
+    filter_config_changed = False
     if 'filter_config' in request_data:
         filter_config = request_data['filter_config']
         filtered_calendar.include_events = serialize_json_field(
@@ -736,6 +742,8 @@ async def update_filtered_calendar(
         filtered_calendar.filter_mode = FilterMode(
             filter_config.get('filter_mode', 'include')
         )
+        filtered_calendar.needs_regeneration = True  # Mark for cache regeneration
+        filter_config_changed = True
     
     from datetime import datetime
     filtered_calendar.updated_at = datetime.utcnow()
@@ -743,6 +751,11 @@ async def update_filtered_calendar(
     session.add(filtered_calendar)
     session.commit()
     session.refresh(filtered_calendar)
+    
+    # Regenerate cache if filter config changed
+    if filter_config_changed:
+        print(f"🔄 Regenerating iCal content for updated filtered calendar {filtered_calendar.id}")
+        ical_content, error = get_filtered_ical_cache_first(filtered_calendar, session)
     
     # Return updated calendar
     return {
@@ -790,51 +803,33 @@ async def delete_filtered_calendar(
 # ==============================================
 
 @app.get("/cal/{token}")
+@app.get("/cal/{token}.ics")
 async def get_public_filtered_calendar(
     token: str,
     session: Session = Depends(get_session)
 ):
-    """Get public filtered calendar - matches OpenAPI spec exactly"""
+    """Get public filtered calendar with cache-first approach - matches OpenAPI spec exactly"""
+    # Remove .ics extension if present for token lookup
+    clean_token = token.replace('.ics', '') if token.endswith('.ics') else token
+    
     # Find filtered calendar by public token
     filtered_calendar = session.exec(
-        select(FilteredCalendar).where(FilteredCalendar.public_token == token)
+        select(FilteredCalendar).where(FilteredCalendar.public_token == clean_token)
     ).first()
     
     if not filtered_calendar:
         raise HTTPException(status_code=404, detail="Public calendar not found or access token invalid")
     
-    # Get source calendar events
-    events = session.exec(
-        select(Event).where(Event.calendar_id == filtered_calendar.source_calendar_id)
-    ).all()
+    # Use cache-first approach for iCal content generation
+    ical_content, error = get_filtered_ical_cache_first(filtered_calendar, session)
     
-    # Convert to dict format for pure functions
-    events_data = []
-    for event in events:
-        events_data.append({
-            "id": event.id,
-            "title": event.title,
-            "start": event.start,
-            "end": event.end,
-            "event_type": event.title,
-            "description": event.description,
-            "location": event.location
-        })
+    if error:
+        raise HTTPException(status_code=500, detail=f"Failed to generate calendar content: {error}")
     
-    # Apply filters using pure functions
-    include_categories = parse_json_field(filtered_calendar.include_events, [])
-    exclude_categories = parse_json_field(filtered_calendar.exclude_events, [])
+    if not ical_content:
+        raise HTTPException(status_code=500, detail="No calendar content available")
     
-    filtered_events = filter_events_by_categories(
-        events_data,
-        include_categories,
-        exclude_categories, 
-        filtered_calendar.filter_mode
-    )
-    
-    # Generate iCal content using pure function
-    ical_content = create_ical_from_events(filtered_events, filtered_calendar.name)
-    
+    # Return cached or freshly generated iCal content
     return Response(
         content=ical_content,
         media_type="text/calendar",
