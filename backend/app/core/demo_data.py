@@ -13,12 +13,17 @@ from .domains import load_domains_config, domain_has_groups
 
 
 def create_demo_calendar_data() -> Dict[str, Any]:
-    """Create demo calendar data for showcasing"""
+    """
+    Create demo calendar data for showcasing.
+    NOTE: This should only be used if domain calendar creation failed.
+    Normally, cal_domain_exter is created by ensure_domain_calendars_exist()
+    """
     return {
-        "id": "exter",
+        "id": "cal_domain_exter",
         "name": "Exter Kalendar",
         "url": "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics",
         "user_id": "public",
+        "domain_id": "exter",
         "created_at": datetime.now()
     }
 
@@ -161,16 +166,18 @@ def seed_demo_data() -> bool:
     try:
         session = get_session_sync()
         
-        # 1. Create demo calendar if it doesn't exist
-        existing_calendar = session.get(Calendar, "exter")
+        # 1. Verify domain calendar exists (should be created by ensure_domain_calendars_exist)
+        existing_calendar = session.get(Calendar, "cal_domain_exter")
         if not existing_calendar:
+            print("⚠️  Domain calendar cal_domain_exter not found!")
+            print("💡 Creating fallback demo calendar (ensure_domain_calendars_exist should have created this)")
             demo_calendar_data = create_demo_calendar_data()
             demo_calendar = Calendar(**demo_calendar_data)
             session.add(demo_calendar)
             session.commit()
-            print("✅ Created demo calendar")
+            print("✅ Created fallback demo calendar")
         else:
-            print("📋 Demo calendar already exists")
+            print("✅ Domain calendar cal_domain_exter exists")
         
         # 2. Create demo groups if they don't exist
         demo_groups_data = create_demo_groups()
@@ -224,8 +231,11 @@ def seed_demo_data() -> bool:
 
 def should_seed_demo_data() -> bool:
     """
-    Check if demo data should be seeded
-    Returns True if no demo groups exist for exter domain
+    Check if demo data should be seeded.
+    Returns True if no demo groups exist for exter domain.
+    
+    NOTE: Domain calendar (cal_domain_exter) should be created by ensure_domain_calendars_exist()
+    before this function is called during startup.
     """
     try:
         session = get_session_sync()
@@ -235,6 +245,8 @@ def should_seed_demo_data() -> bool:
         has_demo_groups = existing_groups is not None
         
         session.close()
+        
+        # Seed if demo groups are missing
         return not has_demo_groups
         
     except Exception as e:

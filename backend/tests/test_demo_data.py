@@ -13,7 +13,7 @@ def test_demo_data_seeding(setup_test_database):
     """Test that demo data can be seeded correctly"""
     session = get_session_sync()
     
-    # Initially, should need seeding
+    # Initially, should need seeding (no groups exist)
     assert should_seed_demo_data() == True
     
     # Seed the demo data
@@ -23,10 +23,11 @@ def test_demo_data_seeding(setup_test_database):
     # After seeding, should not need seeding
     assert should_seed_demo_data() == False
     
-    # Verify demo calendar exists
-    demo_calendar = session.get(Calendar, "exter")
+    # Verify demo calendar exists (created as fallback if domain setup didn't run)
+    demo_calendar = session.get(Calendar, "cal_domain_exter")
     assert demo_calendar is not None
     assert demo_calendar.name == "Exter Kalendar"
+    assert demo_calendar.domain_id == "exter"
     
     # Verify demo groups exist
     demo_groups = session.exec(
