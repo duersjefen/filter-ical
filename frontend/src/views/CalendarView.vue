@@ -16,10 +16,6 @@
     </div>
 
     <!-- Main Content -->
-    <!-- Debug condition -->
-    <div v-if="!loading" class="text-xs text-gray-500 p-2 bg-yellow-100 mb-2">
-      🐛 DEBUG: loading={{ loading }}, events={{ events.length }}, eventTypes={{ eventTypes ? Object.keys(eventTypes).length : 'null' }}, hasGroups={{ hasGroups }}
-    </div>
     <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
       <!-- Show Groups Interface if Domain has Groups -->
       <EventGroupsSection

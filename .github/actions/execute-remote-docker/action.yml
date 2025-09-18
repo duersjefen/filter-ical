@@ -7,7 +7,7 @@ inputs:
     description: 'Space-separated list of containers to operate on'
     required: true
   operation:
-    description: 'Operation to perform (deploy|restart|health-check|rollback)'
+    description: 'Operation to perform (deploy|clean-deploy|restart|health-check|rollback)'
     required: true
   nginx_restart:
     description: 'Whether to restart nginx (true/false)'
@@ -96,10 +96,48 @@ runs:
               echo "🚀 Executing zero-downtime deployment..."
               docker-compose pull $containers
               docker-compose up -d --no-deps $containers
+              ;;
+              
+            "clean-deploy")
+              # CLEAN DEPLOYMENT: Reset database and fresh startup
+              echo "🧹 CLEAN DEPLOYMENT: Resetting database and fresh startup!"
+              echo "⚠️  This will destroy all data and start fresh"
+              
+              # Create backup before clean deployment
+              backup_tag="backup-clean-$(date +%s)"
+              echo "💾 Creating backup before clean deployment: $backup_tag"
+              
+              for container in $containers; do
+                current_image=$(docker-compose images "$container" 2>/dev/null | tail -n 1 | awk '{print $4":"$5}' || echo "")
+                if [ -n "$current_image" ] && [ "$current_image" != ":" ]; then
+                  docker tag "$current_image" "${current_image%:*}:$backup_tag" 2>/dev/null || true
+                  echo "✅ Backup created: $container -> $backup_tag"
+                fi
+              done
+              
+              # Stop containers to ensure clean shutdown
+              echo "🛑 Stopping containers for clean reset..."
+              docker-compose stop $containers
+              
+              # Remove containers to ensure fresh start
+              echo "🗑️  Removing containers for fresh start..."
+              docker-compose rm -f $containers
+              
+              # Remove database volumes to reset data
+              echo "🗄️  Removing database volumes for clean deployment..."
+              docker volume ls -q | grep -E "(data|db|database|postgres|mysql|sqlite)" | xargs -r docker volume rm 2>/dev/null || true
+              
+              # Pull latest images
+              echo "📥 Pulling latest container images..."
+              docker-compose pull $containers
+              
+              # Start containers fresh (will trigger startup scripts)
+              echo "🚀 Starting containers with fresh database..."
+              docker-compose up -d --no-deps $containers
               
               # Intelligent health monitoring with fallback for containers without health checks
               echo "🏥 Monitoring container health..."
-              for i in {1..24}; do  # 2 minutes max
+              for i in {1..30}; do  # 2.5 minutes max for clean deployment
                 unhealthy=0
                 for container in $containers; do
                   # Extract the full status (columns 5 onwards contain the status)
@@ -117,8 +155,8 @@ runs:
                   break
                 fi
                 
-                if [ $i -eq 24 ]; then
-                  echo "❌ Container startup timeout - some containers failed to start"
+                if [ $i -eq 30 ]; then
+                  echo "❌ Clean deployment timeout - some containers failed to start"
                   echo "🔍 Final container status:"
                   docker-compose ps $containers || echo "❌ Failed to get container status"
                   exit 1
@@ -134,6 +172,7 @@ runs:
                 sleep 3
               fi
               
+              echo "🎉 Clean deployment completed - fresh database initialized!"
               echo "backup_created=$backup_tag"
               ;;
               

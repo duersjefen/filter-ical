@@ -76,9 +76,18 @@ jobs:
         DOMAIN_NAME_VAR: ${{ vars.DOMAIN_NAME_VAR }}
         AWS_REGION_VAR: ${{ vars.AWS_REGION }}
     
-    - name: 🔍 Detect File Changes
+    - name: 🔍 Detect File Changes and Clean Deployment Signal
       id: changes
       run: |
+        # Check for clean deployment signal in commit message
+        commit_message=$(git log -1 --pretty=format:"%s%n%b")
+        if echo "$commit_message" | grep -qi "CLEAN_DEPLOY\|clean deployment\|database reset"; then
+          echo "🧹 Clean deployment signal detected!"
+          echo "clean_deploy=true" >> $GITHUB_OUTPUT
+        else
+          echo "clean_deploy=false" >> $GITHUB_OUTPUT
+        fi
+        
         # Robust change detection that handles first commit case
         if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
           # Normal case: compare with previous commit
@@ -168,7 +177,7 @@ jobs:
       uses: ./.github/actions/execute-remote-docker
       with:
         containers: ${{ steps.config.outputs.container_list || 'ical-viewer-backend ical-viewer-frontend' }}
-        operation: 'deploy'
+        operation: ${{ steps.changes.outputs.clean_deploy == 'true' && 'clean-deploy' || 'deploy' }}
         nginx_restart: 'true'
         nginx_container: 'nginx'
     

@@ -149,7 +149,18 @@ deploy-clean: ## Deploy with fresh database (no users yet - destroys all data) [
 		echo "   git add . && git commit -m 'Your commit message'"; \
 		exit 1; \
 	fi
-	@echo "📤 Pushing to remote repository..."
+	@echo "📤 Pushing to remote repository with clean deployment signal..."
+	@git commit --allow-empty -m "🧹 CLEAN_DEPLOY: Force database reset and fresh startup" \
+		-m "" \
+		-m "This is a clean deployment that should:" \
+		-m "- Remove all database volumes" \
+		-m "- Start with fresh containers" \
+		-m "- Trigger domain calendar creation" \
+		-m "- Run demo data seeding" \
+		-m "" \
+		-m "🎭 Generated with [Claude Code](https://claude.ai/code)" \
+		-m "" \
+		-m "Co-Authored-By: Claude <noreply@anthropic.com>"
 	@git push origin $$(git branch --show-current)
 	@echo "👀 Monitoring deployment with GitHub CLI..."
 	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
