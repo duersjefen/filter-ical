@@ -1,13 +1,18 @@
 import { ref, computed, watch } from 'vue'
 import { useAppStore } from '../stores/app'
+import { useUsername } from './useUsername'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
 
-export function useCalendar(eventsData = null, eventTypesData = null, calendarId = null) {
+export function useCalendar(eventsData = null, eventTypesData = null, initialCalendarId = null) {
   const appStore = useAppStore()
+  const { getUserId } = useUsername()
   
   // Use provided data or fall back to store
   const events = eventsData || computed(() => appStore.events)
   const eventTypes = eventTypesData || computed(() => appStore.eventTypes)
+  
+  // Make calendar ID reactive to handle navigation between calendars
+  const calendarId = ref(initialCalendarId)
   
   // Reactive state - these will be loaded from backend preferences
   const selectedEventTypes = ref([])
@@ -22,7 +27,99 @@ export function useCalendar(eventsData = null, eventTypesData = null, calendarId
   const previewOrder = ref(SORT_ORDERS.ASC)
   const previewLimit = ref(EVENT_LIMITS.PREVIEW_DEFAULT)
   
-  // No preferences loading needed - using default state only
+  // Filter persistence functions - now includes user ID for proper isolation
+  const getFilterStorageKey = (calId) => {
+    const userId = getUserId()
+    return calId ? `icalViewer_filters_${calId}_${userId}` : `icalViewer_filters_default_${userId}`
+  }
+
+  const saveFiltersToLocalStorage = () => {
+    try {
+      const storageKey = getFilterStorageKey(calendarId.value)
+      const filtersData = {
+        selectedEventTypes: selectedEventTypes.value,
+        filterMode: filterMode.value,
+        eventTypeSearch: eventTypeSearch.value,
+        showSingleEvents: showSingleEvents.value,
+        showSelectedOnly: showSelectedOnly.value,
+        expandedEventTypes: expandedEventTypes.value,
+        savedAt: new Date().toISOString()
+      }
+      localStorage.setItem(storageKey, JSON.stringify(filtersData))
+      console.log(`💾 Filters saved for calendar: ${calendarId.value || 'default'} (user: ${getUserId()})`)
+    } catch (error) {
+      console.warn('Failed to save filters to localStorage:', error)
+    }
+  }
+
+  const loadFiltersFromLocalStorage = () => {
+    try {
+      const storageKey = getFilterStorageKey(calendarId.value)
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const filtersData = JSON.parse(saved)
+        
+        // Validate data structure
+        if (filtersData && typeof filtersData === 'object') {
+          // Apply saved filters with validation
+          if (Array.isArray(filtersData.selectedEventTypes)) {
+            selectedEventTypes.value = filtersData.selectedEventTypes
+          }
+          if (filtersData.filterMode && Object.values(FILTER_MODES).includes(filtersData.filterMode)) {
+            filterMode.value = filtersData.filterMode
+          }
+          if (typeof filtersData.eventTypeSearch === 'string') {
+            eventTypeSearch.value = filtersData.eventTypeSearch
+          }
+          if (typeof filtersData.showSingleEvents === 'boolean') {
+            showSingleEvents.value = filtersData.showSingleEvents
+          }
+          if (typeof filtersData.showSelectedOnly === 'boolean') {
+            showSelectedOnly.value = filtersData.showSelectedOnly
+          }
+          if (Array.isArray(filtersData.expandedEventTypes)) {
+            expandedEventTypes.value = filtersData.expandedEventTypes
+          }
+          
+          console.log(`📂 Filters loaded for calendar: ${calendarId.value || 'default'} (user: ${getUserId()})`)
+          return true
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load filters from localStorage:', error)
+    }
+    return false
+  }
+
+  // Watch for calendar changes - save current filters and load new calendar's filters
+  watch(calendarId, (newCalendarId, oldCalendarId) => {
+    if (oldCalendarId !== null && oldCalendarId !== newCalendarId) {
+      console.log(`🔄 Calendar changed from ${oldCalendarId} to ${newCalendarId} (user: ${getUserId()})`)
+      
+      // Save current filters for the old calendar
+      if (oldCalendarId) {
+        const oldStorageKey = getFilterStorageKey(oldCalendarId)
+        const currentFilters = {
+          selectedEventTypes: selectedEventTypes.value,
+          filterMode: filterMode.value,
+          eventTypeSearch: eventTypeSearch.value,
+          showSingleEvents: showSingleEvents.value,
+          showSelectedOnly: showSelectedOnly.value,
+          expandedEventTypes: expandedEventTypes.value,
+          savedAt: new Date().toISOString()
+        }
+        try {
+          localStorage.setItem(oldStorageKey, JSON.stringify(currentFilters))
+          console.log(`💾 Saved filters for old calendar: ${oldCalendarId} (user: ${getUserId()})`)
+        } catch (error) {
+          console.warn('Failed to save filters for old calendar:', error)
+        }
+      }
+      
+      // Load filters for the new calendar
+      loadFiltersFromLocalStorage()
+    }
+  })
 
   // Watch for when selectedEventTypes becomes empty and auto-turn off showSelectedOnly
   watch(selectedEventTypes, (newEventTypes) => {
@@ -30,6 +127,30 @@ export function useCalendar(eventsData = null, eventTypesData = null, calendarId
       showSelectedOnly.value = false
     }
   }, { deep: true })
+
+  // Auto-save filter state changes to localStorage
+  let saveTimeout = null
+  const debouncedSave = () => {
+    if (saveTimeout) clearTimeout(saveTimeout)
+    saveTimeout = setTimeout(() => {
+      saveFiltersToLocalStorage()
+    }, 500) // 500ms debounce
+  }
+
+  // Watch filter state changes and auto-save
+  watch(selectedEventTypes, debouncedSave, { deep: true })
+  watch(filterMode, debouncedSave)
+  watch(showSingleEvents, debouncedSave)
+  watch(showSelectedOnly, debouncedSave)
+  watch(expandedEventTypes, debouncedSave, { deep: true })
+  
+  // Debounce search term more aggressively to avoid excessive saves
+  watch(eventTypeSearch, () => {
+    if (saveTimeout) clearTimeout(saveTimeout)
+    saveTimeout = setTimeout(() => {
+      saveFiltersToLocalStorage()
+    }, 1000) // 1 second debounce for search
+  })
 
   // Convert event types object to sorted array with events
   const eventTypesSortedByCount = computed(() => {
@@ -457,7 +578,20 @@ export function useCalendar(eventsData = null, eventTypesData = null, calendarId
     }
   }
 
-  // No persistence functions needed - using default state only
+  // Method to update calendar ID - triggers the watcher for calendar change detection
+  const updateCalendarId = (newCalendarId) => {
+    if (calendarId.value !== newCalendarId) {
+      calendarId.value = newCalendarId
+    }
+  }
+
+  // Load saved filter state when composable is initialized
+  const initializeFilters = () => {
+    loadFiltersFromLocalStorage()
+  }
+
+  // Call initialization immediately
+  initializeFilters()
 
   return {
     // State
@@ -502,6 +636,11 @@ export function useCalendar(eventsData = null, eventTypesData = null, calendarId
     clearAllSingleEvents,
     switchFilterMode,
     togglePreviewOrder,
-    generateIcalFile
+    generateIcalFile,
+    updateCalendarId,
+    
+    // Filter persistence functions
+    saveFiltersToLocalStorage,
+    loadFiltersFromLocalStorage
   }
 }

@@ -66,10 +66,28 @@ export function useUsername() {
     username.value = ''
   }
 
-  // Get current user ID (username or 'public' as fallback)
+  // Get current user ID (username or unique anonymous ID as fallback)
   const getUserId = () => {
     const trimmed = username.value?.trim()
-    return trimmed || 'public'
+    if (trimmed) {
+      return trimmed
+    }
+    
+    // For anonymous users, generate a unique browser-specific ID
+    // This ensures filters don't persist across different browsers
+    const anonymousKey = 'icalViewer_anonymousId'
+    try {
+      let anonymousId = localStorage.getItem(anonymousKey)
+      if (!anonymousId) {
+        // Generate unique ID based on timestamp and random number
+        anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+        localStorage.setItem(anonymousKey, anonymousId)
+      }
+      return anonymousId
+    } catch (error) {
+      // Fallback if localStorage fails - use session-based ID
+      return `anon_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    }
   }
 
 
