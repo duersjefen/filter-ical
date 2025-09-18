@@ -82,6 +82,15 @@ test-backend: setup-backend ## Run backend unit tests
 	@echo "🧪 Running backend tests..."
 	@cd backend && . venv/bin/activate && python -m pytest tests/ -v --tb=short
 
+## Database Commands (Development)
+
+db-reset: setup-backend ## Reset database to fresh schema (⚠️ DESTROYS ALL DATA)
+	@echo "🗄️  Resetting database..."
+	@echo "⚠️  This will destroy all local data!"
+	@read -p "Continue? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@cd backend && . venv/bin/activate && python scripts/reset_database.py
+	@echo "✅ Database reset complete"
+
 ## Production Commands (Docker-First - Universal)
 
 build: ## Build production containers
@@ -102,6 +111,30 @@ ci-build: ## Build containers in CI environment
 
 deploy: ## Deploy to production with automatic monitoring
 	@echo "🚀 Deploying to production..."
+	@echo "📋 Current status:"
+	@git status --porcelain
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "⚠️  You have uncommitted changes. Commit them first:"; \
+		echo "   git add . && git commit -m 'Your commit message'"; \
+		exit 1; \
+	fi
+	@echo "📤 Pushing to remote repository..."
+	@git push origin $$(git branch --show-current)
+	@echo "👀 Monitoring deployment with GitHub CLI..."
+	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
+	@sleep 3
+	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "unknown") && \
+	 if [ "$$latest_run" != "unknown" ]; then \
+		 gh run watch $$latest_run --exit-status 2>/dev/null || echo "📊 Monitoring failed - check status with 'make status'"; \
+	 else \
+		 echo "📊 Could not get run ID - check status with 'make status'"; \
+	 fi
+
+deploy-clean: ## Deploy with fresh database (no users yet - destroys all data)
+	@echo "🚀 Clean deployment (⚠️  DESTROYS ALL DATA)"
+	@echo "⚠️  This will reset the production database!"
+	@echo "💡 Only use this when NO USERS exist yet"
+	@read -p "Are you sure? Type 'RESET' to continue: " confirm && [ "$$confirm" = "RESET" ] || exit 1
 	@echo "📋 Current status:"
 	@git status --porcelain
 	@if [ -n "$$(git status --porcelain)" ]; then \

@@ -15,7 +15,7 @@ import json
 # Import database and models
 from .database import get_session, get_session_sync, create_db_and_tables
 from .models import (
-    Calendar, Event, FilteredCalendar, FilterMode, Group, EventGroup
+    Calendar, Event, FilteredCalendar, FilterMode, Group, EventTypeGroup
 )
 
 # Import pure functions (Functional Core)
@@ -30,6 +30,9 @@ from .core.filters import (
 from .core.domains import (
     load_domains_config, get_available_domains as get_domains_list, get_domain_config,
     validate_domain_config, is_valid_domain_id, domain_has_groups
+)
+from .data.group import (
+    build_group_tree, get_event_types_for_group, validate_group_hierarchy
 )
 from .core.domain_calendar import (
     get_domain_calendar_id, load_domain_calendar_config, is_domain_calendar,
@@ -465,7 +468,7 @@ async def get_calendar_groups(
     username: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
-    """Get calendar events organized by groups - matches OpenAPI spec exactly"""
+    """Get calendar event types organized by groups - matches OpenAPI spec exactly"""
     # Verify calendar access (personal calendars or domain calendars)
     user_id = get_user_id(username)
     calendar = session.exec(
@@ -495,7 +498,7 @@ async def get_calendar_groups(
             has_groups_enabled = False
     
     if not has_groups_enabled:
-        return {"has_groups": False, "groups": {}}
+        return {"has_groups": False, "groups": {}, "ungrouped_events": []}
     
     # Get all groups for this domain
     domain_groups = session.exec(
@@ -503,45 +506,73 @@ async def get_calendar_groups(
     ).all()
     
     if not domain_groups:
-        return {"has_groups": False, "groups": {}}
+        return {"has_groups": False, "groups": {}, "ungrouped_events": []}
+    
+    # Validate group hierarchy for safety
+    is_valid, error_msg = validate_group_hierarchy(domain_groups)
+    if not is_valid:
+        raise HTTPException(status_code=500, detail=f"Invalid group hierarchy: {error_msg}")
     
     # Get all events for this calendar
-    events = session.exec(
+    calendar_events = session.exec(
         select(Event).where(Event.calendar_id == calendar_id)
     ).all()
     
-    # Build grouped structure
-    grouped_events = {}
-    for group in domain_groups:
-        # Get events assigned to this group
-        group_events = session.exec(
-            select(Event)
-            .join(EventGroup, Event.id == EventGroup.event_id)
-            .where(EventGroup.group_id == group.id)
-            .where(Event.calendar_id == calendar_id)
-        ).all()
-        
-        # Transform events to match OpenAPI schema
-        events_list = []
-        for event in group_events:
-            events_list.append({
-                "id": event.id,
-                "title": event.title,
-                "start": event.start.isoformat() + "Z",
-                "end": event.end.isoformat() + "Z",
-                "event_type": event.category,
-                "description": event.description,
-                "location": event.location
-            })
-        
-        grouped_events[group.id] = {
-            "id": group.id,
-            "name": group.name,
-            "color": group.color,
-            "events": events_list
-        }
+    # Get all event type group assignments for this domain
+    event_type_groups = session.exec(
+        select(EventTypeGroup).where(EventTypeGroup.domain_id == domain_id)
+    ).all()
     
-    return {"has_groups": True, "groups": grouped_events}
+    # Build events by group mapping
+    events_by_group = {}
+    assigned_event_categories = set()
+    
+    for group in domain_groups:
+        group_event_types = get_event_types_for_group(group.id, event_type_groups)
+        assigned_event_categories.update(group_event_types)
+        
+        # Find events matching this group's event types
+        group_events = [
+            event for event in calendar_events 
+            if event.category in group_event_types
+        ]
+        events_by_group[group.id] = group_events
+    
+    # Build nested group tree structure
+    nested_groups = build_group_tree(domain_groups, events_by_group)
+    
+    # Find ungrouped events (events whose categories are not assigned to any group)
+    ungrouped_events = [
+        event for event in calendar_events 
+        if event.category not in assigned_event_categories
+    ]
+    
+    # Transform ungrouped events to API response format
+    ungrouped_events_formatted = [
+        {
+            'id': event.id,
+            'title': event.title,
+            'start': event.start.isoformat() if hasattr(event.start, 'isoformat') else event.start,
+            'end': event.end.isoformat() if hasattr(event.end, 'isoformat') else event.end,
+            'event_type': event.category,
+            'description': event.description,
+            'location': event.location
+        }
+        for event in ungrouped_events
+    ]
+    
+    return {
+        "has_groups": True, 
+        "groups": nested_groups,
+        "ungrouped_events": ungrouped_events_formatted
+    }
+
+
+# Manual event assignment endpoints removed - groups now contain event types, not individual events
+
+
+# Manual event removal endpoints removed - groups now contain event types, not individual events
+# Event assignment is now handled through EventTypeGroup model in the database migration
 
 
 # ==============================================
@@ -835,14 +866,21 @@ async def generate_filtered_ical(
     final_events = []
     
     if selected_groups:
-        # Add all events from selected groups
-        group_events = session.exec(
-            select(Event)
-            .join(EventGroup, Event.id == EventGroup.event_id)
-            .where(col(EventGroup.group_id).in_(selected_groups))
-            .where(Event.calendar_id == calendar_id)
+        # Add all events from selected groups (by event types)
+        # First, get all event types that belong to selected groups
+        group_event_types = session.exec(
+            select(EventTypeGroup.event_type)
+            .where(col(EventTypeGroup.group_id).in_(selected_groups))
         ).all()
-        final_events.extend(group_events)
+        
+        # Then, get all events that have those event types
+        if group_event_types:
+            group_events = session.exec(
+                select(Event)
+                .where(col(Event.category).in_(group_event_types))
+                .where(Event.calendar_id == calendar_id)
+            ).all()
+            final_events.extend(group_events)
     
     if selected_events:
         # Add individually selected events

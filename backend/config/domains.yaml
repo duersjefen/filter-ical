@@ -4,7 +4,7 @@
 
 domains:
   exter:
-    name: "Portal Calendar"
+    name: "Exter Kalendar"
     calendar_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
     has_groups: true
 

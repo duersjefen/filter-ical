@@ -56,7 +56,6 @@ class Event(SQLModel, table=True):
     
     # Relationship
     calendar: Optional[Calendar] = Relationship(back_populates="events")
-    event_groups: List["EventGroup"] = Relationship(back_populates="event")
 
 
 class Group(SQLModel, table=True):
@@ -70,22 +69,32 @@ class Group(SQLModel, table=True):
     color: str = Field(default="#3B82F6")  # UI color
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
-    # Relationships
-    event_groups: List["EventGroup"] = Relationship(back_populates="group")
-
-
-class EventGroup(SQLModel, table=True):
-    """Association table linking events to groups"""
-    __tablename__ = "event_groups"
+    # Nested group support
+    parent_group_id: Optional[str] = Field(default=None, foreign_key="groups.id", index=True)
     
-    id: str = Field(default_factory=lambda: f"evg_{uuid.uuid4().hex[:8]}", primary_key=True)
-    event_id: str = Field(foreign_key="events.id", index=True)
+    # Relationships
+    event_type_groups: List["EventTypeGroup"] = Relationship(back_populates="group")
+    
+    # Self-referential relationships for nested structure
+    parent_group: Optional["Group"] = Relationship(
+        back_populates="child_groups",
+        sa_relationship_kwargs={"remote_side": "Group.id"}
+    )
+    child_groups: List["Group"] = Relationship(back_populates="parent_group")
+
+
+class EventTypeGroup(SQLModel, table=True):
+    """Association table linking event types to groups"""
+    __tablename__ = "event_type_groups"
+    
+    id: str = Field(default_factory=lambda: f"etg_{uuid.uuid4().hex[:8]}", primary_key=True)
+    event_type: str = Field(index=True)  # e.g., "Volleyball", "Youngsterband"
     group_id: str = Field(foreign_key="groups.id", index=True)
+    domain_id: str = Field(index=True)  # e.g., "exter" - to scope event types by domain
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
-    # Relationships
-    event: Optional["Event"] = Relationship(back_populates="event_groups")
-    group: Optional["Group"] = Relationship(back_populates="event_groups")
+    # Relationships  
+    group: Optional["Group"] = Relationship(back_populates="event_type_groups")
 
 
 class FilteredCalendar(SQLModel, table=True):

@@ -17,7 +17,7 @@ load_dotenv()
 # Get database URL from environment or use default
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    # Default database location
+    # Simple approach: Always use file database (clean for both dev and production)
     DATABASE_DIR = Path(__file__).parent.parent / "data"
     DATABASE_DIR.mkdir(exist_ok=True)
     DATABASE_FILE = DATABASE_DIR / "icalviewer.db"
@@ -49,11 +49,12 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor.close()
 
 def create_db_and_tables():
-    """Create database tables from SQLModel models and run migrations"""
+    """Create database tables from SQLModel models"""
+    # DEVELOPMENT/PRE-USER PHASE: Simple table creation
     SQLModel.metadata.create_all(engine)
     
-    # Run Alembic migrations automatically
-    run_migrations()
+    # PRODUCTION WITH USERS: Enable migrations (uncomment below)
+    # run_migrations()
 
 def run_migrations():
     """Run Alembic migrations programmatically with fallback repair"""

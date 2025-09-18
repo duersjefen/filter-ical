@@ -16,17 +16,20 @@
     </div>
 
     <!-- Main Content -->
+    <!-- Debug condition -->
+    <div v-if="!loading" class="text-xs text-gray-500 p-2 bg-yellow-100 mb-2">
+      🐛 DEBUG: loading={{ loading }}, events={{ events.length }}, eventTypes={{ eventTypes ? Object.keys(eventTypes).length : 'null' }}, hasGroups={{ hasGroups }}
+    </div>
     <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
       <!-- Show Groups Interface if Domain has Groups -->
       <EventGroupsSection
         v-if="hasGroups"
         :has-groups="hasGroups"
         :groups="groups"
+        :ungrouped-event-types="ungroupedEventTypes"
         :selected-groups="selectedGroups"
-        :selected-events="selectedEvents"
         :filter-mode="filterMode"
         @toggle-group="toggleGroup"
-        @toggle-event="toggleEvent"
         @switch-filter-mode="switchFilterMode"
       />
       
@@ -156,11 +159,10 @@ const selectedCalendar = ref(null)
 const { 
   groups, 
   hasGroups, 
-  selectedGroups, 
-  selectedEvents,
+  ungroupedEventTypes,
+  selectedGroups,
   loadCalendarGroups,
   toggleGroup,
-  toggleEvent,
   generateIcal
 } = appStore
 
@@ -308,6 +310,13 @@ const loadCalendarData = async (calendarId) => {
         hasGroups: hasGroups.value,
         groupsCount: groups.value ? Object.keys(groups.value).length : 0
       })
+      
+      // Debug: Force re-render check
+      console.log('🐛 DEBUG: hasGroups reactivity check:', {
+        hasGroupsRef: hasGroups,
+        hasGroupsValue: hasGroups.value,
+        hasGroupsType: typeof hasGroups.value
+      })
     } else {
       console.error('❌ API call failed:', eventsResult)
       console.error('❌ Error details:', {
@@ -342,6 +351,21 @@ const navigateHome = () => {
 const navigateToCalendar = () => {
   // Stay on current calendar view - this is the calendar view, so no navigation needed
   // The function exists to fulfill the event handler requirement from FilteredCalendarSection
+}
+
+// Handle assigning ungrouped events to groups
+const handleAssignEventToGroup = async ({ eventId, groupId }) => {
+  console.log(`🔄 Assigning event ${eventId} to group ${groupId}`)
+  
+  const result = await assignEventToGroup(eventId, groupId)
+  
+  if (result.success) {
+    console.log('✅ Event successfully assigned to group')
+    // The store will handle updating the UI state automatically
+  } else {
+    console.error('❌ Failed to assign event to group:', result.error)
+    // Could show user notification here
+  }
 }
 
 const loadFilterIntoPage = (filterData) => {

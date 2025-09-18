@@ -284,6 +284,7 @@ paths:
                 required:
                   - has_groups
                   - groups
+                  - ungrouped_events
                 properties:
                   has_groups:
                     type: boolean
@@ -292,59 +293,186 @@ paths:
                   groups:
                     type: object
                     additionalProperties:
-                      type: object
-                      required:
-                        - id
-                        - name
-                        - color
-                        - events
-                      properties:
-                        id:
-                          type: string
-                          description: Unique group identifier
-                          example: "grp_portal"
-                        name:
-                          type: string
-                          description: Group display name
-                          example: "Portal Events"
-                        color:
-                          type: string
-                          description: UI color for the group
-                          example: "#3B82F6"
-                        events:
-                          type: array
-                          items:
-                            $ref: '#/components/schemas/Event'
-                          description: Array of events in this group
+                      $ref: '#/components/schemas/Group'
+                    description: Root-level groups organized by group ID, with nested children
+                  ungrouped_events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                    description: Events that are not assigned to any group
               example:
                 has_groups: true
                 groups:
-                  "grp_portal":
-                    id: "grp_portal"
-                    name: "Portal Events"
+                  "grp_sports":
+                    id: "grp_sports"
+                    name: "Sports"
+                    description: "All sports activities"
                     color: "#3B82F6"
+                    parent_group_id: null
+                    created_at: "2024-01-15T10:30:00Z"
+                    children:
+                      - id: "grp_football"
+                        name: "Football"
+                        description: "Football training and matches"
+                        color: "#10B981"
+                        parent_group_id: "grp_sports"
+                        created_at: "2024-01-15T10:35:00Z"
+                        children: []
+                        events:
+                          - id: "evt_001"
+                            title: "Football Training"
+                            start: "2025-09-20T18:00:00Z"
+                            end: "2025-09-20T20:00:00Z"
+                            event_type: "Football"
+                            description: "Weekly football training"
+                            location: "Sports Field"
+                      - id: "grp_volleyball"
+                        name: "Volleyball"
+                        description: "Volleyball activities"
+                        color: "#F59E0B"
+                        parent_group_id: "grp_sports"
+                        created_at: "2024-01-15T10:40:00Z"
+                        children: []
+                        events:
+                          - id: "evt_002"
+                            title: "Volleyball Match"
+                            start: "2025-09-21T19:00:00Z"
+                            end: "2025-09-21T21:00:00Z"
+                            event_type: "Volleyball"
+                            description: "Weekly volleyball match"
+                            location: "Gym Hall"
                     events:
-                      - id: "evt_001"
-                        title: "Portal Meeting"
-                        start: "2025-09-20T10:00:00Z"
-                        end: "2025-09-20T11:00:00Z"
-                        event_type: "Portal"
-                        description: "Weekly portal sync"
-                        location: "Online"
-                  "grp_meetings":
-                    id: "grp_meetings"
-                    name: "BCC Meetings"
-                    color: "#10B981"
-                    events:
-                      - id: "evt_002"
-                        title: "BCC Standup"
-                        start: "2025-09-21T09:00:00Z"
-                        end: "2025-09-21T09:30:00Z"
+                      - id: "evt_003"
+                        title: "General Sports Meeting"
+                        start: "2025-09-22T17:00:00Z"
+                        end: "2025-09-22T18:00:00Z"
                         event_type: "Meeting"
-                        description: "Daily BCC team sync"
-                        location: "Conference Room"
+                        description: "Monthly sports committee meeting"
+                        location: "Club House"
+                ungrouped_events:
+                  - id: "evt_003"
+                    title: "Random Meeting"
+                    start: "2025-09-22T14:00:00Z"
+                    end: "2025-09-22T15:00:00Z"
+                    event_type: "Meeting"
+                    description: "Unassigned meeting"
+                    location: "TBD"
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/events/{event_id}/groups/{group_id}:
+    post:
+      summary: Assign event to group
+      description: Manually assign an event to a specific group for categorization
+      tags:
+        - Event Groups
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique event identifier
+          example: "evt_001"
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique group identifier
+          example: "grp_exter01"
+      responses:
+        '200':
+          description: Event successfully assigned to group (or already assigned)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                  assignment_id:
+                    type: string
+                    description: Unique assignment identifier
+                  event_title:
+                    type: string
+                    description: Title of the assigned event
+                  group_name:
+                    type: string
+                    description: Name of the group
+              example:
+                message: "Event successfully assigned to group"
+                assignment_id: "evg_12345678"
+                event_title: "Fußball Training"
+                group_name: "Fußball"
+        '404':
+          description: Event or group not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+              example:
+                detail: "Event not found"
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Remove event from group
+      description: Remove an event from a specific group
+      tags:
+        - Event Groups
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique event identifier
+          example: "evt_001"
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique group identifier
+          example: "grp_exter01"
+      responses:
+        '200':
+          description: Event successfully removed from group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                  event_title:
+                    type: string
+                    description: Title of the removed event
+                  group_name:
+                    type: string
+                    description: Name of the group
+              example:
+                message: "Event successfully removed from group"
+                event_title: "Fußball Training"
+                group_name: "Fußball"
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+              example:
+                detail: "Event is not assigned to this group"
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -867,6 +995,52 @@ components:
           format: date-time
           description: Last update timestamp
           example: "2024-01-18T15:30:00Z"
+
+    Group:
+      type: object
+      required:
+        - id
+        - name
+        - color
+        - events
+      properties:
+        id:
+          type: string
+          description: Unique group identifier
+          example: "grp_portal"
+        name:
+          type: string
+          description: Group display name
+          example: "Portal Events"
+        description:
+          type: string
+          description: Optional group description
+          example: "Events related to portal activities"
+        color:
+          type: string
+          description: UI color for the group
+          example: "#3B82F6"
+        parent_group_id:
+          type: string
+          nullable: true
+          description: Parent group ID for nested structure (null for root groups)
+          example: "grp_department"
+        children:
+          type: array
+          items:
+            type: object
+            description: Child group with same structure as parent (recursive nesting supported)
+          description: Child groups (recursive nested structure)
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+          description: Events assigned to this group
+        created_at:
+          type: string
+          format: date-time
+          description: Group creation timestamp
+          example: "2024-01-15T10:30:00Z"
 
     Domain:
       type: object

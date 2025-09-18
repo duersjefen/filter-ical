@@ -246,6 +246,7 @@ export const useAppStore = defineStore('app', () => {
   
   const groups = ref({})
   const hasGroups = ref(false)
+  const ungroupedEventTypes = ref([])
   const selectedGroups = ref(new Set())
   const selectedEvents = ref(new Set()) // Individual event selections
 
@@ -325,11 +326,17 @@ export const useAppStore = defineStore('app', () => {
 
     if (result.success) {
       hasGroups.value = result.data.has_groups
-      groups.value = result.data.groups
+      groups.value = result.data.groups || {}
+      ungroupedEventTypes.value = result.data.ungrouped_event_types || []
 
       // Reset selections when loading new calendar
       selectedGroups.value = new Set()
-      selectedEvents.value = new Set()
+      
+      console.log('📊 Groups data loaded:', {
+        hasGroups: hasGroups.value,
+        groupsCount: Object.keys(groups.value).length,
+        ungroupedEventTypesCount: ungroupedEventTypes.value.length
+      })
     }
 
     return result
@@ -340,34 +347,16 @@ export const useAppStore = defineStore('app', () => {
 
     if (newGroups.has(groupId)) {
       newGroups.delete(groupId)
-      // Remove all events from this group from individual selections
-      const groupEvents = groups.value[groupId]?.events || []
-      const newEvents = new Set(selectedEvents.value)
-      groupEvents.forEach(event => newEvents.delete(event.id))
-      selectedEvents.value = newEvents
     } else {
       newGroups.add(groupId)
-      // Auto-add all events from this group
-      const groupEvents = groups.value[groupId]?.events || []
-      const newEvents = new Set(selectedEvents.value)
-      groupEvents.forEach(event => newEvents.add(event.id))
-      selectedEvents.value = newEvents
     }
 
     selectedGroups.value = newGroups
   }
 
-  const toggleEvent = (eventId) => {
-    const newEvents = new Set(selectedEvents.value)
+  // Individual event selection removed - groups now work with event types
 
-    if (newEvents.has(eventId)) {
-      newEvents.delete(eventId)
-    } else {
-      newEvents.add(eventId)
-    }
-
-    selectedEvents.value = newEvents
-  }
+  // Note: Manual event assignment removed - groups now contain event types, not individual events
 
   // ===============================================
   // SAVED FILTERS SECTION
@@ -608,11 +597,10 @@ export const useAppStore = defineStore('app', () => {
     // ===============================================
     groups,
     hasGroups,
+    ungroupedEventTypes,
     selectedGroups,
-    selectedEvents,
     loadCalendarGroups,
     toggleGroup,
-    toggleEvent,
 
     // ===============================================
     // SAVED FILTERS
