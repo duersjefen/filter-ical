@@ -75,6 +75,8 @@ backend/data/user-filters.edn
 *.db-wal
 backend/data/*.db-shm
 backend/data/*.db-wal
+backend/test_calendars.db
+backend/test_*.db
 
 # Development calendar URLs (NEVER commit!)
 .dev-calendars.local
