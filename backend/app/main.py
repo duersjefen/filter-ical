@@ -5,7 +5,7 @@ Override FastAPI's OpenAPI generation with our existing specification
 """
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col, or_
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 from datetime import datetime
@@ -15,7 +15,7 @@ import json
 # Import database and models
 from .database import get_session, create_db_and_tables
 from .models import (
-    Calendar, Event, FilteredCalendar, FilterMode
+    Calendar, Event, FilteredCalendar, FilterMode, Group, EventGroup
 )
 
 # Import pure functions (Functional Core)
@@ -29,7 +29,11 @@ from .core.filters import (
 )
 from .core.domains import (
     load_domains_config, get_available_domains as get_domains_list, get_domain_config,
-    validate_domain_config, is_valid_domain_id
+    validate_domain_config, is_valid_domain_id, domain_has_groups
+)
+from .core.domain_calendar import (
+    get_domain_calendar_id, load_domain_calendar_config, is_domain_calendar,
+    extract_domain_from_calendar_id
 )
 from .middleware.schema_validation import create_validation_middleware
 import os
@@ -106,8 +110,15 @@ async def get_calendars(
 ):
     """Get calendars for user - matches OpenAPI spec exactly"""
     user_id = get_user_id(username)
+    
+    # Get user's personal calendars and domain calendars (which are public)
     calendars = session.exec(
-        select(Calendar).where(Calendar.user_id == user_id)
+        select(Calendar).where(
+            or_(
+                Calendar.user_id == user_id,
+                Calendar.domain_id != None  # Include all domain calendars
+            )
+        )
     ).all()
     
     # Transform to OpenAPI response format
@@ -215,12 +226,15 @@ async def get_calendar_events(
 ):
     """Get calendar event types (grouped) - matches OpenAPI spec exactly"""
     print("🚨 DEDUPLICATION FIX IS ACTIVE!")
-    # Verify calendar ownership
+    # Verify calendar access (personal calendars or domain calendars)
     user_id = get_user_id(username)
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == user_id
+            or_(
+                Calendar.user_id == user_id,
+                Calendar.domain_id != None  # Allow access to all domain calendars
+            )
         )
     ).first()
     
@@ -302,6 +316,99 @@ async def get_calendar_raw_events(
         })
     
     return {"events": events_list}
+
+
+@app.get("/api/calendar/{calendar_id}/groups")
+async def get_calendar_groups(
+    calendar_id: str,
+    username: Optional[str] = None,
+    session: Session = Depends(get_session)
+):
+    """Get calendar events organized by groups - matches OpenAPI spec exactly"""
+    # Verify calendar access (personal calendars or domain calendars)
+    user_id = get_user_id(username)
+    calendar = session.exec(
+        select(Calendar).where(
+            Calendar.id == calendar_id,
+            or_(
+                Calendar.user_id == user_id,
+                Calendar.domain_id != None  # Allow access to all domain calendars
+            )
+        )
+    ).first()
+    
+    if not calendar:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+    
+    # Determine domain_id for this calendar
+    domain_id = None
+    
+    # First check if calendar has domain_id field
+    if hasattr(calendar, 'domain_id') and calendar.domain_id:
+        domain_id = calendar.domain_id
+    # Or check if it's a domain calendar by ID pattern  
+    elif is_domain_calendar(calendar_id):
+        domain_id = extract_domain_from_calendar_id(calendar_id)
+    # Fallback: assume exter for testing (can be removed later)
+    else:
+        domain_id = "exter"  # Temporary fallback for existing calendars
+    
+    # Load domain configuration to check if groups are enabled
+    try:
+        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        domains_config = load_domains_config(str(config_path))
+        has_groups_enabled = domain_has_groups(domains_config, domain_id) if domain_id else False
+    except Exception:
+        has_groups_enabled = False
+    
+    if not has_groups_enabled:
+        return {"has_groups": False, "groups": {}}
+    
+    # Get all groups for this domain
+    domain_groups = session.exec(
+        select(Group).where(Group.domain_id == domain_id)
+    ).all()
+    
+    if not domain_groups:
+        return {"has_groups": False, "groups": {}}
+    
+    # Get all events for this calendar
+    events = session.exec(
+        select(Event).where(Event.calendar_id == calendar_id)
+    ).all()
+    
+    # Build grouped structure
+    grouped_events = {}
+    for group in domain_groups:
+        # Get events assigned to this group
+        group_events = session.exec(
+            select(Event)
+            .join(EventGroup, Event.id == EventGroup.event_id)
+            .where(EventGroup.group_id == group.id)
+            .where(Event.calendar_id == calendar_id)
+        ).all()
+        
+        # Transform events to match OpenAPI schema
+        events_list = []
+        for event in group_events:
+            events_list.append({
+                "id": event.id,
+                "title": event.title,
+                "start": event.start.isoformat() + "Z",
+                "end": event.end.isoformat() + "Z",
+                "event_type": event.category,
+                "description": event.description,
+                "location": event.location
+            })
+        
+        grouped_events[group.id] = {
+            "id": group.id,
+            "name": group.name,
+            "color": group.color,
+            "events": events_list
+        }
+    
+    return {"has_groups": True, "groups": grouped_events}
 
 
 # ==============================================
@@ -557,32 +664,71 @@ async def generate_filtered_ical(
     session: Session = Depends(get_session)
 ):
     """Generate filtered iCal content - matches OpenAPI spec exactly"""
-    # Verify calendar ownership
+    # Verify calendar access (personal calendars or domain calendars)
     calendar = session.exec(
         select(Calendar).where(
             Calendar.id == calendar_id,
-            Calendar.user_id == PUBLIC_USER_ID
+            or_(
+                Calendar.user_id == PUBLIC_USER_ID,
+                Calendar.domain_id != None  # Allow access to all domain calendars
+            )
         )
     ).first()
     
     if not calendar:
         raise HTTPException(status_code=404, detail="Calendar not found")
     
-    # Get request parameters
-    selected_event_types = request_data.get('selected_event_types', [])
+    # Get request parameters (supporting both groups and individual events)
+    selected_groups = request_data.get('selected_groups', [])
+    selected_events = request_data.get('selected_events', [])
+    selected_event_types = request_data.get('selected_event_types', [])  # Backward compatibility
     filter_mode = request_data.get('filter_mode', 'include')
     
     if filter_mode not in ['include', 'exclude']:
         raise HTTPException(status_code=400, detail="filter_mode must be 'include' or 'exclude'")
     
-    # Get calendar events
+    # Get all events for calendar
     events = session.exec(
         select(Event).where(Event.calendar_id == calendar_id)
     ).all()
     
+    # Build final event list based on groups + individual events + backward compatibility
+    final_events = []
+    
+    if selected_groups:
+        # Add all events from selected groups
+        group_events = session.exec(
+            select(Event)
+            .join(EventGroup, Event.id == EventGroup.event_id)
+            .where(col(EventGroup.group_id).in_(selected_groups))
+            .where(Event.calendar_id == calendar_id)
+        ).all()
+        final_events.extend(group_events)
+    
+    if selected_events:
+        # Add individually selected events
+        individual_events = [e for e in events if e.id in selected_events]
+        final_events.extend(individual_events)
+    
+    # Backward compatibility: handle legacy event type filtering
+    if selected_event_types and not selected_groups and not selected_events:
+        if filter_mode == 'include':
+            final_events = [e for e in events if e.title in selected_event_types]
+        else:
+            final_events = [e for e in events if e.title not in selected_event_types]
+    elif selected_groups or selected_events:
+        # Remove duplicates when combining groups and individual events
+        final_events = list({e.id: e for e in final_events}.values())
+        
+        # Apply filter mode for group/event selection
+        if filter_mode == 'exclude':
+            # Start with all events, remove selected ones
+            excluded_event_ids = set(e.id for e in final_events)
+            final_events = [e for e in events if e.id not in excluded_event_ids]
+    
     # Convert to dict format for pure functions
     events_data = []
-    for event in events:
+    for event in final_events:
         events_data.append({
             "id": event.id,
             "title": event.title,
@@ -593,15 +739,8 @@ async def generate_filtered_ical(
             "location": event.location
         })
     
-    # Apply event type filter using pure function
-    if filter_mode == 'include':
-        filtered_events = filter_events_by_categories(
-            events_data, selected_event_types, [], filter_mode
-        )
-    else:
-        filtered_events = filter_events_by_categories(
-            events_data, [], selected_event_types, filter_mode
-        )
+    # No need for additional filtering - already done above
+    filtered_events = events_data
     
     # Generate iCal content using pure function
     ical_content = create_ical_from_events(filtered_events, calendar.name)

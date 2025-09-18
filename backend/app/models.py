@@ -24,6 +24,7 @@ class Calendar(SQLModel, table=True):
     name: str = Field(min_length=3, max_length=100)
     url: str = Field()
     user_id: str = Field(index=True)
+    domain_id: Optional[str] = Field(default=None, index=True)  # e.g., "exter"
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
@@ -49,6 +50,36 @@ class Event(SQLModel, table=True):
     
     # Relationship
     calendar: Optional[Calendar] = Relationship(back_populates="events")
+    event_groups: List["EventGroup"] = Relationship(back_populates="event")
+
+
+class Group(SQLModel, table=True):
+    """Group model for organizing events within a domain"""
+    __tablename__ = "groups"
+    
+    id: str = Field(default_factory=lambda: f"grp_{uuid.uuid4().hex[:8]}", primary_key=True)
+    name: str = Field(min_length=1, max_length=100)
+    domain_id: Optional[str] = Field(default=None, index=True)  # e.g., "exter"
+    description: Optional[str] = Field(default=None)
+    color: str = Field(default="#3B82F6")  # UI color
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    event_groups: List["EventGroup"] = Relationship(back_populates="group")
+
+
+class EventGroup(SQLModel, table=True):
+    """Association table linking events to groups"""
+    __tablename__ = "event_groups"
+    
+    id: str = Field(default_factory=lambda: f"evg_{uuid.uuid4().hex[:8]}", primary_key=True)
+    event_id: str = Field(foreign_key="events.id", index=True)
+    group_id: str = Field(foreign_key="groups.id", index=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    event: Optional["Event"] = Relationship(back_populates="event_groups")
+    group: Optional["Group"] = Relationship(back_populates="event_groups")
 
 
 class FilteredCalendar(SQLModel, table=True):

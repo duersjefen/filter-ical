@@ -260,6 +260,94 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/calendar/{calendar_id}/groups:
+    get:
+      summary: Get calendar events organized by groups
+      description: Returns events grouped by admin-configured groups, or empty if no groups exist for this calendar's domain
+      tags:
+        - Calendar Data
+      parameters:
+        - name: calendar_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique calendar identifier
+          example: "cal_001"
+      responses:
+        '200':
+          description: Successfully retrieved grouped events
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - has_groups
+                  - groups
+                properties:
+                  has_groups:
+                    type: boolean
+                    description: Whether this calendar's domain has configured groups
+                    example: true
+                  groups:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                        - id
+                        - name
+                        - color
+                        - events
+                      properties:
+                        id:
+                          type: string
+                          description: Unique group identifier
+                          example: "grp_portal"
+                        name:
+                          type: string
+                          description: Group display name
+                          example: "Portal Events"
+                        color:
+                          type: string
+                          description: UI color for the group
+                          example: "#3B82F6"
+                        events:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Event'
+                          description: Array of events in this group
+              example:
+                has_groups: true
+                groups:
+                  "grp_portal":
+                    id: "grp_portal"
+                    name: "Portal Events"
+                    color: "#3B82F6"
+                    events:
+                      - id: "evt_001"
+                        title: "Portal Meeting"
+                        start: "2025-09-20T10:00:00Z"
+                        end: "2025-09-20T11:00:00Z"
+                        event_type: "Portal"
+                        description: "Weekly portal sync"
+                        location: "Online"
+                  "grp_meetings":
+                    id: "grp_meetings"
+                    name: "BCC Meetings"
+                    color: "#10B981"
+                    events:
+                      - id: "evt_002"
+                        title: "BCC Standup"
+                        start: "2025-09-21T09:00:00Z"
+                        end: "2025-09-21T09:30:00Z"
+                        event_type: "Meeting"
+                        description: "Daily BCC team sync"
+                        location: "Conference Room"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   # ===============================================
   # Filtered Calendars APIs
   # ===============================================
@@ -469,7 +557,7 @@ paths:
   /api/calendar/{calendar_id}/generate:
     post:
       summary: Generate filtered iCal content
-      description: Create filtered iCal content from a calendar based on event type filters
+      description: Create filtered iCal content from a calendar based on group and event filters
       tags:
         - iCal Generation
       parameters:
@@ -487,19 +575,30 @@ paths:
             schema:
               type: object
               required:
-                - selected_event_types
                 - filter_mode
               properties:
+                selected_groups:
+                  type: array
+                  items:
+                    type: string
+                  description: Group IDs to include or exclude
+                  example: ["grp_portal", "grp_meetings"]
+                selected_events:
+                  type: array
+                  items:
+                    type: string
+                  description: Individual event IDs to include or exclude
+                  example: ["evt_001", "evt_002"]
                 selected_event_types:
                   type: array
                   items:
                     type: string
-                  description: Event types to include or exclude
+                  description: Event types to include or exclude (for backward compatibility)
                   example: ["Work", "Meeting"]
                 filter_mode:
                   type: string
                   enum: [include, exclude]
-                  description: Whether to include or exclude the selected event types
+                  description: Whether to include or exclude the selected items
                   example: "include"
       responses:
         '200':

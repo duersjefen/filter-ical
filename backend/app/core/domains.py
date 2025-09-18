@@ -116,3 +116,22 @@ def is_valid_domain_id(domain_id: str) -> bool:
     
     # Domain ID should be alphanumeric and underscore only
     return domain_id.replace('_', '').isalnum() and len(domain_id) > 0
+
+
+def domain_has_groups(config: Dict[str, Any], domain_id: str) -> bool:
+    """
+    Check if domain is configured to use groups.
+    Pure function - checks configuration setting.
+    
+    Args:
+        config: Domain configuration dictionary
+        domain_id: ID of the domain to check
+        
+    Returns:
+        True if domain has groups enabled, False otherwise
+    """
+    if 'domains' not in config or domain_id not in config['domains']:
+        return False
+    
+    domain_config = config['domains'][domain_id]
+    return domain_config.get('has_groups', False)
