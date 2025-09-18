@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "npm run types:generate && vite build",
+    "build": "vite build",
+    "build:with-types": "npm run types:generate && vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
