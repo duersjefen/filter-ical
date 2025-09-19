@@ -1,25 +1,31 @@
 <template>
-  <div class="border rounded-lg transition-all duration-200 bg-white dark:bg-gray-900">
+  <div class="border rounded-lg transition-all duration-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
     <!-- Group Card -->
     <div
-      class="cursor-pointer p-4"
+      class="p-4"
       :class="[
         isSelected 
-          ? 'bg-blue-600 text-white' 
+          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' 
           : isPartiallySelected 
-            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700'
-            : 'hover:bg-blue-50 dark:hover:bg-blue-900/10 border-blue-200 dark:border-blue-700'
+            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+            : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
       ]"
-      @click="toggleSelection"
     >
       <div class="flex items-center justify-between">
-        <div class="flex-1">
+        <!-- Group Header (Clickable to expand/collapse) -->
+        <div class="flex-1 cursor-pointer" @click="toggleExpansion">
           <div class="flex items-center space-x-3 mb-2">
             <h4 class="text-lg font-semibold">{{ group.name }}</h4>
             <div
               class="w-3 h-3 rounded-full opacity-60"
               :style="{ backgroundColor: group.color }"
             ></div>
+            <!-- Expand/Collapse indicator -->
+            <div class="text-gray-400 dark:text-gray-500">
+              <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': isExpanded }" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
           </div>
           
           <div class="flex items-center space-x-4">
@@ -34,10 +40,11 @@
           </p>
         </div>
         
-        <!-- Selection Checkbox -->
+        <!-- Selection Checkbox (Clickable to select entire group with children) -->
         <div
-          class="w-5 h-5 rounded border-2 flex items-center justify-center ml-4 flex-shrink-0"
+          class="w-5 h-5 rounded border-2 flex items-center justify-center ml-4 flex-shrink-0 cursor-pointer"
           :class="selectionCheckboxClass"
+          @click.stop="toggleGroupSelection"
         >
           <span v-if="isSelected || isPartiallySelected" class="text-sm">{{ selectionIcon }}</span>
         </div>
@@ -47,11 +54,11 @@
     <!-- Expandable Content -->
     <div 
       v-if="isExpanded" 
-      class="border-t border-blue-200 dark:border-blue-700 bg-blue-50/30 dark:bg-blue-900/10"
+      class="border-t border-gray-200 dark:border-gray-600 bg-gray-50/30 dark:bg-gray-800/30"
     >
       <!-- Children (Subgroups) -->
       <div v-if="group.children && group.children.length > 0" class="p-4 space-y-3">
-        <h5 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-3 uppercase tracking-wide">Subgroups</h5>
+        <h5 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Subgroups</h5>
         <div class="pl-4 space-y-3">
           <SubgroupItem
             v-for="subgroup in group.children"
@@ -72,7 +79,7 @@
       
       <!-- Direct Event Types -->
       <div v-if="group.event_types && Object.keys(group.event_types).length > 0" class="p-4 space-y-3">
-        <h5 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-3 uppercase tracking-wide">Event Types</h5>
+        <h5 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Event Types</h5>
         <div class="pl-4 space-y-2">
           <EventTypeItem
             v-for="(eventTypeData, eventTypeName) in group.event_types"
@@ -89,28 +96,6 @@
         </div>
       </div>
       
-      <!-- Collapse Button -->
-      <div class="border-t border-blue-200 dark:border-blue-700 p-3">
-        <button
-          @click.stop="toggleExpansion"
-          class="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium"
-        >
-          ▲ Collapse Details
-        </button>
-      </div>
-    </div>
-    
-    <!-- Expand Button (when collapsed) -->
-    <div 
-      v-else-if="hasExpandableContent" 
-      class="border-t border-blue-200 dark:border-blue-700 p-3"
-    >
-      <button
-        @click.stop="toggleExpansion"
-        class="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium"
-      >
-        ▼ Show Details ({{ childCount }} items)
-      </button>
     </div>
   </div>
 </template>
@@ -181,11 +166,11 @@ const calculateGroupEventCount = (group) => {
 
 const selectionCheckboxClass = computed(() => {
   if (props.isSelected) {
-    return 'bg-white border-white text-blue-600'
+    return 'bg-blue-500 border-blue-500 text-white'
   } else if (props.isPartiallySelected) {
-    return 'bg-blue-600 border-blue-600 text-white'
+    return 'bg-yellow-500 border-yellow-500 text-white'
   } else {
-    return 'border-blue-300 dark:border-blue-600'
+    return 'border-gray-300 dark:border-gray-600'
   }
 })
 
@@ -221,7 +206,9 @@ const hasPartialSubgroupSelection = (subgroup) => {
   return false
 }
 
-const toggleSelection = () => {
+// Separate handlers for clarity
+const toggleGroupSelection = () => {
+  // This should select the entire group and all its children
   emit('toggle-selection', `group:${props.group.id}`)
 }
 

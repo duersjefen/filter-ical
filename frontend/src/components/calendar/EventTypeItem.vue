@@ -1,24 +1,24 @@
 <template>
-  <div class="border rounded-lg bg-white dark:bg-gray-900 transition-all duration-200 border-blue-200 dark:border-blue-700">
+  <div class="border rounded-lg bg-white dark:bg-gray-900 transition-all duration-200 border-gray-200 dark:border-gray-600">
     <!-- Event Type Header -->
     <div
       class="cursor-pointer p-3"
       :class="[
         isSelected 
-          ? 'bg-blue-400 text-white' 
+          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' 
           : isPartiallySelected 
-            ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200'
-            : 'hover:bg-blue-50 dark:hover:bg-blue-900/10'
+            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+            : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
       ]"
       @click="toggleSelection"
     >
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <!-- Event Type Icon -->
-          <div class="w-1.5 h-1.5 rounded-full opacity-60" :class="isSelected ? 'bg-white' : 'bg-blue-400'"></div>
+          <div class="w-2 h-2 rounded-full" :class="isSelected ? 'bg-green-500' : isPartiallySelected ? 'bg-yellow-500' : 'bg-gray-400'"></div>
           <span class="text-sm font-medium">{{ eventTypeName }}</span>
-          <span class="text-xs px-2 py-1 rounded opacity-75" :class="isSelected ? 'bg-blue-600' : 'bg-blue-200 dark:bg-blue-800'">
-            {{ eventTypeData.count }} events
+          <span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+            {{ eventTypeData.count || 0 }} events
           </span>
         </div>
         
@@ -35,34 +35,34 @@
     <!-- Expandable Individual Events -->
     <div 
       v-if="isExpanded" 
-      class="border-t border-blue-200 dark:border-blue-700 bg-blue-50/20 dark:bg-blue-900/10"
+      class="border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/50"
     >
       <!-- Loading State -->
       <div v-if="isLoading" class="p-4 text-center">
-        <div class="text-sm text-blue-600 dark:text-blue-400">Loading individual events...</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Loading individual events...</div>
       </div>
       
       <!-- Individual Events List -->
-      <div v-else-if="individualEvents.length > 0" class="p-4 space-y-2 max-h-40 overflow-y-auto">
-        <h6 class="text-xs font-medium text-blue-800 dark:text-blue-200 uppercase tracking-wide mb-3">
+      <div v-else-if="individualEvents.length > 0" class="p-4 space-y-2 max-h-60 overflow-y-auto">
+        <h6 class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3">
           Individual Events ({{ individualEvents.length }})
         </h6>
-        <div class="pl-4 space-y-2">
+        <div class="space-y-2">
           <div
             v-for="event in individualEvents"
             :key="event.id"
-            class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-900 border cursor-pointer transition-colors"
+            class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-700 border cursor-pointer transition-colors"
             :class="selectedItems.has(`event:${event.id}`) 
-              ? 'bg-blue-300 dark:bg-blue-800 border-blue-400 text-white' 
-              : 'border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20'"
+              ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-600 text-blue-800 dark:text-blue-200' 
+              : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
             @click="toggleIndividualEvent(event.id)"
           >
             <div class="flex-1 min-w-0">
-              <div class="text-xs font-medium truncate">
-                {{ event.title }}
+              <div class="text-sm font-medium truncate">
+                {{ event.summary || event.title || 'Untitled Event' }}
               </div>
               <div class="text-xs opacity-75">
-                {{ formatEventDate(event.start) }}
+                {{ formatEventDate(event.start || event.dtstart) }}
                 <span v-if="event.location" class="ml-1">• {{ event.location }}</span>
               </div>
             </div>
@@ -71,8 +71,8 @@
             <div
               class="w-3 h-3 rounded border flex items-center justify-center ml-2 flex-shrink-0"
               :class="selectedItems.has(`event:${event.id}`) 
-                ? 'bg-white border-white text-blue-300' 
-                : 'border-blue-300 dark:border-blue-600'"
+                ? 'bg-blue-500 border-blue-500 text-white' 
+                : 'border-gray-300 dark:border-gray-600'"
             >
               <span v-if="selectedItems.has(`event:${event.id}`)" class="text-xs">✓</span>
             </div>
@@ -87,11 +87,18 @@
         </div>
       </div>
       
+      <!-- No Events State -->
+      <div v-else class="p-4 text-center">
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          No individual events found
+        </div>
+      </div>
+      
       <!-- Collapse Button -->
-      <div class="border-t border-blue-200 dark:border-blue-700 p-3">
+      <div class="border-t border-gray-200 dark:border-gray-600 p-2">
         <button
           @click.stop="toggleExpansion"
-          class="w-full text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium"
+          class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors font-medium"
         >
           ▲ Hide Individual Events
         </button>
@@ -99,12 +106,12 @@
     </div>
     
     <!-- Expand Button (when collapsed) -->
-    <div v-else-if="eventTypeData.count > 0" class="border-t border-blue-200 dark:border-blue-700 p-3">
+    <div v-else-if="(eventTypeData.count || 0) > 0" class="border-t border-gray-200 dark:border-gray-600 p-2">
       <button
         @click.stop="toggleExpansion"
-        class="w-full text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium"
+        class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors font-medium"
       >
-        ▼ Show Individual Events ({{ eventTypeData.count }})
+        ▼ Show Individual Events ({{ eventTypeData.count || 0 }})
       </button>
     </div>
   </div>
@@ -148,11 +155,11 @@ const isPartiallySelected = computed(() => {
 
 const selectionCheckboxClass = computed(() => {
   if (props.isSelected) {
-    return 'bg-white border-white text-blue-400'
+    return 'bg-green-500 border-green-500 text-white'
   } else if (isPartiallySelected.value) {
-    return 'bg-blue-400 border-blue-400 text-white'
+    return 'bg-yellow-500 border-yellow-500 text-white'
   } else {
-    return 'border-blue-300 dark:border-blue-600'
+    return 'border-gray-300 dark:border-gray-600'
   }
 })
 

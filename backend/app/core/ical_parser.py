@@ -267,12 +267,8 @@ def split_ungrouped_events_by_type(events_by_type: Dict[str, Dict[str, Any]], un
             event_count = type_data.get('count', 0)
             
             # Determine if this event type is primarily recurring or unique
-            # Check actual is_recurring field from events instead of count heuristic
-            is_recurring_type = False
-            if event_type_name in events_by_event_type:
-                # Check if any event in this type is marked as recurring
-                events_for_type = events_by_event_type[event_type_name]
-                is_recurring_type = any(event.get('is_recurring', False) for event in events_for_type)
+            # Use count-based logic: count > 1 means recurring, count = 1 means unique
+            is_recurring_type = event_count > 1
             
             event_type_obj = {
                 'name': event_type_name,

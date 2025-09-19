@@ -6,7 +6,7 @@ export function useGroupSelection() {
   const expandedGroups = ref(new Set())
   const expandedEventTypes = ref(new Set())
   
-  // Store reference to groups data for cascading logic
+  // Store reference to groups data for hierarchy checks
   let groupsData = null
   
   // Initialize with groups data
@@ -17,17 +17,34 @@ export function useGroupSelection() {
   // Selection helper functions
   const isSelected = (itemId) => selectedItems.value.has(itemId)
   
+  // Simplified toggle selection - no automatic cascading
   const toggleSelection = (itemId, groups = null) => {
     if (groups) setGroupsData(groups)
     
     const newSelection = new Set(selectedItems.value)
     
     if (newSelection.has(itemId)) {
-      // Deselecting - remove this item and all its children
-      removeItemAndChildren(newSelection, itemId)
+      newSelection.delete(itemId)
     } else {
-      // Selecting - add this item and all its children automatically
-      addItemAndChildren(newSelection, itemId)
+      newSelection.add(itemId)
+    }
+    
+    selectedItems.value = newSelection
+  }
+  
+  // Helper function to select/deselect group and all its children
+  const toggleGroupWithChildren = (groupId, groups = null) => {
+    if (groups) setGroupsData(groups)
+    
+    const newSelection = new Set(selectedItems.value)
+    const groupKey = `group:${groupId}`
+    
+    if (newSelection.has(groupKey)) {
+      // Deselecting - remove this group and all its children
+      removeItemAndChildren(newSelection, groupKey)
+    } else {
+      // Selecting - add this group and all its children
+      addItemAndChildren(newSelection, groupKey)
     }
     
     selectedItems.value = newSelection
@@ -136,7 +153,7 @@ export function useGroupSelection() {
     return false // Will be enhanced with actual event data
   }
   
-  // Partial selection detection
+  // Improved partial selection detection
   const isPartiallySelected = (groups, groupId) => {
     if (isSelected(`group:${groupId}`)) return false
     
@@ -144,8 +161,8 @@ export function useGroupSelection() {
     const group = findGroupInProvidedData(groups, groupId)
     if (!group) return false
     
-    // Check if any children are selected
-    return hasAnyChildrenSelected(group)
+    // Check if any children are selected but not all
+    return hasAnyChildrenSelected(group) && !areAllChildrenSelected(group)
   }
   
   // Helper to find group in provided groups data (not the global groupsData)
@@ -164,6 +181,7 @@ export function useGroupSelection() {
     return null
   }
   
+  // Check if any children are selected
   const hasAnyChildrenSelected = (group) => {
     // Check subgroups
     if (group.children) {
@@ -190,6 +208,43 @@ export function useGroupSelection() {
             }
           }
         }
+      }
+    }
+    
+    return false
+  }
+  
+  // Check if ALL children are selected  
+  const areAllChildrenSelected = (group) => {
+    // Check subgroups - all must be selected
+    if (group.children) {
+      for (const child of group.children) {
+        if (!isSelected(`group:${child.id}`)) {
+          return false
+        }
+      }
+    }
+    
+    // Check event types - all must be selected
+    if (group.event_types) {
+      for (const eventTypeName of Object.keys(group.event_types)) {
+        if (!isSelected(`event_type:${eventTypeName}`)) {
+          return false
+        }
+      }
+    }
+    
+    return true
+  }
+  
+  // Check if event type is partially selected (some but not all events selected)
+  const isEventTypePartiallySelected = (eventTypeName) => {
+    if (isSelected(`event_type:${eventTypeName}`)) return false
+    
+    // Check if any individual events of this type are selected
+    for (const itemId of selectedItems.value) {
+      if (itemId.startsWith('event:') && isEventOfType(itemId, eventTypeName)) {
+        return true
       }
     }
     
@@ -277,8 +332,10 @@ export function useGroupSelection() {
     
     // Selection actions
     toggleSelection,
+    toggleGroupWithChildren,
     isSelected,
     isPartiallySelected,
+    isEventTypePartiallySelected,
     selectEventType,
     selectIndividualEvent,
     

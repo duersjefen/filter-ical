@@ -17,8 +17,8 @@
 
     <!-- Main Content -->
     <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
-      <!-- Show KISS Groups Interface if Domain has Groups -->
-      <SimpleGroupCardsSection
+      <!-- Show Improved Groups Interface if Domain has Groups -->
+      <EventGroupsSection
         v-if="appStore.hasGroups"
         :has-groups="appStore.hasGroups"
         :groups="appStore.groups"
@@ -26,8 +26,7 @@
         :ungrouped-recurring-event-types="appStore.ungroupedRecurringEventTypes"
         :ungrouped-unique-event-types="appStore.ungroupedUniqueEventTypes"
         :filter-mode="filterMode"
-        :domain-id="props.id || route.params.id"
-        @selection-changed="handleSimpleSelectionChanged"
+        @selection-changed="handleGroupSelectionChanged"
         @switch-filter-mode="switchFilterMode"
       />
       
@@ -142,7 +141,7 @@ import {
   PreviewEventsSection
 } from '../components/calendar'
 import SimpleGroupCardsSection from '../components/calendar/SimpleGroupCardsSection.vue'
-import EventGroupsSection from '../components/calendar/EventGroupsSectionNew.vue'
+import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
 import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 
 const appStore = useAppStore()
@@ -432,7 +431,64 @@ const handleSelectionChanged = (selection) => {
   selectedEventTypes.value = resolvedEventTypes
 }
 
-// Handle selection changes from the enhanced selection system
+// Handle selection changes from the dual selection system
+const handleGroupSelectionChanged = (selectionData) => {
+  console.log('🎯 Dual selection changed:', selectionData)
+  
+  // Extract data from the dual selection format
+  const { groups, eventTypes, events, subscribedGroups } = selectionData
+  
+  console.log('🔧 Processing dual selection:', {
+    subscribedGroups: subscribedGroups,
+    groups: groups,
+    eventTypes: eventTypes,
+    events: events
+  })
+  
+  // Store selected groups and event types for filtering (legacy support)
+  selectedGroups.value = groups || []
+  
+  // Handle subscribed groups separately (for future-proof filtering)
+  if (subscribedGroups) {
+    console.log('📁 Group subscriptions:', subscribedGroups)
+    // Store subscribed groups for filtered calendar creation
+    // This data will be used when creating filtered calendars that auto-include new events
+  }
+  
+  // Update selectedEventTypes to include both direct event types and resolved group event types
+  let resolvedEventTypes = [...(eventTypes || [])]
+  
+  // Add event types from selected groups (current manual selection)
+  if (groups && groups.length > 0 && appStore.groups) {
+    groups.forEach(groupId => {
+      const group = appStore.groups[groupId]
+      if (group && group.event_types) {
+        resolvedEventTypes.push(...Object.keys(group.event_types))
+      }
+    })
+  }
+  
+  // Add event types from subscribed groups (future-proof selection)
+  if (subscribedGroups && subscribedGroups.length > 0 && appStore.groups) {
+    subscribedGroups.forEach(groupId => {
+      const group = appStore.groups[groupId]
+      if (group && group.event_types) {
+        resolvedEventTypes.push(...Object.keys(group.event_types))
+      }
+    })
+  }
+  
+  // Remove duplicates
+  resolvedEventTypes = [...new Set(resolvedEventTypes)]
+  
+  // Update the selectedEventTypes to integrate with existing filter system
+  selectedEventTypes.value = resolvedEventTypes
+  
+  console.log('✅ Final selectedEventTypes:', selectedEventTypes.value)
+  console.log('📁 Subscribed groups will auto-include future events:', subscribedGroups || [])
+}
+
+// Handle selection changes from the enhanced selection system  
 const handleSimpleSelectionChanged = (selectionData) => {
   console.log('📊 Enhanced selection changed:', selectionData)
   
