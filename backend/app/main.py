@@ -1279,7 +1279,7 @@ async def get_domain_groups(domain_id: str, session: Session = Depends(get_sessi
                 ungrouped_event_type_names.append(event_type)
         
         # Split ungrouped event types into recurring vs unique categories
-        ungrouped_split = split_ungrouped_events_by_type(events_by_type, ungrouped_event_type_names)
+        ungrouped_split = split_ungrouped_events_by_type(events_by_type, ungrouped_event_type_names, events_data)
         print(f"🔍 Debug: Split ungrouped events into {len(ungrouped_split['recurring'])} recurring and {len(ungrouped_split['unique'])} unique")
         
         return {

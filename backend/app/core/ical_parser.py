@@ -102,6 +102,9 @@ def extract_event_data(component: icalendar.Event, calendar_id: str) -> Optional
         description = str(component.get('DESCRIPTION', '')) if component.get('DESCRIPTION') else None
         location = str(component.get('LOCATION', '')) if component.get('LOCATION') else None
         
+        # Check if event is recurring (has RRULE)
+        is_recurring = component.get('RRULE') is not None
+        
         # Extract event_type - use event title as the event type for group mapping
         # The recurring event names themselves ARE the event types
         categories = component.get('CATEGORIES')
@@ -129,6 +132,7 @@ def extract_event_data(component: icalendar.Event, calendar_id: str) -> Optional
             'event_type': event_type,
             'description': description,
             'location': location,
+            'is_recurring': is_recurring,
             'raw_ical': component.to_ical().decode('utf-8')
         }
         
@@ -239,6 +243,51 @@ def events_to_event_types(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, A
         event_types[event_type]['events'].append(event['id'])
     
     return event_types
+
+
+def split_ungrouped_events_by_type(events_by_type: Dict[str, Dict[str, Any]], ungrouped_event_types: List[str], events_data: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Pure function: Split ungrouped event types into recurring vs unique categories
+    Returns: {'recurring': [...], 'unique': [...]} with event type objects including name and count
+    """
+    recurring_types = []
+    unique_types = []
+    
+    # Create a mapping of event_type -> actual events for checking is_recurring
+    events_by_event_type = {}
+    for event in events_data:
+        event_type = event.get('event_type', '')
+        if event_type not in events_by_event_type:
+            events_by_event_type[event_type] = []
+        events_by_event_type[event_type].append(event)
+    
+    for event_type_name in ungrouped_event_types:
+        if event_type_name in events_by_type:
+            type_data = events_by_type[event_type_name]
+            event_count = type_data.get('count', 0)
+            
+            # Determine if this event type is primarily recurring or unique
+            # Check actual is_recurring field from events instead of count heuristic
+            is_recurring_type = False
+            if event_type_name in events_by_event_type:
+                # Check if any event in this type is marked as recurring
+                events_for_type = events_by_event_type[event_type_name]
+                is_recurring_type = any(event.get('is_recurring', False) for event in events_for_type)
+            
+            event_type_obj = {
+                'name': event_type_name,
+                'count': event_count
+            }
+            
+            if is_recurring_type:
+                recurring_types.append(event_type_obj)
+            else:
+                unique_types.append(event_type_obj)
+    
+    return {
+        'recurring': recurring_types,
+        'unique': unique_types
+    }
 
 
 def events_to_recurring_types(events: List[Dict[str, Any]], future_only: bool = True) -> Dict[str, Dict[str, Any]]:

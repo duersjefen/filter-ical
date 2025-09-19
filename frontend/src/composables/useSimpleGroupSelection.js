@@ -1,13 +1,36 @@
 import { ref, computed } from 'vue'
 
 export function useSimpleGroupSelection() {
-  // Simple state for KISS approach
-  const selectedEventTypes = ref([])
+  // Enhanced selection state - separate group vs individual tracking
+  const selectedEventTypes = ref([]) // Individual event type selections
+  const selectedGroups = ref(new Set()) // Group-level selections (includes future events)
   const expandedGroups = ref(new Set())
   
-  // Selection management
+  // Enhanced selection management
   const isEventTypeSelected = (eventType) => {
     return selectedEventTypes.value.includes(eventType)
+  }
+  
+  const isGroupSelected = (groupId) => {
+    return selectedGroups.value.has(groupId)
+  }
+  
+  const isEventTypeInSelectedGroup = (eventType, groups) => {
+    // Check if this event type is in a selected group
+    for (const groupId of selectedGroups.value) {
+      const group = groups[groupId]
+      if (group && group.event_types && group.event_types[eventType]) {
+        return true
+      }
+    }
+    return false
+  }
+  
+  const isEventTypeEffectivelySelected = (eventType, groups = {}) => {
+    // Event type is selected if:
+    // 1. Explicitly selected as individual event type, OR
+    // 2. Part of a selected group
+    return isEventTypeSelected(eventType) || isEventTypeInSelectedGroup(eventType, groups)
   }
   
   const toggleEventType = (eventType) => {
@@ -58,13 +81,17 @@ export function useSimpleGroupSelection() {
   }
   
   const toggleGroupSelection = (group) => {
+    const groupId = group.id
     const groupEventTypes = getGroupEventTypes(group)
+    
     if (groupEventTypes.length === 0) return
     
-    const isFullySelected = isGroupFullySelected(group)
-    
-    if (isFullySelected) {
-      // Deselect all event types in this group
+    if (selectedGroups.value.has(groupId)) {
+      // Deselect the group
+      selectedGroups.value.delete(groupId)
+      
+      // Remove individual selections for event types in this group
+      // (since they were covered by the group selection)
       groupEventTypes.forEach(eventType => {
         const index = selectedEventTypes.value.indexOf(eventType)
         if (index > -1) {
@@ -72,18 +99,38 @@ export function useSimpleGroupSelection() {
         }
       })
     } else {
-      // Select all event types in this group
+      // Select the group - this will include all current AND future event types
+      selectedGroups.value.add(groupId)
+      
+      // Remove individual event type selections for this group's events
+      // since they're now covered by the group selection
       groupEventTypes.forEach(eventType => {
-        if (!isEventTypeSelected(eventType)) {
-          selectedEventTypes.value.push(eventType)
+        const index = selectedEventTypes.value.indexOf(eventType)
+        if (index > -1) {
+          selectedEventTypes.value.splice(index, 1)
         }
       })
+    }
+  }
+  
+  const toggleIndividualEventType = (eventType, groups = {}) => {
+    // Toggle individual event type selection
+    // Individual selections work independently of group selections
+    
+    const index = selectedEventTypes.value.indexOf(eventType)
+    if (index > -1) {
+      // Remove individual selection
+      selectedEventTypes.value.splice(index, 1)
+    } else {
+      // Add individual selection - no group interference
+      selectedEventTypes.value.push(eventType)
     }
   }
   
   // Bulk operations
   const clearAllSelections = () => {
     selectedEventTypes.value = []
+    selectedGroups.value = new Set()
   }
   
   const selectAllGroups = (groups) => {
@@ -101,28 +148,37 @@ export function useSimpleGroupSelection() {
   const selectionSummary = computed(() => {
     return {
       eventTypes: selectedEventTypes.value,
-      count: selectedEventTypes.value.length
+      groups: Array.from(selectedGroups.value),
+      count: selectedEventTypes.value.length,
+      groupCount: selectedGroups.value.size
     }
   })
   
   return {
     // State
     selectedEventTypes: computed(() => selectedEventTypes.value),
+    selectedGroups: computed(() => selectedGroups.value),
     expandedGroups: computed(() => expandedGroups.value),
     
     // Event type selection
     isEventTypeSelected,
+    isEventTypeEffectivelySelected,
     toggleEventType,
+    toggleIndividualEventType,
     setSelectedEventTypes,
+    
+    // Group selection
+    isGroupSelected,
+    isEventTypeInSelectedGroup,
+    toggleGroupSelection,
     
     // Group expansion
     isGroupExpanded,
     toggleGroupExpansion,
     
-    // Group selection helpers
+    // Legacy group selection helpers (for compatibility)
     isGroupFullySelected,
     isGroupPartiallySelected,
-    toggleGroupSelection,
     
     // Bulk operations
     clearAllSelections,

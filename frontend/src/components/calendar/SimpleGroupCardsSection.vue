@@ -44,9 +44,33 @@
           </button>
         </div>
         
-        <span class="text-xs text-gray-500 dark:text-gray-400">
-          {{ Object.keys(groups || {}).length + (otherActivitiesGroup ? 1 : 0) }} groups
-        </span>
+        <!-- Expand/Collapse Controls -->
+        <div class="flex space-x-2">
+          <button
+            @click="expandAll"
+            class="inline-flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+            :disabled="allGroupsExpanded"
+            :class="allGroupsExpanded ? 'opacity-50 cursor-not-allowed' : ''"
+            title="Expand all groups to show event types"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7" />
+            </svg>
+            Expand All
+          </button>
+          <button
+            @click="collapseAll"
+            class="inline-flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+            :disabled="allGroupsCollapsed"
+            :class="allGroupsCollapsed ? 'opacity-50 cursor-not-allowed' : ''"
+            title="Collapse all groups to hide event types"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 15l7-7 7 7" />
+            </svg>
+            Collapse All
+          </button>
+        </div>
       </div>
 
       <!-- Group Cards Grid - Following existing EventTypeCardsSection pattern -->
@@ -63,11 +87,24 @@
           @expand-group="handleGroupExpansion"
         />
         
-        <!-- Other Activities Group for ungrouped event types -->
+        <!-- Recurring Events Group for ungrouped recurring event types -->
         <GroupCard
-          v-if="otherActivitiesGroup"
-          :key="otherActivitiesGroup.id"
-          :group="otherActivitiesGroup"
+          v-if="recurringActivitiesGroup"
+          :key="recurringActivitiesGroup.id"
+          :group="recurringActivitiesGroup"
+          :selected-event-types="selectedEventTypes"
+          :expanded-groups="expandedGroups"
+          :domain-id="domainId"
+          @toggle-group="handleGroupToggle"
+          @toggle-event-type="handleEventTypeToggle"
+          @expand-group="handleGroupExpansion"
+        />
+        
+        <!-- Unique Events Group for ungrouped unique event types -->
+        <GroupCard
+          v-if="uniqueActivitiesGroup"
+          :key="uniqueActivitiesGroup.id"
+          :group="uniqueActivitiesGroup"
           :selected-event-types="selectedEventTypes"
           :expanded-groups="expandedGroups"
           :domain-id="domainId"
@@ -90,6 +127,8 @@ const props = defineProps({
   groups: { type: Object, default: () => ({}) },
   filterMode: { type: String, default: 'include' },
   ungroupedEventTypes: { type: Array, default: () => [] },
+  ungroupedRecurringEventTypes: { type: Array, default: () => [] },
+  ungroupedUniqueEventTypes: { type: Array, default: () => [] },
   domainId: { type: String, required: true }
 })
 
@@ -98,22 +137,97 @@ const emit = defineEmits([
   'selection-changed'
 ])
 
-// Use the simplified selection composable
+// Use the enhanced selection composable
 const {
   selectedEventTypes,
+  selectedGroups,
   expandedGroups,
   toggleEventType,
+  toggleIndividualEventType,
   toggleGroupExpansion,
   toggleGroupSelection,
   clearAllSelections,
   selectAllGroups,
-  selectedCount
+  selectedCount,
+  isEventTypeEffectivelySelected,
+  isGroupSelected
 } = useSimpleGroupSelection()
 
 // Computed
 const selectedEventTypesCount = computed(() => selectedCount.value)
 
-// Create virtual "Other Activities" group from ungrouped event types
+// All available group IDs (including virtual groups)
+const allGroupIds = computed(() => {
+  const ids = Object.keys(props.groups || {})
+  if (recurringActivitiesGroup.value) ids.push(recurringActivitiesGroup.value.id)
+  if (uniqueActivitiesGroup.value) ids.push(uniqueActivitiesGroup.value.id)
+  return ids
+})
+
+// Check if all groups are expanded
+const allGroupsExpanded = computed(() => {
+  if (allGroupIds.value.length === 0) return true
+  return allGroupIds.value.every(groupId => expandedGroups.value.has(groupId))
+})
+
+// Check if all groups are collapsed
+const allGroupsCollapsed = computed(() => {
+  if (allGroupIds.value.length === 0) return true
+  return allGroupIds.value.every(groupId => !expandedGroups.value.has(groupId))
+})
+
+// Create virtual groups for recurring and unique ungrouped event types
+const recurringActivitiesGroup = computed(() => {
+  if (!props.ungroupedRecurringEventTypes || props.ungroupedRecurringEventTypes.length === 0) {
+    return null
+  }
+  
+  // Transform ungrouped recurring event types into event_types format
+  const eventTypes = {}
+  props.ungroupedRecurringEventTypes.forEach(eventType => {
+    eventTypes[eventType.name] = {
+      name: eventType.name,
+      count: eventType.count,
+      events: []
+    }
+  })
+  
+  return {
+    id: 'group_recurring_activities',
+    name: '🔄 Recurring Events',
+    description: 'Recurring events not assigned to specific groups',
+    color: '#059669', // green-600
+    parent_group_id: null,
+    event_types: eventTypes
+  }
+})
+
+const uniqueActivitiesGroup = computed(() => {
+  if (!props.ungroupedUniqueEventTypes || props.ungroupedUniqueEventTypes.length === 0) {
+    return null
+  }
+  
+  // Transform ungrouped unique event types into event_types format
+  const eventTypes = {}
+  props.ungroupedUniqueEventTypes.forEach(eventType => {
+    eventTypes[eventType.name] = {
+      name: eventType.name,
+      count: eventType.count,
+      events: []
+    }
+  })
+  
+  return {
+    id: 'group_unique_activities',
+    name: '📅 Unique Events',
+    description: 'One-time events not assigned to specific groups',
+    color: '#7C3AED', // violet-600
+    parent_group_id: null,
+    event_types: eventTypes
+  }
+})
+
+// Legacy fallback group for backward compatibility
 const otherActivitiesGroup = computed(() => {
   if (!props.ungroupedEventTypes || props.ungroupedEventTypes.length === 0) {
     return null
@@ -141,7 +255,13 @@ const otherActivitiesGroup = computed(() => {
 
 // Watch for selection changes and emit to parent
 const emitSelectionChange = () => {
-  emit('selection-changed', selectedEventTypes.value)
+  // Emit enhanced selection information
+  const selectionData = {
+    selectedEventTypes: selectedEventTypes.value,
+    selectedGroups: Array.from(selectedGroups.value),
+    mode: 'enhanced'
+  }
+  emit('selection-changed', selectionData)
 }
 
 // Event handlers  
@@ -154,7 +274,8 @@ const handleGroupToggle = (groupId) => {
 }
 
 const handleEventTypeToggle = (eventType) => {
-  toggleEventType(eventType)
+  // Use individual event type toggle for granular control
+  toggleIndividualEventType(eventType, props.groups)
   emitSelectionChange()
 }
 
@@ -170,5 +291,22 @@ const clearAll = () => {
 const selectAll = () => {
   selectAllGroups(props.groups)
   emitSelectionChange()
+}
+
+// Expand/Collapse All functionality
+const expandAll = () => {
+  allGroupIds.value.forEach(groupId => {
+    if (!expandedGroups.value.has(groupId)) {
+      toggleGroupExpansion(groupId)
+    }
+  })
+}
+
+const collapseAll = () => {
+  allGroupIds.value.forEach(groupId => {
+    if (expandedGroups.value.has(groupId)) {
+      toggleGroupExpansion(groupId)
+    }
+  })
 }
 </script>

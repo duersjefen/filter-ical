@@ -233,13 +233,22 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     if (selectedEventTypes.value.length === 0) return []
 
     const selectedEventTypeNames = new Set(selectedEventTypes.value)
+    const now = new Date()
+    
     return events.value.filter(event => {
       const eventType = getEventTypeKey(event)
       const isInSelectedEventType = selectedEventTypeNames.has(eventType)
       
-      return filterMode.value === FILTER_MODES.INCLUDE 
+      // Check if event is in future (filter out past events)
+      const eventStart = event.start || event.dtstart
+      const isFutureEvent = !eventStart || new Date(eventStart) >= now
+      
+      // Apply both event type filter and future events filter
+      const passesEventTypeFilter = filterMode.value === FILTER_MODES.INCLUDE 
         ? isInSelectedEventType 
         : !isInSelectedEventType
+        
+      return passesEventTypeFilter && isFutureEvent
     })
   })
 

@@ -9,37 +9,46 @@
   >
     <!-- Group Header -->
     <div 
-      class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+      class="flex items-center gap-3 p-3 transition-colors"
       :class="isExpanded ? 'rounded-t-md' : 'rounded-md'"
-      @click="toggleGroup"
     >
-      <!-- Group Checkbox -->
+      <!-- Group Checkbox - Dedicated click zone for selection -->
       <div class="flex-shrink-0">
         <div 
-          class="w-4 h-4 rounded border flex items-center justify-center text-xs transition-all"
+          class="w-4 h-4 rounded border flex items-center justify-center text-xs transition-all cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30"
           :class="isGroupSelected 
             ? 'bg-blue-500 border-blue-500 text-white' 
             : isPartiallySelected
               ? 'bg-blue-100 border-blue-300 text-blue-600 dark:bg-blue-900/40 dark:border-blue-500 dark:text-blue-200'
               : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'"
+          @click.stop="toggleGroup"
+          title="Select/deselect all events in this group"
         >
           <span v-if="isGroupSelected">✓</span>
           <span v-else-if="isPartiallySelected">•</span>
         </div>
       </div>
       
-      <!-- Group Info -->
-      <div class="flex-1 min-w-0">
+      <!-- Group Info - Dedicated click zone for expansion -->
+      <div 
+        class="flex-1 min-w-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded px-2 py-1"
+        @click="expandGroup"
+        title="Click to expand/collapse group details"
+      >
         <div class="font-medium text-gray-900 dark:text-gray-100 truncate">
           {{ group.name }}
         </div>
         <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
-          {{ eventTypesCount }} event types
+          {{ eventTypesCount }} {{ eventTypesCount === 1 ? 'Typ' : 'Typen' }}
         </div>
       </div>
       
-      <!-- Expansion Indicator -->
-      <div class="flex-shrink-0">
+      <!-- Expansion Indicator - Part of expansion click zone -->
+      <div 
+        class="flex-shrink-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded p-1"
+        @click="expandGroup"
+        title="Click to expand/collapse group details"
+      >
         <svg 
           class="w-5 h-5 text-gray-400 transition-transform duration-200"
           :class="{ 'rotate-180': isExpanded }"
@@ -148,15 +157,6 @@
       </div>
     </div>
     
-    <!-- Expand Button (when collapsed) -->
-    <div v-else-if="!isExpanded && hasEventTypes" class="border-t border-gray-200 dark:border-gray-700 p-2">
-      <button
-        @click.stop="expandGroup"
-        class="w-full text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium"
-      >
-        ▼ Show {{ eventTypesCount }} event types
-      </button>
-    </div>
   </div>
 </template>
 
@@ -255,14 +255,28 @@ const fetchEventTypeEvents = async (eventTypeName) => {
   }
   
   try {
-    const response = await fetch(`/api/domains/${props.domainId}/types/${encodeURIComponent(eventTypeName)}/events`)
+    // Handle domain ID format - strip 'cal_domain_' prefix if present
+    const cleanDomainId = props.domainId.startsWith('cal_domain_') 
+      ? props.domainId.replace('cal_domain_', '') 
+      : props.domainId
+    
+    const response = await fetch(`/api/domains/${cleanDomainId}/types/${encodeURIComponent(eventTypeName)}/events`)
     if (!response.ok) {
       throw new Error(`Failed to fetch events: ${response.status}`)
     }
     
     const data = await response.json()
+    
+    // Filter events to show only future events (hide past events)
+    const now = new Date()
+    const futureEvents = (data.events || []).filter(event => {
+      if (!event.start) return true // Keep events without start date
+      const eventDate = new Date(event.start)
+      return eventDate >= now
+    })
+    
     eventTypeEvents.value[eventTypeName] = {
-      events: data.events || [],
+      events: futureEvents,
       loading: false,
       error: null
     }
