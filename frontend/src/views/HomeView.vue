@@ -82,7 +82,7 @@
                   {{ $t('home.viewEvents') }}
                 </button>
                 <button 
-                  v-if="calendar.user_id !== 'default'"
+                  v-if="calendar.user_id !== 'default' && !calendar.id.startsWith('cal_domain_')"
                   @click="deleteCalendar(calendar.id)" 
                   class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg"
                   :disabled="appStore.loading"
@@ -120,7 +120,7 @@
                       {{ $t('home.viewEvents') }}
                     </button>
                     <button 
-                      v-if="calendar.user_id !== 'default'"
+                      v-if="calendar.user_id !== 'default' && !calendar.id.startsWith('cal_domain_')"
                       @click="deleteCalendar(calendar.id)" 
                       class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg whitespace-nowrap"
                       :disabled="appStore.loading"
@@ -195,6 +195,10 @@ const handleAddCalendar = async () => {
   if (!result.success && result.error) {
     // Set error in app store for display
     appStore.setError(result.error)
+  } else if (result.success && result.warnings && result.warnings.length > 0) {
+    // Show warnings to user - calendar created but with issues
+    const warningMessage = `Calendar added successfully, but with issues:\n• ${result.warnings.join('\n• ')}`
+    appStore.setError(warningMessage)
   }
 }
 
@@ -225,14 +229,14 @@ const confirmDelete = async () => {
   if (!calendarToDelete.value) return
   
   console.log('User confirmed deletion')
-  try {
-    const result = await appStore.deleteCalendar(calendarToDelete.value.id)
-    console.log('Delete result:', result)
-  } catch (error) {
-    console.error('Error during deletion:', error)
-  } finally {
-    calendarToDelete.value = null
+  const result = await appStore.deleteCalendar(calendarToDelete.value.id)
+  
+  if (!result.success && result.error) {
+    // Show error message to user
+    appStore.setError(result.error)
   }
+  
+  calendarToDelete.value = null
 }
 
 // Handle cancellation  

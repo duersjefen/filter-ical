@@ -8,6 +8,9 @@ import { ref, watch } from 'vue'
 const username = ref('')
 const STORAGE_KEY = 'icalViewer_username'
 
+// Username change callbacks for data source switching
+const usernameChangeCallbacks = new Set()
+
 // Initialize username from localStorage
 const initializeUsername = () => {
   try {
@@ -39,12 +42,24 @@ export function useUsername() {
   }
 
   // Watch for changes and persist to localStorage
-  watch(username, (newUsername) => {
+  watch(username, (newUsername, oldUsername) => {
     try {
       if (newUsername && newUsername.trim()) {
         localStorage.setItem(STORAGE_KEY, newUsername.trim())
       } else {
         localStorage.removeItem(STORAGE_KEY)
+      }
+      
+      // Trigger username change callbacks for data source switching
+      if (newUsername !== oldUsername) {
+        console.log('🔄 Username changed:', { from: oldUsername, to: newUsername })
+        usernameChangeCallbacks.forEach(callback => {
+          try {
+            callback(newUsername, oldUsername)
+          } catch (error) {
+            console.error('Username change callback error:', error)
+          }
+        })
       }
     } catch (error) {
       console.warn('Failed to save username to localStorage:', error)
@@ -97,6 +112,16 @@ export function useUsername() {
     return trimmed && trimmed !== 'public'
   }
 
+  // Register callback for username changes (for data source switching)
+  const onUsernameChange = (callback) => {
+    usernameChangeCallbacks.add(callback)
+    
+    // Return unregister function
+    return () => {
+      usernameChangeCallbacks.delete(callback)
+    }
+  }
+
   return {
     // State
     username,
@@ -110,6 +135,9 @@ export function useUsername() {
     hasCustomUsername,
     
     // Utilities
-    isValidUsername
+    isValidUsername,
+    
+    // Username change detection
+    onUsernameChange
   }
 }

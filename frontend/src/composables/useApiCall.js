@@ -80,6 +80,7 @@ export function useApiCall() {
     // Error state from useAPI composable
     loading: api.loading,
     error: api.error,
-    clearError: api.clearError
+    clearError: api.clearError,
+    setError: api.setError
   }
 }

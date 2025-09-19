@@ -5,7 +5,7 @@ Override FastAPI's OpenAPI generation with our existing specification
 """
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import Session, select, col, or_
+from sqlmodel import Session, select, col, or_, and_
 from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
 from datetime import datetime
@@ -276,12 +276,12 @@ async def get_calendars(
     """Get calendars for user - matches OpenAPI spec exactly"""
     user_id = get_user_id(username)
     
-    # Get user's personal calendars and domain calendars (which are public)
+    # Get only user's personal calendars (exclude domain calendars from personal lists)
     calendars = session.exec(
         select(Calendar).where(
-            or_(
+            and_(
                 Calendar.user_id == user_id,
-                Calendar.domain_id != None  # Include all domain calendars
+                Calendar.domain_id == None  # Exclude domain calendars from personal lists
             )
         )
     ).all()
@@ -327,13 +327,25 @@ async def create_calendar(
     session.refresh(new_calendar)
     
     # Parse and store events using pure functions
+    event_processing_warnings = []
+    
     try:
         ical_content, error = fetch_ical_content(url)
         if error:
-            print(f"Warning: Could not fetch calendar events: {error}")
+            warning_msg = f"Could not fetch calendar content: {error}"
+            print(f"Warning: {warning_msg}")
+            event_processing_warnings.append(warning_msg)
         else:
             events_data, parse_error = parse_calendar_events(ical_content, new_calendar.id)
-            if not parse_error and events_data:
+            if parse_error:
+                warning_msg = f"Could not parse calendar events: {parse_error}"
+                print(f"Warning: {warning_msg}")
+                event_processing_warnings.append(warning_msg)
+            elif not events_data or len(events_data) == 0:
+                warning_msg = "Calendar URL is valid but contains no events"
+                print(f"Warning: {warning_msg}")
+                event_processing_warnings.append(warning_msg)
+            else:
                 # Store events in database
                 for event_data in events_data:
                     event = Event(**event_data)
@@ -341,16 +353,24 @@ async def create_calendar(
                 session.commit()
                 print(f"Successfully parsed {len(events_data)} events with {len(events_to_recurring_types(events_data))} event types")
     except Exception as e:
-        print(f"Warning: Could not process calendar events: {e}")
+        warning_msg = f"Could not process calendar events: {str(e)}"
+        print(f"Warning: {warning_msg}")
+        event_processing_warnings.append(warning_msg)
     
-    # Return response matching OpenAPI schema
-    return {
+    # Return response matching OpenAPI schema with optional warnings
+    response = {
         "id": new_calendar.id,
         "name": new_calendar.name,
         "url": new_calendar.url, 
         "user_id": new_calendar.user_id,
         "created_at": new_calendar.created_at.isoformat() + "Z"
     }
+    
+    # Include warnings if any event processing issues occurred
+    if event_processing_warnings:
+        response["warnings"] = event_processing_warnings
+    
+    return response
 
 @app.delete("/api/calendars/{calendar_id}")
 async def delete_calendar(

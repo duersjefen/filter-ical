@@ -21,7 +21,16 @@ export function useAPI() {
       const result = await apiCall()
       return result
     } catch (err) {
-      error.value = err.response?.data?.detail || err.response?.data?.message || 'An error occurred'
+      // Create more detailed error information
+      const status = err.response?.status
+      const detail = err.response?.data?.detail || err.response?.data?.message || 'An error occurred'
+      
+      error.value = detail
+      
+      // Enhance error object for better handling
+      err.status = status
+      err.detail = detail
+      
       throw err // Re-throw so caller can handle if needed
     } finally {
       loading.value = false
@@ -38,7 +47,12 @@ export function useAPI() {
       const result = await execute(apiCall)
       return { success: true, data: result }
     } catch (err) {
-      return { success: false, error: error.value }
+      return { 
+        success: false, 
+        error: error.value,
+        status: err.status,
+        detail: err.detail
+      }
     }
   }
 
@@ -49,11 +63,19 @@ export function useAPI() {
     error.value = null
   }
 
+  /**
+   * Set an error message manually
+   */
+  const setError = (message) => {
+    error.value = message
+  }
+
   return {
     loading,
     error,
     execute,
     safeExecute,
-    clearError
+    clearError,
+    setError
   }
 }
