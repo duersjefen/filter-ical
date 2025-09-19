@@ -57,6 +57,7 @@
           :group="group"
           :selected-event-types="selectedEventTypes"
           :expanded-groups="expandedGroups"
+          :domain-id="domainId"
           @toggle-group="handleGroupToggle"
           @toggle-event-type="handleEventTypeToggle"
           @expand-group="handleGroupExpansion"
@@ -69,6 +70,7 @@
           :group="otherActivitiesGroup"
           :selected-event-types="selectedEventTypes"
           :expanded-groups="expandedGroups"
+          :domain-id="domainId"
           @toggle-group="handleGroupToggle"
           @toggle-event-type="handleEventTypeToggle"
           @expand-group="handleGroupExpansion"
@@ -87,7 +89,8 @@ const props = defineProps({
   hasGroups: { type: Boolean, default: false },
   groups: { type: Object, default: () => ({}) },
   filterMode: { type: String, default: 'include' },
-  ungroupedEventTypes: { type: Array, default: () => [] }
+  ungroupedEventTypes: { type: Array, default: () => [] },
+  domainId: { type: String, required: true }
 })
 
 const emit = defineEmits([

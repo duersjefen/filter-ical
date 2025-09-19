@@ -24,6 +24,7 @@
         :groups="appStore.groups"
         :ungrouped-event-types="appStore.ungroupedEventTypes"
         :filter-mode="filterMode"
+        :domain-id="props.id || route.params.id"
         @selection-changed="handleSimpleSelectionChanged"
         @switch-filter-mode="switchFilterMode"
       />

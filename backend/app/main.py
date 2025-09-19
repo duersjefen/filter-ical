@@ -1381,6 +1381,93 @@ async def get_domain_event_types(domain_id: str):
         )
 
 # ==============================================
+# DOMAIN EVENT TYPE EVENTS ENDPOINT
+# ==============================================
+
+@app.get("/api/domains/{domain_id}/types/{event_type}/events")
+async def get_domain_event_type_events(domain_id: str, event_type: str):
+    """Get individual events for a specific event type in a domain"""
+    # Validate domain ID format
+    if not is_valid_domain_id(domain_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid domain ID format: {domain_id}"
+        )
+    
+    try:
+        # Load domain configuration
+        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        domains_config = load_domains_config(str(config_path))
+        
+        # Get specific domain configuration
+        domain_config = get_domain_config(domains_config, domain_id)
+        if not domain_config:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Domain '{domain_id}' not found"
+            )
+        
+        # Fetch fresh iCal content
+        calendar_url = domain_config.get('calendar_url', '')
+        if not calendar_url:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No calendar URL configured for domain '{domain_id}'"
+            )
+        
+        # Fetch and parse iCal content
+        ical_content, fetch_error = fetch_ical_content(calendar_url)
+        if fetch_error or not ical_content:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch calendar data: {fetch_error}"
+            )
+        
+        # Parse events from iCal content
+        domain_calendar_id = f"domain_{domain_id}"
+        events_data, parse_error = parse_calendar_events(ical_content, domain_calendar_id)
+        if parse_error:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to parse calendar data: {parse_error}"
+            )
+        
+        # Filter events for the specific event type
+        filtered_events = []
+        for event in events_data:
+            if event.get('summary', '').strip() == event_type:
+                # Format event for response
+                formatted_event = {
+                    'id': event.get('uid', ''),
+                    'title': event.get('summary', ''),
+                    'start': event.get('start', ''),
+                    'end': event.get('end', ''),
+                    'description': event.get('description', ''),
+                    'location': event.get('location', ''),
+                    'is_recurring': bool(event.get('rrule'))
+                }
+                filtered_events.append(formatted_event)
+        
+        # Sort events by start date
+        filtered_events.sort(key=lambda x: x.get('start', ''))
+        
+        return {
+            'domain_id': domain_id,
+            'event_type': event_type,
+            'events': filtered_events,
+            'count': len(filtered_events)
+        }
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get events for event type: {str(e)}"
+        )
+
+# ==============================================
 # HEALTH CHECK ENDPOINT
 # ==============================================
 
