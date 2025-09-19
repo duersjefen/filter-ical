@@ -15,29 +15,16 @@ setup: setup-backend setup-frontend ## Setup local development environment
 
 dev: ## Start full development environment (kills existing servers first)
 	@echo "🚀 Starting Python + Vue 3 development..."
-	@echo "🔍 Checking for existing processes on ports 3000 and 8000..."
-	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
-	@lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
+	@$(MAKE) stop >/dev/null 2>&1 || true
 	@sleep 1
-	@echo "🆕 Starting fresh development servers..."
+	@echo "🆕 Starting development servers..."
 	@echo "Press Ctrl+C to stop both services"
 	@(trap 'kill 0' INT; $(MAKE) backend & $(MAKE) frontend & wait)
 
 backend: setup-backend ## Start backend development server
 	@echo "🐍 Starting Python FastAPI backend..."
-	@echo "🔍 Checking for existing backend processes..."
-	@pkill -f "python.*app.main" 2>/dev/null && echo "🛑 Stopped existing backend" || echo "✅ No existing backend found"
-	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
-	@echo "🔒 Checking database lock status..."
-	@fuser -k backend/data/icalviewer.db 2>/dev/null && echo "🛑 Released database locks" || echo "✅ No database locks found"
-	@echo "🔍 Final process verification..."
-	@if pgrep -f "python.*app.main" > /dev/null; then \
-		echo "❌ ERROR: Backend processes still running! Use 'make stop' first"; \
-		exit 1; \
-	fi
-	@sleep 2
-	@echo "🚀 Starting single backend process..."
 	@cd backend && . venv/bin/activate && python -m app.main
+
 
 setup-backend: ## Setup backend virtual environment and dependencies
 	@echo "🔧 Setting up Python backend..."
@@ -53,14 +40,27 @@ setup-frontend: ## Setup frontend dependencies
 	@cd frontend && npm install
 
 stop: ## Stop all development servers and clean up processes
-	@echo "🛑 Stopping development servers..."
-	@pkill -f "python.*app.main" 2>/dev/null && echo "🐍 Backend stopped" || echo "🐍 Backend not running"
-	@pkill -f "vite.*dev" 2>/dev/null && echo "🎨 Frontend stopped" || echo "🎨 Frontend not running"  
-	@pkill -f "npm.*run.*dev" 2>/dev/null || true
+	@echo "🛑 Stopping all development servers and processes..."
+	@echo "🔍 Terminating backend processes..."
+	@pkill -9 -f "python.*app.main" 2>/dev/null && echo "🐍 Backend stopped" || echo "🐍 Backend not running"
+	@pkill -9 -f "uvicorn" 2>/dev/null && echo "🐍 Uvicorn stopped" || true
+	@echo "🔍 Terminating frontend processes..."
+	@pkill -9 -f "vite.*dev" 2>/dev/null && echo "🎨 Frontend stopped" || echo "🎨 Frontend not running"  
+	@pkill -9 -f "npm.*run.*dev" 2>/dev/null && echo "🎨 NPM dev stopped" || true
+	@pkill -9 -f "node.*vite" 2>/dev/null && echo "🎨 Node vite stopped" || true
+	@pkill -9 -f "make.*dev" 2>/dev/null && echo "🔧 Make dev stopped" || true
+	@pkill -9 -f "make.*backend" 2>/dev/null && echo "🔧 Make backend stopped" || true
+	@pkill -9 -f "make.*frontend" 2>/dev/null && echo "🔧 Make frontend stopped" || true
+	@echo "🔍 Clearing ports and locks..."
 	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 3000 cleared" || true
 	@lsof -ti:8000 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 8000 cleared" || true
+	@lsof -ti:8001 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 8001 cleared" || true
+	@lsof -ti:8002 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 8002 cleared" || true
 	@fuser -k backend/data/icalviewer.db 2>/dev/null && echo "🔒 Database locks released" || true
-	@sleep 1
+	@sleep 3
+	@echo "🔍 Final verification..."
+	@if lsof -ti:3000 > /dev/null 2>&1; then echo "⚠️  Port 3000 still in use"; else echo "✅ Port 3000 clear"; fi
+	@if lsof -ti:8000 > /dev/null 2>&1; then echo "⚠️  Port 8000 still in use"; else echo "✅ Port 8000 clear"; fi
 	@echo "✅ All development servers stopped and cleaned up"
 
 ## Testing Commands (TDD Workflow - Universal Pattern)
@@ -122,6 +122,17 @@ ci-test: ## Run tests in CI environment (Docker-first)
 
 ci-build: ## Build containers in CI environment
 	@$(MAKE) build
+
+## Database Management Commands
+
+db-status: ## Show database status (groups, assignments, etc.)
+	@cd backend && . venv/bin/activate && python manage_db.py status
+
+db-reseed: ## Clear and reseed database with updated demo data
+	@cd backend && . venv/bin/activate && python manage_db.py reseed
+
+db-clear: ## Clear all groups and event type assignments
+	@cd backend && . venv/bin/activate && python manage_db.py clear
 
 ## Deployment Commands (Universal - Work with any language)
 

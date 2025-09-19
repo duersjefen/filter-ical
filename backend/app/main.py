@@ -22,7 +22,7 @@ from .models import (
 from .core.ical_parser import (
     fetch_ical_content, parse_calendar_events,
     events_to_recurring_types, filter_future_events, create_ical_from_events,
-    events_to_event_types
+    events_to_event_types, split_ungrouped_events_by_type
 )
 from .core.filters import (
     filter_events_by_categories, apply_saved_filter_config,
@@ -322,6 +322,13 @@ async def create_calendar(
     
     # Create calendar with smart ID generation
     new_calendar = create_calendar_with_smart_id(name, url, user_id)
+    
+    # Protect domain calendars: They can only be created by system startup, not via API
+    if new_calendar.id.startswith('cal_domain_'):
+        raise HTTPException(
+            status_code=400, 
+            detail="Domain calendars are system-managed and cannot be created via API. They are automatically created from domains.yaml configuration."
+        )
     
     # Check if calendar with this ID already exists
     existing_calendar = session.get(Calendar, new_calendar.id)
@@ -1266,20 +1273,23 @@ async def get_domain_groups(domain_id: str, session: Session = Depends(get_sessi
             }
         
         # Calculate ungrouped event types (event types that exist but aren't assigned to any group)
-        ungrouped_event_types = []
-        for event_type, type_data in events_by_type.items():
+        ungrouped_event_type_names = []
+        for event_type in events_by_type.keys():
             if event_type not in all_assigned_event_types:
-                event_count = type_data.get('count', 0) if isinstance(type_data, dict) else 0
-                ungrouped_event_types.append({
-                    'name': event_type,
-                    'count': event_count
-                })
+                ungrouped_event_type_names.append(event_type)
+        
+        # Split ungrouped event types into recurring vs unique categories
+        ungrouped_split = split_ungrouped_events_by_type(events_by_type, ungrouped_event_type_names)
+        print(f"🔍 Debug: Split ungrouped events into {len(ungrouped_split['recurring'])} recurring and {len(ungrouped_split['unique'])} unique")
         
         return {
             'has_groups': True,
             'domain_id': domain_id,
             'groups': groups_dict,
-            'ungrouped_event_types': ungrouped_event_types
+            'ungrouped_recurring_event_types': ungrouped_split['recurring'],
+            'ungrouped_unique_event_types': ungrouped_split['unique'],
+            # Keep legacy field for backward compatibility
+            'ungrouped_event_types': ungrouped_split['recurring'] + ungrouped_split['unique']
         }
         
     except HTTPException:

@@ -76,46 +76,13 @@ export default {
     const domainConfig = ref(null)
     const calendarId = ref(null)
 
-    // Find or create calendar for domain
-    const findOrCreateDomainCalendar = async (domainConfig) => {
-      try {
-        // First, try to find the domain calendar with proper ID format
-        const expectedDomainCalendarId = `cal_domain_${props.domain}`
-        const calendarsResult = await get('/api/calendars')
-        if (calendarsResult.success) {
-          // Look for domain calendar first (preferred)
-          const domainCalendar = calendarsResult.data.calendars.find(
-            cal => cal.id === expectedDomainCalendarId
-          )
-          
-          if (domainCalendar) {
-            return domainCalendar.id
-          }
-          
-          // Fallback: look for any calendar with this URL
-          const existingCalendar = calendarsResult.data.calendars.find(
-            cal => cal.url === domainConfig.calendar_url
-          )
-          
-          if (existingCalendar) {
-            return existingCalendar.id
-          }
-        }
-
-        // If not found, create new calendar for this domain
-        const createResult = await post('/api/calendars', {
-          name: domainConfig.name,
-          url: domainConfig.calendar_url
-        })
-
-        if (createResult.success) {
-          return createResult.data.id
-        }
-      } catch (err) {
-        console.error('Failed to find/create domain calendar:', err)
-      }
-      
-      return null
+    // Domain calendars use direct endpoints - no need to search in user calendar lists
+    const findDomainCalendar = async (domainConfig) => {
+      // Return the correct domain calendar ID format that matches backend database
+      const domainCalendarId = `cal_domain_${props.domain}`
+      console.log(`✅ Using domain calendar: ${domainCalendarId}`)
+      console.log('💡 Domain events loaded directly from domain endpoint')
+      return domainCalendarId
     }
 
     // Load domain configuration and find calendar
@@ -126,8 +93,8 @@ export default {
         if (domainResult.success) {
           domainConfig.value = domainResult.data
           
-          // Find or create calendar for this domain
-          const foundCalendarId = await findOrCreateDomainCalendar(domainConfig.value)
+          // Find domain calendar (system-managed)
+          const foundCalendarId = await findDomainCalendar(domainConfig.value)
           calendarId.value = foundCalendarId
         }
       } catch (err) {

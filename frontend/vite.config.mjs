@@ -15,6 +15,7 @@ export default defineConfig({
   },
   server: {
     port: 8000,
+    strictPort: true, // Fail if port 8000 is not available, don't try other ports
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
