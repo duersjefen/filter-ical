@@ -29,132 +29,90 @@ def create_demo_calendar_data() -> Dict[str, Any]:
 
 
 def create_demo_groups() -> List[Dict[str, Any]]:
-    """Create demo group hierarchy for showcasing based on real Exter calendar events"""
+    """Create simple demo groups for KISS card-based interface (no nesting)"""
     return [
-        # Top-level activity categories
+        # Simple flat groups - perfect for 3-card layout
         {
             "id": "group_music",
-            "name": "Music Activities",
+            "name": "🎵 Music Activities",
             "domain_id": "exter",
             "parent_group_id": None,
-            "description": "All music-related activities and bands"
+            "description": "Bands, concerts, and musical events"
         },
         {
             "id": "group_sports",
-            "name": "Sports & Recreation",
+            "name": "⚽ Sports & Recreation",
             "domain_id": "exter", 
             "parent_group_id": None,
             "description": "Sports activities and physical recreation"
         },
         {
             "id": "group_youth",
-            "name": "Youth Activities",
+            "name": "👨‍👩‍👧‍👦 Youth & Family",
             "domain_id": "exter",
             "parent_group_id": None,
-            "description": "Activities for children and teenagers"
+            "description": "Activities for children, teenagers and families"
         },
         {
             "id": "group_seniors",
-            "name": "Senior Activities",
+            "name": "👥 Senior Activities",
             "domain_id": "exter",
             "parent_group_id": None,
             "description": "Programs and events for older adults"
         },
         {
-            "id": "group_special_events",
-            "name": "Special Events",
+            "id": "group_meetings",
+            "name": "💼 Meetings & Events",
             "domain_id": "exter",
             "parent_group_id": None,
-            "description": "Special community events and gatherings"
-        },
-        
-        # Music sub-groups
-        {
-            "id": "group_music_bands",
-            "name": "Bands",
-            "domain_id": "exter",
-            "parent_group_id": "group_music",
-            "description": "Musical bands and ensembles"
+            "description": "Community meetings and special events"
         },
         {
-            "id": "group_music_youth",
-            "name": "Youth Music",
+            "id": "group_education",
+            "name": "📚 Education & Learning",
             "domain_id": "exter",
-            "parent_group_id": "group_music",
-            "description": "Music programs for young people"
-        },
-        
-        # Sports sub-groups
-        {
-            "id": "group_sports_team",
-            "name": "Team Sports",
-            "domain_id": "exter",
-            "parent_group_id": "group_sports",
-            "description": "Team-based sports activities"
-        },
-        {
-            "id": "group_sports_ice",
-            "name": "Ice Sports",
-            "domain_id": "exter",
-            "parent_group_id": "group_sports",
-            "description": "Ice hockey and ice skating"
-        },
-        
-        # Youth sub-groups
-        {
-            "id": "group_youth_teens",
-            "name": "Teenagers",
-            "domain_id": "exter",
-            "parent_group_id": "group_youth",
-            "description": "Activities for teenage participants"
-        },
-        {
-            "id": "group_youth_tweens",
-            "name": "Tweens",
-            "domain_id": "exter",
-            "parent_group_id": "group_youth",
-            "description": "Activities for pre-teen children"
-        },
-        
-        # Additional nested groups for 10+ total
-        {
-            "id": "group_community_events",
-            "name": "Community Events",
-            "domain_id": "exter",
-            "parent_group_id": "group_special_events",
-            "description": "Regular community gatherings"
+            "parent_group_id": None,
+            "description": "Educational activities and workshops"
         }
     ]
 
 
 def create_demo_event_type_assignments() -> List[Dict[str, Any]]:
-    """Create demo event type to group assignments based on real Exter calendar events"""
+    """Create simple event type to group assignments for KISS interface"""
     return [
         # Music Activities - Real event types from Exter calendar
-        {"group_id": "group_music_bands", "event_type": "Musik Band", "domain_id": "exter"},
-        {"group_id": "group_music_youth", "event_type": "Youngsterband", "domain_id": "exter"},
+        {"group_id": "group_music", "event_type": "Musik Band", "domain_id": "exter"},
+        {"group_id": "group_music", "event_type": "Youngsterband", "domain_id": "exter"},
+        {"group_id": "group_music", "event_type": "Concert", "domain_id": "exter"},
+        {"group_id": "group_music", "event_type": "Choir Practice", "domain_id": "exter"},
         
         # Sports Activities - Real event types
-        {"group_id": "group_sports_team", "event_type": "Volleyball", "domain_id": "exter"},
-        {"group_id": "group_sports_ice", "event_type": "Eiszeit (Jugend)", "domain_id": "exter"},
+        {"group_id": "group_sports", "event_type": "Volleyball", "domain_id": "exter"},
+        {"group_id": "group_sports", "event_type": "Eiszeit (Jugend)", "domain_id": "exter"},
+        {"group_id": "group_sports", "event_type": "Sports Tournament", "domain_id": "exter"},
+        {"group_id": "group_sports", "event_type": "Football Training", "domain_id": "exter"},
         
-        # Youth Activities - Real event types
-        {"group_id": "group_youth_tweens", "event_type": "Tweens", "domain_id": "exter"},
-        {"group_id": "group_youth_teens", "event_type": "BUK-Abend", "domain_id": "exter"},
+        # Youth & Family Activities - Real event types
+        {"group_id": "group_youth", "event_type": "Tweens", "domain_id": "exter"},
+        {"group_id": "group_youth", "event_type": "BUK-Abend", "domain_id": "exter"},
+        {"group_id": "group_youth", "event_type": "Summer Camp", "domain_id": "exter"},
+        {"group_id": "group_youth", "event_type": "Family Day", "domain_id": "exter"},
         
         # Senior Activities - Real event types
         {"group_id": "group_seniors", "event_type": "Ü60 Abend", "domain_id": "exter"},
+        {"group_id": "group_seniors", "event_type": "Senior Coffee", "domain_id": "exter"},
+        {"group_id": "group_seniors", "event_type": "Walking Group", "domain_id": "exter"},
         
-        # Additional demo event types for showcasing grouping functionality
-        {"group_id": "group_community_events", "event_type": "Community Meeting", "domain_id": "exter"},
-        {"group_id": "group_community_events", "event_type": "Annual Festival", "domain_id": "exter"},
-        {"group_id": "group_special_events", "event_type": "Holiday Celebration", "domain_id": "exter"},
-        {"group_id": "group_special_events", "event_type": "Fundraising Event", "domain_id": "exter"},
+        # Meetings & Events
+        {"group_id": "group_meetings", "event_type": "Community Meeting", "domain_id": "exter"},
+        {"group_id": "group_meetings", "event_type": "Annual Festival", "domain_id": "exter"},
+        {"group_id": "group_meetings", "event_type": "Holiday Celebration", "domain_id": "exter"},
+        {"group_id": "group_meetings", "event_type": "Fundraising Event", "domain_id": "exter"},
         
-        # Cross-category assignments to show flexibility
-        {"group_id": "group_music", "event_type": "Concert", "domain_id": "exter"},
-        {"group_id": "group_sports", "event_type": "Sports Tournament", "domain_id": "exter"},
-        {"group_id": "group_youth", "event_type": "Summer Camp", "domain_id": "exter"}
+        # Education & Learning
+        {"group_id": "group_education", "event_type": "Workshop", "domain_id": "exter"},
+        {"group_id": "group_education", "event_type": "Language Class", "domain_id": "exter"},
+        {"group_id": "group_education", "event_type": "Computer Course", "domain_id": "exter"}
     ]
 
 

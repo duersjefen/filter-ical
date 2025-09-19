@@ -17,14 +17,13 @@
 
     <!-- Main Content -->
     <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
-      <!-- Show Groups Interface if Domain has Groups -->
-      <EventGroupsSection
+      <!-- Show KISS Groups Interface if Domain has Groups -->
+      <SimpleGroupCardsSection
         v-if="appStore.hasGroups"
         :has-groups="appStore.hasGroups"
         :groups="appStore.groups"
-        :ungrouped-event-types="appStore.ungroupedEventTypes"
         :filter-mode="filterMode"
-        @selection-changed="handleSelectionChanged"
+        @selection-changed="handleSimpleSelectionChanged"
         @switch-filter-mode="switchFilterMode"
       />
       
@@ -135,6 +134,7 @@ import {
   EventTypeCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
+import SimpleGroupCardsSection from '../components/calendar/SimpleGroupCardsSection.vue'
 import EventGroupsSection from '../components/calendar/EventGroupsSectionNew.vue'
 import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 
@@ -371,7 +371,7 @@ const loadFilterIntoPage = (filterData) => {
   console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.eventTypes.length} event types in ${filterData.mode} mode`)
 }
 
-// Handle selection changes from the new multi-level selection system
+// Handle selection changes from the new multi-level selection system (old complex)
 const handleSelectionChanged = (selection) => {
   console.log('📊 Selection changed:', selection)
   
@@ -381,6 +381,14 @@ const handleSelectionChanged = (selection) => {
   
   // Update the selectedEventTypes to integrate with existing filter system
   selectedEventTypes.value = resolvedEventTypes
+}
+
+// Handle selection changes from the KISS simple selection system
+const handleSimpleSelectionChanged = (eventTypes) => {
+  console.log('📊 Simple selection changed:', eventTypes)
+  
+  // Directly update selectedEventTypes since we already have a flat list
+  selectedEventTypes.value = eventTypes
 }
 
 // Helper function to resolve hierarchical group selections into event types

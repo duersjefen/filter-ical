@@ -25,6 +25,18 @@ dev: ## Start full development environment (kills existing servers first)
 
 backend: setup-backend ## Start backend development server
 	@echo "🐍 Starting Python FastAPI backend..."
+	@echo "🔍 Checking for existing backend processes..."
+	@pkill -f "python.*app.main" 2>/dev/null && echo "🛑 Stopped existing backend" || echo "✅ No existing backend found"
+	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
+	@echo "🔒 Checking database lock status..."
+	@fuser -k backend/data/icalviewer.db 2>/dev/null && echo "🛑 Released database locks" || echo "✅ No database locks found"
+	@echo "🔍 Final process verification..."
+	@if pgrep -f "python.*app.main" > /dev/null; then \
+		echo "❌ ERROR: Backend processes still running! Use 'make stop' first"; \
+		exit 1; \
+	fi
+	@sleep 2
+	@echo "🚀 Starting single backend process..."
 	@cd backend && . venv/bin/activate && python -m app.main
 
 setup-backend: ## Setup backend virtual environment and dependencies
@@ -40,12 +52,16 @@ setup-frontend: ## Setup frontend dependencies
 	@echo "🔧 Setting up frontend dependencies..."
 	@cd frontend && npm install
 
-stop: ## Stop all development servers
+stop: ## Stop all development servers and clean up processes
 	@echo "🛑 Stopping development servers..."
 	@pkill -f "python.*app.main" 2>/dev/null && echo "🐍 Backend stopped" || echo "🐍 Backend not running"
 	@pkill -f "vite.*dev" 2>/dev/null && echo "🎨 Frontend stopped" || echo "🎨 Frontend not running"  
 	@pkill -f "npm.*run.*dev" 2>/dev/null || true
-	@echo "✅ All development servers stopped"
+	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 3000 cleared" || true
+	@lsof -ti:8000 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 8000 cleared" || true
+	@fuser -k backend/data/icalviewer.db 2>/dev/null && echo "🔒 Database locks released" || true
+	@sleep 1
+	@echo "✅ All development servers stopped and cleaned up"
 
 ## Testing Commands (TDD Workflow - Universal Pattern)
 

@@ -322,6 +322,18 @@ async def create_calendar(
     # Create calendar with smart ID generation
     new_calendar = create_calendar_with_smart_id(name, url, user_id)
     
+    # Check if calendar with this ID already exists
+    existing_calendar = session.get(Calendar, new_calendar.id)
+    if existing_calendar:
+        # Return existing calendar instead of creating duplicate
+        return {
+            "id": existing_calendar.id,
+            "name": existing_calendar.name,
+            "url": existing_calendar.url,
+            "user_id": existing_calendar.user_id,
+            "created_at": existing_calendar.created_at.isoformat() if existing_calendar.created_at else None
+        }
+    
     session.add(new_calendar)
     session.commit()
     session.refresh(new_calendar)
