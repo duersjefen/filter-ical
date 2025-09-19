@@ -78,41 +78,24 @@ def create_demo_groups() -> List[Dict[str, Any]]:
 
 
 def create_demo_event_type_assignments() -> List[Dict[str, Any]]:
-    """Create simple event type to group assignments for KISS interface"""
+    """Create simple event type to group assignments for KISS interface - only real event types"""
     return [
-        # Music Activities - Real event types from Exter calendar
+        # Music Activities - Only verified real event types from Exter calendar
         {"group_id": "group_music", "event_type": "Musik Band", "domain_id": "exter"},
         {"group_id": "group_music", "event_type": "Youngsterband", "domain_id": "exter"},
-        {"group_id": "group_music", "event_type": "Concert", "domain_id": "exter"},
-        {"group_id": "group_music", "event_type": "Choir Practice", "domain_id": "exter"},
         
-        # Sports Activities - Real event types
-        {"group_id": "group_sports", "event_type": "Volleyball", "domain_id": "exter"},
-        {"group_id": "group_sports", "event_type": "Eiszeit (Jugend)", "domain_id": "exter"},
-        {"group_id": "group_sports", "event_type": "Sports Tournament", "domain_id": "exter"},
-        {"group_id": "group_sports", "event_type": "Football Training", "domain_id": "exter"},
+        # Sports Activities - Only verified real event types
+        {"group_id": "group_sports", "event_type": "Eishockey (Jugend)", "domain_id": "exter"},
         
-        # Youth & Family Activities - Real event types
+        # Youth & Family Activities - Only verified real event types
         {"group_id": "group_youth", "event_type": "Tweens", "domain_id": "exter"},
         {"group_id": "group_youth", "event_type": "BUK-Abend", "domain_id": "exter"},
-        {"group_id": "group_youth", "event_type": "Summer Camp", "domain_id": "exter"},
-        {"group_id": "group_youth", "event_type": "Family Day", "domain_id": "exter"},
         
-        # Senior Activities - Real event types
-        {"group_id": "group_seniors", "event_type": "Ü60 Abend", "domain_id": "exter"},
-        {"group_id": "group_seniors", "event_type": "Senior Coffee", "domain_id": "exter"},
-        {"group_id": "group_seniors", "event_type": "Walking Group", "domain_id": "exter"},
+        # Senior Activities - Only verified real event types
+        {"group_id": "group_seniors", "event_type": "Ü60 Abend", "domain_id": "exter"}
         
-        # Meetings & Events
-        {"group_id": "group_meetings", "event_type": "Community Meeting", "domain_id": "exter"},
-        {"group_id": "group_meetings", "event_type": "Annual Festival", "domain_id": "exter"},
-        {"group_id": "group_meetings", "event_type": "Holiday Celebration", "domain_id": "exter"},
-        {"group_id": "group_meetings", "event_type": "Fundraising Event", "domain_id": "exter"},
-        
-        # Education & Learning
-        {"group_id": "group_education", "event_type": "Workshop", "domain_id": "exter"},
-        {"group_id": "group_education", "event_type": "Language Class", "domain_id": "exter"},
-        {"group_id": "group_education", "event_type": "Computer Course", "domain_id": "exter"}
+        # Note: All other fake event types removed to eliminate empty groups showing 0 events
+        # Real ungrouped event types will appear in "Other Activities" section automatically
     ]
 
 

@@ -22,6 +22,7 @@
         v-if="appStore.hasGroups"
         :has-groups="appStore.hasGroups"
         :groups="appStore.groups"
+        :ungrouped-event-types="appStore.ungroupedEventTypes"
         :filter-mode="filterMode"
         @selection-changed="handleSimpleSelectionChanged"
         @switch-filter-mode="switchFilterMode"

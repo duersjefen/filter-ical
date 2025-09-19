@@ -2,14 +2,14 @@
   <div 
     class="rounded-lg border-2 transition-all duration-200 bg-white dark:bg-gray-800"
     :class="isGroupSelected 
-      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
+      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-400' 
       : isPartiallySelected
-        ? 'border-blue-300 bg-blue-25 dark:bg-blue-900/10'
-        : 'border-gray-200 dark:border-gray-700'"
+        ? 'border-blue-300 bg-blue-25 dark:bg-blue-900/20 dark:border-blue-500'
+        : 'border-gray-200 dark:border-gray-600'"
   >
     <!-- Group Header -->
     <div 
-      class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+      class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/70 transition-colors duration-200"
       :class="isExpanded ? 'rounded-t-lg' : 'rounded-lg'"
       @click="toggleGroup"
     >
@@ -20,8 +20,8 @@
           :class="isGroupSelected 
             ? 'bg-blue-500 border-blue-500 text-white' 
             : isPartiallySelected
-              ? 'bg-blue-200 border-blue-300 text-blue-700'
-              : 'border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700'"
+              ? 'bg-blue-200 border-blue-300 text-blue-700 dark:bg-blue-600 dark:border-blue-500 dark:text-blue-100'
+              : 'border-blue-300 dark:border-blue-500 bg-white dark:bg-gray-700'"
         >
           <span v-if="isGroupSelected">✓</span>
           <span v-else-if="isPartiallySelected">◐</span>
@@ -52,7 +52,7 @@
     </div>
     
     <!-- Expandable Event Types List -->
-    <div v-if="isExpanded && hasEventTypes" class="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+    <div v-if="isExpanded && hasEventTypes" class="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
       <div class="p-3 space-y-2">
         <div class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">
           Event Types ({{ eventTypesCount }})
@@ -63,7 +63,7 @@
           <div
             v-for="(eventTypeData, eventTypeName) in group.event_types"
             :key="eventTypeName"
-            class="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white dark:hover:bg-gray-700 transition-colors duration-200"
+            class="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200"
             @click="toggleEventType(eventTypeName)"
           >
             <!-- Event Type Checkbox -->
@@ -71,7 +71,7 @@
               class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200 flex-shrink-0"
               :class="isEventTypeSelected(eventTypeName)
                 ? 'bg-blue-500 border-blue-500 text-white' 
-                : 'border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700'"
+                : 'border-blue-300 dark:border-blue-500 bg-white dark:bg-gray-700'"
             >
               <span v-if="isEventTypeSelected(eventTypeName)">✓</span>
             </div>

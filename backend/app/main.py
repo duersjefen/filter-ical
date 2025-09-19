@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, col, or_, and_
 from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import yaml
 import json
 
@@ -21,7 +21,8 @@ from .models import (
 # Import pure functions (Functional Core)
 from .core.ical_parser import (
     fetch_ical_content, parse_calendar_events,
-    events_to_recurring_types, filter_future_events, create_ical_from_events
+    events_to_recurring_types, filter_future_events, create_ical_from_events,
+    events_to_event_types
 )
 from .core.filters import (
     filter_events_by_categories, apply_saved_filter_config,
@@ -1050,6 +1051,333 @@ async def get_domain_configuration(domain_id: str):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to load domain configuration: {str(e)}"
+        )
+
+
+@app.get("/api/domains/{domain_id}/events")
+async def get_domain_events(domain_id: str, event_type: Optional[str] = None):
+    """Get real-time events for a domain - matches OpenAPI spec exactly"""
+    # Validate domain ID format
+    if not is_valid_domain_id(domain_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid domain ID format: {domain_id}"
+        )
+    
+    try:
+        # Load domain configuration
+        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        domains_config = load_domains_config(str(config_path))
+        
+        # Get specific domain configuration
+        domain_config = get_domain_config(domains_config, domain_id)
+        if not domain_config:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Domain '{domain_id}' not found"
+            )
+        
+        # Fetch fresh iCal content directly from source
+        calendar_url = domain_config.get('calendar_url', '')
+        if not calendar_url:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Domain '{domain_id}' has no calendar URL configured"
+            )
+        
+        # Fetch and parse iCal content in real-time
+        ical_content, fetch_error = fetch_ical_content(calendar_url)
+        if fetch_error or not ical_content:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch calendar data: {fetch_error or 'No content returned'}"
+            )
+        
+        # Parse events from iCal content
+        domain_calendar_id = f"domain_{domain_id}"
+        events_data, parse_error = parse_calendar_events(ical_content, domain_calendar_id)
+        if parse_error:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to parse calendar data: {parse_error}"
+            )
+        
+        # Group events by event type
+        events_by_type = {}
+        for event in events_data:
+            event_type_name = event.get('event_type', 'Unknown')
+            if event_type_name not in events_by_type:
+                events_by_type[event_type_name] = {
+                    'count': 0,
+                    'events': []
+                }
+            events_by_type[event_type_name]['count'] += 1
+            events_by_type[event_type_name]['events'].append(event)
+        
+        # Apply event_type filter if specified
+        if event_type:
+            if event_type in events_by_type:
+                filtered_events = events_by_type[event_type]['events']
+            else:
+                filtered_events = []
+            events_response = filtered_events
+        else:
+            events_response = events_by_type
+        
+        # Create metadata response
+        now = datetime.utcnow()
+        cache_expires = now + timedelta(minutes=5)  # 5-minute cache
+        
+        metadata = {
+            'domain_id': domain_id,
+            'last_updated': now.isoformat() + 'Z',
+            'total_events': len(events_data),
+            'source_url': calendar_url,
+            'cache_expires': cache_expires.isoformat() + 'Z'
+        }
+        
+        return {
+            'events': events_response,
+            'metadata': metadata
+        }
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=500,
+            detail="Domain configuration file not found"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get domain events: {str(e)}"
+        )
+
+
+@app.get("/api/domains/{domain_id}/groups")
+async def get_domain_groups(domain_id: str, session: Session = Depends(get_session)):
+    """Get domain-specific event groups - matches OpenAPI spec exactly"""
+    print(f"🔍 get_domain_groups called for domain: {domain_id}")
+    # Validate domain ID format
+    if not is_valid_domain_id(domain_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid domain ID format: {domain_id}"
+        )
+    
+    try:
+        # Load domain configuration
+        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        domains_config = load_domains_config(str(config_path))
+        
+        # Check if domain exists
+        domain_config = get_domain_config(domains_config, domain_id)
+        if not domain_config:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Domain '{domain_id}' not found"
+            )
+        
+        # Check if domain has groups enabled
+        has_groups = domain_has_groups(domains_config, domain_id)
+        if not has_groups:
+            return {
+                'has_groups': False,
+                'domain_id': domain_id,
+                'groups': {},
+                'ungrouped_event_types': []
+            }
+        
+        # Get real-time events for this domain using the same logic as events endpoint
+        # Get calendar URL from domain config
+        calendar_url = domain_config.get('calendar_url', '')
+        if not calendar_url:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Domain '{domain_id}' has no calendar URL configured"
+            )
+        
+        try:
+            # Fetch and parse iCal content in real-time (same as events endpoint)
+            ical_content, fetch_error = fetch_ical_content(calendar_url)
+            if fetch_error or not ical_content:
+                print(f"Warning: Failed to fetch domain events for {domain_id}: {fetch_error}")
+                events_by_type = {}
+            else:
+                # Parse events from iCal content
+                domain_calendar_id = f"domain_{domain_id}"
+                events_data, parse_error = parse_calendar_events(ical_content, domain_calendar_id)
+                if parse_error:
+                    print(f"Warning: Failed to parse domain events for {domain_id}: {parse_error}")
+                    events_by_type = {}
+                else:
+                    # Convert to event types format (same as events endpoint)
+                    events_by_type = events_to_event_types(events_data)
+                    
+                    print(f"🔍 Debug: Found {len(events_by_type)} event types in domain {domain_id}")
+                    for event_type, data in list(events_by_type.items())[:3]:  # Show first 3
+                        print(f"  {event_type}: {data.get('count', 0) if isinstance(data, dict) else 0} events")
+                
+        except Exception as e:
+            # If fetching fails, return empty groups with no events
+            print(f"Warning: Failed to fetch domain events for {domain_id}: {e}")
+            events_by_type = {}
+        
+        # Get groups for this domain
+        groups_query = select(Group).where(Group.domain_id == domain_id)
+        domain_groups = session.exec(groups_query).all()
+        
+        # Build groups with real-time event counts
+        all_assigned_event_types = set()
+        
+        groups_dict = {}
+        for group in domain_groups:
+            # Get event type assignments for this group
+            assignments_query = select(EventTypeGroup).where(
+                EventTypeGroup.group_id == group.id
+            )
+            assignments = session.exec(assignments_query).all()
+            
+            # Create event types dict for this group with real counts
+            event_types = {}
+            for assignment in assignments:
+                event_type = assignment.event_type
+                all_assigned_event_types.add(event_type)
+                
+                # Get actual events for this event type from real-time data
+                type_events = events_by_type.get(event_type, {})
+                event_count = type_events.get('count', 0) if isinstance(type_events, dict) else 0
+                
+                event_types[event_type] = {
+                    'name': event_type,
+                    'count': event_count,
+                    'events': []  # Keep empty for API response size
+                }
+            
+            groups_dict[group.id] = {
+                'id': group.id,
+                'name': group.name,
+                'description': group.description,
+                'color': getattr(group, 'color', '#3B82F6'),
+                'parent_group_id': group.parent_group_id,
+                'event_types': event_types
+            }
+        
+        # Calculate ungrouped event types (event types that exist but aren't assigned to any group)
+        ungrouped_event_types = []
+        for event_type, type_data in events_by_type.items():
+            if event_type not in all_assigned_event_types:
+                event_count = type_data.get('count', 0) if isinstance(type_data, dict) else 0
+                ungrouped_event_types.append({
+                    'name': event_type,
+                    'count': event_count
+                })
+        
+        return {
+            'has_groups': True,
+            'domain_id': domain_id,
+            'groups': groups_dict,
+            'ungrouped_event_types': ungrouped_event_types
+        }
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get domain groups: {str(e)}"
+        )
+
+
+@app.get("/api/domains/{domain_id}/types")
+async def get_domain_event_types(domain_id: str):
+    """Get available event types for domain - matches OpenAPI spec exactly"""
+    # Validate domain ID format
+    if not is_valid_domain_id(domain_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid domain ID format: {domain_id}"
+        )
+    
+    try:
+        # Load domain configuration
+        config_path = Path(__file__).parent.parent / "config" / "domains.yaml"
+        domains_config = load_domains_config(str(config_path))
+        
+        # Get specific domain configuration
+        domain_config = get_domain_config(domains_config, domain_id)
+        if not domain_config:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Domain '{domain_id}' not found"
+            )
+        
+        # Fetch fresh iCal content to get current event types
+        calendar_url = domain_config.get('calendar_url', '')
+        if not calendar_url:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Domain '{domain_id}' has no calendar URL configured"
+            )
+        
+        # Fetch and parse iCal content in real-time
+        ical_content, fetch_error = fetch_ical_content(calendar_url)
+        if fetch_error or not ical_content:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch calendar data: {fetch_error or 'No content returned'}"
+            )
+        
+        # Parse events from iCal content
+        domain_calendar_id = f"domain_{domain_id}"
+        events_data, parse_error = parse_calendar_events(ical_content, domain_calendar_id)
+        if parse_error:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to parse calendar data: {parse_error}"
+            )
+        
+        # Analyze event types and their counts (simplified - no last_event tracking to avoid timezone issues)
+        event_type_stats = {}
+        for event in events_data:
+            event_type_name = event.get('title', 'Unknown')  # Use event title as the event type name
+            if event_type_name not in event_type_stats:
+                event_type_stats[event_type_name] = {
+                    'count': 0
+                }
+            
+            event_type_stats[event_type_name]['count'] += 1
+        
+        # Format response according to contract
+        event_types = []
+        total_count = 0
+        for event_type_name, stats in event_type_stats.items():
+            event_type_obj = {
+                'name': event_type_name,
+                'count': stats['count']
+            }
+            event_types.append(event_type_obj)
+            total_count += stats['count']
+        
+        # Sort by count (descending) for better UX
+        event_types.sort(key=lambda x: x['count'], reverse=True)
+        
+        return {
+            'domain_id': domain_id,
+            'event_types': event_types,
+            'total_count': total_count
+        }
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get domain event types: {str(e)}"
         )
 
 # ==============================================

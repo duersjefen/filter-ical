@@ -44,7 +44,7 @@
         </div>
         
         <div class="text-sm">
-          <span class="text-gray-600 dark:text-gray-400">{{ Object.keys(groups || {}).length }} groups</span>
+          <span class="text-gray-600 dark:text-gray-400">{{ Object.keys(groups || {}).length + (otherActivitiesGroup ? 1 : 0) }} groups</span>
           <span v-if="selectedEventTypesCount > 0" class="ml-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
             {{ selectedEventTypesCount }} selected
           </span>
@@ -57,6 +57,18 @@
           v-for="group in Object.values(groups || {})"
           :key="group.id"
           :group="group"
+          :selected-event-types="selectedEventTypes"
+          :expanded-groups="expandedGroups"
+          @toggle-group="handleGroupToggle"
+          @toggle-event-type="handleEventTypeToggle"
+          @expand-group="handleGroupExpansion"
+        />
+        
+        <!-- Other Activities Group for ungrouped event types -->
+        <GroupCard
+          v-if="otherActivitiesGroup"
+          :key="otherActivitiesGroup.id"
+          :group="otherActivitiesGroup"
           :selected-event-types="selectedEventTypes"
           :expanded-groups="expandedGroups"
           @toggle-group="handleGroupToggle"
@@ -90,7 +102,8 @@ import { useSimpleGroupSelection } from '../../composables/useSimpleGroupSelecti
 const props = defineProps({
   hasGroups: { type: Boolean, default: false },
   groups: { type: Object, default: () => ({}) },
-  filterMode: { type: String, default: 'include' }
+  filterMode: { type: String, default: 'include' },
+  ungroupedEventTypes: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits([
@@ -112,6 +125,32 @@ const {
 
 // Computed
 const selectedEventTypesCount = computed(() => selectedCount.value)
+
+// Create virtual "Other Activities" group from ungrouped event types
+const otherActivitiesGroup = computed(() => {
+  if (!props.ungroupedEventTypes || props.ungroupedEventTypes.length === 0) {
+    return null
+  }
+  
+  // Transform ungrouped event types into event_types format
+  const eventTypes = {}
+  props.ungroupedEventTypes.forEach(eventType => {
+    eventTypes[eventType.name] = {
+      name: eventType.name,
+      count: eventType.count,
+      events: []
+    }
+  })
+  
+  return {
+    id: 'group_other_activities',
+    name: '📦 Other Activities',
+    description: 'Events not assigned to specific groups',
+    color: '#6B7280', // gray-500
+    parent_group_id: null,
+    event_types: eventTypes
+  }
+})
 
 // Watch for selection changes and emit to parent
 const emitSelectionChange = () => {

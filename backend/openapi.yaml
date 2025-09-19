@@ -831,6 +831,271 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/domains/{domain_id}/events:
+    get:
+      summary: Get real-time events for a domain
+      description: |
+        Fetch and parse events directly from domain's iCal source in real-time.
+        This endpoint provides the core domain event data without requiring user calendar creation.
+      tags:
+        - Domains
+      parameters:
+        - name: domain_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique domain identifier
+          example: "exter"
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter events by specific event type
+          example: "Volleyball"
+      responses:
+        '200':
+          description: Successfully retrieved domain events
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - events
+                  - metadata
+                properties:
+                  events:
+                    oneOf:
+                      - type: object
+                        additionalProperties:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                              description: Number of events of this type
+                            events:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/Event'
+                              description: Array of events in this event type
+                        description: Events grouped by type (when no event_type filter)
+                      - type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                        description: Individual events list (when event_type filter is provided)
+                  metadata:
+                    type: object
+                    required:
+                      - domain_id
+                      - last_updated
+                      - total_events
+                      - source_url
+                    properties:
+                      domain_id:
+                        type: string
+                        description: Domain identifier
+                        example: "exter"
+                      last_updated:
+                        type: string
+                        format: date-time
+                        description: When domain events were last fetched
+                        example: "2025-09-19T07:30:00Z"
+                      total_events:
+                        type: integer
+                        description: Total number of events in domain
+                        example: 42
+                      source_url:
+                        type: string
+                        format: uri
+                        description: Original iCal source URL
+                        example: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+                      cache_expires:
+                        type: string
+                        format: date-time
+                        description: When cached data expires
+                        example: "2025-09-19T07:35:00Z"
+              example:
+                events:
+                  "Volleyball":
+                    count: 3
+                    events:
+                      - id: "evt_volleyball_001"
+                        title: "Volleyball Training"
+                        start: "2025-09-20T18:00:00Z"
+                        end: "2025-09-20T19:30:00Z"
+                        event_type: "Volleyball"
+                        description: "Weekly volleyball training session"
+                        location: "Sports Hall"
+                  "Musik Band":
+                    count: 2
+                    events:
+                      - id: "evt_band_001"
+                        title: "Band Practice"
+                        start: "2025-09-21T19:00:00Z"
+                        end: "2025-09-21T21:00:00Z"
+                        event_type: "Musik Band"
+                        description: "Weekly band rehearsal"
+                        location: "Music Room"
+                metadata:
+                  domain_id: "exter"
+                  last_updated: "2025-09-19T07:30:00Z"
+                  total_events: 42
+                  source_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+                  cache_expires: "2025-09-19T07:35:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/domains/{domain_id}/groups:
+    get:
+      summary: Get domain-specific event groups
+      description: |
+        Retrieve event groups configured for this domain with current event assignments.
+        Groups provide organized filtering of domain events by category.
+      tags:
+        - Domains
+      parameters:
+        - name: domain_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique domain identifier
+          example: "exter"
+      responses:
+        '200':
+          description: Successfully retrieved domain groups
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - has_groups
+                  - domain_id
+                  - groups
+                properties:
+                  has_groups:
+                    type: boolean
+                    description: Whether this domain has any groups configured
+                    example: true
+                  domain_id:
+                    type: string
+                    description: Domain identifier
+                    example: "exter"
+                  groups:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/Group'
+                    description: Groups available for this domain
+                  ungrouped_event_types:
+                    type: array
+                    items:
+                      type: string
+                    description: Event types not assigned to any group
+                    example: ["Other Event", "Miscellaneous"]
+              example:
+                has_groups: true
+                domain_id: "exter"
+                groups:
+                  "group_sports":
+                    id: "group_sports"
+                    name: "⚽ Sports & Recreation"
+                    description: "Sports activities and physical recreation"
+                    color: "#3B82F6"
+                    parent_group_id: null
+                    event_types:
+                      "Volleyball":
+                        name: "Volleyball"
+                        count: 3
+                        events: []
+                      "Eiszeit (Jugend)":
+                        name: "Eiszeit (Jugend)"
+                        count: 2
+                        events: []
+                ungrouped_event_types: ["Other Event"]
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/domains/{domain_id}/types:
+    get:
+      summary: Get available event types for domain
+      description: |
+        Retrieve all event types available in this domain's calendar data.
+        Useful for building dynamic filters and understanding domain content.
+      tags:
+        - Domains
+      parameters:
+        - name: domain_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique domain identifier
+          example: "exter"
+      responses:
+        '200':
+          description: Successfully retrieved domain event types
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - domain_id
+                  - event_types
+                  - total_count
+                properties:
+                  domain_id:
+                    type: string
+                    description: Domain identifier
+                    example: "exter"
+                  event_types:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - name
+                        - count
+                      properties:
+                        name:
+                          type: string
+                          description: Event type name
+                          example: "Volleyball"
+                        count:
+                          type: integer
+                          description: Number of events of this type
+                          example: 3
+                        last_event:
+                          type: string
+                          format: date-time
+                          description: Date of most recent event of this type
+                          example: "2025-09-25T18:00:00Z"
+                    description: Available event types with counts
+                  total_count:
+                    type: integer
+                    description: Total number of events across all types
+                    example: 42
+              example:
+                domain_id: "exter"
+                event_types:
+                  - name: "Volleyball"
+                    count: 3
+                    last_event: "2025-09-25T18:00:00Z"
+                  - name: "Musik Band"
+                    count: 2
+                    last_event: "2025-09-24T19:00:00Z"
+                  - name: "Tweens"
+                    count: 5
+                    last_event: "2025-09-26T16:00:00Z"
+                total_count: 42
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   # ===============================================
   # Health Check
   # ===============================================
