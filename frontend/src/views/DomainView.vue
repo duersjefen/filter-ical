@@ -71,7 +71,6 @@ export default {
     }
   },
   setup(props) {
-    const { t } = useI18n()
     const { get, post, loading, error } = useApiCall()
 
     const domainConfig = ref(null)

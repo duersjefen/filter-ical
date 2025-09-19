@@ -47,7 +47,7 @@ class Event(SQLModel, table=True):
     title: str = Field()
     start: datetime = Field()
     end: datetime = Field()
-    category: str = Field(index=True)  # Indexed for fast filtering
+    event_type: str = Field(index=True)  # Indexed for fast filtering - renamed from category
     description: Optional[str] = Field(default=None)
     location: Optional[str] = Field(default=None)
     

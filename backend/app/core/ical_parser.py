@@ -102,23 +102,23 @@ def extract_event_data(component: icalendar.Event, calendar_id: str) -> Optional
         description = str(component.get('DESCRIPTION', '')) if component.get('DESCRIPTION') else None
         location = str(component.get('LOCATION', '')) if component.get('LOCATION') else None
         
-        # Extract category - use event title as the event type for group mapping
+        # Extract event_type - use event title as the event type for group mapping
         # The recurring event names themselves ARE the event types
         categories = component.get('CATEGORIES')
         if categories:
             # Handle icalendar vCategory objects
             if hasattr(categories, 'to_ical'):
-                category = categories.to_ical().decode('utf-8').split(',')[0].strip()
+                event_type = categories.to_ical().decode('utf-8').split(',')[0].strip()
             else:
-                category = str(categories).split(',')[0].strip()
+                event_type = str(categories).split(',')[0].strip()
             
-            # For domain calendars: if category is generic "Exter", use event title as event type
+            # For domain calendars: if event_type is generic "Exter", use event title as event type
             # This makes recurring event names the actual event types for group mapping
-            if category.lower() in ['exter', 'domain'] and title:
-                category = title.strip()
+            if event_type.lower() in ['exter', 'domain'] and title:
+                event_type = title.strip()
         else:
-            # Use event title as category - recurring event names are the event types
-            category = title.strip() if title else 'Event'
+            # Use event title as event_type - recurring event names are the event types
+            event_type = title.strip() if title else 'Event'
         
         return {
             'id': f"evt_{uuid.uuid4().hex[:8]}",
@@ -126,7 +126,7 @@ def extract_event_data(component: icalendar.Event, calendar_id: str) -> Optional
             'title': title,
             'start': start_dt,
             'end': end_dt,
-            'category': category,
+            'event_type': event_type,
             'description': description,
             'location': location,
             'raw_ical': component.to_ical().decode('utf-8')
@@ -219,26 +219,26 @@ def filter_future_events(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return future_events
 
 
-def events_to_categories(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+def events_to_event_types(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
-    Pure function: Transform events list into categories summary
-    Returns dictionary matching OpenAPI categories response format
+    Pure function: Transform events list into event types summary
+    Returns dictionary matching OpenAPI event types response format
     """
-    categories = {}
+    event_types = {}
     
     for event in events:
-        category = event.get('category', 'Uncategorized')
+        event_type = event.get('event_type', 'Uncategorized')
         
-        if category not in categories:
-            categories[category] = {
+        if event_type not in event_types:
+            event_types[event_type] = {
                 'count': 0,
                 'events': []
             }
             
-        categories[category]['count'] += 1
-        categories[category]['events'].append(event['id'])
+        event_types[event_type]['count'] += 1
+        event_types[event_type]['events'].append(event['id'])
     
-    return categories
+    return event_types
 
 
 def events_to_recurring_types(events: List[Dict[str, Any]], future_only: bool = True) -> Dict[str, Dict[str, Any]]:
@@ -262,12 +262,22 @@ def events_to_recurring_types(events: List[Dict[str, Any]], future_only: bool = 
             
         recurring_types[title]['count'] += 1
         
-        # Format event for API response with proper ISO dates
+        # Format event for API response with proper ISO dates and timezone handling
         formatted_event = dict(event)
         if 'start' in formatted_event and hasattr(formatted_event['start'], 'isoformat'):
-            formatted_event['start'] = formatted_event['start'].isoformat() + 'Z'
+            start_dt = formatted_event['start']
+            # Ensure timezone-aware datetime for proper ISO formatting
+            if hasattr(start_dt, 'tzinfo') and start_dt.tzinfo is None:
+                from datetime import timezone
+                start_dt = start_dt.replace(tzinfo=timezone.utc)
+            formatted_event['start'] = start_dt.isoformat() + ('Z' if start_dt.tzinfo else '')
         if 'end' in formatted_event and hasattr(formatted_event['end'], 'isoformat'):
-            formatted_event['end'] = formatted_event['end'].isoformat() + 'Z'
+            end_dt = formatted_event['end']
+            # Ensure timezone-aware datetime for proper ISO formatting
+            if hasattr(end_dt, 'tzinfo') and end_dt.tzinfo is None:
+                from datetime import timezone
+                end_dt = end_dt.replace(tzinfo=timezone.utc)
+            formatted_event['end'] = end_dt.isoformat() + ('Z' if end_dt.tzinfo else '')
             
         recurring_types[title]['events'].append(formatted_event)
     
@@ -297,8 +307,8 @@ def create_ical_from_events(events: List[Dict[str, Any]], calendar_name: str) ->
             event.add('description', event_data['description'])
         if event_data.get('location'):
             event.add('location', event_data['location'])
-        if event_data.get('category'):
-            event.add('categories', event_data['category'])
+        if event_data.get('event_type'):
+            event.add('categories', event_data['event_type'])
             
         cal.add_component(event)
     

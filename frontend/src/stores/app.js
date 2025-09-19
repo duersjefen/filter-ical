@@ -437,6 +437,28 @@ export const useAppStore = defineStore('app', () => {
     return result
   }
 
+  const loadDomainGroups = async (domainName) => {
+    const result = await get(`/api/domains/${domainName}/groups`)
+
+    if (result.success) {
+      hasGroups.value = result.data.has_groups
+      groups.value = result.data.groups || {}
+      ungroupedEventTypes.value = result.data.ungrouped_event_types || []
+
+      // Reset selections when loading new domain
+      selectedGroups.value = new Set()
+      
+      console.log('📊 Domain groups data loaded:', {
+        domainName,
+        hasGroups: hasGroups.value,
+        groupsCount: Object.keys(groups.value).length,
+        ungroupedEventTypesCount: ungroupedEventTypes.value.length
+      })
+    }
+
+    return result
+  }
+
   const toggleGroup = (groupId) => {
     const newGroups = new Set(selectedGroups.value)
 
@@ -695,6 +717,7 @@ export const useAppStore = defineStore('app', () => {
     ungroupedEventTypes,
     selectedGroups,
     loadCalendarGroups,
+    loadDomainGroups,
     toggleGroup,
 
     // ===============================================

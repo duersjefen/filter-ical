@@ -41,7 +41,7 @@ def get_filtered_events_from_db(
             "title": event.title,
             "start": event.start,
             "end": event.end,
-            "category": event.category,
+            "event_type": event.event_type,
             "description": event.description,
             "location": event.location
         })

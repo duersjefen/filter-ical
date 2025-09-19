@@ -225,15 +225,42 @@ const loadCalendarData = async (calendarId) => {
       }
     }
     
-    // Load events and event types from single endpoint
-    console.log('🔍 About to make API call to:', `/api/calendar/${calendarId}/events`)
+    // Detect if this is a domain calendar and choose appropriate endpoint
+    const isDomainCalendar = props.domainContext || calendarId.startsWith('cal_domain_')
+    let domainName = null
+    
+    if (isDomainCalendar && props.domainContext) {
+      domainName = props.domainContext.id
+    } else if (isDomainCalendar && calendarId.startsWith('cal_domain_')) {
+      domainName = calendarId.replace('cal_domain_', '')
+    }
+    
+    let apiEndpoint, apiPath
+    if (isDomainCalendar && domainName) {
+      apiEndpoint = `/api/domains/${domainName}/events`
+      apiPath = 'domain events'
+    } else {
+      apiEndpoint = `/api/calendar/${calendarId}/events`
+      apiPath = 'calendar events'
+    }
+    
+    console.log('🔍 About to make API call to:', apiEndpoint, `(${apiPath})`)
     const eventsResult = await api.safeExecute(async () => {
       console.log('🔍 Inside API call, making axios request...')
-      const response = await axios.get(`/api/calendar/${calendarId}/events`)
+      const response = await axios.get(apiEndpoint)
       console.log('🔍 Raw axios response:', response)
       console.log('🔍 Response data:', response.data)
-      console.log('🔍 Response data.events:', response.data.events)
-      return response.data.events
+      
+      // Domain endpoints return {events: {eventType: {...}}} structure
+      // Calendar endpoints return {events: {eventType: {...}}} structure
+      // Both have the same structure!
+      if (isDomainCalendar) {
+        console.log('🔍 Domain response data.events:', response.data.events)
+        return response.data.events
+      } else {
+        console.log('🔍 Calendar response data.events:', response.data.events)
+        return response.data.events
+      }
     })
     console.log('🔍 safeExecute result:', eventsResult)
     
@@ -290,9 +317,14 @@ const loadCalendarData = async (calendarId) => {
         shouldShow: !loading.value && events.value.length > 0 && eventTypes.value && Object.keys(eventTypes.value).length > 0
       })
 
-      // Load groups data
+      // Load groups data - use domain endpoint for domain calendars
       console.log('🔄 Loading groups data...')
-      await appStore.loadCalendarGroups(calendarId)
+      if (isDomainCalendar && domainName) {
+        console.log('🔍 Loading domain groups for:', domainName)
+        await appStore.loadDomainGroups(domainName)
+      } else {
+        await appStore.loadCalendarGroups(calendarId)
+      }
       console.log('✅ Groups loaded:', {
         hasGroups: appStore.hasGroups,
         groupsCount: appStore.groups ? Object.keys(appStore.groups).length : 0
