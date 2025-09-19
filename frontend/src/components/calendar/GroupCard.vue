@@ -1,30 +1,30 @@
 <template>
   <div 
-    class="rounded-lg border-2 transition-all duration-200 bg-white dark:bg-gray-800"
+    class="rounded-md border transition-all duration-150 bg-white dark:bg-gray-800"
     :class="isGroupSelected 
-      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-400' 
+      ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500' 
       : isPartiallySelected
-        ? 'border-blue-300 bg-blue-25 dark:bg-blue-900/20 dark:border-blue-500'
+        ? 'border-blue-300 bg-blue-50/30 dark:bg-blue-900/10 dark:border-blue-400'
         : 'border-gray-200 dark:border-gray-600'"
   >
     <!-- Group Header -->
     <div 
-      class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/70 transition-colors duration-200"
-      :class="isExpanded ? 'rounded-t-lg' : 'rounded-lg'"
+      class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+      :class="isExpanded ? 'rounded-t-md' : 'rounded-md'"
       @click="toggleGroup"
     >
       <!-- Group Checkbox -->
       <div class="flex-shrink-0">
         <div 
-          class="w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200"
+          class="w-4 h-4 rounded border flex items-center justify-center text-xs transition-all"
           :class="isGroupSelected 
             ? 'bg-blue-500 border-blue-500 text-white' 
             : isPartiallySelected
-              ? 'bg-blue-200 border-blue-300 text-blue-700 dark:bg-blue-600 dark:border-blue-500 dark:text-blue-100'
-              : 'border-blue-300 dark:border-blue-500 bg-white dark:bg-gray-700'"
+              ? 'bg-blue-100 border-blue-300 text-blue-600 dark:bg-blue-900/40 dark:border-blue-500 dark:text-blue-200'
+              : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'"
         >
           <span v-if="isGroupSelected">✓</span>
-          <span v-else-if="isPartiallySelected">◐</span>
+          <span v-else-if="isPartiallySelected">•</span>
         </div>
       </div>
       
@@ -68,10 +68,10 @@
           >
             <!-- Event Type Checkbox -->
             <div 
-              class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200 flex-shrink-0"
+              class="w-3 h-3 rounded border flex items-center justify-center text-xs transition-all flex-shrink-0"
               :class="isEventTypeSelected(eventTypeName)
                 ? 'bg-blue-500 border-blue-500 text-white' 
-                : 'border-blue-300 dark:border-blue-500 bg-white dark:bg-gray-700'"
+                : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'"
             >
               <span v-if="isEventTypeSelected(eventTypeName)">✓</span>
             </div>

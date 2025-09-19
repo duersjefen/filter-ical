@@ -1,54 +1,52 @@
 <template>
-  <div v-if="hasGroups" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">🏷️ Event Groups</h3>
-      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-        {{ selectedEventTypesCount > 0
-          ? `${selectedEventTypesCount} event types selected`
-          : 'Click groups to expand and select event types' }}
-      </p>
+  <div v-if="hasGroups" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
+    <!-- Minimalistic Header -->
+    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Event Groups</h3>
+        <div class="flex items-center gap-3">
+          <!-- Filter Mode Toggle - Compact -->
+          <button
+            @click="$emit('switch-filter-mode', filterMode === 'include' ? 'exclude' : 'include')"
+            class="px-3 py-1 text-sm rounded-md transition-colors"
+            :class="filterMode === 'include'
+              ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300'
+              : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300'"
+          >
+            {{ filterMode === 'include' ? 'Include' : 'Exclude' }}
+          </button>
+          
+          <!-- Selection count badge -->
+          <span v-if="selectedEventTypesCount > 0" class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
+            {{ selectedEventTypesCount }}
+          </span>
+        </div>
+      </div>
     </div>
 
-    <div class="p-6">
-      <!-- Filter Mode Toggle -->
-      <div class="flex justify-center mb-6">
-        <button
-          @click="$emit('switch-filter-mode', filterMode === 'include' ? 'exclude' : 'include')"
-          class="px-4 py-2 border-2 rounded-lg font-semibold transition-all duration-200 hover:shadow-md"
-          :class="filterMode === 'include'
-            ? 'border-green-400 bg-green-50 text-green-700 hover:bg-green-100'
-            : 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100'"
-        >
-          {{ filterMode === 'include' ? '✅ Include Selected' : '❌ Exclude Selected' }}
-        </button>
-      </div>
-
-      <!-- Selection Actions -->
-      <div class="flex justify-between items-center mb-6">
-        <div class="flex space-x-3">
+    <div class="p-4">
+      <!-- Compact Actions -->
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex space-x-2">
           <button
             @click="clearAll"
-            class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-600"
+            class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
             :disabled="selectedEventTypesCount === 0"
             :class="selectedEventTypesCount === 0 ? 'opacity-50 cursor-not-allowed' : ''"
           >
-            Clear All
+            Clear
           </button>
           <button
             @click="selectAll"
-            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            class="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
           >
-            Select All Groups
+            Select All
           </button>
         </div>
         
-        <div class="text-sm">
-          <span class="text-gray-600 dark:text-gray-400">{{ Object.keys(groups || {}).length + (otherActivitiesGroup ? 1 : 0) }} groups</span>
-          <span v-if="selectedEventTypesCount > 0" class="ml-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
-            {{ selectedEventTypesCount }} selected
-          </span>
-        </div>
+        <span class="text-xs text-gray-500 dark:text-gray-400">
+          {{ Object.keys(groups || {}).length + (otherActivitiesGroup ? 1 : 0) }} groups
+        </span>
       </div>
 
       <!-- Group Cards Grid - Following existing EventTypeCardsSection pattern -->
@@ -75,20 +73,6 @@
           @toggle-event-type="handleEventTypeToggle"
           @expand-group="handleGroupExpansion"
         />
-      </div>
-      
-      <!-- Selection Summary -->
-      <div v-if="selectedEventTypesCount > 0" class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-        <h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Selection Summary</h4>
-        <div class="text-sm text-blue-700 dark:text-blue-300">
-          <div>
-            <strong>{{ filterMode === 'include' ? 'Including' : 'Excluding' }}:</strong> 
-            {{ selectedEventTypes.slice(0, 3).join(', ') }}
-            <span v-if="selectedEventTypes.length > 3">
-              and {{ selectedEventTypes.length - 3 }} more event types
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   </div>
