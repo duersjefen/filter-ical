@@ -99,8 +99,28 @@ else:
 def startup_event():
     create_db_and_tables()
     
-    # Only start background tasks in production/development, not during testing
-    if os.getenv('TESTING') != 'true':
+    # Check environment mode
+    is_testing = os.getenv('TESTING') == 'true'
+    is_dev_mode = os.getenv('DEV_MODE') == 'true'
+    disable_background_tasks = os.getenv('DISABLE_BACKGROUND_TASKS') == 'true'
+    
+    if is_testing:
+        print("🧪 Running in test mode - background tasks disabled")
+    elif disable_background_tasks:
+        print("🔧 Development mode - background tasks disabled for stability")
+        ensure_domain_calendars_exist()
+        
+        # Seed demo data if needed (for showcasing)
+        if should_seed_demo_data():
+            print("🎭 Seeding demo data for showcasing...")
+            if seed_demo_data():
+                print("✅ Demo data seeded successfully")
+            else:
+                print("❌ Failed to seed demo data")
+        else:
+            print("📋 Demo data already exists")
+    else:
+        # Production or full development mode
         ensure_domain_calendars_exist()
         
         # Seed demo data if needed (for showcasing)
@@ -115,18 +135,23 @@ def startup_event():
         
         background_manager.start()
         print("⏰ Background calendar updates every 5 minutes")
-    else:
-        print("🧪 Running in test mode - background tasks disabled")
     
-    print("🚀 iCal Viewer API starting with functional architecture")
+    mode_info = "🧪 TEST" if is_testing else ("🔧 DEV" if is_dev_mode else "🚀 PROD")
+    print(f"{mode_info} iCal Viewer API starting with functional architecture")
     print("📋 Contract-driven development with OpenAPI compliance")
 
 
 # Stop background tasks on shutdown
 @app.on_event("shutdown") 
 def shutdown_event():
-    if os.getenv('TESTING') != 'true':
+    # Only stop background tasks if they were started
+    is_testing = os.getenv('TESTING') == 'true'
+    disable_background_tasks = os.getenv('DISABLE_BACKGROUND_TASKS') == 'true'
+    
+    if not is_testing and not disable_background_tasks:
         background_manager.stop()
+        print("🛑 Background tasks stopped")
+    
     print("🛑 iCal Viewer API shutting down")
 
 # Public access - no authentication required

@@ -23,6 +23,8 @@
         :has-groups="appStore.hasGroups"
         :groups="appStore.groups"
         :ungrouped-event-types="appStore.ungroupedEventTypes"
+        :ungrouped-recurring-event-types="appStore.ungroupedRecurringEventTypes"
+        :ungrouped-unique-event-types="appStore.ungroupedUniqueEventTypes"
         :filter-mode="filterMode"
         :domain-id="props.id || route.params.id"
         @selection-changed="handleSimpleSelectionChanged"
@@ -64,9 +66,12 @@
       <FilteredCalendarSection
         :selected-calendar="selectedCalendar"
         :selected-event-types="selectedEventTypes"
+        :selected-groups="selectedGroups"
         :filter-mode="filterMode"
         :main-event-types="mainEventTypes"
         :single-event-types="singleEventTypes"
+        :groups="appStore.groups"
+        :has-groups="appStore.hasGroups"
         @navigate-to-calendar="navigateToCalendar"
         @load-filter="loadFilterIntoPage"
       />
@@ -151,6 +156,7 @@ const error = ref(null)
 const events = ref([])
 const eventTypes = ref({})
 const selectedCalendar = ref(null)
+const selectedGroups = ref([])
 
 // Groups data - from store (keep reactive by not destructuring)
 // Note: Vue 3 + Pinia - destructuring breaks reactivity, use store.property instead
@@ -208,22 +214,31 @@ const loadCalendarData = async (calendarId) => {
   
   try {
     
-    // Load calendar info
-    if (appStore.calendars.length === 0) {
-      await appStore.fetchCalendars()
-    }
-    
-    const calendar = appStore.calendars.find(c => c.id === calendarId)
-    if (calendar) {
-      selectedCalendar.value = calendar
-    } else if (props.domainContext && calendarId.startsWith('cal_')) {
-      // Create virtual calendar object for domain calendars
+    // For domain calendars, create a system-managed calendar reference
+    // Domain calendars are NOT user calendars and should not be mixed with user calendar lists
+    if (props.domainContext && calendarId.startsWith('cal_')) {
+      // Domain calendars are system-managed - create reference without API dependency
       selectedCalendar.value = {
         id: calendarId,
         name: props.domainContext.name || `Domain Calendar (${calendarId})`,
         url: props.domainContext.ical_url || '',
-        user_id: 'domain',
-        source: 'domain'
+        user_id: 'system', // Mark as system-managed, not domain user
+        source: 'domain',
+        system_managed: true // Explicit flag for domain calendars
+      }
+    } else {
+      // For user calendars, load from API/localStorage as normal
+      if (appStore.calendars.length === 0) {
+        await appStore.fetchCalendars()
+      }
+      
+      const calendar = appStore.calendars.find(c => c.id === calendarId)
+      if (calendar) {
+        selectedCalendar.value = calendar
+      } else {
+        console.error(`❌ User calendar ${calendarId} not found in available calendars`)
+        error.value = `Calendar ${calendarId} not found`
+        return
       }
     }
     
@@ -417,12 +432,25 @@ const handleSelectionChanged = (selection) => {
   selectedEventTypes.value = resolvedEventTypes
 }
 
-// Handle selection changes from the KISS simple selection system
-const handleSimpleSelectionChanged = (eventTypes) => {
-  console.log('📊 Simple selection changed:', eventTypes)
+// Handle selection changes from the enhanced selection system
+const handleSimpleSelectionChanged = (selectionData) => {
+  console.log('📊 Enhanced selection changed:', selectionData)
   
-  // Directly update selectedEventTypes since we already have a flat list
-  selectedEventTypes.value = eventTypes
+  if (selectionData.mode === 'enhanced') {
+    // Handle enhanced selection data with both groups and individual event types
+    console.log('🔧 Processing enhanced selection:', {
+      eventTypes: selectionData.selectedEventTypes,
+      groups: selectionData.selectedGroups
+    })
+    
+    // Store both selected groups and individual event types
+    selectedEventTypes.value = selectionData.selectedEventTypes
+    selectedGroups.value = selectionData.selectedGroups
+  } else {
+    // Legacy support: direct array of event types
+    selectedEventTypes.value = selectionData
+    selectedGroups.value = []
+  }
 }
 
 // Helper function to resolve hierarchical group selections into event types

@@ -342,6 +342,8 @@ export const useAppStore = defineStore('app', () => {
   const groups = ref({})
   const hasGroups = ref(false)
   const ungroupedEventTypes = ref([])
+  const ungroupedRecurringEventTypes = ref([])
+  const ungroupedUniqueEventTypes = ref([])
   const selectedGroups = ref(new Set())
   const selectedEvents = ref(new Set()) // Individual event selections
 
@@ -444,6 +446,8 @@ export const useAppStore = defineStore('app', () => {
       hasGroups.value = result.data.has_groups
       groups.value = result.data.groups || {}
       ungroupedEventTypes.value = result.data.ungrouped_event_types || []
+      ungroupedRecurringEventTypes.value = result.data.ungrouped_recurring_event_types || []
+      ungroupedUniqueEventTypes.value = result.data.ungrouped_unique_event_types || []
 
       // Reset selections when loading new domain
       selectedGroups.value = new Set()
@@ -452,7 +456,9 @@ export const useAppStore = defineStore('app', () => {
         domainName,
         hasGroups: hasGroups.value,
         groupsCount: Object.keys(groups.value).length,
-        ungroupedEventTypesCount: ungroupedEventTypes.value.length
+        ungroupedEventTypesCount: ungroupedEventTypes.value.length,
+        ungroupedRecurringCount: ungroupedRecurringEventTypes.value.length,
+        ungroupedUniqueCount: ungroupedUniqueEventTypes.value.length
       })
     }
 
@@ -715,6 +721,8 @@ export const useAppStore = defineStore('app', () => {
     groups,
     hasGroups,
     ungroupedEventTypes,
+    ungroupedRecurringEventTypes,
+    ungroupedUniqueEventTypes,
     selectedGroups,
     loadCalendarGroups,
     loadDomainGroups,

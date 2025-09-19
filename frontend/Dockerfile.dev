@@ -1,0 +1,31 @@
+# Frontend Development Dockerfile - Optimized for hot reloading
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache curl
+
+# Copy package files first for better layer caching
+COPY package*.json ./
+
+# Install dependencies (including dev dependencies for development)
+RUN npm ci
+
+# Create a non-root user for development (handle existing group gracefully)
+RUN addgroup -g 1000 devuser 2>/dev/null || true
+RUN adduser -D -u 1000 -G devuser devuser 2>/dev/null || adduser -D devuser
+RUN chown -R devuser:devuser /app
+USER devuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check - check if Vite dev server is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8000 || exit 1
+
+# Development command with hot reloading
+# The source code will be mounted as a volume, so changes will be reflected immediately
+# Vite dev server runs on port 8000 and watches for file changes
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8000"]

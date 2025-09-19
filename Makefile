@@ -1,67 +1,55 @@
 # =============================================================================
-# Project Makefile - Python + Vue 3 (Template for other languages)
+# Project Makefile - Docker-First Development
 # =============================================================================
-# This Makefile is optimized for THIS project's stack (Python + Vue 3).
-# When copying to a new project, adapt the language-specific commands below.
-# The universal commands (deploy, clean, etc.) work with any language.
+# This project uses Docker containers for development to eliminate environment
+# conflicts and ensure consistent behavior across all development machines.
 
-.PHONY: setup dev backend frontend stop test test-unit test-integration test-future test-all build clean help deploy deploy-force status status-detailed health
+.PHONY: dev test test-unit test-integration test-future test-all build clean help deploy deploy-force status status-detailed health dev-docker stop-docker logs-docker shell-backend shell-frontend reset-docker
 .DEFAULT_GOAL := help
 
-## Development Commands (Language-Specific: Python + Vue 3)
+## Docker Development Commands (Primary Workflow)
 
-setup: setup-backend setup-frontend ## Setup local development environment
-	@echo "✅ Setup complete! Run 'make dev' to start development."
+dev: dev-docker ## Start development environment (Docker)
 
-dev: ## Start full development environment (kills existing servers first)
-	@echo "🚀 Starting Python + Vue 3 development..."
-	@$(MAKE) stop >/dev/null 2>&1 || true
-	@sleep 1
-	@echo "🆕 Starting development servers..."
-	@echo "Press Ctrl+C to stop both services"
-	@(trap 'kill 0' INT; $(MAKE) backend & $(MAKE) frontend & wait)
+dev-docker: ## Start full development environment with Docker
+	@echo "🐳 Starting Docker development environment..."
+	@echo "✨ Zero conflicts, fresh environment every time"
+	@echo "📝 Backend: http://localhost:3000 | Frontend: http://localhost:8000"
+	@docker-compose -f docker-compose.dev.yml up --build
 
-backend: setup-backend ## Start backend development server
-	@echo "🐍 Starting Python FastAPI backend..."
-	@cd backend && . venv/bin/activate && python -m app.main
+stop: stop-docker ## Stop development environment
 
+stop-docker: ## Stop Docker development environment
+	@echo "🛑 Stopping Docker development environment..."
+	@docker-compose -f docker-compose.dev.yml down
 
-setup-backend: ## Setup backend virtual environment and dependencies
-	@echo "🔧 Setting up Python backend..."
-	@cd backend && python3 -m venv venv 2>/dev/null || true
-	@cd backend && . venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+logs: logs-docker ## View development logs
 
-frontend: setup-frontend ## Start frontend development server
-	@echo "🎨 Starting Vue 3 frontend..."
-	@cd frontend && npm run dev
+logs-docker: ## View logs from Docker development environment
+	@echo "📋 Viewing Docker development logs..."
+	@docker-compose -f docker-compose.dev.yml logs -f
 
-setup-frontend: ## Setup frontend dependencies
-	@echo "🔧 Setting up frontend dependencies..."
-	@cd frontend && npm install
+shell-backend: ## Open shell in backend development container
+	@echo "🐍 Opening shell in backend container..."
+	@docker-compose -f docker-compose.dev.yml exec backend-dev /bin/bash
 
-stop: ## Stop all development servers and clean up processes
-	@echo "🛑 Stopping all development servers and processes..."
-	@echo "🔍 Terminating backend processes..."
-	@pkill -9 -f "python.*app.main" 2>/dev/null && echo "🐍 Backend stopped" || echo "🐍 Backend not running"
-	@pkill -9 -f "uvicorn" 2>/dev/null && echo "🐍 Uvicorn stopped" || true
-	@echo "🔍 Terminating frontend processes..."
-	@pkill -9 -f "vite.*dev" 2>/dev/null && echo "🎨 Frontend stopped" || echo "🎨 Frontend not running"  
-	@pkill -9 -f "npm.*run.*dev" 2>/dev/null && echo "🎨 NPM dev stopped" || true
-	@pkill -9 -f "node.*vite" 2>/dev/null && echo "🎨 Node vite stopped" || true
-	@pkill -9 -f "make.*dev" 2>/dev/null && echo "🔧 Make dev stopped" || true
-	@pkill -9 -f "make.*backend" 2>/dev/null && echo "🔧 Make backend stopped" || true
-	@pkill -9 -f "make.*frontend" 2>/dev/null && echo "🔧 Make frontend stopped" || true
-	@echo "🔍 Clearing ports and locks..."
-	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 3000 cleared" || true
-	@lsof -ti:8000 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 8000 cleared" || true
-	@lsof -ti:8001 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 8001 cleared" || true
-	@lsof -ti:8002 | xargs -r kill -9 2>/dev/null && echo "🔌 Port 8002 cleared" || true
-	@fuser -k backend/data/icalviewer.db 2>/dev/null && echo "🔒 Database locks released" || true
-	@sleep 3
-	@echo "🔍 Final verification..."
-	@if lsof -ti:3000 > /dev/null 2>&1; then echo "⚠️  Port 3000 still in use"; else echo "✅ Port 3000 clear"; fi
-	@if lsof -ti:8000 > /dev/null 2>&1; then echo "⚠️  Port 8000 still in use"; else echo "✅ Port 8000 clear"; fi
-	@echo "✅ All development servers stopped and cleaned up"
+shell-frontend: ## Open shell in frontend development container
+	@echo "🎨 Opening shell in frontend container..."
+	@docker-compose -f docker-compose.dev.yml exec frontend-dev /bin/sh
+
+reset: reset-docker ## Reset development environment (clean slate)
+
+reset-docker: ## Reset Docker development environment (clean slate)
+	@echo "🧹 Resetting Docker development environment..."
+	@docker-compose -f docker-compose.dev.yml down -v --remove-orphans
+	@docker-compose -f docker-compose.dev.yml build --no-cache
+	@echo "✅ Docker environment reset complete"
+
+## Legacy Support (for compatibility)
+
+setup: ## Setup environment for development
+	@echo "🐳 This project uses Docker for development"
+	@echo "💡 Use 'make dev' to start the development environment"
 
 ## Testing Commands (TDD Workflow - Universal Pattern)
 
@@ -69,43 +57,34 @@ test: test-unit ## Run unit tests (for commits)
 
 test-unit: ## Run unit tests only - must pass for commits
 	@echo "🧪 Running unit tests (must pass for commits)..."
-	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -m unit -v
+	@docker-compose -f docker-compose.dev.yml exec backend-dev python3 -m pytest tests/ -m unit -v
 
 test-integration: ## Run integration tests - for deployment readiness
 	@echo "🔧 Running integration tests..."
-	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -m integration -v
+	@docker-compose -f docker-compose.dev.yml exec backend-dev python3 -m pytest tests/ -m integration -v
 
 test-future: ## Run TDD future tests - shows what to build next
 	@echo "🔮 Running TDD future tests (can fail - guides development)..."
-	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -m future -v || echo "✨ Future tests show features to implement"
+	@docker-compose -f docker-compose.dev.yml exec backend-dev python3 -m pytest tests/ -m future -v || echo "✨ Future tests show features to implement"
 
 test-all: ## Run ALL tests (unit + integration + future + E2E)
 	@echo "🎯 Running complete test suite..."
-	@cd backend && . venv/bin/activate && python3 -m pytest tests/ -v
+	@docker-compose -f docker-compose.dev.yml exec backend-dev python3 -m pytest tests/ -v
 	@echo ""
 	@echo "🎭 Running E2E tests..."
-	@cd frontend && npx playwright test
+	@docker-compose -f docker-compose.dev.yml exec frontend-dev npx playwright test
 
 test-e2e: ## Run end-to-end tests (catches UI issues)
 	@echo "🎭 Running E2E tests..."
-	@cd frontend && npx playwright test
+	@docker-compose -f docker-compose.dev.yml exec frontend-dev npx playwright test
 
-test-api: setup-backend ## Run OpenAPI contract tests (validates API against spec)
+test-api: ## Run OpenAPI contract tests (validates API against spec)
 	@echo "📋 Running OpenAPI contract tests..."
-	@cd backend && . venv/bin/activate && python -m pytest tests/test_api_contract.py -v
+	@docker-compose -f docker-compose.dev.yml exec backend-dev python -m pytest tests/test_api_contract.py -v
 
-test-backend: setup-backend ## Run backend unit tests
+test-backend: ## Run backend unit tests in Docker
 	@echo "🧪 Running backend tests..."
-	@cd backend && . venv/bin/activate && python -m pytest tests/ -v --tb=short
-
-## Database Commands (Development)
-
-db-reset: setup-backend ## Reset database to fresh schema (⚠️ DESTROYS ALL DATA)
-	@echo "🗄️  Resetting database..."
-	@echo "⚠️  This will destroy all local data!"
-	@read -p "Continue? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
-	@cd backend && . venv/bin/activate && python scripts/reset_database.py
-	@echo "✅ Database reset complete"
+	@docker-compose -f docker-compose.dev.yml exec backend-dev python -m pytest tests/ -v --tb=short
 
 ## Production Commands (Docker-First - Universal)
 
@@ -123,16 +102,6 @@ ci-test: ## Run tests in CI environment (Docker-first)
 ci-build: ## Build containers in CI environment
 	@$(MAKE) build
 
-## Database Management Commands
-
-db-status: ## Show database status (groups, assignments, etc.)
-	@cd backend && . venv/bin/activate && python manage_db.py status
-
-db-reseed: ## Clear and reseed database with updated demo data
-	@cd backend && . venv/bin/activate && python manage_db.py reseed
-
-db-clear: ## Clear all groups and event type assignments
-	@cd backend && . venv/bin/activate && python manage_db.py clear
 
 ## Deployment Commands (Universal - Work with any language)
 
@@ -262,16 +231,21 @@ clean: ## Clean up development artifacts
 	@echo "✅ Cleanup complete"
 
 help: ## Show this help message
-	@echo "🚀 Python + Vue 3 Project Interface"
-	@echo "==================================="
+	@echo "🚀 iCal Viewer - Docker-First Development"
+	@echo "=========================================="
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \\033[36m%-15s\\033[0m %s\\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \\033[36m%-18s\\033[0m %s\\n", $$1, $$2}'
 	@echo ""
-	@echo "Quick start:"
-	@echo "  make setup    # Setup Python + Vue 3 environment"
-	@echo "  make dev      # Start development servers"
-	@echo "  make test     # Run tests"
+	@echo "🐳 Primary Development Workflow:"
+	@echo "  make dev          # Start development environment (Docker)"
+	@echo "  make stop         # Stop development environment"
+	@echo "  make logs         # View development logs"
+	@echo "  make reset        # Reset environment (clean slate)"
 	@echo ""
-	@echo "🎯 To adapt for other languages:"
-	@echo "   Modify the 'Language-Specific' commands above"
-	@echo "   Keep the 'Universal' commands unchanged"
+	@echo "🔧 Development Tools:"
+	@echo "  make shell-backend   # Access backend container"
+	@echo "  make shell-frontend  # Access frontend container"
+	@echo ""
+	@echo "🧪 Testing & Deployment:"
+	@echo "  make test         # Run tests"
+	@echo "  make deploy       # Deploy to production"

@@ -18,11 +18,15 @@ export default defineConfig({
     strictPort: true, // Fail if port 8000 is not available, don't try other ports
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV 
+          ? 'http://backend-dev:3000'  // Docker container communication
+          : 'http://localhost:3000',   // Native development
         changeOrigin: true
       },
       '/health': {
-        target: 'http://localhost:3000',
+        target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV
+          ? 'http://backend-dev:3000'  // Docker container communication  
+          : 'http://localhost:3000',   // Native development
         changeOrigin: true
       }
     }

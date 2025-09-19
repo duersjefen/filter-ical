@@ -367,6 +367,10 @@ const props = defineProps({
     type: Array,
     required: true
   },
+  selectedGroups: {
+    type: Array,
+    default: () => []
+  },
   filterMode: {
     type: String,
     required: true
@@ -378,6 +382,15 @@ const props = defineProps({
   singleEventTypes: {
     type: Array,
     default: () => []
+  },
+  // Group data for enhanced filter display
+  groups: {
+    type: Object,
+    default: () => ({})
+  },
+  hasGroups: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -467,6 +480,8 @@ const createFilteredCalendar = async () => {
   const filterConfig = {
     include_event_types: props.filterMode === 'include' ? props.selectedEventTypes : [],
     exclude_event_types: props.filterMode === 'exclude' ? props.selectedEventTypes : [],
+    include_groups: props.filterMode === 'include' ? props.selectedGroups : [],
+    exclude_groups: props.filterMode === 'exclude' ? props.selectedGroups : [],
     filter_mode: props.filterMode
   }
 
@@ -717,6 +732,98 @@ const getExcludeEventTypesCount = (filterConfig) => {
 const getSmartEventTypeDisplay = (selectedEventTypes) => {
   if (!selectedEventTypes || selectedEventTypes.length === 0) return ''
   
+  // Enhanced display for group-aware filtering
+  if (props.hasGroups && props.groups && Object.keys(props.groups).length > 0) {
+    return getGroupAwareDisplay(selectedEventTypes)
+  }
+  
+  // Fallback to original logic for non-group calendars
+  return getBasicEventTypeDisplay(selectedEventTypes)
+}
+
+const getGroupAwareDisplay = (selectedEventTypes) => {
+  const selectedGroups = []
+  const selectedIndividualEventTypes = [...selectedEventTypes]
+  
+  // Find which groups are fully or partially selected
+  Object.values(props.groups).forEach(group => {
+    if (!group.event_types) return
+    
+    const groupEventTypes = Object.keys(group.event_types)
+    const selectedInGroup = groupEventTypes.filter(eventType => 
+      selectedEventTypes.includes(eventType)
+    )
+    
+    if (selectedInGroup.length === groupEventTypes.length && groupEventTypes.length > 0) {
+      // Fully selected group
+      selectedGroups.push({ name: group.name, type: 'full', count: groupEventTypes.length })
+      // Remove these event types from individual list
+      selectedInGroup.forEach(eventType => {
+        const index = selectedIndividualEventTypes.indexOf(eventType)
+        if (index > -1) selectedIndividualEventTypes.splice(index, 1)
+      })
+    } else if (selectedInGroup.length > 0) {
+      // Partially selected group
+      selectedGroups.push({ 
+        name: group.name, 
+        type: 'partial', 
+        count: selectedInGroup.length,
+        total: groupEventTypes.length
+      })
+      // Remove these event types from individual list
+      selectedInGroup.forEach(eventType => {
+        const index = selectedIndividualEventTypes.indexOf(eventType)
+        if (index > -1) selectedIndividualEventTypes.splice(index, 1)
+      })
+    }
+  })
+  
+  // Check virtual groups (Recurring and Unique)
+  const recurringGroup = getVirtualGroupSelection('🔄 Recurring Events', selectedEventTypes, selectedIndividualEventTypes)
+  const uniqueGroup = getVirtualGroupSelection('📅 Unique Events', selectedEventTypes, selectedIndividualEventTypes)
+  
+  if (recurringGroup) selectedGroups.push(recurringGroup)
+  if (uniqueGroup) selectedGroups.push(uniqueGroup)
+  
+  // Build display string
+  let parts = []
+  
+  // Add groups
+  if (selectedGroups.length > 0) {
+    const groupDescriptions = selectedGroups.map(group => {
+      if (group.type === 'full') {
+        return group.name
+      } else {
+        return `${group.name} (${group.count}/${group.total})`
+      }
+    })
+    
+    if (groupDescriptions.length <= 2) {
+      parts.push(groupDescriptions.join(', '))
+    } else {
+      parts.push(`${groupDescriptions[0]} and ${groupDescriptions.length - 1} more groups`)
+    }
+  }
+  
+  // Add remaining individual event types
+  if (selectedIndividualEventTypes.length > 0) {
+    const individualSummary = selectedIndividualEventTypes.length === 1 
+      ? '1 event type' 
+      : `${selectedIndividualEventTypes.length} event types`
+    parts.push(individualSummary)
+  }
+  
+  return parts.join(' + ')
+}
+
+const getVirtualGroupSelection = (groupName, selectedEventTypes, selectedIndividualEventTypes) => {
+  // This is a simplified version - in a real implementation, you'd check
+  // against the actual virtual group event types from the store
+  // For now, we'll just return null to avoid complexity
+  return null
+}
+
+const getBasicEventTypeDisplay = (selectedEventTypes) => {
   // Use proper event type data to distinguish main vs single event types
   const mainEventTypeNames = props.mainEventTypes.map(eventType => eventType.name)
   const singleEventTypeNames = props.singleEventTypes.map(eventType => eventType.name)

@@ -50,18 +50,23 @@ Claude Code will automatically:
 
 ### Quick Start
 ```bash
-# Backend development
-cd backend && source venv/bin/activate && python app/main.py
-
-# Frontend development  
-cd frontend && npm run dev
+# Start development environment (Docker - Recommended)
+make dev
 
 # Run tests
-cd backend && python -m pytest
+make test
 
 # Deploy to production
 git push origin main  # Automated pipeline
 ```
+
+**Docker-First Development:**
+- `make dev` - Start both frontend and backend with hot reloading
+- `make stop` - Stop development environment  
+- `make logs` - View development logs
+- `make reset` - Reset environment (clean slate)
+
+All development uses Docker containers for consistency and zero conflicts.
 
 ## 🚢 Production Infrastructure
 

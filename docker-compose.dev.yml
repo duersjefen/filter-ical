@@ -1,0 +1,44 @@
+services:
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/venv  # Exclude venv from volume mount
+      - backend-data:/app/data  # Persistent database storage
+    env_file:
+      - .env.development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Exclude node_modules from volume mount
+    env_file:
+      - .env.development
+    depends_on:
+      backend-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+    driver: local
+
+networks:
+  default:
+    name: ical-viewer-dev

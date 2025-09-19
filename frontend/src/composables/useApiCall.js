@@ -4,6 +4,7 @@
  */
 import axios from 'axios'
 import { useAPI } from './useAPI'
+import { API_BASE_URL } from '../constants/api'
 
 export function useApiCall() {
   const api = useAPI()
@@ -27,7 +28,7 @@ export function useApiCall() {
     return await api.safeExecute(async () => {
       const config = {
         method,
-        url: endpoint,
+        url: `${API_BASE_URL}${endpoint}`,
         headers: {
           'Content-Type': 'application/json',
           ...headers
