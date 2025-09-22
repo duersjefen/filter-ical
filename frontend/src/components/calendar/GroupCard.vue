@@ -10,8 +10,12 @@
   >
     <!-- Group Header -->
     <div class="p-4">
-      <!-- Group Title and Info -->
-      <div class="flex items-center gap-3 mb-3">
+      <!-- Group Title and Info - Fully Clickable Header -->
+      <div 
+        class="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200"
+        @click="expandGroup"
+        title="Click anywhere to expand/collapse group details"
+      >
         <div class="flex-1 min-w-0">
           <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">
             {{ group.name }}
@@ -23,9 +27,7 @@
         
         <!-- Expansion Indicator -->
         <div 
-          class="flex-shrink-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded p-1"
-          @click="expandGroup"
-          title="Click to expand/collapse group details"
+          class="flex-shrink-0 p-1 rounded transition-colors duration-200"
         >
           <svg 
             class="w-5 h-5 text-gray-400 transition-transform duration-200"
@@ -80,23 +82,32 @@
           <div
             v-for="(eventTypeData, eventTypeName) in group.event_types"
             :key="eventTypeName"
-            class="border border-gray-100 dark:border-gray-700 rounded-md"
+            class="border rounded-md transition-all duration-200"
+            :class="isEventTypeSelected(eventTypeName)
+              ? 'border-blue-300 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-600' 
+              : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'"
           >
             <!-- Event Type Header -->
-            <div class="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <div class="flex items-center gap-2 p-2 transition-colors">
               <!-- Event Type Checkbox -->
               <div 
-                class="w-3 h-3 rounded border flex items-center justify-center text-xs transition-all flex-shrink-0 cursor-pointer"
+                class="w-3 h-3 rounded border flex items-center justify-center text-xs transition-all flex-shrink-0"
                 :class="isEventTypeSelected(eventTypeName)
                   ? 'bg-blue-500 border-blue-500 text-white' 
                   : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'"
-                @click.stop="toggleEventType(eventTypeName)"
               >
                 <span v-if="isEventTypeSelected(eventTypeName)">✓</span>
               </div>
               
-              <!-- Event Type Info -->
-              <div class="flex-1 min-w-0">
+              <!-- Event Type Info - Fully Clickable for Selection -->
+              <div 
+                class="flex-1 min-w-0 cursor-pointer rounded p-1 -m-1 transition-colors duration-200"
+                :class="isEventTypeSelected(eventTypeName)
+                  ? 'hover:bg-blue-100 dark:hover:bg-blue-800/30' 
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'"
+                @click.stop="toggleEventType(eventTypeName)"
+                :title="`Click to ${isEventTypeSelected(eventTypeName) ? 'deselect' : 'select'} ${eventTypeName}`"
+              >
                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                   {{ eventTypeName }}
                 </div>
@@ -110,6 +121,7 @@
                 @click.stop="toggleEventTypeExpansion(eventTypeName)"
                 class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
                 :class="{ 'transform rotate-180': isEventTypeExpanded(eventTypeName) }"
+                title="Click to view individual events"
               >
                 <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
