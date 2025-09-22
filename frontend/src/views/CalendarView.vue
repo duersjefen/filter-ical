@@ -214,7 +214,6 @@ const {
   toggleEventType: unifiedToggleEventType,
   selectEventTypes,
   clearSelection,
-  handleSelectAllEventTypes
 } = useUnifiedSelection()
 
 // View mode localStorage persistence functions
