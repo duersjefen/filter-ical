@@ -70,20 +70,48 @@ export function useEventSelection() {
     return subscribedGroups.value.has(groupId)
   }
   
-  const toggleGroupSubscription = (groupId) => {
+  const toggleGroupSubscription = (groupId, group = null) => {
     if (subscribedGroups.value.has(groupId)) {
-      subscribedGroups.value.delete(groupId)
+      unsubscribeFromGroup(groupId, group)
     } else {
-      subscribedGroups.value.add(groupId)
+      subscribeToGroup(groupId, group)
     }
   }
   
-  const subscribeToGroup = (groupId) => {
+  const subscribeToGroup = (groupId, group = null) => {
     subscribedGroups.value.add(groupId)
+    
+    // Smart subscribe: Auto-select group's event types if no events currently selected
+    if (selectedEventTypes.value.length === 0 && group?.event_types) {
+      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
+        // Only include event types that have events (count > 0)
+        return group.event_types[eventType].count > 0
+      })
+      selectedEventTypes.value.push(...groupEventTypes)
+    }
   }
   
-  const unsubscribeFromGroup = (groupId) => {
+  const unsubscribeFromGroup = (groupId, group = null) => {
     subscribedGroups.value.delete(groupId)
+    
+    // Smart unsubscribe: Auto-deselect group's event types if all are currently selected
+    if (group?.event_types) {
+      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
+        // Only include event types that have events (count > 0)
+        return group.event_types[eventType].count > 0
+      })
+      
+      // Check if ALL group event types are currently individually selected
+      const allGroupTypesSelected = groupEventTypes.length > 0 && 
+        groupEventTypes.every(eventType => selectedEventTypes.value.includes(eventType))
+      
+      if (allGroupTypesSelected) {
+        // Remove all group event types from individual selections
+        selectedEventTypes.value = selectedEventTypes.value.filter(
+          eventType => !groupEventTypes.includes(eventType)
+        )
+      }
+    }
   }
   
   const subscribeToAllGroups = (groups) => {
@@ -218,7 +246,7 @@ export function useEventSelection() {
       }
     })
     
-    // Count effectively selected (subscribed groups + individual selections)
+    // Count effectively selected: subscribed groups + individual selections
     totalEventTypes.forEach(eventType => {
       if (isEventTypeEffectivelySelected(eventType, groups)) {
         effectivelySelectedTypes.add(eventType)
@@ -232,12 +260,24 @@ export function useEventSelection() {
       }
     })
     
+    // ENHANCEMENT: Add individual selections from NON-subscribed groups
+    // This addresses the requirement: "+ 30 event types should include selected events from groups the user is not subscribed to"
+    Object.entries(groups).forEach(([groupId, group]) => {
+      if (!subscribedGroups.value.has(groupId) && group.event_types) {
+        Object.keys(group.event_types).forEach(eventType => {
+          if (group.event_types[eventType].count > 0 && selectedEventTypes.value.includes(eventType)) {
+            effectivelySelectedTypes.add(eventType)
+          }
+        })
+      }
+    })
+    
     return {
       selected: effectivelySelectedTypes.size,
       total: totalEventTypes.size,
       subscribed: subscribedGroups.value.size,
       individual: selectedEventTypes.value.length,
-      text: `${effectivelySelectedTypes.size} of ${totalEventTypes.size} events selected`
+      text: `${effectivelySelectedTypes.size} of ${totalEventTypes.size} event types selected`
     }
   }
   

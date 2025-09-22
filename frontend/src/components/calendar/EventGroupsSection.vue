@@ -197,21 +197,28 @@ const allGroupsCollapsed = computed(() => {
 })
 
 const selectionSummary = computed(() => {
-  return getSelectionSummary(allGroups.value)
+  // Combine all ungrouped event types for comprehensive summary
+  const allUngroupedTypes = [
+    ...props.ungroupedEventTypes,
+    ...props.ungroupedRecurringEventTypes,
+    ...props.ungroupedUniqueEventTypes
+  ]
+  return getSelectionSummary(allGroups.value, allUngroupedTypes)
 })
 
 // Methods
 const toggleGroupSubscription = (groupId) => {
+  const group = allGroups.value[groupId]
   if (subscribedGroups.value.has(groupId)) {
-    unsubscribeFromGroup(groupId)
+    unsubscribeFromGroup(groupId, group)
   } else {
-    subscribeToGroup(groupId)
+    subscribeToGroup(groupId, group)
   }
 }
 
 const subscribeToAllGroups = () => {
-  Object.keys(allGroups.value).forEach(groupId => {
-    subscribeToGroup(groupId)
+  Object.entries(allGroups.value).forEach(([groupId, group]) => {
+    subscribeToGroup(groupId, group)
   })
 }
 
