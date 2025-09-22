@@ -26,6 +26,7 @@
         :ungrouped-recurring-event-types="appStore.ungroupedRecurringEventTypes"
         :ungrouped-unique-event-types="appStore.ungroupedUniqueEventTypes"
         :filter-mode="filterMode"
+        :domain-id="props.domainContext?.id || 'default'"
         @selection-changed="handleGroupSelectionChanged"
         @switch-filter-mode="switchFilterMode"
       />
@@ -140,7 +141,6 @@ import {
   EventTypeCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
-import SimpleGroupCardsSection from '../components/calendar/SimpleGroupCardsSection.vue'
 import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
 import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 

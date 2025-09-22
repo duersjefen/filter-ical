@@ -1,4 +1,5 @@
 <template>
+  <!-- Fixed template structure -->
   <div 
     class="rounded-md border transition-all duration-150 bg-white dark:bg-gray-800"
     :class="isGroupSelected 
@@ -8,55 +9,62 @@
         : 'border-gray-200 dark:border-gray-600'"
   >
     <!-- Group Header -->
-    <div 
-      class="flex items-center gap-3 p-3 transition-colors"
-      :class="isExpanded ? 'rounded-t-md' : 'rounded-md'"
-    >
-      <!-- Group Checkbox - Dedicated click zone for selection -->
-      <div class="flex-shrink-0">
+    <div class="p-4">
+      <!-- Group Title and Info -->
+      <div class="flex items-center gap-3 mb-3">
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {{ group.name }}
+          </div>
+          <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
+            {{ group.description || `${eventTypesCount} ${eventTypesCount === 1 ? 'event type' : 'event types'}` }}
+          </div>
+        </div>
+        
+        <!-- Expansion Indicator -->
         <div 
-          class="w-4 h-4 rounded border flex items-center justify-center text-xs transition-all cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30"
-          :class="isGroupSelected 
-            ? 'bg-blue-500 border-blue-500 text-white' 
-            : isPartiallySelected
-              ? 'bg-blue-100 border-blue-300 text-blue-600 dark:bg-blue-900/40 dark:border-blue-500 dark:text-blue-200'
-              : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'"
-          @click.stop="toggleGroup"
-          title="Select/deselect all events in this group"
+          class="flex-shrink-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded p-1"
+          @click="expandGroup"
+          title="Click to expand/collapse group details"
         >
-          <span v-if="isGroupSelected">✓</span>
-          <span v-else-if="isPartiallySelected">•</span>
+          <svg 
+            class="w-5 h-5 text-gray-400 transition-transform duration-200"
+            :class="{ 'rotate-180': isExpanded }"
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
         </div>
       </div>
       
-      <!-- Group Info - Dedicated click zone for expansion -->
-      <div 
-        class="flex-1 min-w-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded px-2 py-1"
-        @click="expandGroup"
-        title="Click to expand/collapse group details"
-      >
-        <div class="font-medium text-gray-900 dark:text-gray-100 truncate">
-          {{ group.name }}
-        </div>
-        <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
-          {{ eventTypesCount }} {{ eventTypesCount === 1 ? 'Typ' : 'Typen' }}
-        </div>
-      </div>
-      
-      <!-- Expansion Indicator - Part of expansion click zone -->
-      <div 
-        class="flex-shrink-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded p-1"
-        @click="expandGroup"
-        title="Click to expand/collapse group details"
-      >
-        <svg 
-          class="w-5 h-5 text-gray-400 transition-transform duration-200"
-          :class="{ 'rotate-180': isExpanded }"
-          fill="currentColor" 
-          viewBox="0 0 20 20"
+      <!-- Action Buttons: Subscribe vs Select All -->
+      <div class="flex gap-2 mt-3">
+        <!-- Subscribe Button - Group-level subscription -->
+        <button
+          @click.stop="toggleGroupSubscription"
+          class="flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+          :class="isGroupSubscribed 
+            ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
+          :title="isGroupSubscribed ? 'Unsubscribe from this group' : 'Subscribe to all events in this group automatically'"
         >
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
+          <span v-if="isGroupSubscribed">✓ Subscribed</span>
+          <span v-else>📥 Subscribe</span>
+        </button>
+        
+        <!-- Select All Button - Individual event type selection -->
+        <button
+          @click.stop="toggleSelectAllEventTypes"
+          class="flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+          :class="areAllEventTypesSelected 
+            ? 'bg-green-500 hover:bg-green-600 text-white' 
+            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
+          :title="areAllEventTypesSelected ? 'Deselect all event types' : 'Select all event types individually'"
+        >
+          <span v-if="areAllEventTypesSelected">✓ All Selected</span>
+          <span v-else>☐ Select All</span>
+        </button>
       </div>
     </div>
     
@@ -166,14 +174,17 @@ import { computed, ref } from 'vue'
 const props = defineProps({
   group: { type: Object, required: true },
   selectedEventTypes: { type: Array, default: () => [] },
+  subscribedGroups: { type: Set, default: () => new Set() },
   expandedGroups: { type: Set, default: () => new Set() },
   domainId: { type: String, required: true }
 })
 
 const emit = defineEmits([
   'toggle-group',
-  'toggle-event-type', 
-  'expand-group'
+  'toggle-event-type',
+  'expand-group', 
+  'subscribe-to-group',
+  'select-all-event-types'
 ])
 
 // State for expanded event types and their events
@@ -215,6 +226,18 @@ const isPartiallySelected = computed(() => {
          selectedGroupEventTypes.value.length < groupEventTypes.value.length
 })
 
+// New computed properties for Subscribe and Select All buttons
+const isGroupSubscribed = computed(() => {
+  return props.subscribedGroups.has(props.group.id)
+})
+
+const areAllEventTypesSelected = computed(() => {
+  return groupEventTypes.value.length > 0 && 
+         groupEventTypes.value.every(eventType => 
+           props.selectedEventTypes.includes(eventType)
+         )
+})
+
 // Methods
 const isEventTypeSelected = (eventTypeName) => {
   return props.selectedEventTypes.includes(eventTypeName)
@@ -230,6 +253,19 @@ const toggleEventType = (eventTypeName) => {
 
 const expandGroup = () => {
   emit('expand-group', props.group.id)
+}
+
+// New methods for Subscribe and Select All buttons
+const toggleGroupSubscription = () => {
+  emit('subscribe-to-group', props.group.id)
+}
+
+const toggleSelectAllEventTypes = () => {
+  emit('select-all-event-types', {
+    groupId: props.group.id,
+    eventTypes: groupEventTypes.value,
+    selectAll: !areAllEventTypesSelected.value
+  })
 }
 
 // Event type expansion methods
@@ -267,16 +303,17 @@ const fetchEventTypeEvents = async (eventTypeName) => {
     
     const data = await response.json()
     
-    // Filter events to show only future events (hide past events)
+    // Filter events to show recent and future events (hide old past events)
     const now = new Date()
-    const futureEvents = (data.events || []).filter(event => {
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const recentAndFutureEvents = (data.events || []).filter(event => {
       if (!event.start) return true // Keep events without start date
       const eventDate = new Date(event.start)
-      return eventDate >= now
+      return eventDate >= oneWeekAgo // Show events from last week onward
     })
     
     eventTypeEvents.value[eventTypeName] = {
-      events: futureEvents,
+      events: recentAndFutureEvents,
       loading: false,
       error: null
     }
