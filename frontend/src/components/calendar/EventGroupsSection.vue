@@ -1,9 +1,15 @@
 <template>
-  <div v-if="hasGroups" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
+  <div v-if="hasGroups" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
     <!-- Header Component -->
-    <GroupsHeader :selection-summary="selectionSummary" />
+    <GroupsHeader 
+      :selection-summary="selectionSummary" 
+      :is-collapsed="!props.showGroupsSection"
+      @toggle-collapse="$emit('toggle-groups-section')"
+      @switch-to-types="$emit('switch-to-types')"
+    />
 
-    <div class="p-6">
+    <!-- Collapsible Content -->
+    <div v-if="props.showGroupsSection" class="p-3 sm:p-4 lg:p-6">
       <!-- Control Bar Component -->
       <GroupsControlBar
         :has-selections="hasSelections"
@@ -85,12 +91,15 @@ const props = defineProps({
   ungroupedEventTypes: { type: Array, default: () => [] },
   ungroupedRecurringEventTypes: { type: Array, default: () => [] },
   ungroupedUniqueEventTypes: { type: Array, default: () => [] },
-  domainId: { type: String, default: null }
+  domainId: { type: String, default: null },
+  showGroupsSection: { type: Boolean, default: true }
 })
 
 const emit = defineEmits([
   'selection-changed',
-  'switch-filter-mode'
+  'switch-filter-mode',
+  'switch-to-types',
+  'toggle-groups-section'
 ])
 
 // Use simplified event selection system

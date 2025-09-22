@@ -1,101 +1,89 @@
 <template>
   <div v-if="hasAnyEventTypes" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
-    <!-- Collapsible Header -->
+    <!-- Header with Switch Button -->
     <div 
-      class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
-      :class="showEventTypesSection ? 'rounded-t-xl' : 'rounded-xl'"
-      @click="showEventTypesSection = !showEventTypesSection"
+      class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700"
+      :class="props.showEventTypesSection ? 'rounded-t-xl' : 'rounded-xl'"
     >
       <!-- Mobile Layout -->
       <div class="block sm:hidden">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">📂 {{ $t('calendar.eventTypes') }}</h3>
-          <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200">
-            <svg 
-              class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
-              :class="{ 'rotate-180': showEventTypesSection }"
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-            >
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <!-- Filter Toggle centered on mobile -->
-        <div class="flex justify-center mb-2">
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
+              📂 {{ $t('calendar.eventTypes') }}
+              <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(Active)</span>
+            </h3>
+          </div>
+          <!-- Mobile Switch Button -->
           <button
-            @click.stop="$emit('switch-filter-mode', filterMode === 'include' ? 'exclude' : 'include')"
-            class="px-3 py-2 border-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95"
-            :class="filterMode === 'include' 
-              ? 'border-green-400 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50 hover:border-green-500 dark:hover:border-green-400' 
-              : 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-500 dark:hover:border-red-400'"
-            :title="filterMode === 'include' 
-              ? $t('eventTypes.includeTooltip') 
-              : $t('eventTypes.excludeTooltip')"
+            @click="$emit('switch-to-groups')"
+            class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
+            title="Switch to Event Groups view"
           >
-            <span class="flex items-center gap-1">
-              <span class="hidden xs:inline">{{ filterMode === 'include' ? '✅ ' + $t('eventTypes.includeSelected') : '❌ ' + $t('eventTypes.excludeSelected') }}</span>
-              <span class="xs:hidden">{{ filterMode === 'include' ? '✅ ' + $t('eventTypes.include') : '❌ ' + $t('eventTypes.exclude') }}</span>
-            </span>
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">🏷️ Groups</span>
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
           </button>
         </div>
         <!-- Status text on mobile -->
         <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
           {{ selectedEventTypes.length > 0 
-            ? filterMode === 'include'
-              ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
-              : $t('eventTypes.excludedEventTypes', { count: selectedEventTypes.length })
+            ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
             : $t('eventTypes.selectEventTypesBelow') }}
         </p>
       </div>
 
       <!-- Desktop Layout -->
       <div class="hidden sm:flex items-center justify-between">
-        <div class="flex-1">
-          <div class="flex items-center gap-4 mb-2">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">📂 {{ $t('calendar.eventTypes') }}</h3>
-            <!-- Filter Mode Toggle in Header -->
-            <button
-              @click.stop="$emit('switch-filter-mode', filterMode === 'include' ? 'exclude' : 'include')"
-              class="px-3 py-1.5 border-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95"
-              :class="filterMode === 'include' 
-                ? 'border-green-400 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50 hover:border-green-500 dark:hover:border-green-400' 
-                : 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-500 dark:hover:border-red-400'"
-              :title="filterMode === 'include' 
-                ? $t('eventTypes.includeTooltip') 
-                : $t('eventTypes.excludeTooltip')"
-            >
-              <span class="flex items-center gap-1">
-                {{ filterMode === 'include' ? '✅ ' + $t('eventTypes.includeSelected') : '❌ ' + $t('eventTypes.excludeSelected') }}
-                <svg class="w-3 h-3 opacity-70" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            {{ selectedEventTypes.length > 0 
-              ? filterMode === 'include'
-                ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
-                : $t('eventTypes.excludedEventTypes', { count: selectedEventTypes.length })
-              : $t('eventTypes.selectEventTypesBelow') }}
-          </p>
-        </div>
-        <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 ml-4">
+        <!-- Left: Header Info with collapse button -->
+        <div class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200" @click="$emit('toggle-event-types-section')">
+          <!-- Dropdown Icon -->
           <svg 
-            class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
-            :class="{ 'rotate-180': showCategoriesSection }"
+            class="w-5 h-5 text-gray-400 transition-transform duration-200"
+            :class="{ 'rotate-180': !props.showEventTypesSection }"
             fill="currentColor" 
             viewBox="0 0 20 20"
           >
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+          
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              📂 {{ $t('calendar.eventTypes') }}
+              <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(Active)</span>
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              {{ selectedEventTypes.length > 0 
+                ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
+                : $t('eventTypes.selectEventTypesBelow') }}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Desktop Switch Button -->
+        <button
+          @click="$emit('switch-to-groups')"
+          class="px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-2 group ml-4"
+          title="Switch to Event Groups view"
+        >
+          <div class="text-right">
+            <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+              Switch to
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300">
+              🏷️ Event Groups
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
         </button>
       </div>
     </div>
 
     <!-- Collapsible Content -->
-    <div v-if="showEventTypesSection" class="p-3 sm:p-4">
+    <div v-if="props.showEventTypesSection" class="p-3 sm:p-4">
       <!-- Action Buttons -->
       <div class="flex flex-wrap gap-2 justify-center mb-4 px-1">
         <!-- When NOT searching: Show All/Clear All -->
@@ -339,6 +327,40 @@
         </div>
         </div>
       </div>
+      
+      <!-- Bulk Groups Actions -->
+      <div v-if="hasGroups" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+        <div class="text-center">
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            Quick Actions
+          </h4>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <!-- Subscribe to All Groups -->
+            <button
+              @click="$emit('subscribe-all-groups')"
+              class="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
+            >
+              <span>📥</span>
+              <span>Subscribe to All Groups</span>
+            </button>
+            
+            <!-- Unsubscribe from All Groups -->
+            <button
+              @click="$emit('unsubscribe-all-groups')"
+              class="px-6 py-2.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
+            >
+              <span>📤</span>
+              <span>Unsubscribe from All</span>
+            </button>
+          </div>
+          
+          <!-- Helper Text -->
+          <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            💡 For fine-grained control and customization, switch to 
+            <span class="font-medium text-blue-600 dark:text-blue-400">Groups view</span>
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -357,7 +379,7 @@ const props = defineProps({
   showEventTypesSection: { type: Boolean, default: true },
   showSelectedOnly: { type: Boolean, default: false },
   searchTerm: { type: String, default: '' },
-  filterMode: { type: String, default: 'include' },
+  hasGroups: { type: Boolean, default: false },
   formatDateTime: { type: Function, required: true },
   formatDateRange: { type: Function, required: true }
 })
@@ -469,7 +491,10 @@ const emit = defineEmits([
   'select-all-singles',
   'clear-all-singles',
   'toggle-selected-only',
-  'switch-filter-mode'
+  'subscribe-all-groups',
+  'unsubscribe-all-groups',
+  'switch-to-groups',
+  'toggle-event-types-section'
 ])
 
 // Make showSingleEvents and showCategoriesSection writable
@@ -478,8 +503,4 @@ const showSingleEvents = computed({
   set: (value) => emit('toggle-singles-visibility', value)
 })
 
-const showEventTypesSection = computed({
-  get: () => props.showEventTypesSection,
-  set: (value) => emit('toggle-event-types-section', value)
-})
 </script>

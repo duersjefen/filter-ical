@@ -17,9 +17,9 @@
 
     <!-- Main Content -->
     <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
-      <!-- Show Improved Groups Interface if Domain has Groups -->
+      <!-- Show Groups Interface Based on User Choice -->
       <EventGroupsSection
-        v-if="appStore.hasGroups"
+        v-if="shouldShowGroups"
         :has-groups="appStore.hasGroups"
         :groups="appStore.groups"
         :ungrouped-event-types="appStore.ungroupedEventTypes"
@@ -27,13 +27,16 @@
         :ungrouped-unique-event-types="appStore.ungroupedUniqueEventTypes"
         :filter-mode="filterMode"
         :domain-id="props.domainContext?.id || 'default'"
+        :show-groups-section="showGroupsSection"
         @selection-changed="handleGroupSelectionChanged"
         @switch-filter-mode="switchFilterMode"
+        @switch-to-types="() => handleViewModeChange('types')"
+        @toggle-groups-section="showGroupsSection = !showGroupsSection"
       />
       
-      <!-- Fallback to Event Types Interface if No Groups -->
+      <!-- Show Event Types Interface Based on User Choice -->
       <EventTypeCardsSection
-        v-else
+        v-if="shouldShowTypes"
         :event-types="mainEventTypes"
         :main-event-types="mainEventTypes"
         :single-event-types="singleEventTypes"
@@ -44,7 +47,7 @@
         :show-event-types-section="showEventTypesSection"
         :show-selected-only="showSelectedOnly"
         :search-term="eventTypeSearch"
-        :filter-mode="filterMode"
+        :has-groups="appStore.hasGroups"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
         @clear-all="clearAllEventTypes"
@@ -57,7 +60,9 @@
         @clear-all-singles="clearAllSingleEvents"
         @toggle-event-types-section="showEventTypesSection = !showEventTypesSection"
         @toggle-selected-only="showSelectedOnly = !showSelectedOnly"
-        @switch-filter-mode="switchFilterMode"
+        @subscribe-all-groups="handleSubscribeAllGroups"
+        @unsubscribe-all-groups="handleUnsubscribeAllGroups"
+        @switch-to-groups="() => handleViewModeChange('groups')"
       />
 
       <!-- Filtered Calendar Section -->
@@ -135,6 +140,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAPI } from '../composables/useAPI'
 import { useCalendar } from '../composables/useCalendar'
+import { useEventSelection } from '../composables/useEventSelection'
 import axios from 'axios'
 import {
   HeaderSection,
@@ -157,6 +163,9 @@ const eventTypes = ref({})
 const selectedCalendar = ref(null)
 const selectedGroups = ref([])
 
+// View mode state with localStorage persistence
+const viewMode = ref('groups') // 'groups' | 'types'
+
 // Groups data - from store (keep reactive by not destructuring)
 // Note: Vue 3 + Pinia - destructuring breaks reactivity, use store.property instead
 
@@ -175,6 +184,7 @@ const {
   expandedEventTypes,
   showSingleEvents,
   showEventTypesSection,
+  showGroupsSection,
   showSelectedOnly,
   eventTypeSearch,
   filterMode,
@@ -198,6 +208,58 @@ const {
   updateCalendarId,
   // No preferences loading needed
 } = useCalendar(events, eventTypes, props.id)
+
+// Get group subscription functions
+const { subscribeToGroup, unsubscribeFromGroup } = useEventSelection()
+
+// View mode localStorage persistence functions
+const VIEW_MODE_STORAGE_KEY = 'ical-viewer-view-mode'
+
+const loadViewModePreference = () => {
+  try {
+    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY)
+    return saved && ['groups', 'types'].includes(saved) ? saved : 'groups'
+  } catch (error) {
+    console.warn('Failed to load view mode preference:', error)
+    return 'groups'
+  }
+}
+
+const saveViewModePreference = (mode) => {
+  try {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode)
+  } catch (error) {
+    console.warn('Failed to save view mode preference:', error)
+  }
+}
+
+// Initialize view mode from localStorage
+viewMode.value = loadViewModePreference()
+
+// Computed properties for view mode logic
+const shouldShowGroups = computed(() => {
+  // If user explicitly chose types, show types
+  if (viewMode.value === 'types') return false
+  
+  // If user chose groups but no groups available, fallback to types
+  if (viewMode.value === 'groups' && !appStore.hasGroups) return false
+  
+  // Show groups if available and user chose groups
+  return appStore.hasGroups
+})
+
+const shouldShowTypes = computed(() => {
+  return !shouldShowGroups.value
+})
+
+
+// Handle view mode changes
+const handleViewModeChange = (newMode) => {
+  console.log('🔄 ViewMode change requested:', newMode, 'current:', viewMode.value)
+  viewMode.value = newMode
+  saveViewModePreference(newMode)
+  console.log('✅ ViewMode updated to:', viewMode.value)
+}
 
 // Simple, direct data loading
 const loadCalendarData = async (calendarId) => {
@@ -588,6 +650,27 @@ const findGroupInChildren = (children, groupId) => {
   }
   
   return null
+}
+
+// Bulk group action handlers  
+const handleSubscribeAllGroups = () => {
+  // Get all available groups
+  const allGroups = { ...(appStore.groups || {}) }
+  
+  // Subscribe to each group using the shared event selection system
+  Object.entries(allGroups).forEach(([groupId, group]) => {
+    subscribeToGroup(groupId, group)
+  })
+}
+
+const handleUnsubscribeAllGroups = () => {
+  // Get all available groups
+  const allGroups = { ...(appStore.groups || {}) }
+  
+  // Unsubscribe from each group using the shared event selection system
+  Object.entries(allGroups).forEach(([groupId, group]) => {
+    unsubscribeFromGroup(groupId, group)
+  })
 }
 
 onMounted(async () => {

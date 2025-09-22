@@ -19,6 +19,7 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
   const expandedEventTypes = ref([])
   const showSingleEvents = ref(false)
   const showEventTypesSection = ref(true)
+  const showGroupsSection = ref(true)
   const showSelectedOnly = ref(false)
   const eventTypeSearch = ref('')
   const filterMode = ref(FILTER_MODES.INCLUDE)
@@ -608,6 +609,7 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     expandedEventTypes,
     showSingleEvents,
     showEventTypesSection,
+    showGroupsSection,
     showSelectedOnly,
     eventTypeSearch,
     filterMode,
