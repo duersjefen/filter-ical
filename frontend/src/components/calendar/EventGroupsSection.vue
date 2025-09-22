@@ -15,7 +15,11 @@
         :has-selections="hasSelections"
         :all-expanded="allGroupsExpanded"
         :all-collapsed="allGroupsCollapsed"
-        :all-subscribed="allEventsSelected"
+        :all-subscribed="allEventsSelected(allGroups, [
+          ...props.ungroupedEventTypes,
+          ...props.ungroupedRecurringEventTypes, 
+          ...props.ungroupedUniqueEventTypes
+        ])"
         :total-groups="Object.keys(allGroups).length"
         :subscribed-count="subscribedGroups.size"
         :group-stats-text="getGroupBreakdownSummary()"
@@ -80,7 +84,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useEventSelection } from '../../composables/useEventSelection'
+import { useUnifiedSelection } from '../../composables/useUnifiedSelection'
 import GroupsHeader from './GroupsHeader.vue'
 import GroupsControlBar from './GroupsControlBar.vue'
 import GroupCard from './GroupCard.vue'
@@ -101,7 +105,7 @@ const emit = defineEmits([
   'toggle-groups-section'
 ])
 
-// Use simplified event selection system
+// Use unified selection system (single source of truth)
 const {
   subscribedGroups,
   selectedEventTypes,
@@ -110,11 +114,17 @@ const {
   toggleEventType,
   clearSelection,
   isEventTypeEffectivelySelected,
-  getSelectionSummary
-} = useEventSelection()
-
-// Local state for UI interactions
-const expandedGroups = ref(new Set())
+  getSelectionSummary,
+  expandedGroups,
+  toggleGroupExpansion,
+  expandAllGroups,
+  collapseAllGroups,
+  subscribeAndSelectAllGroups,
+  unsubscribeFromAllGroups,
+  handleSelectAllEventTypes,
+  allEventsSelected,
+  getGroupBreakdownSummary
+} = useUnifiedSelection()
 
 // Virtual groups for ungrouped event types
 const recurringActivitiesGroup = computed(() => {
@@ -209,40 +219,7 @@ const allGroupsSubscribed = computed(() => {
   return totalGroups > 0 && subscribedGroups.value.size === totalGroups
 })
 
-const allEventsSelected = computed(() => {
-  // Get all available event types from all sources
-  const allAvailableEventTypes = new Set()
-  
-  // Add event types from all groups
-  Object.values(allGroups.value).forEach(group => {
-    if (group.event_types) {
-      Object.keys(group.event_types).forEach(eventType => {
-        allAvailableEventTypes.add(eventType)
-      })
-    }
-  })
-  
-  // Add ungrouped event types
-  props.ungroupedEventTypes.forEach(eventType => {
-    allAvailableEventTypes.add(eventType.name || eventType)
-  })
-  props.ungroupedRecurringEventTypes.forEach(eventType => {
-    allAvailableEventTypes.add(eventType.name || eventType)
-  })
-  props.ungroupedUniqueEventTypes.forEach(eventType => {
-    allAvailableEventTypes.add(eventType.name || eventType)
-  })
-  
-  // Check if all available event types are effectively selected
-  // (either through group subscription or individual selection)
-  for (const eventType of allAvailableEventTypes) {
-    if (!isEventTypeEffectivelySelected(eventType)) {
-      return false
-    }
-  }
-  
-  return allAvailableEventTypes.size > 0
-})
+// allEventsSelected is now provided by unified selection system
 
 const selectionSummary = computed(() => {
   // Combine all ungrouped event types for comprehensive summary
@@ -304,23 +281,8 @@ const subscribeAndSelectAllGroups = () => {
   })
 }
 
-const toggleExpansion = (groupId) => {
-  if (expandedGroups.value.has(groupId)) {
-    expandedGroups.value.delete(groupId)
-  } else {
-    expandedGroups.value.add(groupId)
-  }
-}
-
-const expandAllGroups = () => {
-  Object.keys(allGroups.value).forEach(groupId => {
-    expandedGroups.value.add(groupId)
-  })
-}
-
-const collapseAllGroups = () => {
-  expandedGroups.value.clear()
-}
+// Use unified expansion functions (toggleGroupExpansion, expandAllGroups, collapseAllGroups)
+const toggleExpansion = toggleGroupExpansion
 
 const getGroupEventTypes = (group) => {
   if (!group || !group.event_types) return []
@@ -330,73 +292,9 @@ const getGroupEventTypes = (group) => {
 }
 
 
-const handleSelectAllEventTypes = ({ groupId, eventTypes, selectAll }) => {
-  if (selectAll) {
-    // Select all event types in this group
-    eventTypes.forEach(eventType => {
-      if (!selectedEventTypes.value.includes(eventType)) {
-        toggleEventType(eventType)
-      }
-    })
-  } else {
-    // Deselect all event types in this group
-    eventTypes.forEach(eventType => {
-      if (selectedEventTypes.value.includes(eventType)) {
-        toggleEventType(eventType)
-      }
-    })
-  }
-}
+// handleSelectAllEventTypes is now provided by unified selection system
 
-const getGroupBreakdownSummary = () => {
-  const totalGroups = Object.keys(allGroups.value).length
-  const subscribedGroupsCount = subscribedGroups.value.size
-  const selectedEventsCount = selectedEventTypes.value.length
-  
-  // Calculate total available events across all groups
-  let totalAvailableEvents = 0
-  Object.values(allGroups.value).forEach(group => {
-    const groupEventTypes = getGroupEventTypes(group)
-    totalAvailableEvents += groupEventTypes.length
-  })
-  
-  // Calculate effective selected events (subscribed groups + individual selections)
-  let effectiveSelectedEvents = selectedEventsCount
-  subscribedGroups.value.forEach(groupId => {
-    const group = allGroups.value[groupId]
-    if (group) {
-      const groupEventTypes = getGroupEventTypes(group)
-      // Add group events that aren't already counted as individual selections
-      groupEventTypes.forEach(eventType => {
-        if (!selectedEventTypes.value.includes(eventType)) {
-          effectiveSelectedEvents++
-        }
-      })
-    }
-  })
-  
-  if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
-    return 'No events or groups selected'
-  }
-  
-  const parts = []
-  
-  // Events part
-  if (effectiveSelectedEvents > 0) {
-    parts.push(`${effectiveSelectedEvents}/${totalAvailableEvents} Events`)
-  }
-  
-  // Groups part with special cases
-  if (subscribedGroupsCount === 0) {
-    parts.push('No groups')
-  } else if (subscribedGroupsCount === totalGroups && totalGroups > 0) {
-    parts.push('All groups')
-  } else {
-    parts.push(`${subscribedGroupsCount}/${totalGroups} Groups`)
-  }
-  
-  return parts.join(' & ')
-}
+// getGroupBreakdownSummary is now provided by unified selection system
 
 const getDetailedGroupSummary = () => {
   // Create detailed group status display

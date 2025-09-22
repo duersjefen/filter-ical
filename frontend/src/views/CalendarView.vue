@@ -138,7 +138,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useAPI } from '../composables/useAPI'
 import { useCalendar } from '../composables/useCalendar'
-import { useEventSelection } from '../composables/useEventSelection'
+import { useUnifiedSelection } from '../composables/useUnifiedSelection'
 import axios from 'axios'
 import {
   HeaderSection,
@@ -205,7 +205,7 @@ const {
   // No preferences loading needed
 } = useCalendar(events, eventTypes, props.id)
 
-// Get unified event selection system (replaces useCalendar selection)
+// Get unified event selection system (SINGLE SOURCE OF TRUTH)
 const { 
   subscribeToGroup, 
   unsubscribeFromGroup, 
@@ -213,8 +213,9 @@ const {
   selectedEventTypes: unifiedSelectedEventTypes,
   toggleEventType: unifiedToggleEventType,
   selectEventTypes,
-  clearSelection
-} = useEventSelection()
+  clearSelection,
+  handleSelectAllEventTypes
+} = useUnifiedSelection()
 
 // View mode localStorage persistence functions
 const VIEW_MODE_STORAGE_KEY = 'ical-viewer-view-mode'
@@ -687,7 +688,7 @@ const handleSelectAllEventTypes = () => {
     allEventTypes.push(...singleEventTypes.value.map(et => et.name))
   }
   
-  // Remove duplicates and select all
+  // Remove duplicates and select all using unified system
   const uniqueEventTypes = [...new Set(allEventTypes)]
   selectEventTypes(uniqueEventTypes)
 }
