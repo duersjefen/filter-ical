@@ -11,14 +11,13 @@
           <div class="flex-1">
             <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
               📂 {{ $t('calendar.eventTypes') }}
-              <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(Active)</span>
             </h3>
           </div>
           <!-- Mobile Switch Button -->
           <button
             @click="$emit('switch-to-groups')"
             class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
-            title="Switch to Event Groups view"
+            title="Switch to Groups view"
           >
             <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">🏷️ Groups</span>
             <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
@@ -29,7 +28,7 @@
         <!-- Status text on mobile -->
         <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
           {{ selectedEventTypes.length > 0 
-            ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
+            ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length, total: allEventTypes.length })
             : $t('eventTypes.selectEventTypesBelow') }}
         </p>
       </div>
@@ -51,11 +50,10 @@
           <div class="flex-1">
             <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               📂 {{ $t('calendar.eventTypes') }}
-              <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(Active)</span>
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">
               {{ selectedEventTypes.length > 0 
-                ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
+                ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length, total: allEventTypes.length })
                 : $t('eventTypes.selectEventTypesBelow') }}
             </p>
           </div>
@@ -65,14 +63,14 @@
         <button
           @click="$emit('switch-to-groups')"
           class="px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-2 group ml-4"
-          title="Switch to Event Groups view"
+          title="Switch to Groups view"
         >
           <div class="text-right">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
               Switch to
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300">
-              🏷️ Event Groups
+              🏷️ Groups
             </div>
           </div>
           <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
@@ -332,7 +330,7 @@
       <div v-if="hasGroups" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
         <div class="text-center">
           <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-            Quick Actions
+            What to do with future Events?
           </h4>
           <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <!-- Subscribe to All Groups -->

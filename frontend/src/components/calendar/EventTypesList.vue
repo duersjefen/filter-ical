@@ -35,10 +35,10 @@
           <!-- Selection checkbox -->
           <div
             @click.stop="$emit('toggle-event-type-selection', eventTypeName)"
-            class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 cursor-pointer"
+            class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors duration-200"
             :class="isEventTypeSelected(eventTypeName)
               ? 'bg-green-500 border-green-500 text-white'
-              : 'border-gray-300 dark:border-gray-600 hover:border-green-400'"
+              : 'border-gray-300 dark:border-gray-600 hover:border-green-400 dark:hover:border-green-500'"
           >
             <span v-if="isEventTypeSelected(eventTypeName)" class="text-xs">✓</span>
           </div>

@@ -2,7 +2,7 @@
   <div class="border rounded-lg transition-all duration-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
     <!-- Group Card -->
     <div
-      class="p-4"
+      class="p-4 cursor-pointer"
       :class="[
         isSelected 
           ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' 
@@ -10,10 +10,11 @@
             ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
             : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
       ]"
+      @click="toggleGroupSelection"
     >
       <div class="flex items-center justify-between">
-        <!-- Group Header (Clickable to expand/collapse) -->
-        <div class="flex-1 cursor-pointer" @click="toggleExpansion">
+        <!-- Group Header -->
+        <div class="flex-1">
           <div class="flex items-center space-x-3 mb-2">
             <h4 class="text-lg font-semibold">{{ group.name }}</h4>
             <div
@@ -40,13 +41,35 @@
           </p>
         </div>
         
-        <!-- Selection Checkbox (Clickable to select entire group with children) -->
-        <div
-          class="w-5 h-5 rounded border-2 flex items-center justify-center ml-4 flex-shrink-0 cursor-pointer"
-          :class="selectionCheckboxClass"
-          @click.stop="toggleGroupSelection"
-        >
-          <span v-if="isSelected || isPartiallySelected" class="text-sm">{{ selectionIcon }}</span>
+        <!-- Action Controls -->
+        <div class="flex items-center gap-2 ml-4">
+          <!-- Dedicated Expansion Button -->
+          <button
+            v-if="hasExpandableContent"
+            @click.stop="toggleExpansion"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-transparent hover:border-blue-300 dark:hover:border-blue-600"
+            :class="isExpanded 
+              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
+              : 'text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400'"
+            :title="isExpanded ? 'Collapse group' : 'Expand group'"
+          >
+            <svg 
+              class="w-4 h-4 transition-transform duration-200" 
+              :class="{ 'rotate-180': isExpanded }"
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          
+          <!-- Selection Checkbox (Visual indicator only - card handles selection) -->
+          <div
+            class="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 pointer-events-none"
+            :class="selectionCheckboxClass"
+          >
+            <span v-if="isSelected || isPartiallySelected" class="text-sm">{{ selectionIcon }}</span>
+          </div>
         </div>
       </div>
     </div>

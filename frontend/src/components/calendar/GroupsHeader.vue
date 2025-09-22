@@ -8,15 +8,14 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex-1">
           <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-            🏷️ Event Groups
-            <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(Active)</span>
+            🏷️ Groups
           </h3>
         </div>
         <!-- Mobile Switch Button -->
         <button
           @click="$emit('switch-to-types')"
           class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
-          title="Switch to Event Types view"
+          title="Switch to Events view"
         >
           <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">📂 Types</span>
           <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
@@ -48,8 +47,7 @@
         
         <div class="flex-1">
           <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            🏷️ Event Groups
-            <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(Active)</span>
+            🏷️ Groups
           </h3>
           <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ selectionSummary.selected > 0
@@ -63,14 +61,14 @@
       <button
         @click="$emit('switch-to-types')"
         class="px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-2 group ml-4"
-        title="Switch to Event Types view"
+        title="Switch to Events view"
       >
         <div class="text-right">
           <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
             Switch to
           </div>
           <div class="text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300">
-            📂 Event Types
+            📂 Events
           </div>
         </div>
         <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">

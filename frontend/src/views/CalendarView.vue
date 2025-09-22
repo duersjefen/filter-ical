@@ -30,7 +30,7 @@
         :show-groups-section="showGroupsSection"
         @selection-changed="handleGroupSelectionChanged"
         @switch-filter-mode="switchFilterMode"
-        @switch-to-types="() => handleViewModeChange('types')"
+        @switch-to-types="handleSwitchToTypes"
         @toggle-groups-section="showGroupsSection = !showGroupsSection"
       />
       
@@ -62,7 +62,7 @@
         @toggle-selected-only="showSelectedOnly = !showSelectedOnly"
         @subscribe-all-groups="handleSubscribeAllGroups"
         @unsubscribe-all-groups="handleUnsubscribeAllGroups"
-        @switch-to-groups="() => handleViewModeChange('groups')"
+        @switch-to-groups="handleSwitchToGroups"
       />
 
       <!-- Filtered Calendar Section -->
@@ -259,6 +259,17 @@ const handleViewModeChange = (newMode) => {
   viewMode.value = newMode
   saveViewModePreference(newMode)
   console.log('✅ ViewMode updated to:', viewMode.value)
+}
+
+// Specific switch handlers with debugging
+const handleSwitchToTypes = () => {
+  console.log('🔄 switch-to-types event fired')
+  handleViewModeChange('types')
+}
+
+const handleSwitchToGroups = () => {
+  console.log('🔄 switch-to-groups event fired') 
+  handleViewModeChange('groups')
 }
 
 // Simple, direct data loading

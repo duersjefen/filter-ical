@@ -281,7 +281,7 @@ const getTotalGroupsText = () => {
     return `${selectedGroups} groups subscribed, ${selectedTypes} types selected`
   }
   
-  return `${totalGroups} ${totalGroups === 1 ? 'group' : 'groups'}`
+  return `${selectedGroups}/${totalGroups} groups subscribed`
 }
 
 // Watch for changes and emit to parent

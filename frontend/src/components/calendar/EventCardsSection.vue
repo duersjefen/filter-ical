@@ -43,7 +43,7 @@
         <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
           {{ selectedEventTypes.length > 0 
             ? filterMode === 'include'
-              ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
+              ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length, total: allEventTypes.length })
               : $t('eventTypes.excludedEventTypes', { count: selectedEventTypes.length })
             : $t('eventTypes.selectEventTypesBelow') }}
         </p>
@@ -76,7 +76,7 @@
           <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ selectedEventTypes.length > 0 
               ? filterMode === 'include'
-                ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length })
+                ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length, total: allEventTypes.length })
                 : $t('eventTypes.excludedEventTypes', { count: selectedEventTypes.length })
               : $t('eventTypes.selectEventTypesBelow') }}
           </p>
