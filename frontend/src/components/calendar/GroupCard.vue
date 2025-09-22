@@ -90,7 +90,7 @@
     <div v-if="isExpanded && hasEventTypes" class="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
       <div class="p-3 space-y-2">
         <div class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">
-          Event Types ({{ eventTypesCount }})
+          Events ({{ eventTypesCount }})
         </div>
         
         <!-- Event Type Checkboxes -->

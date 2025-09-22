@@ -27,9 +27,9 @@
         </div>
         <!-- Status text on mobile -->
         <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
-          {{ selectedEventTypes.length > 0 
+          {{ summaryText || (selectedEventTypes.length > 0 
             ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length, total: allEventTypes.length })
-            : $t('eventTypes.selectEventTypesBelow') }}
+            : $t('eventTypes.selectEventTypesBelow')) }}
         </p>
       </div>
 
@@ -52,9 +52,9 @@
               📂 {{ $t('calendar.eventTypes') }}
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              {{ selectedEventTypes.length > 0 
+              {{ summaryText || (selectedEventTypes.length > 0 
                 ? $t('eventTypes.selectedEventTypes', { count: selectedEventTypes.length, total: allEventTypes.length })
-                : $t('eventTypes.selectEventTypesBelow') }}
+                : $t('eventTypes.selectEventTypesBelow')) }}
             </p>
           </div>
         </div>
@@ -155,7 +155,7 @@
         </button>
       </div>
       
-      <!-- Multi-Event Types -->
+      <!-- Multi-Events -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 items-start">
         <div 
           v-for="eventType in filteredMainEventTypes" 
@@ -342,13 +342,13 @@
               <span>Subscribe to All Groups</span>
             </button>
             
-            <!-- Unsubscribe from All Groups -->
+            <!-- Unsubscribe & Deselect All Groups -->
             <button
               @click="$emit('unsubscribe-all-groups')"
               class="px-6 py-2.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <span>📤</span>
-              <span>Unsubscribe from All</span>
+              <span>Unsubscribe & Deselect all</span>
             </button>
           </div>
           
@@ -370,7 +370,7 @@ const props = defineProps({
   eventTypes: { type: Array, default: () => [] },
   mainEventTypes: { type: Array, default: () => [] },
   singleEventTypes: { type: Array, default: () => [] },
-  allEventTypes: { type: Array, default: () => [] }, // Unfiltered event types for visibility check
+  allEventTypes: { type: Array, default: () => [] }, // Unfiltered events for visibility check
   selectedEventTypes: { type: Array, default: () => [] },
   expandedEventTypes: { type: Array, default: () => [] },
   showSingleEvents: { type: Boolean, default: false },
@@ -378,17 +378,18 @@ const props = defineProps({
   showSelectedOnly: { type: Boolean, default: false },
   searchTerm: { type: String, default: '' },
   hasGroups: { type: Boolean, default: false },
+  summaryText: { type: String, default: '' },
   formatDateTime: { type: Function, required: true },
   formatDateRange: { type: Function, required: true }
 })
 
-// Check if there are any event types at all (for section visibility)
-// Use unfiltered event types to prevent section from disappearing during search
+// Check if there are any events at all (for section visibility)
+// Use unfiltered events to prevent section from disappearing during search
 const hasAnyEventTypes = computed(() => {
   return props.allEventTypes.length > 0
 })
 
-// Filtered event types based on search and selection
+// Filtered events based on search and selection
 const filteredMainEventTypes = computed(() => {
   let eventTypes = props.mainEventTypes
   
@@ -443,7 +444,7 @@ const selectedSinglesCount = computed(() => {
   return singleNames.filter(name => props.selectedEventTypes.includes(name)).length
 })
 
-// Visible selection state for main event types
+// Visible selection state for main events
 const areAllVisibleSelected = computed(() => {
   if (filteredMainEventTypes.value.length === 0) return false
   const visibleNames = filteredMainEventTypes.value.map(eventType => eventType.name)
@@ -455,7 +456,7 @@ const hasAnyVisibleSelected = computed(() => {
   return visibleNames.some(name => props.selectedEventTypes.includes(name))
 })
 
-// Check if filtering/search results in any visible event types
+// Check if filtering/search results in any visible events
 const hasAnyVisibleEventTypes = computed(() => {
   return filteredMainEventTypes.value.length > 0 || filteredSingleEventTypes.value.length > 0
 })

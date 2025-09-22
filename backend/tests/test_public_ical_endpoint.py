@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.models import Calendar, Event, FilteredCalendar, FilterMode
+from app.models import Calendar, Event, FilteredCalendar
 from app.core.filters import serialize_json_field
 from app.main import app
 
@@ -30,7 +30,8 @@ class TestPublicICalEndpoint:
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,
             public_token="test_token_123"
         )
@@ -82,7 +83,8 @@ END:VCALENDAR"""
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=False,  # Cache is valid
             cached_ical_content=cached_ical,
             cached_content_hash="test_hash",
@@ -136,7 +138,8 @@ END:VCALENDAR"""
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,  # Force regeneration
             cached_ical_content=stale_ical,
             cached_content_hash="stale_hash",
@@ -196,7 +199,8 @@ END:VCALENDAR"""
             user_id="public",
             include_events=serialize_json_field(["Work", "Meeting"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,
             public_token="filter_token_abc"
         )
@@ -249,7 +253,8 @@ END:VCALENDAR"""
             user_id="public",
             include_events=serialize_json_field([]),
             exclude_events=serialize_json_field(["Work"]),
-            filter_mode=FilterMode.exclude,
+            selected_groups=serialize_json_field(["grp_excluded"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,
             public_token="exclude_token_def"
         )
@@ -282,7 +287,8 @@ END:VCALENDAR"""
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,
             public_token="download_token_ghi"
         )
@@ -319,7 +325,8 @@ END:VCALENDAR"""
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,
             public_token="empty_token_jkl"
         )

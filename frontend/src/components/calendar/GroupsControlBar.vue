@@ -1,62 +1,52 @@
 <template>
-  <div class="flex justify-between items-center mb-6">
-    <!-- Left Side: Action Buttons -->
-    <div class="flex space-x-3">
-      <button
-        @click="$emit('clear-all')"
-        class="px-4 py-2 text-sm border border-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors font-medium text-blue-600 dark:text-blue-400"
-        :disabled="!hasSelections"
-        :class="!hasSelections ? 'opacity-50 cursor-not-allowed' : ''"
-      >
-        Clear All
-      </button>
-      
-      <button
-        @click="$emit('subscribe-all')"
-        class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-      >
-        📁 Subscribe to All Groups
-      </button>
-      
-      <button
-        v-if="!allExpanded"
-        @click="$emit('expand-all')"
-        class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-gray-700 dark:text-gray-300"
-      >
-        📂 Expand All Groups
-      </button>
-      
-      <button
-        v-if="!allCollapsed"
-        @click="$emit('collapse-all')"
-        class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-gray-700 dark:text-gray-300"
-      >
-        📁 Collapse All Groups
-      </button>
-    </div>
-    
-    <!-- Right Side: Stats and Filter Toggle -->
-    <div class="flex items-center space-x-4">
-      <div class="text-sm text-gray-600 dark:text-gray-400">
-        {{ groupStatsText }}
+  <div class="flex flex-col gap-4 mb-6">
+    <!-- Action Buttons - Organized in Groups -->
+    <div class="flex flex-wrap gap-3 justify-center">
+      <!-- Selection Actions Group -->
+      <div v-if="!allSubscribed || !noSelections" class="flex gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+        <button
+          v-if="hasSelections"
+          @click="$emit('unsubscribe-all')"
+          class="px-3 py-2 text-sm border border-red-300 dark:border-red-600 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-red-600 dark:text-red-400"
+        >
+          ✗ Unsubscribe & Deselect all
+        </button>
+        
+        <button
+          v-if="!allSubscribed"
+          @click="$emit('subscribe-and-select-all')"
+          class="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+        >
+          📁 Subscribe & Select All
+        </button>
       </div>
       
-      <!-- Filter Mode Toggle -->
-      <button
-        @click="$emit('toggle-filter-mode')"
-        class="px-3 py-1 text-sm rounded-md transition-colors hover:scale-105 active:scale-95"
-        :class="filterMode === 'include'
-          ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300'
-          : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300'"
-      >
-        {{ filterMode === 'include' ? '✅ Include' : '❌ Exclude' }}
-      </button>
+      <!-- Expansion Actions Group -->
+      <div class="flex gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+        <button
+          v-if="!allExpanded"
+          @click="$emit('expand-all')"
+          class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium text-gray-700 dark:text-gray-300"
+        >
+          📂 Expand All
+        </button>
+        
+        <button
+          v-if="!allCollapsed"
+          @click="$emit('collapse-all')"
+          class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium text-gray-700 dark:text-gray-300"
+        >
+          📁 Collapse All
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   hasSelections: {
     type: Boolean,
     default: false
@@ -73,17 +63,29 @@ defineProps({
     type: String,
     default: '0 groups'
   },
-  filterMode: {
-    type: String,
-    default: 'include'
+  allSubscribed: {
+    type: Boolean,
+    default: false
+  },
+  totalGroups: {
+    type: Number,
+    default: 0
+  },
+  subscribedCount: {
+    type: Number,
+    default: 0
   }
 })
 
+// Computed properties for contextual logic
+const noSelections = computed(() => {
+  return props.subscribedCount === 0 && !props.hasSelections
+})
+
 defineEmits([
-  'clear-all',
-  'subscribe-all', 
+  'unsubscribe-all',
+  'subscribe-and-select-all', 
   'expand-all',
-  'collapse-all',
-  'toggle-filter-mode'
+  'collapse-all'
 ])
 </script>

@@ -15,13 +15,14 @@
         :has-selections="hasSelections"
         :all-expanded="allGroupsExpanded"
         :all-collapsed="allGroupsCollapsed"
-        :group-stats-text="getTotalGroupsText()"
-        :filter-mode="filterMode"
-        @clear-all="clearSelections"
-        @subscribe-all="subscribeToAllGroups"
+        :all-subscribed="allEventsSelected"
+        :total-groups="Object.keys(allGroups).length"
+        :subscribed-count="subscribedGroups.size"
+        :group-stats-text="getGroupBreakdownSummary()"
+        @unsubscribe-all="unsubscribeFromAllGroups"
+        @subscribe-and-select-all="subscribeAndSelectAllGroups"
         @expand-all="expandAllGroups"
         @collapse-all="collapseAllGroups"
-        @toggle-filter-mode="handleFilterModeToggle"
       />
 
       <!-- Groups Grid -->
@@ -87,7 +88,6 @@ import GroupCard from './GroupCard.vue'
 const props = defineProps({
   hasGroups: { type: Boolean, default: false },
   groups: { type: Object, default: () => ({}) },
-  filterMode: { type: String, default: 'include' },
   ungroupedEventTypes: { type: Array, default: () => [] },
   ungroupedRecurringEventTypes: { type: Array, default: () => [] },
   ungroupedUniqueEventTypes: { type: Array, default: () => [] },
@@ -97,7 +97,6 @@ const props = defineProps({
 
 const emit = defineEmits([
   'selection-changed',
-  'switch-filter-mode',
   'switch-to-types',
   'toggle-groups-section'
 ])
@@ -109,7 +108,7 @@ const {
   subscribeToGroup,
   unsubscribeFromGroup,
   toggleEventType,
-  clearSelections,
+  clearSelection,
   isEventTypeEffectivelySelected,
   getSelectionSummary
 } = useEventSelection()
@@ -205,6 +204,46 @@ const allGroupsCollapsed = computed(() => {
   return expandedGroups.value.size === 0
 })
 
+const allGroupsSubscribed = computed(() => {
+  const totalGroups = Object.keys(allGroups.value).length
+  return totalGroups > 0 && subscribedGroups.value.size === totalGroups
+})
+
+const allEventsSelected = computed(() => {
+  // Get all available event types from all sources
+  const allAvailableEventTypes = new Set()
+  
+  // Add event types from all groups
+  Object.values(allGroups.value).forEach(group => {
+    if (group.event_types) {
+      Object.keys(group.event_types).forEach(eventType => {
+        allAvailableEventTypes.add(eventType)
+      })
+    }
+  })
+  
+  // Add ungrouped event types
+  props.ungroupedEventTypes.forEach(eventType => {
+    allAvailableEventTypes.add(eventType.name || eventType)
+  })
+  props.ungroupedRecurringEventTypes.forEach(eventType => {
+    allAvailableEventTypes.add(eventType.name || eventType)
+  })
+  props.ungroupedUniqueEventTypes.forEach(eventType => {
+    allAvailableEventTypes.add(eventType.name || eventType)
+  })
+  
+  // Check if all available event types are effectively selected
+  // (either through group subscription or individual selection)
+  for (const eventType of allAvailableEventTypes) {
+    if (!isEventTypeEffectivelySelected(eventType)) {
+      return false
+    }
+  }
+  
+  return allAvailableEventTypes.size > 0
+})
+
 const selectionSummary = computed(() => {
   // Combine all ungrouped event types for comprehensive summary
   const allUngroupedTypes = [
@@ -212,7 +251,15 @@ const selectionSummary = computed(() => {
     ...props.ungroupedRecurringEventTypes,
     ...props.ungroupedUniqueEventTypes
   ]
-  return getSelectionSummary(allGroups.value, allUngroupedTypes)
+  const summary = getSelectionSummary(allGroups.value, allUngroupedTypes)
+  
+  // Add compact text using our enhanced format
+  const compactText = getGroupBreakdownSummary()
+  
+  return {
+    ...summary,
+    compactText
+  }
 })
 
 // Methods
@@ -228,6 +275,32 @@ const toggleGroupSubscription = (groupId) => {
 const subscribeToAllGroups = () => {
   Object.entries(allGroups.value).forEach(([groupId, group]) => {
     subscribeToGroup(groupId, group)
+  })
+}
+
+const unsubscribeFromAllGroups = () => {
+  // Unsubscribe from all groups but keep individual event selections
+  Object.entries(allGroups.value).forEach(([groupId, group]) => {
+    unsubscribeFromGroup(groupId, group)
+  })
+}
+
+const subscribeAndSelectAllGroups = () => {
+  // Subscribe to all groups AND select all their event types (like Subscribe & Select)
+  Object.entries(allGroups.value).forEach(([groupId, group]) => {
+    subscribeToGroup(groupId, group)
+    
+    // Also select all event types in this group
+    if (group && group.event_types) {
+      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
+        return group.event_types[eventType].count > 0
+      })
+      groupEventTypes.forEach(eventType => {
+        if (!selectedEventTypes.value.includes(eventType)) {
+          toggleEventType(eventType)
+        }
+      })
+    }
   })
 }
 
@@ -249,10 +322,13 @@ const collapseAllGroups = () => {
   expandedGroups.value.clear()
 }
 
-const handleFilterModeToggle = () => {
-  const newMode = props.filterMode === 'include' ? 'exclude' : 'include'
-  emit('switch-filter-mode', newMode)
+const getGroupEventTypes = (group) => {
+  if (!group || !group.event_types) return []
+  return Object.keys(group.event_types).filter(eventType => {
+    return group.event_types[eventType].count > 0
+  })
 }
+
 
 const handleSelectAllEventTypes = ({ groupId, eventTypes, selectAll }) => {
   if (selectAll) {
@@ -272,16 +348,82 @@ const handleSelectAllEventTypes = ({ groupId, eventTypes, selectAll }) => {
   }
 }
 
-const getTotalGroupsText = () => {
+const getGroupBreakdownSummary = () => {
   const totalGroups = Object.keys(allGroups.value).length
-  const selectedGroups = subscribedGroups.value.size
-  const selectedTypes = selectedEventTypes.value.length
+  const subscribedGroupsCount = subscribedGroups.value.size
+  const selectedEventsCount = selectedEventTypes.value.length
   
-  if (selectedGroups > 0 || selectedTypes > 0) {
-    return `${selectedGroups} groups subscribed, ${selectedTypes} types selected`
+  // Calculate total available events across all groups
+  let totalAvailableEvents = 0
+  Object.values(allGroups.value).forEach(group => {
+    const groupEventTypes = getGroupEventTypes(group)
+    totalAvailableEvents += groupEventTypes.length
+  })
+  
+  // Calculate effective selected events (subscribed groups + individual selections)
+  let effectiveSelectedEvents = selectedEventsCount
+  subscribedGroups.value.forEach(groupId => {
+    const group = allGroups.value[groupId]
+    if (group) {
+      const groupEventTypes = getGroupEventTypes(group)
+      // Add group events that aren't already counted as individual selections
+      groupEventTypes.forEach(eventType => {
+        if (!selectedEventTypes.value.includes(eventType)) {
+          effectiveSelectedEvents++
+        }
+      })
+    }
+  })
+  
+  if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
+    return 'No events or groups selected'
   }
   
-  return `${selectedGroups}/${totalGroups} groups subscribed`
+  const parts = []
+  
+  // Events part
+  if (effectiveSelectedEvents > 0) {
+    parts.push(`${effectiveSelectedEvents}/${totalAvailableEvents} Events`)
+  }
+  
+  // Groups part with special cases
+  if (subscribedGroupsCount === 0) {
+    parts.push('No groups')
+  } else if (subscribedGroupsCount === totalGroups && totalGroups > 0) {
+    parts.push('All groups')
+  } else {
+    parts.push(`${subscribedGroupsCount}/${totalGroups} Groups`)
+  }
+  
+  return parts.join(' & ')
+}
+
+const getDetailedGroupSummary = () => {
+  // Create detailed group status display
+  const groupSummaries = []
+  
+  Object.entries(allGroups.value).forEach(([groupId, group]) => {
+    const isSubscribed = subscribedGroups.value.has(groupId)
+    const groupEventTypes = getGroupEventTypes(group)
+    const selectedInGroup = groupEventTypes.filter(eventType => 
+      selectedEventTypes.value.includes(eventType)
+    ).length
+    
+    const checkbox = isSubscribed ? '☑' : '☐'
+    const name = group.name || 'Unnamed Group'
+    const summary = `${checkbox} ${selectedInGroup}/${groupEventTypes.length} ${name}`
+    
+    groupSummaries.push(summary)
+  })
+  
+  // Limit display to avoid overwhelming UI - show first 3-4 groups with "and X more"
+  if (groupSummaries.length <= 4) {
+    return groupSummaries.join(', ')
+  } else {
+    const displayed = groupSummaries.slice(0, 3)
+    const remaining = groupSummaries.length - 3
+    return displayed.join(', ') + `, and ${remaining} more groups`
+  }
 }
 
 // Watch for changes and emit to parent

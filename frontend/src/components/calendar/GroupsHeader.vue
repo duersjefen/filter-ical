@@ -26,7 +26,7 @@
       <!-- Status text on mobile -->
       <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
         {{ selectionSummary.selected > 0
-          ? selectionSummary.text
+          ? selectionSummary.compactText || selectionSummary.text
           : 'Subscribe to groups or select specific event types' }}
       </p>
     </div>
@@ -51,7 +51,7 @@
           </h3>
           <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ selectionSummary.selected > 0
-              ? selectionSummary.text
+              ? selectionSummary.compactText || selectionSummary.text
               : 'Subscribe to groups or select specific event types' }}
           </p>
         </div>

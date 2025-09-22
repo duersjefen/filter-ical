@@ -7,7 +7,8 @@ from sqlmodel import Session, select
 from datetime import datetime
 
 from ..models import FilteredCalendar, Event, Calendar
-from .filters import apply_saved_filter_config, parse_json_field
+from .filters import parse_json_field
+from ..data.group import get_event_types_for_group
 from .ical_parser import create_ical_from_events
 
 
@@ -50,8 +51,40 @@ def get_filtered_events_from_db(
     from ..core.ical_parser import filter_recent_and_future_events
     recent_and_future_events = filter_recent_and_future_events(events_data)
     
-    # Apply filter configuration using pure function
-    filtered_events = apply_saved_filter_config(recent_and_future_events, filter_config)
+    # Apply new selection-based filtering
+    if not filter_config.get('selected_groups') and not filter_config.get('selected_events'):
+        # No selection made, return empty list
+        return []
+    
+    # Get selected events from groups and individual selections
+    selected_event_ids = set()
+    
+    # Add events from selected groups (by event types)
+    selected_groups = filter_config.get('selected_groups', [])
+    if selected_groups:
+        from sqlmodel import select, col
+        from ..models import EventTypeGroup
+        # Get event types for selected groups
+        group_event_types = session.exec(
+            select(EventTypeGroup.event_type)
+            .where(col(EventTypeGroup.group_id).in_(selected_groups))
+        ).all()
+        
+        # Add events that match these event types
+        for event in recent_and_future_events:
+            if event.get('event_type') in group_event_types:
+                selected_event_ids.add(event.get('id'))
+    
+    # Add individually selected events
+    selected_events = filter_config.get('selected_events', [])
+    if selected_events:
+        selected_event_ids.update(selected_events)
+    
+    # Filter events to only include selected ones
+    filtered_events = [
+        event for event in recent_and_future_events 
+        if event.get('id') in selected_event_ids
+    ]
     
     return filtered_events
 
@@ -122,14 +155,13 @@ def regenerate_filtered_calendar_content(filtered_calendar: FilteredCalendar, se
         Tuple of (ical_content, error_message)
     """
     try:
-        # Parse filter configuration
-        include_events = parse_json_field(filtered_calendar.include_events, [])
-        exclude_events = parse_json_field(filtered_calendar.exclude_events, [])
+        # Parse selection configuration from new format
+        selected_groups = parse_json_field(filtered_calendar.selected_groups, [])
+        selected_events = parse_json_field(filtered_calendar.selected_events, [])
         
         filter_config = {
-            'include_events': include_events,
-            'exclude_events': exclude_events,
-            'filter_mode': filtered_calendar.filter_mode
+            'selected_groups': selected_groups,
+            'selected_events': selected_events
         }
         
         # Get filtered events from database

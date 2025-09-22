@@ -15,7 +15,7 @@ import json
 # Import database and models
 from .database import get_session, get_session_sync, create_db_and_tables
 from .models import (
-    Calendar, Event, FilteredCalendar, FilterMode, Group, EventTypeGroup
+    Calendar, Event, FilteredCalendar, Group, EventTypeGroup
 )
 
 # Import pure functions (Functional Core)
@@ -25,7 +25,6 @@ from .core.ical_parser import (
     create_ical_from_events, events_to_event_types, split_ungrouped_events_by_type
 )
 from .core.filters import (
-    filter_events_by_categories, apply_saved_filter_config,
     parse_json_field, serialize_json_field
 )
 from .core.domains import (
@@ -687,11 +686,8 @@ async def get_filtered_calendars(
             "calendar_url": fc.calendar_url,
             "preview_url": fc.preview_url,
             "source_calendar_id": fc.source_calendar_id,
-            "filter_config": {
-                "include_event_types": parse_json_field(fc.include_events, []),
-                "exclude_event_types": parse_json_field(fc.exclude_events, []),
-                "filter_mode": fc.filter_mode
-            },
+            "selected_groups": parse_json_field(fc.selected_groups, []),
+            "selected_events": parse_json_field(fc.selected_events, []),
             "created_at": fc.created_at.isoformat() + "Z",
             "updated_at": fc.updated_at.isoformat() + "Z"
         })
@@ -707,7 +703,8 @@ async def create_filtered_calendar(
     """Create filtered calendar - matches OpenAPI spec exactly"""
     source_calendar_id = request_data.get('source_calendar_id')
     name = request_data.get('name', '').strip()
-    filter_config = request_data.get('filter_config', {})
+    selected_groups = request_data.get('selected_groups', [])
+    selected_events = request_data.get('selected_events', [])
     user_id = get_user_id(username)
     
     # Validation
@@ -733,9 +730,8 @@ async def create_filtered_calendar(
         name=name,
         source_calendar_id=source_calendar_id,
         user_id=user_id,
-        include_events=serialize_json_field(filter_config.get('include_event_types', [])),
-        exclude_events=serialize_json_field(filter_config.get('exclude_event_types', [])),
-        filter_mode=FilterMode(filter_config.get('filter_mode', 'include')),
+        selected_groups=serialize_json_field(selected_groups),
+        selected_events=serialize_json_field(selected_events),
         needs_regeneration=True  # Flag for initial iCal generation
     )
     
@@ -755,11 +751,8 @@ async def create_filtered_calendar(
         "calendar_url": filtered_calendar.calendar_url,
         "preview_url": filtered_calendar.preview_url,
         "source_calendar_id": filtered_calendar.source_calendar_id,
-        "filter_config": {
-            "include_event_types": parse_json_field(filtered_calendar.include_events, []),
-            "exclude_event_types": parse_json_field(filtered_calendar.exclude_events, []),
-            "filter_mode": filtered_calendar.filter_mode
-        },
+        "selected_groups": parse_json_field(filtered_calendar.selected_groups, []),
+        "selected_events": parse_json_field(filtered_calendar.selected_events, []),
         "created_at": filtered_calendar.created_at.isoformat() + "Z",
         "updated_at": filtered_calendar.updated_at.isoformat() + "Z"
     }
@@ -795,20 +788,18 @@ async def update_filtered_calendar(
             )
         filtered_calendar.name = name
     
-    filter_config_changed = False
-    if 'filter_config' in request_data:
-        filter_config = request_data['filter_config']
-        filtered_calendar.include_events = serialize_json_field(
-            filter_config.get('include_event_types', [])
-        )
-        filtered_calendar.exclude_events = serialize_json_field(
-            filter_config.get('exclude_event_types', [])
-        )
-        filtered_calendar.filter_mode = FilterMode(
-            filter_config.get('filter_mode', 'include')
-        )
+    selection_changed = False
+    if 'selected_groups' in request_data or 'selected_events' in request_data:
+        if 'selected_groups' in request_data:
+            filtered_calendar.selected_groups = serialize_json_field(
+                request_data['selected_groups']
+            )
+        if 'selected_events' in request_data:
+            filtered_calendar.selected_events = serialize_json_field(
+                request_data['selected_events']
+            )
         filtered_calendar.needs_regeneration = True  # Mark for cache regeneration
-        filter_config_changed = True
+        selection_changed = True
     
     from datetime import datetime
     filtered_calendar.updated_at = datetime.utcnow()
@@ -817,8 +808,8 @@ async def update_filtered_calendar(
     session.commit()
     session.refresh(filtered_calendar)
     
-    # Regenerate cache if filter config changed
-    if filter_config_changed:
+    # Regenerate cache if selection changed
+    if selection_changed:
         print(f"🔄 Regenerating iCal content for updated filtered calendar {filtered_calendar.id}")
         ical_content, error = get_filtered_ical_cache_first(filtered_calendar, session)
     
@@ -830,11 +821,8 @@ async def update_filtered_calendar(
         "calendar_url": filtered_calendar.calendar_url,
         "preview_url": filtered_calendar.preview_url,
         "source_calendar_id": filtered_calendar.source_calendar_id,
-        "filter_config": {
-            "include_event_types": parse_json_field(filtered_calendar.include_events, []),
-            "exclude_event_types": parse_json_field(filtered_calendar.exclude_events, []),
-            "filter_mode": filtered_calendar.filter_mode
-        },
+        "selected_groups": parse_json_field(filtered_calendar.selected_groups, []),
+        "selected_events": parse_json_field(filtered_calendar.selected_events, []),
         "created_at": filtered_calendar.created_at.isoformat() + "Z",
         "updated_at": filtered_calendar.updated_at.isoformat() + "Z"
     }
@@ -933,11 +921,6 @@ async def generate_filtered_ical(
     # Get request parameters (supporting both groups and individual events)
     selected_groups = request_data.get('selected_groups', [])
     selected_events = request_data.get('selected_events', [])
-    selected_event_types = request_data.get('selected_event_types', [])  # Backward compatibility
-    filter_mode = request_data.get('filter_mode', 'include')
-    
-    if filter_mode not in ['include', 'exclude']:
-        raise HTTPException(status_code=400, detail="filter_mode must be 'include' or 'exclude'")
     
     # Get all events for calendar
     events = session.exec(
@@ -969,21 +952,12 @@ async def generate_filtered_ical(
         individual_events = [e for e in events if e.id in selected_events]
         final_events.extend(individual_events)
     
-    # Backward compatibility: handle legacy event type filtering
-    if selected_event_types and not selected_groups and not selected_events:
-        if filter_mode == 'include':
-            final_events = [e for e in events if e.title in selected_event_types]
-        else:
-            final_events = [e for e in events if e.title not in selected_event_types]
-    elif selected_groups or selected_events:
-        # Remove duplicates when combining groups and individual events
+    # Remove duplicates when combining groups and individual events
+    if selected_groups or selected_events:
         final_events = list({e.id: e for e in final_events}.values())
-        
-        # Apply filter mode for group/event selection
-        if filter_mode == 'exclude':
-            # Start with all events, remove selected ones
-            excluded_event_ids = set(e.id for e in final_events)
-            final_events = [e for e in events if e.id not in excluded_event_ids]
+    else:
+        # If no selection made, return empty calendar (no events)
+        final_events = []
     
     # Convert to dict format for pure functions
     events_data = []

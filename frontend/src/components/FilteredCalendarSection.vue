@@ -41,7 +41,7 @@
       }"
     >
       <div class="p-4 sm:p-6">
-      <!-- Create/Update Form - Auto-show when event types selected -->
+      <!-- Create/Update Form - Auto-show when events selected -->
       <div v-if="selectedEventTypes.length > 0 || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
@@ -88,20 +88,33 @@
           </div>
 
           <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600">
-            <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ $t('filteredCalendar.currentFilter') }}:
-            </h5>
-            <div class="text-sm text-gray-600 dark:text-gray-400">
-              <div v-if="filterMode === 'include'" class="mb-1">
-                ✅ <strong>{{ $t('filteredCalendar.includeMode') }}</strong>: 
-                {{ getSmartEventTypeDisplay(selectedEventTypes) || $t('filteredCalendar.allEventTypes') }}
+            <div class="space-y-3">
+              <!-- Group Subscriptions Display -->
+              <div v-if="hasGroups && groups && Object.keys(groups).length > 0" class="space-y-2">
+                <!-- All Groups in a flex wrap layout -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                  <span 
+                    v-for="(group, groupId) in groups" 
+                    :key="groupId"
+                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 whitespace-nowrap font-medium transition-all duration-200"
+                    :class="getGroupDisplayClass(groupId)"
+                  >
+                    <!-- Large, prominent subscription icon -->
+                    <span class="text-sm font-bold">{{ getGroupSubscriptionIcon(groupId) }}</span>
+                    <!-- Subscription status text -->
+                    <span class="font-semibold text-xs uppercase tracking-wide">{{ getGroupSubscriptionStatus(groupId) }}</span>
+                    <!-- Count display -->
+                    <span class="px-2 py-1 rounded-md text-xs font-bold" :class="getCountDisplayClass(groupId)">
+                      {{ getGroupSelectedCount(groupId) }}/{{ getGroupTotalCount(group) }}
+                    </span>
+                    <!-- Group name with icon -->
+                    <span class="font-medium">{{ getGroupDisplayName(group) }}</span>
+                  </span>
+                </div>
               </div>
-              <div v-else class="mb-1">
-                ❌ <strong>{{ $t('filteredCalendar.excludeMode') }}</strong>: 
-                {{ getSmartEventTypeDisplay(selectedEventTypes) || $t('filteredCalendar.noExclusions') }}
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-500">
-                {{ $t('filteredCalendar.filterInfo') }}
+              <!-- Fallback for non-group calendars -->
+              <div v-else class="text-sm text-gray-600 dark:text-gray-400">
+                {{ reactiveGroupBreakdown || $t('filteredCalendar.noSelection') }}
               </div>
             </div>
           </div>
@@ -242,7 +255,7 @@
         </div>
       </div>
 
-      <!-- Empty state - only show if no existing calendars and no event types selected -->
+      <!-- Empty state - only show if no existing calendars and no events selected -->
       <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedEventTypes.length === 0" class="text-center py-6">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
@@ -371,6 +384,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  subscribedGroups: {
+    type: Set,
+    default: () => new Set()
+  },
   filterMode: {
     type: String,
     required: true
@@ -413,7 +430,7 @@ const {
 // Reactive state
 const isExpanded = ref(true) // Start expanded by default
 const showEditModal = ref(false)
-const hasEverHadEventTypes = ref(false) // Track if user has ever selected event types
+const hasEverHadEventTypes = ref(false) // Track if user has ever selected events
 const isUpdateMode = ref(false) // Track if user is updating an existing filter
 const updateModeCalendar = ref(null) // Store the calendar being updated
 const createForm = ref({
@@ -433,20 +450,55 @@ const editNameInput = ref(null) // Reference to edit input for focus
 const formatDateTime = computed(() => formatDateTimeUtil)
 const formatDateRange = computed(() => formatDateRangeUtil)
 
-// Show section if there are existing filtered calendars OR if event types are selected
-// OR if user has ever interacted with event types (to prevent disappearing during search/filter workflows)
+// Reactive computed property for group breakdown display
+const reactiveGroupBreakdown = computed(() => {
+  if (!props.hasGroups || !props.groups) {
+    return ''
+  }
+  
+  const groupBreakdowns = []
+  
+  // Process all groups and show detailed breakdown
+  Object.entries(props.groups).forEach(([groupId, group]) => {
+    const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
+    const groupEventTypes = getGroupEventTypes(group)
+    const selectedInGroup = groupEventTypes.filter(type => 
+      props.selectedEventTypes && props.selectedEventTypes.includes(type)
+    ).length
+    const totalInGroup = groupEventTypes.length
+    
+    // Get group emoji/icon from name (first emoji) or use default
+    const groupIcon = group.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '📋'
+    const groupName = group.name.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
+    
+    const subscriptionIcon = isSubscribed ? '✅' : '☐'
+    const effectiveSelected = selectedInGroup
+    
+    groupBreakdowns.push(`${subscriptionIcon} ${effectiveSelected}/${totalInGroup} ${groupIcon} ${groupName}`)
+  })
+  
+  if (groupBreakdowns.length === 0) {
+    return 'No groups available'
+  }
+  
+  // Show ALL groups - no truncation
+  return groupBreakdowns.join(', ')
+})
+
+// Show section if there are existing filtered calendars OR if events are selected
+// OR if user has ever interacted with events (to prevent disappearing during search/filter workflows)
 const shouldShowSection = computed(() => {
   // Always show if there are existing filtered calendars
   if (filteredCalendars.value.length > 0) {
     return true
   }
   
-  // Show if event types are currently selected
+  // Show if events are currently selected
   if (props.selectedEventTypes.length > 0) {
     return true
   }
   
-  // Show if user has ever selected event types in this session
+  // Show if user has ever selected events in this session
   // This prevents the section from disappearing during search/filter operations
   if (hasEverHadEventTypes.value) {
     return true
@@ -455,10 +507,12 @@ const shouldShowSection = computed(() => {
   return false
 })
 
-// Auto-populate form name when event types selected
+// Auto-populate form name when groups/events selected
 const updateFormName = () => {
-  if (props.selectedEventTypes.length > 0 && !createForm.value.name.trim()) {
-    createForm.value.name = `${props.selectedCalendar.name} - ${props.filterMode === 'include' ? t('filteredCalendar.includeMode') : t('filteredCalendar.excludeMode')}`
+  if ((props.selectedEventTypes.length > 0 || (props.selectedGroups && props.selectedGroups.size > 0)) && !createForm.value.name.trim()) {
+    const groupCount = props.selectedGroups ? props.selectedGroups.size : 0
+    const suffix = groupCount > 0 ? t('filteredCalendar.groupSelection') : t('filteredCalendar.eventSelection')
+    createForm.value.name = `${props.selectedCalendar.name} - ${suffix}`
   }
 }
 
@@ -729,6 +783,57 @@ const getExcludeEventTypesCount = (filterConfig) => {
   return filterConfig?.exclude_event_types?.length || 0
 }
 
+const getGroupEventTypes = (group) => {
+  if (!group || !group.event_types) return []
+  return Object.keys(group.event_types).filter(eventType => {
+    return group.event_types[eventType].count > 0
+  })
+}
+
+const getDetailedGroupBreakdown = () => {
+  if (!props.hasGroups || !props.groups) {
+    return ''
+  }
+  
+  const groupBreakdowns = []
+  
+  // Process all groups and show detailed breakdown
+  Object.entries(props.groups).forEach(([groupId, group]) => {
+    const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
+    const groupEventTypes = getGroupEventTypes(group)
+    const selectedInGroup = groupEventTypes.filter(type => 
+      props.selectedEventTypes && props.selectedEventTypes.includes(type)
+    ).length
+    const totalInGroup = groupEventTypes.length
+    
+    // Get group emoji/icon from name (first emoji) or use default
+    const groupIcon = group.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '📋'
+    const groupName = group.name.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
+    
+    const subscriptionIcon = isSubscribed ? '✅' : '☐'
+    const effectiveSelected = selectedInGroup
+    
+    groupBreakdowns.push(`${subscriptionIcon} ${effectiveSelected}/${totalInGroup} ${groupIcon} ${groupName}`)
+  })
+  
+  if (groupBreakdowns.length === 0) {
+    return 'No groups available'
+  }
+  
+  // Show ALL groups - no truncation
+  return groupBreakdowns.join(', ')
+}
+
+const getGroupSubscriptionDisplay = (selectedEventTypes, selectedGroups) => {
+  if (!props.hasGroups || !props.groups) {
+    // Fallback for non-group calendars
+    return getBasicEventTypeDisplay(selectedEventTypes)
+  }
+  
+  // Return the detailed group breakdown instead of the old simple display
+  return getDetailedGroupBreakdown()
+}
+
 const getSmartEventTypeDisplay = (selectedEventTypes) => {
   if (!selectedEventTypes || selectedEventTypes.length === 0) return ''
   
@@ -742,75 +847,27 @@ const getSmartEventTypeDisplay = (selectedEventTypes) => {
 }
 
 const getGroupAwareDisplay = (selectedEventTypes) => {
-  const selectedGroups = []
-  const selectedIndividualEventTypes = [...selectedEventTypes]
-  
-  // Find which groups are fully or partially selected
-  Object.values(props.groups).forEach(group => {
-    if (!group.event_types) return
-    
-    const groupEventTypes = Object.keys(group.event_types)
-    const selectedInGroup = groupEventTypes.filter(eventType => 
-      selectedEventTypes.includes(eventType)
-    )
-    
-    if (selectedInGroup.length === groupEventTypes.length && groupEventTypes.length > 0) {
-      // Fully selected group
-      selectedGroups.push({ name: group.name, type: 'full', count: groupEventTypes.length })
-      // Remove these event types from individual list
-      selectedInGroup.forEach(eventType => {
-        const index = selectedIndividualEventTypes.indexOf(eventType)
-        if (index > -1) selectedIndividualEventTypes.splice(index, 1)
-      })
-    } else if (selectedInGroup.length > 0) {
-      // Partially selected group
-      selectedGroups.push({ 
-        name: group.name, 
-        type: 'partial', 
-        count: selectedInGroup.length,
-        total: groupEventTypes.length
-      })
-      // Remove these event types from individual list
-      selectedInGroup.forEach(eventType => {
-        const index = selectedIndividualEventTypes.indexOf(eventType)
-        if (index > -1) selectedIndividualEventTypes.splice(index, 1)
-      })
-    }
-  })
-  
-  // Check virtual groups (Recurring and Unique)
-  const recurringGroup = getVirtualGroupSelection('🔄 Recurring Events', selectedEventTypes, selectedIndividualEventTypes)
-  const uniqueGroup = getVirtualGroupSelection('📅 Unique Events', selectedEventTypes, selectedIndividualEventTypes)
-  
-  if (recurringGroup) selectedGroups.push(recurringGroup)
-  if (uniqueGroup) selectedGroups.push(uniqueGroup)
-  
-  // Build display string
-  let parts = []
-  
-  // Add groups
-  if (selectedGroups.length > 0) {
-    const groupDescriptions = selectedGroups.map(group => {
-      if (group.type === 'full') {
-        return group.name
-      } else {
-        return `${group.name} (${group.count}/${group.total})`
-      }
-    })
-    
-    if (groupDescriptions.length <= 2) {
-      parts.push(groupDescriptions.join(', '))
-    } else {
-      parts.push(`${groupDescriptions[0]} and ${groupDescriptions.length - 1} more groups`)
-    }
+  if (!props.groups || !props.selectedGroups) {
+    return getBasicEventTypeDisplay(selectedEventTypes)
   }
   
-  // Add remaining individual event types
-  if (selectedIndividualEventTypes.length > 0) {
-    const individualSummary = selectedIndividualEventTypes.length === 1 
-      ? '1 event type' 
-      : `${selectedIndividualEventTypes.length} event types`
-    parts.push(individualSummary)
+  const totalGroups = Object.keys(props.groups).length
+  const subscribedGroups = props.selectedGroups.size || 0
+  
+  if (subscribedGroups === 0 && (!selectedEventTypes || selectedEventTypes.length === 0)) {
+    return 'No groups or events selected'
+  }
+  
+  // Create summary for compact display
+  const parts = []
+  
+  if (subscribedGroups > 0) {
+    parts.push(`${subscribedGroups}/${totalGroups} groups subscribed`)
+  }
+  
+  const individualEvents = selectedEventTypes || []
+  if (individualEvents.length > 0) {
+    parts.push(`${individualEvents.length} individual events`)
   }
   
   return parts.join(' + ')
@@ -839,7 +896,7 @@ const getBasicEventTypeDisplay = (selectedEventTypes) => {
     if (selectedMainTypes.length <= 3) {
       display = selectedMainTypes.join(', ')
     } else {
-      display = `${selectedMainTypes.slice(0, 2).join(', ')} and ${selectedMainTypes.length - 2} more event types`
+      display = `${selectedMainTypes.slice(0, 2).join(', ')} and ${selectedMainTypes.length - 2} more events`
     }
   }
   
@@ -850,6 +907,97 @@ const getBasicEventTypeDisplay = (selectedEventTypes) => {
   }
   
   return display
+}
+
+// New helper functions for improved group display
+const getGroupSubscriptionIcon = (groupId) => {
+  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  return isSubscribed ? '✅' : '☐'
+}
+
+const getGroupSelectedCount = (groupId) => {
+  const group = props.groups[groupId]
+  if (!group) return 0
+  
+  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const groupEventTypes = getGroupEventTypes(group)
+  
+  if (isSubscribed) {
+    // When subscribed, count the actual events that have event counts > 0
+    return groupEventTypes.length
+  }
+  
+  // Count individually selected events in this group
+  return groupEventTypes.filter(type => 
+    props.selectedEventTypes && props.selectedEventTypes.includes(type)
+  ).length
+}
+
+const getGroupTotalCount = (group) => {
+  return getGroupEventTypes(group).length
+}
+
+const getGroupDisplayName = (group) => {
+  // Extract emoji and clean name
+  const groupIcon = group.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '📋'
+  const groupName = group.name.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
+  return `${groupIcon} ${groupName}`
+}
+
+const getGroupSubscriptionStatus = (groupId) => {
+  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const selectedCount = getGroupSelectedCount(groupId)
+  const totalCount = getGroupTotalCount(props.groups[groupId])
+  
+  if (isSubscribed) {
+    return 'SUBSCRIBED'
+  } else if (selectedCount === totalCount && totalCount > 0) {
+    return 'ALL SELECTED'
+  } else if (selectedCount > 0) {
+    return 'PARTIAL'
+  } else {
+    return 'NOT SELECTED'
+  }
+}
+
+const getGroupDisplayClass = (groupId) => {
+  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const selectedCount = getGroupSelectedCount(groupId)
+  const totalCount = getGroupTotalCount(props.groups[groupId])
+  
+  if (isSubscribed) {
+    // SUBSCRIBED - Very prominent green with strong border
+    return 'bg-green-100 dark:bg-green-800/50 border-green-500 dark:border-green-400 text-green-800 dark:text-green-100 shadow-lg shadow-green-200/50 dark:shadow-green-800/30'
+  } else if (selectedCount === totalCount && totalCount > 0) {
+    // ALL SELECTED manually - Strong blue
+    return 'bg-blue-100 dark:bg-blue-800/50 border-blue-500 dark:border-blue-400 text-blue-800 dark:text-blue-100 shadow-md shadow-blue-200/50 dark:shadow-blue-800/30'
+  } else if (selectedCount > 0) {
+    // PARTIALLY selected - Light blue
+    return 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300'
+  } else {
+    // NOT SELECTED - Muted gray
+    return 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+  }
+}
+
+const getCountDisplayClass = (groupId) => {
+  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const selectedCount = getGroupSelectedCount(groupId)
+  const totalCount = getGroupTotalCount(props.groups[groupId])
+  
+  if (isSubscribed) {
+    // SUBSCRIBED - White text on dark green
+    return 'bg-green-600 dark:bg-green-500 text-white'
+  } else if (selectedCount === totalCount && totalCount > 0) {
+    // ALL SELECTED manually - White text on dark blue
+    return 'bg-blue-600 dark:bg-blue-500 text-white'
+  } else if (selectedCount > 0) {
+    // PARTIALLY selected - Dark blue text on light blue
+    return 'bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-100'
+  } else {
+    // NOT SELECTED - Gray
+    return 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+  }
 }
 
 // Keep the old function for backward compatibility in existing calendars display
@@ -872,16 +1020,16 @@ const getConciseEventTypes = (eventTypes) => {
 watch([() => props.selectedEventTypes, () => props.filterMode], () => {
   updateFormName()
   
-  // Track if user has ever selected event types to prevent section from disappearing
+  // Track if user has ever selected events to prevent section from disappearing
   if (props.selectedEventTypes.length > 0) {
     hasEverHadEventTypes.value = true
   }
   
-  // Exit update mode if no event types are selected (with delay to allow parent to update props)
+  // Exit update mode if no events are selected (with delay to allow parent to update props)
   if (props.selectedEventTypes.length === 0 && isUpdateMode.value) {
     // Use nextTick to allow parent component to process the load-filter event first
     setTimeout(() => {
-      // Only exit if still no event types after allowing time for parent to update
+      // Only exit if still no events after allowing time for parent to update
       if (props.selectedEventTypes.length === 0 && isUpdateMode.value) {
         exitUpdateMode()
       }

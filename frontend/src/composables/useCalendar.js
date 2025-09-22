@@ -22,7 +22,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
   const showGroupsSection = ref(true)
   const showSelectedOnly = ref(false)
   const eventTypeSearch = ref('')
-  const filterMode = ref(FILTER_MODES.INCLUDE)
   const showPreview = ref(false)
   const previewGroup = ref(PREVIEW_GROUPS.NONE)
   const previewOrder = ref(SORT_ORDERS.ASC)
@@ -39,7 +38,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
       const storageKey = getFilterStorageKey(calendarId.value)
       const filtersData = {
         selectedEventTypes: selectedEventTypes.value,
-        filterMode: filterMode.value,
         eventTypeSearch: eventTypeSearch.value,
         showSingleEvents: showSingleEvents.value,
         showSelectedOnly: showSelectedOnly.value,
@@ -65,9 +63,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
           // Apply saved filters with validation
           if (Array.isArray(filtersData.selectedEventTypes)) {
             selectedEventTypes.value = filtersData.selectedEventTypes
-          }
-          if (filtersData.filterMode && Object.values(FILTER_MODES).includes(filtersData.filterMode)) {
-            filterMode.value = filtersData.filterMode
           }
           if (typeof filtersData.eventTypeSearch === 'string') {
             eventTypeSearch.value = filtersData.eventTypeSearch
@@ -102,7 +97,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
         const oldStorageKey = getFilterStorageKey(oldCalendarId)
         const currentFilters = {
           selectedEventTypes: selectedEventTypes.value,
-          filterMode: filterMode.value,
           eventTypeSearch: eventTypeSearch.value,
           showSingleEvents: showSingleEvents.value,
           showSelectedOnly: showSelectedOnly.value,
@@ -140,7 +134,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
 
   // Watch filter state changes and auto-save
   watch(selectedEventTypes, debouncedSave, { deep: true })
-  watch(filterMode, debouncedSave)
   watch(showSingleEvents, debouncedSave)
   watch(showSelectedOnly, debouncedSave)
   watch(expandedEventTypes, debouncedSave, { deep: true })
@@ -224,9 +217,8 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
       const eventType = getEventTypeKey(event)
       const isInSelectedEventType = selectedEventTypeNames.has(eventType)
       
-      return filterMode.value === FILTER_MODES.INCLUDE 
-        ? isInSelectedEventType 
-        : !isInSelectedEventType
+      // With groups, we only show selected event types (simple inclusion)
+      return isInSelectedEventType
     }).length
   })
 
@@ -245,9 +237,8 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
       const isFutureEvent = !eventStart || new Date(eventStart) >= now
       
       // Apply both event type filter and future events filter
-      const passesEventTypeFilter = filterMode.value === FILTER_MODES.INCLUDE 
-        ? isInSelectedEventType 
-        : !isInSelectedEventType
+      // With groups, we only show selected event types (simple inclusion)
+      const passesEventTypeFilter = isInSelectedEventType
         
       return passesEventTypeFilter && isFutureEvent
     })
@@ -549,13 +540,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     selectedEventTypes.value = selectedEventTypes.value.filter(name => !singleEventNames.includes(name))
   }
 
-  function switchFilterMode(newMode) {
-    if (filterMode.value !== newMode) {
-      // Just switch the mode, keep the same categories selected
-      filterMode.value = newMode
-      previewLimit.value = EVENT_LIMITS.PREVIEW_DEFAULT
-    }
-  }
 
   function togglePreviewOrder() {
     previewOrder.value = previewOrder.value === SORT_ORDERS.ASC ? SORT_ORDERS.DESC : SORT_ORDERS.ASC
@@ -565,8 +549,7 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     try {
       const result = await appStore.generateIcal({
         calendarId: appStore.selectedCalendar.id,
-        selectedEventTypes: selectedEventTypes.value,
-        filterMode: filterMode.value
+        selectedEventTypes: selectedEventTypes.value
       })
       
       if (result.success) {
@@ -612,7 +595,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     showGroupsSection,
     showSelectedOnly,
     eventTypeSearch,
-    filterMode,
     showPreview,
     previewGroup,
     previewOrder,
@@ -645,7 +627,6 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     clearAllEventTypes,
     selectAllSingleEvents,
     clearAllSingleEvents,
-    switchFilterMode,
     togglePreviewOrder,
     generateIcalFile,
     updateCalendarId,

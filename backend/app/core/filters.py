@@ -8,51 +8,6 @@ from datetime import datetime, date
 import json
 
 
-def filter_events_by_categories(
-    events: List[Dict[str, Any]], 
-    include_categories: List[str], 
-    exclude_categories: List[str], 
-    filter_mode: str
-) -> List[Dict[str, Any]]:
-    """
-    Pure function: Filter events by category inclusion/exclusion rules
-    
-    Args:
-        events: List of event dictionaries
-        include_categories: Categories to include 
-        exclude_categories: Categories to exclude
-        filter_mode: "include" or "exclude"
-    
-    Returns:
-        Filtered list of events
-    """
-    if not events:
-        return []
-    
-    filtered_events = []
-    
-    for event in events:
-        event_category = event.get('category', '')
-        
-        if filter_mode == 'include':
-            # Include mode: only include events in specified categories
-            if include_categories:
-                if event_category in include_categories:
-                    filtered_events.append(event)
-            else:
-                # No include categories specified, include all
-                filtered_events.append(event)
-        
-        elif filter_mode == 'exclude':
-            # Exclude mode: exclude events in specified categories  
-            if exclude_categories:
-                if event_category not in exclude_categories:
-                    filtered_events.append(event)
-            else:
-                # No exclude categories specified, include all
-                filtered_events.append(event)
-    
-    return filtered_events
 
 
 def filter_events_by_date_range(
@@ -202,70 +157,6 @@ def sort_events(
         )
 
 
-def apply_saved_filter_config(
-    events: List[Dict[str, Any]], 
-    filter_config: Dict[str, Any]
-) -> List[Dict[str, Any]]:
-    """
-    Pure function: Apply a saved filter configuration to events
-    
-    Args:
-        events: List of event dictionaries
-        filter_config: Filter configuration matching SavedFilterConfig schema
-    
-    Returns:
-        Filtered and sorted list of events
-    """
-    if not events:
-        return []
-    
-    filtered_events = events
-    
-    # Apply category filter
-    selected_types = filter_config.get('selectedEventTypes', [])
-    if selected_types:
-        filtered_events = filter_events_by_categories(
-            filtered_events,
-            include_categories=selected_types,
-            exclude_categories=[],
-            filter_mode='include'
-        )
-    
-    # Apply keyword filter  
-    keyword_filter = filter_config.get('keywordFilter', '')
-    if keyword_filter.strip():
-        filtered_events = filter_events_by_keywords(filtered_events, keyword_filter)
-    
-    # Apply date range filter
-    date_range = filter_config.get('dateRange', {})
-    start_date_str = date_range.get('start')
-    end_date_str = date_range.get('end')
-    
-    start_date = None
-    end_date = None
-    
-    if start_date_str:
-        try:
-            start_date = datetime.fromisoformat(start_date_str)
-        except:
-            pass
-            
-    if end_date_str:
-        try:
-            end_date = datetime.fromisoformat(end_date_str)
-        except:
-            pass
-    
-    if start_date or end_date:
-        filtered_events = filter_events_by_date_range(filtered_events, start_date, end_date)
-    
-    # Apply sorting
-    sort_by = filter_config.get('sortBy', 'date')
-    sort_direction = filter_config.get('sortDirection', 'asc')
-    
-    filtered_events = sort_events(filtered_events, sort_by, sort_direction)
-    
-    return filtered_events
 
 
 def parse_json_field(json_string: str, default: Any = None) -> Any:

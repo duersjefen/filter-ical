@@ -24,16 +24,12 @@ export function useFilteredCalendarAPI() {
   /**
    * Pure function: Create filtered calendar data payload
    */
-  const createFilteredCalendarPayload = (sourceCalendarId, name, filterConfig) => {
-    // Keep the original structure that the frontend expects
+  const createFilteredCalendarPayload = (sourceCalendarId, name, selectedGroups, selectedEvents) => {
     return {
       source_calendar_id: sourceCalendarId,
       name: name.trim(),
-      filter_config: {
-        include_event_types: filterConfig.include_event_types || [],
-        exclude_event_types: filterConfig.exclude_event_types || [],
-        filter_mode: filterConfig.filter_mode || 'include'
-      }
+      selected_groups: selectedGroups || [],
+      selected_events: selectedEvents || []
     }
   }
 
@@ -48,7 +44,8 @@ export function useFilteredCalendarAPI() {
       calendar_url: apiResponse.calendar_url,
       preview_url: apiResponse.preview_url,
       source_calendar_id: apiResponse.source_calendar_id,
-      filter_config: apiResponse.filter_config,
+      selected_groups: apiResponse.selected_groups || [],
+      selected_events: apiResponse.selected_events || [],
       created_at: apiResponse.created_at,
       updated_at: apiResponse.updated_at || apiResponse.created_at
     }
@@ -94,7 +91,7 @@ export function useFilteredCalendarAPI() {
     }
   }
 
-  const createFilteredCalendar = async (sourceCalendarId, name, filterConfig) => {
+  const createFilteredCalendar = async (sourceCalendarId, name, selectedGroups, selectedEvents) => {
     if (!name?.trim()) {
       error.value = 'Name is required'
       return false
@@ -104,7 +101,7 @@ export function useFilteredCalendarAPI() {
     error.value = null
 
     try {
-      const payload = createFilteredCalendarPayload(sourceCalendarId, name, filterConfig)
+      const payload = createFilteredCalendarPayload(sourceCalendarId, name, selectedGroups, selectedEvents)
       const response = await axios.post('/api/filtered-calendars', payload, {
         headers: {}
       })
@@ -135,7 +132,8 @@ export function useFilteredCalendarAPI() {
     try {
       const payload = {
         name: updates.name?.trim(),
-        filter_config: updates.filter_config
+        selected_groups: updates.selected_groups,
+        selected_events: updates.selected_events
       }
 
       // Remove undefined values
@@ -213,24 +211,14 @@ export function useFilteredCalendarAPI() {
   /**
    * Pure helper functions for validation
    */
-  const validateFilterConfig = (filterConfig) => {
+  const validateSelection = (selectedGroups, selectedEvents) => {
     const errors = []
     
-    if (!filterConfig) {
-      errors.push('Filter configuration is required')
-      return { isValid: false, errors }
-    }
+    const hasGroups = selectedGroups?.length > 0
+    const hasEvents = selectedEvents?.length > 0
 
-    if (!filterConfig.filter_mode || !['include', 'exclude'].includes(filterConfig.filter_mode)) {
-      errors.push('Valid filter mode (include/exclude) is required')
-    }
-
-    const hasIncludeCategories = filterConfig.include_event_types?.length > 0
-    const hasExcludeCategories = filterConfig.exclude_event_types?.length > 0
-    const hasKeywords = filterConfig.include_keywords?.length > 0 || filterConfig.exclude_keywords?.length > 0
-
-    if (!hasIncludeCategories && !hasExcludeCategories && !hasKeywords) {
-      errors.push('At least one filter criteria is required (categories or keywords)')
+    if (!hasGroups && !hasEvents) {
+      errors.push('At least one group or event must be selected')
     }
 
     return {
@@ -277,7 +265,7 @@ export function useFilteredCalendarAPI() {
     getPublicCalendar,
     
     // Utilities
-    validateFilterConfig,
+    validateSelection,
     validateCalendarName,
     clearError,
     

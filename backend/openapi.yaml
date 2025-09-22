@@ -521,10 +521,8 @@ paths:
                     calendar_url: "https://filter-ical.de/cal/abc123def456"
                     preview_url: "https://filter-ical.de/preview/abc123def456"
                     source_calendar_id: "cal_001"
-                    filter_config:
-                      include_event_types: ["Work", "Meeting"]
-                      exclude_event_types: []
-                      filter_mode: "include"
+                    selected_groups: ["grp_work", "grp_meetings"]
+                    selected_events: ["evt_001", "evt_002"]
                     created_at: "2024-01-18T09:00:00Z"
                     updated_at: "2024-01-18T09:00:00Z"
         '500':
@@ -544,7 +542,8 @@ paths:
               required:
                 - source_calendar_id
                 - name
-                - filter_config
+                - selected_groups
+                - selected_events
               properties:
                 source_calendar_id:
                   type: string
@@ -556,15 +555,23 @@ paths:
                   maxLength: 100
                   description: Name for the filtered calendar
                   example: "Work Events Only"
-                filter_config:
-                  $ref: '#/components/schemas/FilterConfig'
+                selected_groups:
+                  type: array
+                  items:
+                    type: string
+                  description: Group IDs that are selected
+                  example: ["grp_sports", "grp_meetings"]
+                selected_events:
+                  type: array
+                  items:
+                    type: string
+                  description: Individual event IDs that are selected
+                  example: ["evt_001", "evt_002"]
             example:
               source_calendar_id: "cal_001"
               name: "Work Events Only"
-              filter_config:
-                include_event_types: ["Work", "Meeting"]
-                exclude_event_types: []
-                filter_mode: "include"
+              selected_groups: ["grp_sports", "grp_meetings"]
+              selected_events: ["evt_001", "evt_002"]
       responses:
         '201':
           description: Filtered calendar created successfully
@@ -606,14 +613,22 @@ paths:
                   maxLength: 100
                   description: Updated name for the filtered calendar
                   example: "Updated Work Events"
-                filter_config:
-                  $ref: '#/components/schemas/FilterConfig'
+                selected_groups:
+                  type: array
+                  items:
+                    type: string
+                  description: Updated group IDs that are selected
+                  example: ["grp_sports", "grp_meetings", "grp_training"]
+                selected_events:
+                  type: array
+                  items:
+                    type: string
+                  description: Updated individual event IDs that are selected
+                  example: ["evt_001", "evt_002", "evt_003"]
             example:
               name: "Updated Work Events"
-              filter_config:
-                include_event_types: ["Work", "Meeting", "Training"]
-                exclude_event_types: []
-                filter_mode: "include"
+              selected_groups: ["grp_sports", "grp_meetings", "grp_training"]
+              selected_events: ["evt_001", "evt_002", "evt_003"]
       responses:
         '200':
           description: Filtered calendar updated successfully
@@ -715,32 +730,19 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - filter_mode
               properties:
                 selected_groups:
                   type: array
                   items:
                     type: string
-                  description: Group IDs to include or exclude
+                  description: Group IDs to include in the filtered calendar
                   example: ["grp_portal", "grp_meetings"]
                 selected_events:
                   type: array
                   items:
                     type: string
-                  description: Individual event IDs to include or exclude
+                  description: Individual event IDs to include in the filtered calendar
                   example: ["evt_001", "evt_002"]
-                selected_event_types:
-                  type: array
-                  items:
-                    type: string
-                  description: Event types to include or exclude (for backward compatibility)
-                  example: ["Work", "Meeting"]
-                filter_mode:
-                  type: string
-                  enum: [include, exclude]
-                  description: Whether to include or exclude the selected items
-                  example: "include"
       responses:
         '200':
           description: Successfully generated filtered iCal content
@@ -1223,28 +1225,6 @@ components:
           description: Event location (optional)
           example: "Conference Room A"
 
-    FilterConfig:
-      type: object
-      required:
-        - filter_mode
-      properties:
-        include_event_types:
-          type: array
-          items:
-            type: string
-          description: Event types to include (when filter_mode is 'include')
-          example: ["Work", "Meeting"]
-        exclude_event_types:
-          type: array
-          items:
-            type: string
-          description: Event types to exclude (when filter_mode is 'exclude')
-          example: []
-        filter_mode:
-          type: string
-          enum: [include, exclude]
-          description: Filter mode - include or exclude selected event types
-          example: "include"
 
     FilteredCalendar:
       type: object
@@ -1255,7 +1235,8 @@ components:
         - calendar_url
         - preview_url
         - source_calendar_id
-        - filter_config
+        - selected_groups
+        - selected_events
         - created_at
         - updated_at
       properties:
@@ -1285,8 +1266,18 @@ components:
           type: string
           description: Source calendar identifier
           example: "cal_001"
-        filter_config:
-          $ref: '#/components/schemas/FilterConfig'
+        selected_groups:
+          type: array
+          items:
+            type: string
+          description: Group IDs that are subscribed/selected
+          example: ["grp_sports", "grp_meetings"]
+        selected_events:
+          type: array
+          items:
+            type: string
+          description: Individual event IDs that are selected
+          example: ["evt_001", "evt_002"]
         created_at:
           type: string
           format: date-time

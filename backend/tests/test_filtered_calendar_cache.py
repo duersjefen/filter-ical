@@ -7,7 +7,8 @@ import hashlib
 from datetime import datetime, timedelta
 from sqlmodel import Session
 
-from app.models import Calendar, Event, FilteredCalendar, FilterMode
+from app.models import Calendar, Event, FilteredCalendar
+from app.core.filters import serialize_json_field
 from app.core.filter_regeneration import (
     get_cached_filtered_ical,
     get_filtered_ical_cache_first, 
@@ -32,7 +33,8 @@ class TestFilteredCalendarCache:
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,
             cached_ical_content=None  # No cache
         )
@@ -69,7 +71,8 @@ class TestFilteredCalendarCache:
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=False,  # Cache is valid
             cached_ical_content=cached_content,
             cached_content_hash=content_hash,
@@ -98,7 +101,8 @@ class TestFilteredCalendarCache:
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True,  # Cache is invalid
             cached_ical_content=stale_content,
             cached_content_hash="old_hash",
@@ -130,7 +134,8 @@ class TestFilteredCalendarCache:
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True
         )
         session.add(filtered_calendar)
@@ -195,7 +200,8 @@ class TestFilteredCalendarCache:
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True
         )
         session.add(filtered_calendar)
@@ -272,7 +278,8 @@ class TestFilteredCalendarCache:
             user_id="public",
             include_events=serialize_json_field(["Work"]),
             exclude_events=serialize_json_field([]),
-            filter_mode=FilterMode.include,
+            selected_groups=serialize_json_field(["grp_work"]),
+            selected_events=serialize_json_field([]),
             needs_regeneration=True
         )
         session.add(filtered_calendar)

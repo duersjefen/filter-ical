@@ -25,11 +25,9 @@
         :ungrouped-event-types="appStore.ungroupedEventTypes"
         :ungrouped-recurring-event-types="appStore.ungroupedRecurringEventTypes"
         :ungrouped-unique-event-types="appStore.ungroupedUniqueEventTypes"
-        :filter-mode="filterMode"
         :domain-id="props.domainContext?.id || 'default'"
         :show-groups-section="showGroupsSection"
         @selection-changed="handleGroupSelectionChanged"
-        @switch-filter-mode="switchFilterMode"
         @switch-to-types="handleSwitchToTypes"
         @toggle-groups-section="showGroupsSection = !showGroupsSection"
       />
@@ -41,19 +39,20 @@
         :main-event-types="mainEventTypes"
         :single-event-types="singleEventTypes"
         :all-event-types="eventTypesSortedByCount"
-        :selected-event-types="selectedEventTypes"
+        :selected-event-types="unifiedSelectedEventTypes"
         :expanded-event-types="expandedEventTypes"
         :show-single-events="showSingleEvents"
         :show-event-types-section="showEventTypesSection"
         :show-selected-only="showSelectedOnly"
         :search-term="eventTypeSearch"
         :has-groups="appStore.hasGroups"
+        :summary-text="eventGroupSummary"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
-        @clear-all="clearAllEventTypes"
-        @select-all="selectAllEventTypes"
+        @clear-all="clearSelection"
+        @select-all="handleSelectAllEventTypes"
         @update:search-term="eventTypeSearch = $event"
-        @toggle-event-type="toggleEventType"
+        @toggle-event-type="unifiedToggleEventType"
         @toggle-expansion="toggleEventTypeExpansion"
         @toggle-singles-visibility="showSingleEvents = !showSingleEvents"
         @select-all-singles="selectAllSingleEvents"
@@ -70,9 +69,9 @@
       <!-- This manages global filtered calendars that may exist from any source calendar -->
       <FilteredCalendarSection
         :selected-calendar="selectedCalendar"
-        :selected-event-types="selectedEventTypes"
+        :selected-event-types="unifiedSelectedEventTypes"
         :selected-groups="selectedGroups"
-        :filter-mode="filterMode"
+        :subscribed-groups="subscribedGroups"
         :main-event-types="mainEventTypes"
         :single-event-types="singleEventTypes"
         :groups="appStore.groups"
@@ -82,11 +81,10 @@
       />
 
       <PreviewEventsSection
-        :selected-event-types="selectedEventTypes"
+        :selected-event-types="unifiedSelectedEventTypes"
         :sorted-preview-events="sortedPreviewEvents"
         :preview-group="previewGroup"
         :grouped-preview-events="groupedPreviewEvents"
-        :filter-mode="filterMode"
         :all-events="events"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
@@ -187,7 +185,6 @@ const {
   showGroupsSection,
   showSelectedOnly,
   eventTypeSearch,
-  filterMode,
   previewGroup,
   eventTypesSortedByCount,
   mainEventTypes,
@@ -204,13 +201,20 @@ const {
   clearAllEventTypes,
   selectAllSingleEvents,
   clearAllSingleEvents,
-  switchFilterMode,
   updateCalendarId,
   // No preferences loading needed
 } = useCalendar(events, eventTypes, props.id)
 
-// Get group subscription functions
-const { subscribeToGroup, unsubscribeFromGroup } = useEventSelection()
+// Get unified event selection system (replaces useCalendar selection)
+const { 
+  subscribeToGroup, 
+  unsubscribeFromGroup, 
+  subscribedGroups,
+  selectedEventTypes: unifiedSelectedEventTypes,
+  toggleEventType: unifiedToggleEventType,
+  selectEventTypes,
+  clearSelection
+} = useEventSelection()
 
 // View mode localStorage persistence functions
 const VIEW_MODE_STORAGE_KEY = 'ical-viewer-view-mode'
@@ -250,6 +254,48 @@ const shouldShowGroups = computed(() => {
 
 const shouldShowTypes = computed(() => {
   return !shouldShowGroups.value
+})
+
+// Computed property for the summary text that should appear in both card headers
+const eventGroupSummary = computed(() => {
+  const totalGroups = appStore.groups ? Object.keys(appStore.groups).length : 0
+  const subscribedGroupsCount = selectedGroups.value ? selectedGroups.value.length : 0
+  const selectedEventsCount = selectedEventTypes.value ? selectedEventTypes.value.length : 0
+  
+  // Calculate total available events
+  let totalAvailableEvents = 0
+  if (eventTypes.value) {
+    Object.values(eventTypes.value).forEach(eventType => {
+      if (eventType && eventType.count > 0) {
+        totalAvailableEvents += 1 // Count event types, not individual events
+      }
+    })
+  }
+  
+  // Use the effective selected count
+  let effectiveSelectedEvents = selectedEventsCount
+  
+  if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
+    return 'No events or groups selected'
+  }
+  
+  const parts = []
+  
+  // Events part
+  if (effectiveSelectedEvents > 0 || totalAvailableEvents > 0) {
+    parts.push(`${effectiveSelectedEvents}/${totalAvailableEvents} Events`)
+  }
+  
+  // Groups part with special cases
+  if (subscribedGroupsCount === 0) {
+    parts.push('No groups')
+  } else if (subscribedGroupsCount === totalGroups && totalGroups > 0) {
+    parts.push('All groups')
+  } else {
+    parts.push(`${subscribedGroupsCount}/${totalGroups} Groups`)
+  }
+  
+  return parts.join(' & ')
 })
 
 
@@ -479,10 +525,6 @@ const loadFilterIntoPage = (filterData) => {
   // Clear current selection
   clearAllEventTypes()
   
-  // Set the filter mode
-  if (filterData.mode !== filterMode.value) {
-    switchFilterMode(filterData.mode)
-  }
   
   // Select the event types from the filter
   filterData.eventTypes.forEach(eventTypeName => {
@@ -506,59 +548,26 @@ const handleSelectionChanged = (selection) => {
 
 // Handle selection changes from the dual selection system
 const handleGroupSelectionChanged = (selectionData) => {
-  console.log('🎯 Dual selection changed:', selectionData)
+  console.log('🎯 Unified selection changed:', selectionData)
   
-  // Extract data from the dual selection format
+  // Extract data from the unified selection format
   const { groups, eventTypes, events, subscribedGroups } = selectionData
   
-  console.log('🔧 Processing dual selection:', {
+  console.log('🔧 Processing unified selection:', {
     subscribedGroups: subscribedGroups,
     groups: groups,
     eventTypes: eventTypes,
     events: events
   })
   
-  // Store selected groups and event types for filtering (legacy support)
+  // Store legacy selectedGroups for compatibility (will be removed later)
   selectedGroups.value = groups || []
   
-  // Handle subscribed groups separately (for future-proof filtering)
-  if (subscribedGroups) {
-    console.log('📁 Group subscriptions:', subscribedGroups)
-    // Store subscribed groups for filtered calendar creation
-    // This data will be used when creating filtered calendars that auto-include new events
-  }
+  // Note: No need to manually update selectedEventTypes here anymore
+  // The unified system handles this automatically through useEventSelection
+  // The Events and Groups views now share the same selection state
   
-  // Update selectedEventTypes to include both direct event types and resolved group event types
-  let resolvedEventTypes = [...(eventTypes || [])]
-  
-  // Add event types from selected groups (current manual selection)
-  if (groups && groups.length > 0 && appStore.groups) {
-    groups.forEach(groupId => {
-      const group = appStore.groups[groupId]
-      if (group && group.event_types) {
-        resolvedEventTypes.push(...Object.keys(group.event_types))
-      }
-    })
-  }
-  
-  // Add event types from subscribed groups (future-proof selection)
-  if (subscribedGroups && subscribedGroups.length > 0 && appStore.groups) {
-    subscribedGroups.forEach(groupId => {
-      const group = appStore.groups[groupId]
-      if (group && group.event_types) {
-        resolvedEventTypes.push(...Object.keys(group.event_types))
-      }
-    })
-  }
-  
-  // Remove duplicates
-  resolvedEventTypes = [...new Set(resolvedEventTypes)]
-  
-  // Update the selectedEventTypes to integrate with existing filter system
-  selectedEventTypes.value = resolvedEventTypes
-  
-  console.log('✅ Final selectedEventTypes:', selectedEventTypes.value)
-  console.log('📁 Subscribed groups will auto-include future events:', subscribedGroups || [])
+  console.log('✅ Unified selection system updated')
 }
 
 // Handle selection changes from the enhanced selection system  
@@ -661,6 +670,26 @@ const findGroupInChildren = (children, groupId) => {
   }
   
   return null
+}
+
+// Unified event selection handlers
+const handleSelectAllEventTypes = () => {
+  // Get all available event types from the current data
+  const allEventTypes = []
+  
+  // Add main event types
+  if (mainEventTypes.value) {
+    allEventTypes.push(...Object.keys(mainEventTypes.value))
+  }
+  
+  // Add single event types
+  if (singleEventTypes.value) {
+    allEventTypes.push(...singleEventTypes.value.map(et => et.name))
+  }
+  
+  // Remove duplicates and select all
+  const uniqueEventTypes = [...new Set(allEventTypes)]
+  selectEventTypes(uniqueEventTypes)
 }
 
 // Bulk group action handlers  

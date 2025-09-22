@@ -9,9 +9,6 @@ from enum import Enum
 import uuid
 
 
-class FilterMode(str, Enum):
-    include = "include"
-    exclude = "exclude"
 
 
 
@@ -118,9 +115,8 @@ class FilteredCalendar(SQLModel, table=True):
     cache_updated_at: Optional[datetime] = Field(default=None)  # When cache was last updated
     
     # Filter configuration stored as JSON
-    include_events: str = Field(default="[]")  # JSON array of strings
-    exclude_events: str = Field(default="[]")  # JSON array of strings  
-    filter_mode: FilterMode = Field(default=FilterMode.include)
+    selected_groups: str = Field(default="[]")  # JSON array of group IDs
+    selected_events: str = Field(default="[]")  # JSON array of event IDs
     
     # Relationship
     source_calendar: Optional[Calendar] = Relationship(back_populates="filtered_calendars")
