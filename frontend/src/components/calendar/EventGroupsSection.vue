@@ -255,31 +255,7 @@ const subscribeToAllGroups = () => {
   })
 }
 
-const unsubscribeFromAllGroups = () => {
-  // Unsubscribe from all groups but keep individual event selections
-  Object.entries(allGroups.value).forEach(([groupId, group]) => {
-    unsubscribeFromGroup(groupId, group)
-  })
-}
-
-const subscribeAndSelectAllGroups = () => {
-  // Subscribe to all groups AND select all their event types (like Subscribe & Select)
-  Object.entries(allGroups.value).forEach(([groupId, group]) => {
-    subscribeToGroup(groupId, group)
-    
-    // Also select all event types in this group
-    if (group && group.event_types) {
-      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
-        return group.event_types[eventType].count > 0
-      })
-      groupEventTypes.forEach(eventType => {
-        if (!selectedEventTypes.value.includes(eventType)) {
-          toggleEventType(eventType)
-        }
-      })
-    }
-  })
-}
+// unsubscribeFromAllGroups and subscribeAndSelectAllGroups are now provided by unified selection system
 
 // Use unified expansion functions (toggleGroupExpansion, expandAllGroups, collapseAllGroups)
 const toggleExpansion = toggleGroupExpansion
