@@ -46,8 +46,12 @@ def get_filtered_events_from_db(
             "location": event.location
         })
     
+    # Apply consistent date filtering: only recent (1 week) + future events
+    from ..core.ical_parser import filter_recent_and_future_events
+    recent_and_future_events = filter_recent_and_future_events(events_data)
+    
     # Apply filter configuration using pure function
-    filtered_events = apply_saved_filter_config(events_data, filter_config)
+    filtered_events = apply_saved_filter_config(recent_and_future_events, filter_config)
     
     return filtered_events
 

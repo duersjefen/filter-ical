@@ -837,6 +837,8 @@ paths:
       description: |
         Fetch and parse events directly from domain's iCal source in real-time.
         This endpoint provides the core domain event data without requiring user calendar creation.
+        
+        **Event Filtering**: Returns only recent (1 week back) and future events. See EventFiltering schema for details.
       tags:
         - Domains
       parameters:
@@ -954,6 +956,8 @@ paths:
       description: |
         Retrieve event groups configured for this domain with current event assignments.
         Groups provide organized filtering of domain events by category.
+        
+        **Event Filtering**: All event counts within groups reflect only recent (1 week back) and future events. See EventFiltering schema for details.
       tags:
         - Domains
       parameters:
@@ -1026,6 +1030,8 @@ paths:
       description: |
         Retrieve all event types available in this domain's calendar data.
         Useful for building dynamic filters and understanding domain content.
+        
+        **Event Filtering**: Returns only event types that have recent (1 week back) or future events. See EventFiltering schema for details.
       tags:
         - Domains
       parameters:
@@ -1127,6 +1133,24 @@ paths:
 
 components:
   schemas:
+    EventFiltering:
+      type: object
+      description: |
+        **Event Filtering Behavior**
+        
+        All event-related endpoints in this API implement consistent filtering:
+        - **Recent Events**: Events from 1 week ago through present day
+        - **Future Events**: All events scheduled for future dates
+        - **Excluded**: Events older than 1 week are excluded from all responses
+        
+        This filtering applies to:
+        - Event counts in group responses
+        - Individual event lists
+        - Generated filtered iCal files
+        - All domain event endpoints
+        
+        **Rationale**: Calendar applications should focus on upcoming events with minimal recent context.
+        
     Calendar:
       type: object
       required:

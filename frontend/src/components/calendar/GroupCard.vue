@@ -303,17 +303,10 @@ const fetchEventTypeEvents = async (eventTypeName) => {
     
     const data = await response.json()
     
-    // Filter events to show recent and future events (hide old past events)
-    const now = new Date()
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const recentAndFutureEvents = (data.events || []).filter(event => {
-      if (!event.start) return true // Keep events without start date
-      const eventDate = new Date(event.start)
-      return eventDate >= oneWeekAgo // Show events from last week onward
-    })
-    
+    // Backend now handles consistent filtering (recent + future events)
+    // No need for additional frontend filtering
     eventTypeEvents.value[eventTypeName] = {
-      events: recentAndFutureEvents,
+      events: data.events || [],
       loading: false,
       error: null
     }

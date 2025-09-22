@@ -21,8 +21,8 @@ from .models import (
 # Import pure functions (Functional Core)
 from .core.ical_parser import (
     fetch_ical_content, parse_calendar_events,
-    events_to_recurring_types, filter_future_events, create_ical_from_events,
-    events_to_event_types, split_ungrouped_events_by_type
+    events_to_recurring_types, filter_future_events, filter_recent_and_future_events, 
+    create_ical_from_events, events_to_event_types, split_ungrouped_events_by_type
 )
 from .core.filters import (
     filter_events_by_categories, apply_saved_filter_config,
@@ -1134,9 +1134,12 @@ async def get_domain_events(domain_id: str, event_type: Optional[str] = None):
                 detail=f"Failed to parse calendar data: {parse_error}"
             )
         
+        # Apply consistent filtering: only recent (1 week) + future events
+        filtered_events_data = filter_recent_and_future_events(events_data)
+        
         # Group events by event type
         events_by_type = {}
-        for event in events_data:
+        for event in filtered_events_data:
             event_type_name = event.get('event_type', 'Unknown')
             if event_type_name not in events_by_type:
                 events_by_type[event_type_name] = {
@@ -1163,7 +1166,7 @@ async def get_domain_events(domain_id: str, event_type: Optional[str] = None):
         metadata = {
             'domain_id': domain_id,
             'last_updated': now.isoformat() + 'Z',
-            'total_events': len(events_data),
+            'total_events': len(filtered_events_data),
             'source_url': calendar_url,
             'cache_expires': cache_expires.isoformat() + 'Z'
         }
@@ -1245,8 +1248,10 @@ async def get_domain_groups(domain_id: str, session: Session = Depends(get_sessi
                     print(f"Warning: Failed to parse domain events for {domain_id}: {parse_error}")
                     events_by_type = {}
                 else:
+                    # Apply consistent filtering: only recent (1 week) + future events
+                    filtered_events_data = filter_recent_and_future_events(events_data)
                     # Convert to event types format (same as events endpoint)
-                    events_by_type = events_to_event_types(events_data)
+                    events_by_type = events_to_event_types(filtered_events_data)
                     
                     print(f"🔍 Debug: Found {len(events_by_type)} event types in domain {domain_id}")
                     for event_type, data in list(events_by_type.items())[:3]:  # Show first 3
@@ -1273,20 +1278,23 @@ async def get_domain_groups(domain_id: str, session: Session = Depends(get_sessi
             assignments = session.exec(assignments_query).all()
             
             # Create event types dict for this group with real counts
+            # Only include assignments for event types that have recent+future events
             event_types = {}
             for assignment in assignments:
                 event_type = assignment.event_type
-                all_assigned_event_types.add(event_type)
                 
-                # Get actual events for this event type from real-time data
+                # Get actual events for this event type from real-time filtered data
                 type_events = events_by_type.get(event_type, {})
                 event_count = type_events.get('count', 0) if isinstance(type_events, dict) else 0
                 
-                event_types[event_type] = {
-                    'name': event_type,
-                    'count': event_count,
-                    'events': []  # Keep empty for API response size
-                }
+                # Only include this assignment if the event type has recent+future events
+                if event_count > 0:
+                    all_assigned_event_types.add(event_type)
+                    event_types[event_type] = {
+                        'name': event_type,
+                        'count': event_count,
+                        'events': []  # Keep empty for API response size
+                    }
             
             groups_dict[group.id] = {
                 'id': group.id,
@@ -1304,7 +1312,8 @@ async def get_domain_groups(domain_id: str, session: Session = Depends(get_sessi
                 ungrouped_event_type_names.append(event_type)
         
         # Split ungrouped event types into recurring vs unique categories
-        ungrouped_split = split_ungrouped_events_by_type(events_by_type, ungrouped_event_type_names, events_data)
+        # Use the same filtered events for consistency
+        ungrouped_split = split_ungrouped_events_by_type(events_by_type, ungrouped_event_type_names, filtered_events_data if 'filtered_events_data' in locals() else [])
         print(f"🔍 Debug: Split ungrouped events into {len(ungrouped_split['recurring'])} recurring and {len(ungrouped_split['unique'])} unique")
         
         return {
@@ -1467,9 +1476,12 @@ async def get_domain_event_type_events(domain_id: str, event_type: str):
                 detail=f"Failed to parse calendar data: {parse_error}"
             )
         
+        # Apply consistent filtering: only recent (1 week) + future events
+        recent_and_future_events = filter_recent_and_future_events(events_data)
+        
         # Filter events for the specific event type
         filtered_events = []
-        for event in events_data:
+        for event in recent_and_future_events:
             if event.get('summary', '').strip() == event_type:
                 # Format event for response
                 formatted_event = {

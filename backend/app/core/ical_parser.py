@@ -223,6 +223,43 @@ def filter_future_events(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return future_events
 
 
+def filter_recent_and_future_events(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Pure function: Filter events to include recent (1 week back) and future events
+    
+    This is the standard filtering function for all domain endpoints to ensure consistency:
+    - Recent events: Events from 1 week ago through present day
+    - Future events: All events scheduled for future dates
+    - Excluded: Events older than 1 week
+    
+    Returns: List of events from 1 week ago through the future
+    """
+    from datetime import datetime, timezone, timedelta
+    
+    # Calculate the cutoff date (1 week ago)
+    now = datetime.now(timezone.utc)
+    one_week_ago = now - timedelta(days=7)
+    cutoff = one_week_ago.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    recent_and_future_events = []
+    for event in events:
+        start = event.get('start')
+        if start:
+            # Convert to timezone-aware datetime for comparison
+            if isinstance(start, datetime):
+                if start.tzinfo is None:
+                    start = start.replace(tzinfo=timezone.utc)
+                if start >= cutoff:
+                    recent_and_future_events.append(event)
+            # Handle date objects (all-day events)
+            elif hasattr(start, 'year'):
+                start_dt = datetime.combine(start, datetime.min.time()).replace(tzinfo=timezone.utc)
+                if start_dt >= cutoff:
+                    recent_and_future_events.append(event)
+    
+    return recent_and_future_events
+
+
 def events_to_event_types(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
     Pure function: Transform events list into event types summary
@@ -286,13 +323,15 @@ def split_ungrouped_events_by_type(events_by_type: Dict[str, Dict[str, Any]], un
     }
 
 
-def events_to_recurring_types(events: List[Dict[str, Any]], future_only: bool = True) -> Dict[str, Dict[str, Any]]:
+def events_to_recurring_types(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
     Pure function: Transform events list into recurring event types grouped by identical titles
     Returns dictionary matching OpenAPI events response format for recurring events
+    
+    Note: Uses consistent recent + future filtering (1 week back through future)
     """
-    # Filter to future events only if requested
-    processed_events = filter_future_events(events) if future_only else events
+    # Apply consistent filtering: recent (1 week) + future events
+    processed_events = filter_recent_and_future_events(events)
     
     recurring_types = {}
     
