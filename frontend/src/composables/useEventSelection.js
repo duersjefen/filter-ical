@@ -80,43 +80,47 @@ export function useEventSelection() {
   
   const subscribeToGroup = (groupId, group = null) => {
     subscribedGroups.value.add(groupId)
-    
-    // Smart subscribe: Auto-select group's event types if no events currently selected
-    if (selectedEventTypes.value.length === 0 && group?.event_types) {
-      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
-        // Only include event types that have events (count > 0)
-        return group.event_types[eventType].count > 0
-      })
-      selectedEventTypes.value.push(...groupEventTypes)
-    }
+    // Subscribe only - no automatic selection of event types
+    // Use the combined "Subscribe & Select" button for automatic selection
   }
   
   const unsubscribeFromGroup = (groupId, group = null) => {
     subscribedGroups.value.delete(groupId)
-    
-    // Smart unsubscribe: Auto-deselect group's event types if all are currently selected
-    if (group?.event_types) {
-      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
-        // Only include event types that have events (count > 0)
-        return group.event_types[eventType].count > 0
-      })
-      
-      // Check if ALL group event types are currently individually selected
-      const allGroupTypesSelected = groupEventTypes.length > 0 && 
-        groupEventTypes.every(eventType => selectedEventTypes.value.includes(eventType))
-      
-      if (allGroupTypesSelected) {
-        // Remove all group event types from individual selections
-        selectedEventTypes.value = selectedEventTypes.value.filter(
-          eventType => !groupEventTypes.includes(eventType)
-        )
-      }
-    }
+    // Unsubscribe only - no automatic deselection of event types
+    // Use the combined "Subscribe & Select" button for automatic deselection
   }
   
   const subscribeToAllGroups = (groups) => {
     const groupIds = Object.keys(groups || {})
     subscribedGroups.value = new Set(groupIds)
+  }
+
+  // === Combined Operations for Three-Button System ===
+  
+  const subscribeAndSelectGroup = (groupId, group) => {
+    // Combined action: Subscribe to group AND select all its event types
+    subscribeToGroup(groupId, group)
+    
+    if (group?.event_types) {
+      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
+        // Only include event types that have events (count > 0)
+        return group.event_types[eventType].count > 0
+      })
+      selectEventTypes(groupEventTypes)
+    }
+  }
+  
+  const unsubscribeAndDeselectGroup = (groupId, group) => {
+    // Combined action: Unsubscribe from group AND deselect all its event types
+    unsubscribeFromGroup(groupId, group)
+    
+    if (group?.event_types) {
+      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
+        // Only include event types that have events (count > 0)
+        return group.event_types[eventType].count > 0
+      })
+      deselectEventTypes(groupEventTypes)
+    }
   }
   
   // === Group Operations (Legacy - for individual event type selection within groups) ===
@@ -301,6 +305,10 @@ export function useEventSelection() {
     subscribeToGroup,
     unsubscribeFromGroup,
     subscribeToAllGroups,
+    
+    // Combined operations (for three-button system)
+    subscribeAndSelectGroup,
+    unsubscribeAndDeselectGroup,
     
     // Group operations (legacy individual selection)
     getGroupEventTypes,

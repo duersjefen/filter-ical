@@ -40,31 +40,47 @@
         </div>
       </div>
       
-      <!-- Action Buttons: Subscribe vs Select All -->
+      <!-- Action Buttons: Three-Button System -->
       <div class="flex gap-2 mt-3">
-        <!-- Subscribe Button - Group-level subscription -->
+        <!-- Combined Button - Primary Action (Subscribe + Select) -->
+        <button
+          @click.stop="toggleSubscribeAndSelect"
+          class="flex-1 px-4 py-2.5 text-sm rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 border-2"
+          :class="isBothSubscribedAndSelected 
+            ? 'bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-500' 
+            : 'bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-600'"
+          :title="isBothSubscribedAndSelected ? 'Unsubscribe and deselect this group' : 'Subscribe to group and select all event types'"
+        >
+          <span v-if="isBothSubscribedAndSelected">✅ Subscribed & Selected</span>
+          <span v-else>🎯 Subscribe & Select</span>
+        </button>
+      </div>
+      
+      <!-- Individual Control Buttons - Secondary Actions -->
+      <div class="flex gap-2 mt-2">
+        <!-- Subscribe Only Button -->
         <button
           @click.stop="toggleGroupSubscription"
-          class="flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+          class="flex-1 px-3 py-2 text-xs rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-1"
           :class="isGroupSubscribed 
             ? 'bg-blue-500 hover:bg-blue-600 text-white' 
             : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
-          :title="isGroupSubscribed ? 'Unsubscribe from this group' : 'Subscribe to all events in this group automatically'"
+          :title="isGroupSubscribed ? 'Unsubscribe from this group' : 'Subscribe to future events from this group'"
         >
-          <span v-if="isGroupSubscribed">✓ Subscribed</span>
+          <span v-if="isGroupSubscribed">✅ Subscribed</span>
           <span v-else>📥 Subscribe</span>
         </button>
         
-        <!-- Select All Button - Individual event type selection -->
+        <!-- Select All Only Button -->
         <button
           @click.stop="toggleSelectAllEventTypes"
-          class="flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+          class="flex-1 px-3 py-2 text-xs rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-1"
           :class="areAllEventTypesSelected 
             ? 'bg-green-500 hover:bg-green-600 text-white' 
             : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
-          :title="areAllEventTypesSelected ? 'Deselect all event types' : 'Select all event types individually'"
+          :title="areAllEventTypesSelected ? 'Deselect all event types' : 'Select all event types for current view'"
         >
-          <span v-if="areAllEventTypesSelected">✓ All Selected</span>
+          <span v-if="areAllEventTypesSelected">✓ Deselect All</span>
           <span v-else>☐ Select All</span>
         </button>
       </div>
@@ -250,6 +266,11 @@ const areAllEventTypesSelected = computed(() => {
          )
 })
 
+// Combined state computed property
+const isBothSubscribedAndSelected = computed(() => {
+  return isGroupSubscribed.value && areAllEventTypesSelected.value
+})
+
 // Methods
 const isEventTypeSelected = (eventTypeName) => {
   return props.selectedEventTypes.includes(eventTypeName)
@@ -278,6 +299,31 @@ const toggleSelectAllEventTypes = () => {
     eventTypes: groupEventTypes.value,
     selectAll: !areAllEventTypesSelected.value
   })
+}
+
+// Combined action method for Subscribe & Select
+const toggleSubscribeAndSelect = () => {
+  if (isBothSubscribedAndSelected.value) {
+    // If both are active, deactivate both
+    emit('subscribe-to-group', props.group.id)  // Toggle subscription off
+    emit('select-all-event-types', {
+      groupId: props.group.id,
+      eventTypes: groupEventTypes.value,
+      selectAll: false  // Deselect all
+    })
+  } else {
+    // Activate both subscription and selection
+    if (!isGroupSubscribed.value) {
+      emit('subscribe-to-group', props.group.id)  // Subscribe
+    }
+    if (!areAllEventTypesSelected.value) {
+      emit('select-all-event-types', {
+        groupId: props.group.id,
+        eventTypes: groupEventTypes.value,
+        selectAll: true  // Select all
+      })
+    }
+  }
 }
 
 // Event type expansion methods
