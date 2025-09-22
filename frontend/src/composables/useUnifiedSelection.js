@@ -11,10 +11,19 @@
 import { useSelectionStore } from '../stores/selectionStore'
 import { useAppStore } from '../stores/app'
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 
 export function useUnifiedSelection() {
   const selectionStore = useSelectionStore()
   const appStore = useAppStore()
+  
+  // Extract reactive refs properly from stores
+  const {
+    selectedEventTypes,
+    subscribedGroups,
+    expandedGroups,
+    expandedEventTypes
+  } = storeToRefs(selectionStore)
   
   // ===============================================
   // COMPUTED PROPERTIES WITH APP STORE INTEGRATION
@@ -25,10 +34,10 @@ export function useUnifiedSelection() {
    * Integrates with app store's groups data
    */
   const effectiveSelectedEventTypes = computed(() => {
-    const selected = [...selectionStore.selectedEventTypes]
+    const selected = [...selectedEventTypes.value]
     
     // Add event types from subscribed groups
-    for (const groupId of selectionStore.subscribedGroups) {
+    for (const groupId of subscribedGroups.value) {
       const group = appStore.groups[groupId]
       if (group && group.event_types) {
         for (const eventType of Object.keys(group.event_types)) {
@@ -45,22 +54,22 @@ export function useUnifiedSelection() {
   /**
    * Check if all events are selected (integrates with app store data)
    */
-  const allEventsSelected = computed(() => {
+  const allEventsSelected = (groups, ungroupedEventTypes) => {
     return selectionStore.allEventsSelected(
-      appStore.groups || {}, 
-      [
+      groups || appStore.groups || {}, 
+      ungroupedEventTypes || [
         ...(appStore.ungroupedEventTypes || []),
         ...(appStore.ungroupedRecurringEventTypes || []),
         ...(appStore.ungroupedUniqueEventTypes || [])
       ]
     )
-  })
+  }
   
   /**
    * Check if event type is effectively selected (with app store groups)
    */
-  const isEventTypeEffectivelySelected = (eventType) => {
-    return selectionStore.isEventTypeEffectivelySelected(eventType, appStore.groups || {})
+  const isEventTypeEffectivelySelected = (eventType, groups) => {
+    return selectionStore.isEventTypeEffectivelySelected(eventType, groups || appStore.groups || {})
   }
   
   /**
@@ -87,8 +96,8 @@ export function useUnifiedSelection() {
   const getGroupBreakdownSummary = () => {
     const groups = appStore.groups || {}
     const totalGroups = Object.keys(groups).length
-    const subscribedGroupsCount = selectionStore.subscribedGroups.size
-    const selectedEventsCount = selectionStore.selectedEventTypes.length
+    const subscribedGroupsCount = subscribedGroups.value.size
+    const selectedEventsCount = selectedEventTypes.value.length
     
     // Calculate total available events across all groups
     let totalAvailableEvents = 0
@@ -103,7 +112,7 @@ export function useUnifiedSelection() {
     
     // Calculate effective selected events (subscribed groups + individual selections)
     let effectiveSelectedEvents = selectedEventsCount
-    selectionStore.subscribedGroups.forEach(groupId => {
+    subscribedGroups.value.forEach(groupId => {
       const group = groups[groupId]
       if (group && group.event_types) {
         const groupEventTypes = Object.keys(group.event_types).filter(eventType => 
@@ -111,7 +120,7 @@ export function useUnifiedSelection() {
         )
         // Add group events that aren't already counted as individual selections
         groupEventTypes.forEach(eventType => {
-          if (!selectionStore.selectedEventTypes.includes(eventType)) {
+          if (!selectedEventTypes.value.includes(eventType)) {
             effectiveSelectedEvents++
           }
         })
@@ -201,14 +210,14 @@ export function useUnifiedSelection() {
     if (selectAll) {
       // Select all event types in this group
       eventTypes.forEach(eventType => {
-        if (!selectionStore.selectedEventTypes.includes(eventType)) {
+        if (!selectedEventTypes.value.includes(eventType)) {
           selectionStore.toggleEventType(eventType)
         }
       })
     } else {
       // Deselect all event types in this group
       eventTypes.forEach(eventType => {
-        if (selectionStore.selectedEventTypes.includes(eventType)) {
+        if (selectedEventTypes.value.includes(eventType)) {
           selectionStore.toggleEventType(eventType)
         }
       })
@@ -220,15 +229,14 @@ export function useUnifiedSelection() {
   // ===============================================
   
   return {
-    // Direct store state (reactive)
-    selectedEventTypes: selectionStore.selectedEventTypes,
-    subscribedGroups: selectionStore.subscribedGroups,
-    expandedGroups: selectionStore.expandedGroups,
-    expandedEventTypes: selectionStore.expandedEventTypes,
+    // Properly reactive refs from storeToRefs
+    selectedEventTypes,
+    subscribedGroups,
+    expandedGroups,
+    expandedEventTypes,
     
     // Computed properties with app store integration
     effectiveSelectedEventTypes,
-    allEventsSelected,
     selectionSummary,
     
     // Individual event type operations
@@ -265,6 +273,9 @@ export function useUnifiedSelection() {
     getGroupSelectionState,
     getGroupBreakdownSummary,
     handleSelectAllEventTypes,
+    
+    // Selection checking methods
+    allEventsSelected,
     
     // Legacy compatibility functions (for gradual migration)
     getSelectionSummary: () => selectionStore.getSelectionSummary(

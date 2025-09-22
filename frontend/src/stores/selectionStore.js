@@ -45,58 +45,54 @@ export const useSelectionStore = defineStore('selection', () => {
    * Check if a specific event type is effectively selected
    * (either individually or through group subscription)
    */
-  const isEventTypeEffectivelySelected = computed(() => {
-    return (eventType, groups = {}) => {
-      // Direct individual selection
-      if (selectedEventTypes.value.includes(eventType)) return true
-      
-      // Check if event type is in any subscribed group
-      for (const groupId of subscribedGroups.value) {
-        const group = groups[groupId]
-        if (group && group.event_types && group.event_types[eventType]) {
-          return true
-        }
+  const isEventTypeEffectivelySelected = (eventType, groups = {}) => {
+    // Direct individual selection
+    if (selectedEventTypes.value.includes(eventType)) return true
+    
+    // Check if event type is in any subscribed group
+    for (const groupId of subscribedGroups.value) {
+      const group = groups[groupId]
+      if (group && group.event_types && group.event_types[eventType]) {
+        return true
       }
-      return false
     }
-  })
+    return false
+  }
   
   /**
    * Check if all available events are selected
    */
-  const allEventsSelected = computed(() => {
-    return (groups = {}, ungroupedEventTypes = []) => {
-      // Get all available event types from all sources
-      const allAvailableEventTypes = new Set()
-      
-      // Add event types from all groups
-      Object.values(groups).forEach(group => {
-        if (group.event_types) {
-          Object.keys(group.event_types).forEach(eventType => {
-            if (group.event_types[eventType].count > 0) {
-              allAvailableEventTypes.add(eventType)
-            }
-          })
-        }
-      })
-      
-      // Add ungrouped event types
-      ungroupedEventTypes.forEach(eventType => {
-        if (eventType.count > 0) {
-          allAvailableEventTypes.add(eventType.name || eventType)
-        }
-      })
-      
-      // Check if all available event types are effectively selected
-      for (const eventType of allAvailableEventTypes) {
-        if (!isEventTypeEffectivelySelected.value(eventType, groups)) {
-          return false
-        }
+  const allEventsSelected = (groups = {}, ungroupedEventTypes = []) => {
+    // Get all available event types from all sources
+    const allAvailableEventTypes = new Set()
+    
+    // Add event types from all groups
+    Object.values(groups).forEach(group => {
+      if (group.event_types) {
+        Object.keys(group.event_types).forEach(eventType => {
+          if (group.event_types[eventType].count > 0) {
+            allAvailableEventTypes.add(eventType)
+          }
+        })
       }
-      
-      return allAvailableEventTypes.size > 0
+    })
+    
+    // Add ungrouped event types
+    ungroupedEventTypes.forEach(eventType => {
+      if (eventType.count > 0) {
+        allAvailableEventTypes.add(eventType.name || eventType)
+      }
+    })
+    
+    // Check if all available event types are effectively selected
+    for (const eventType of allAvailableEventTypes) {
+      if (!isEventTypeEffectivelySelected(eventType, groups)) {
+        return false
+      }
     }
-  })
+    
+    return allAvailableEventTypes.size > 0
+  }
 
   // ===============================================
   // INDIVIDUAL EVENT TYPE OPERATIONS
@@ -270,7 +266,7 @@ export const useSelectionStore = defineStore('selection', () => {
     
     // Count effectively selected: subscribed groups + individual selections
     totalEventTypes.forEach(eventType => {
-      if (isEventTypeEffectivelySelected.value(eventType, groups)) {
+      if (isEventTypeEffectivelySelected(eventType, groups)) {
         effectivelySelectedTypes.add(eventType)
       }
     })
@@ -300,16 +296,14 @@ export const useSelectionStore = defineStore('selection', () => {
   // ===============================================
   
   return {
-    // State (read-only computed)
-    selectedEventTypes: computed(() => selectedEventTypes.value),
-    subscribedGroups: computed(() => subscribedGroups.value),
-    expandedGroups: computed(() => expandedGroups.value),
-    expandedEventTypes: computed(() => expandedEventTypes.value),
+    // Direct reactive refs (not wrapped in computed)
+    selectedEventTypes,
+    subscribedGroups,
+    expandedGroups,
+    expandedEventTypes,
     
-    // Computed properties
+    // Computed properties for derived values
     effectiveSelectedEventTypes,
-    isEventTypeEffectivelySelected,
-    allEventsSelected,
     
     // Individual event type operations
     isEventTypeSelected,
@@ -338,6 +332,10 @@ export const useSelectionStore = defineStore('selection', () => {
     toggleGroupExpansion,
     expandAllGroups,
     collapseAllGroups,
+    
+    // Methods for checking selection state
+    isEventTypeEffectivelySelected,
+    allEventsSelected,
     
     // Summary and analysis
     getSelectionSummary

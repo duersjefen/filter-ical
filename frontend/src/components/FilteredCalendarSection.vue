@@ -919,15 +919,10 @@ const getGroupSelectedCount = (groupId) => {
   const group = props.groups[groupId]
   if (!group) return 0
   
-  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
   const groupEventTypes = getGroupEventTypes(group)
   
-  if (isSubscribed) {
-    // When subscribed, count the actual events that have event counts > 0
-    return groupEventTypes.length
-  }
-  
-  // Count individually selected events in this group
+  // Always count only the actually selected events from props.selectedEventTypes
+  // This works for both subscribed groups and individual selections
   return groupEventTypes.filter(type => 
     props.selectedEventTypes && props.selectedEventTypes.includes(type)
   ).length
