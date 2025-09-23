@@ -93,10 +93,10 @@
           Events ({{ eventTypesCount }})
         </div>
         
-        <!-- Event Type Checkboxes -->
+        <!-- Event Type Checkboxes (sorted by count, descending) -->
         <div class="space-y-1">
           <div
-            v-for="(eventTypeData, eventTypeName) in group.event_types"
+            v-for="[eventTypeName, eventTypeData] in sortedEventTypes"
             :key="eventTypeName"
             class="border rounded-md transition-all duration-200"
             :class="isEventTypeSelected(eventTypeName)
@@ -157,28 +157,20 @@
                 <div class="text-xs text-red-500">Error: {{ eventTypeEvents[eventTypeName].error }}</div>
               </div>
               
-              <!-- Events List -->
-              <div v-else-if="eventTypeEvents[eventTypeName]?.events?.length" class="max-h-48 overflow-y-auto">
+              <!-- Events List (Concise Display) -->
+              <div v-else-if="eventTypeEvents[eventTypeName]?.events?.length" class="space-y-1">
                 <div 
                   v-for="event in eventTypeEvents[eventTypeName].events" 
                   :key="event.id"
-                  class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+                  class="px-2 py-1.5 bg-gray-50 dark:bg-gray-800/30 rounded text-xs"
                 >
-                  <div class="flex items-start gap-2">
-                    <!-- Individual Event Checkbox -->
-                    <div class="w-2 h-2 rounded-sm border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 mt-1 flex-shrink-0"></div>
-                    
-                    <!-- Event Details -->
-                    <div class="flex-1 min-w-0">
-                      <div class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
-                        {{ event.title }}
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {{ formatEventDate(event.start) }}
-                        <span v-if="event.location" class="ml-2">📍 {{ event.location }}</span>
-                        <span v-if="event.is_recurring" class="ml-2">🔄</span>
-                      </div>
-                    </div>
+                  <!-- Compact Event Details -->
+                  <div class="text-gray-700 dark:text-gray-300">
+                    📅 {{ formatDateRange(event) }}
+                    <span v-if="event.is_recurring" class="ml-1">🔄</span>
+                  </div>
+                  <div v-if="event.location" class="text-gray-600 dark:text-gray-400 mt-0.5">
+                    📍 {{ event.location }}
                   </div>
                 </div>
               </div>
@@ -198,6 +190,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { formatDateRange } from '@/utils/dates'
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -235,6 +228,14 @@ const eventCountDisplay = computed(() => {
   const selectedCount = selectedGroupEventTypes.value.length
   
   return `${selectedCount}/${totalEventTypes} events selected`
+})
+
+// Sort event types by count (descending) for better UX
+const sortedEventTypes = computed(() => {
+  if (!hasEventTypes.value) return []
+  
+  return Object.entries(props.group.event_types)
+    .sort(([, a], [, b]) => (b.count || 0) - (a.count || 0))
 })
 
 const isExpanded = computed(() => {
@@ -386,19 +387,5 @@ const fetchEventTypeEvents = async (eventTypeName) => {
   }
 }
 
-// Date formatting utility
-const formatEventDate = (dateString) => {
-  if (!dateString) return ''
-  try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch (error) {
-    return dateString
-  }
-}
+// Use formatDateRange from utils for proper 24h format and multi-day support
 </script>
