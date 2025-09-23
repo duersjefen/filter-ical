@@ -139,6 +139,7 @@ import { useAppStore } from '../stores/app'
 import { useAPI } from '../composables/useAPI'
 import { useCalendar } from '../composables/useCalendar'
 import { useUnifiedSelection } from '../composables/useUnifiedSelection'
+import { API_ENDPOINTS } from '../constants/api'
 import axios from 'axios'
 import {
   HeaderSection,
@@ -361,43 +362,66 @@ const loadCalendarData = async (calendarId) => {
     }
     
     // Detect if this is a domain calendar and choose appropriate endpoint
+    
     const isDomainCalendar = props.domainContext || calendarId.startsWith('cal_domain_')
     let domainName = null
     
-    if (isDomainCalendar && props.domainContext) {
-      domainName = props.domainContext.id
+    if (isDomainCalendar && props.domainContext?.domain_key) {
+      domainName = props.domainContext.domain_key
     } else if (isDomainCalendar && calendarId.startsWith('cal_domain_')) {
       domainName = calendarId.replace('cal_domain_', '')
     }
     
+    
     let apiEndpoint, apiPath
     if (isDomainCalendar && domainName) {
-      apiEndpoint = `/api/domains/${domainName}/events`
+      apiEndpoint = API_ENDPOINTS.DOMAIN_EVENTS(domainName)
       apiPath = 'domain events'
     } else {
-      apiEndpoint = `/api/calendar/${calendarId}/events`
+      apiEndpoint = API_ENDPOINTS.CALENDAR_EVENTS(calendarId)
       apiPath = 'calendar events'
     }
     
-    console.log('🔍 About to make API call to:', apiEndpoint, `(${apiPath})`)
     const eventsResult = await api.safeExecute(async () => {
-      console.log('🔍 Inside API call, making axios request...')
       const response = await axios.get(apiEndpoint)
-      console.log('🔍 Raw axios response:', response)
-      console.log('🔍 Response data:', response.data)
       
-      // Domain endpoints return {events: {eventType: {...}}} structure
-      // Calendar endpoints return {events: {eventType: {...}}} structure
-      // Both have the same structure!
+      // Domain endpoints return {groups: Array, ungrouped_events: Array}
+      // Calendar endpoints return {events: Array}
       if (isDomainCalendar) {
-        console.log('🔍 Domain response data.events:', response.data.events)
-        return response.data.events
+        // Transform domain structure to expected eventTypes format
+        const eventTypes = {}
+        
+        // Process groups
+        if (response.data.groups) {
+          for (const group of response.data.groups) {
+            for (const recurringEvent of group.recurring_events || []) {
+              // Handle double-nested structure: recurringEvent.events.events contains actual events array
+              const actualEvents = recurringEvent.events?.events || recurringEvent.events || []
+              eventTypes[recurringEvent.title] = {
+                count: recurringEvent.event_count,
+                events: Array.isArray(actualEvents) ? actualEvents : []
+              }
+            }
+          }
+        }
+        
+        // Process ungrouped events
+        if (response.data.ungrouped_events) {
+          for (const recurringEvent of response.data.ungrouped_events) {
+            // Handle double-nested structure: recurringEvent.events.events contains actual events array
+            const actualEvents = recurringEvent.events?.events || recurringEvent.events || []
+            eventTypes[recurringEvent.title] = {
+              count: recurringEvent.event_count,
+              events: Array.isArray(actualEvents) ? actualEvents : []
+            }
+          }
+        }
+        
+        return eventTypes
       } else {
-        console.log('🔍 Calendar response data.events:', response.data.events)
         return response.data.events
       }
     })
-    console.log('🔍 safeExecute result:', eventsResult)
     
     if (eventsResult.success) {
       // Backend returns {events: {eventTypeName: {count: N, events: [...]}, ...}}
@@ -408,9 +432,6 @@ const loadCalendarData = async (calendarId) => {
       })
       
       // Extract event types object
-      console.log('🔍 Raw API response:', eventsResult.data)
-      console.log('🔍 Data type:', typeof eventsResult.data)
-      console.log('🔍 Data keys:', Object.keys(eventsResult.data || {}))
       
       eventTypes.value = eventsResult.data
       console.log('✅ EventTypes assigned:', {
@@ -420,11 +441,9 @@ const loadCalendarData = async (calendarId) => {
       
       // Extract unique events from all event types
       const allEvents = []
-      console.log('🔍 About to process eventTypes.value:', eventTypes.value)
       try {
         if (eventTypes.value) {
           Object.values(eventTypes.value).forEach(eventType => {
-            console.log('🔍 Processing eventType:', eventType)
             if (eventType && eventType.events && Array.isArray(eventType.events)) {
               console.log(`🔍 Adding ${eventType.events.length} events from eventType`)
               allEvents.push(...eventType.events)
@@ -455,7 +474,6 @@ const loadCalendarData = async (calendarId) => {
       // Load groups data - use domain endpoint for domain calendars
       console.log('🔄 Loading groups data...')
       if (isDomainCalendar && domainName) {
-        console.log('🔍 Loading domain groups for:', domainName)
         await appStore.loadDomainGroups(domainName)
       } else {
         await appStore.loadCalendarGroups(calendarId)

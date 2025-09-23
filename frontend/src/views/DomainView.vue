@@ -49,7 +49,7 @@
   <CalendarView 
     v-else-if="calendarId" 
     :id="calendarId" 
-    :domain-context="domainConfig" 
+    :domain-context="domainConfig?.data" 
   />
 </template>
 
@@ -58,6 +58,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CalendarView from './CalendarView.vue'
 import { useApiCall } from '../composables/useApiCall'
+import { API_ENDPOINTS } from '../constants/api'
 
 export default {
   name: 'DomainView',
@@ -89,7 +90,7 @@ export default {
     const loadDomainData = async () => {
       try {
         // Load domain configuration
-        const domainResult = await get(`/api/domains/${props.domain}`)
+        const domainResult = await get(`/domains/${props.domain}`)
         if (domainResult.success) {
           domainConfig.value = domainResult.data
           

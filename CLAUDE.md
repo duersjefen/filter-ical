@@ -74,6 +74,39 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 
 **IMPORTANT**: This TODO management happens automatically - I don't ask permission, I just do it as part of completing substantial work. This keeps the TODO file always clean and actionable for the user.
 
+### 📢 MANDATORY: User Notification System
+
+**I MUST automatically send notifications to keep the user informed of important developments:**
+
+**✅ REQUIRED NOTIFICATIONS:**
+- **Before Plan Mode**: Send notification when entering plan mode to analyze complex issues
+- **After Plan Presentation**: Send notification after presenting implementation plans
+- **Task Completion**: Send notification when completing significant work or fixes
+- **Error Discoveries**: Send notification when finding critical issues or bugs
+- **Milestone Achievement**: Send notification when reaching important development milestones
+
+**🔧 NOTIFICATION COMMAND:**
+```bash
+/home/martijn/.claude-notifications/claude_notify "message" "type"
+```
+
+**Notification Types:**
+- `task_complete` - For completed work and fixes
+- `error` - For critical issues discovered
+- `milestone` - For significant progress points
+- `approval_needed` - When requiring user input or decisions
+
+**💡 EXAMPLES:**
+```bash
+# Before presenting plan
+/home/martijn/.claude-notifications/claude_notify "🔍 Analyzing domain calendar issue - preparing comprehensive fix plan" "milestone"
+
+# After plan completion  
+/home/martijn/.claude-notifications/claude_notify "🎉 Domain calendar fully fixed! Shows proper name and loads 100+ events" "task_complete"
+```
+
+**PURPOSE**: Proactive notifications ensure the user stays informed of progress without needing to constantly monitor the development process.
+
 ## 📋 CRITICAL: CONTRACT-DRIVEN DEVELOPMENT
 
 **THE MOST IMPORTANT LESSON: OpenAPI specifications are immutable contracts that enable unlimited backend refactoring freedom**
