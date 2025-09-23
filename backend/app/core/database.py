@@ -47,3 +47,8 @@ def create_tables():
 def drop_tables():
     """Drop all database tables (for testing)."""
     Base.metadata.drop_all(bind=engine)
+
+
+def get_session_sync():
+    """Get synchronous database session for background tasks and seeding."""
+    return SessionLocal()

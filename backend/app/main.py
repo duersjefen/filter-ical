@@ -38,19 +38,66 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup - Rapid development approach
     print("🚀 Starting iCal Viewer API...")
+    print(f"🌍 Environment: {settings.environment.value}")
     print("📋 Contract-first development active")
     
     # Create tables directly for rapid development (no Alembic complexity)
     Base.metadata.create_all(bind=engine)
     print("✅ Database tables created")
     
-    # Start background scheduler for domain calendar sync
-    start_scheduler()
+    # Ensure domain calendars exist (from domains.yaml configuration)
+    from .services.domain_service import load_domains_config, ensure_domain_calendar_exists
+    from .core.database import get_session_sync
+    
+    try:
+        success, domains_config, error = load_domains_config(settings.domains_config_path)
+        if success and domains_config:
+            session = get_session_sync()
+            for domain_key in domains_config.get('domains', {}):
+                domain_success, calendar, domain_error = await ensure_domain_calendar_exists(
+                    session, domain_key, domains_config
+                )
+                if domain_success:
+                    print(f"✅ Domain calendar '{domain_key}' ready")
+                else:
+                    print(f"⚠️ Domain calendar '{domain_key}' issue: {domain_error}")
+            session.close()
+    except Exception as e:
+        print(f"⚠️ Domain calendar setup warning: {e}")
+    
+    # Seed demo data in development environment
+    if settings.should_seed_demo_data:
+        print("🌱 Development environment - checking demo data...")
+        try:
+            # Import demo data functions
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent))
+            from demo_data import should_seed_demo_data, seed_demo_data
+            
+            if should_seed_demo_data():
+                print("🌱 Seeding demo data for development...")
+                if seed_demo_data():
+                    print("✅ Demo data seeded successfully")
+                else:
+                    print("⚠️ Demo data seeding had issues (check logs)")
+            else:
+                print("📋 Demo data already exists")
+        except Exception as e:
+            print(f"⚠️ Demo data seeding warning: {e}")
+    
+    # Start background scheduler for domain calendar sync (configurable)
+    if settings.should_enable_background_tasks:
+        print(f"⏰ Starting background scheduler (sync every {settings.actual_sync_interval_minutes} minutes)")
+        start_scheduler()
+    else:
+        print("⏰ Background tasks disabled (testing environment)")
     
     yield
     
     # Shutdown
-    stop_scheduler()
+    if settings.should_enable_background_tasks:
+        stop_scheduler()
     print("🛑 Shutting down iCal Viewer API")
 
 

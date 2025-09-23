@@ -141,7 +141,7 @@ def start_scheduler():
         # Add the domain sync task
         scheduler.add_job(
             sync_domain_calendars_task,
-            trigger=IntervalTrigger(minutes=settings.sync_interval_minutes),
+            trigger=IntervalTrigger(minutes=settings.actual_sync_interval_minutes),
             id="domain_calendar_sync",
             name="Domain Calendar Sync and Cache Warming",
             replace_existing=True
@@ -149,7 +149,7 @@ def start_scheduler():
         
         # Start the scheduler
         scheduler.start()
-        print(f"🕒 Scheduler started: syncing every {settings.sync_interval_minutes} minutes")
+        print(f"🕒 Scheduler started: syncing every {settings.actual_sync_interval_minutes} minutes")
         
     except Exception as e:
         print(f"❌ Failed to start scheduler: {e}")

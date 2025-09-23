@@ -65,7 +65,7 @@ def set_cache(key: str, data: Dict[str, Any], expire_seconds: int = 300) -> bool
         client.setex(key, expire_seconds, json_data)
         return True
     except Exception as e:
-        print(f"Redis cache set error: {e}")
+        # Silently fail when Redis is unavailable (graceful degradation)
         return False
 
 
@@ -94,7 +94,7 @@ def get_cache(key: str) -> Optional[Dict[str, Any]]:
             return json.loads(json_data)
         return None
     except Exception as e:
-        print(f"Redis cache get error: {e}")
+        # Silently fail when Redis is unavailable (graceful degradation)
         return None
 
 
@@ -120,7 +120,7 @@ def delete_cache(key: str) -> bool:
         client.delete(key)
         return True
     except Exception as e:
-        print(f"Redis cache delete error: {e}")
+        # Silently fail when Redis is unavailable (graceful degradation)
         return False
 
 
@@ -145,7 +145,7 @@ def cache_exists(key: str) -> bool:
             return False
         return client.exists(key) > 0
     except Exception as e:
-        print(f"Redis cache exists error: {e}")
+        # Silently fail when Redis is unavailable (graceful degradation)
         return False
 
 
@@ -170,5 +170,5 @@ def get_cache_ttl(key: str) -> int:
             return -2
         return client.ttl(key)
     except Exception as e:
-        print(f"Redis cache TTL error: {e}")
+        # Silently fail when Redis is unavailable (graceful degradation)
         return -2
