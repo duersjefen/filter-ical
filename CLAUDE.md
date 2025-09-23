@@ -98,9 +98,6 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 
 **💡 EXAMPLES:**
 ```bash
-# Before presenting plan
-/home/martijn/.claude-notifications/claude_notify "🔍 Analyzing domain calendar issue - preparing comprehensive fix plan" "milestone"
-
 # After plan completion  
 /home/martijn/.claude-notifications/claude_notify "🎉 Domain calendar fully fixed! Shows proper name and loads 100+ events" "task_complete"
 ```
