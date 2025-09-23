@@ -21,7 +21,7 @@
             {{ group.name }}
           </div>
           <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
-            {{ group.description || `${eventTypesCount} ${eventTypesCount === 1 ? 'event type' : 'event types'}` }}
+            {{ group.description || eventCountDisplay }}
           </div>
         </div>
         
@@ -228,6 +228,15 @@ const eventTypesCount = computed(() => {
   return hasEventTypes.value ? Object.keys(props.group.event_types).length : 0
 })
 
+const eventCountDisplay = computed(() => {
+  if (!hasEventTypes.value) return '0/0 events selected'
+  
+  const totalEventTypes = eventTypesCount.value
+  const selectedCount = selectedGroupEventTypes.value.length
+  
+  return `${selectedCount}/${totalEventTypes} events selected`
+})
+
 const isExpanded = computed(() => {
   return props.expandedGroups.has(props.group.id)
 })
@@ -349,16 +358,13 @@ const fetchEventTypeEvents = async (eventTypeName) => {
   }
   
   try {
-    // For domain calendars, events are already included in the group data
-    // Find the recurring event with matching title
-    const recurringEvent = props.group.recurring_events?.find(
-      event => event.title === eventTypeName
-    )
+    // Events are already processed and available in event_types
+    const eventTypeData = props.group.event_types?.[eventTypeName]
     
-    if (recurringEvent && recurringEvent.events) {
+    if (eventTypeData && eventTypeData.events) {
       // Events are already available in the group data - no API call needed!
       eventTypeEvents.value[eventTypeName] = {
-        events: Array.isArray(recurringEvent.events) ? recurringEvent.events : [],
+        events: Array.isArray(eventTypeData.events) ? eventTypeData.events : [],
         loading: false,
         error: null
       }

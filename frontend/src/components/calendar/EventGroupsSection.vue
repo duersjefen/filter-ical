@@ -27,9 +27,9 @@
 
       <!-- Groups Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <!-- All Groups (including auto-created groups from backend) -->
+        <!-- All Groups (sorted by event count, descending) -->
         <GroupCard
-          v-for="group in Object.values(props.groups || {})"
+          v-for="group in sortedGroups"
           :key="group.id"
           :group="group"
           :selected-event-types="selectedEventTypes"
@@ -94,6 +94,24 @@ const {
 // Computed properties for UI state  
 const allGroups = computed(() => {
   return { ...(props.groups || {}) }
+})
+
+// Sort groups by total number of events (descending)
+const sortedGroups = computed(() => {
+  const groupsArray = Object.values(allGroups.value)
+  
+  return groupsArray.sort((a, b) => {
+    // Calculate total events for group a
+    const totalEventsA = a.event_types ? 
+      Object.values(a.event_types).reduce((sum, eventType) => sum + (eventType.count || 0), 0) : 0
+    
+    // Calculate total events for group b  
+    const totalEventsB = b.event_types ?
+      Object.values(b.event_types).reduce((sum, eventType) => sum + (eventType.count || 0), 0) : 0
+    
+    // Sort descending (highest count first)
+    return totalEventsB - totalEventsA
+  })
 })
 
 const effectiveSelectedEventTypes = computed(() => {
