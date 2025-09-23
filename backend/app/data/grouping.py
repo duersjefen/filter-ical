@@ -203,11 +203,164 @@ def _event_matches_rule(event: Dict[str, Any], rule: Dict[str, Any]) -> bool:
     return False
 
 
+def create_auto_group_data(domain_key: str, group_type: str) -> Dict[str, Any]:
+    """
+    Create auto-group data structure for ungrouped events.
+    
+    Args:
+        domain_key: Domain identifier
+        group_type: Type of auto-group ('recurring' or 'unique')
+        
+    Returns:
+        Auto-group data dictionary
+        
+    Pure function - creates new data structure.
+    """
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    
+    group_names = {
+        'recurring': '📅 Other Recurring Events',
+        'unique': '🎯 Special Events'
+    }
+    
+    return {
+        "domain_key": domain_key,
+        "name": group_names.get(group_type, f"Auto-{group_type.title()} Events"),
+        "created_at": now,
+        "updated_at": now,
+        "auto_group_type": group_type,  # Mark as auto-created
+        "auto_group_id": f"{domain_key}_auto_{group_type}"  # Unique identifier
+    }
+
+
+def assign_ungrouped_to_auto_groups(ungrouped_events: List[Dict[str, Any]], 
+                                  domain_key: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Create auto-groups and assign ungrouped events to them.
+    
+    Args:
+        ungrouped_events: List of ungrouped event data
+        domain_key: Domain identifier
+        
+    Returns:
+        Tuple of (recurring_auto_group, unique_auto_group) with events assigned
+        
+    Pure function - data categorization logic.
+    """
+    # Create auto-groups
+    recurring_group = create_auto_group_data(domain_key, 'recurring')
+    unique_group = create_auto_group_data(domain_key, 'unique')
+    
+    # Assign unique IDs for auto-groups (negative to avoid conflicts with real groups)
+    recurring_group['id'] = f"{domain_key}_auto_recurring"
+    unique_group['id'] = f"{domain_key}_auto_unique"
+    
+    # Categorize events
+    recurring_events = []
+    unique_events = []
+    
+    for event_data in ungrouped_events:
+        event_count = event_data.get('event_count', 0)
+        if event_count > 1:
+            recurring_events.append(event_data)
+        else:
+            unique_events.append(event_data)
+    
+    # Add events to groups
+    recurring_group['recurring_events'] = recurring_events
+    unique_group['recurring_events'] = unique_events
+    
+    return recurring_group, unique_group
+
+
+def build_domain_events_with_auto_groups(grouped_events: Dict[str, List[Dict[str, Any]]], 
+                                        groups_data: List[Dict[str, Any]],
+                                        recurring_assignments: List[Dict[str, Any]],
+                                        domain_key: str) -> Dict[str, Any]:
+    """
+    Build domain events response with auto-grouping for ungrouped events.
+    
+    Args:
+        grouped_events: Events grouped by title
+        groups_data: List of group data from database
+        recurring_assignments: List of recurring event group assignments
+        domain_key: Domain identifier for auto-group creation
+        
+    Returns:
+        Domain events response with all events in groups (no ungrouped_events)
+        
+    Pure function - data structure transformation with auto-grouping.
+    """
+    # Create mapping of group_id -> group_name
+    groups_map = {group['id']: group for group in groups_data}
+    
+    # Create mapping of group_id -> assigned recurring event titles
+    group_recurring_titles = {}
+    for assignment in recurring_assignments:
+        group_id = assignment['group_id']
+        title = assignment['recurring_event_title']
+        
+        if group_id not in group_recurring_titles:
+            group_recurring_titles[group_id] = []
+        group_recurring_titles[group_id].append(title)
+    
+    # Build groups with their recurring events
+    groups_with_events = []
+    
+    for group_id, group_data in groups_map.items():
+        assigned_titles = group_recurring_titles.get(group_id, [])
+        
+        # Find events for assigned titles
+        group_recurring_events = []
+        for title in assigned_titles:
+            if title in grouped_events:
+                # grouped_events[title] already has correct structure: {title, event_count, events}
+                events_for_title = grouped_events[title]
+                group_recurring_events.append(events_for_title)
+                
+                # Remove from grouped_events so they don't appear as ungrouped
+                del grouped_events[title]
+        
+        # Only include groups that have events with actual event data
+        if group_recurring_events and any(event_data.get('events') for event_data in group_recurring_events):
+            groups_with_events.append({
+                "id": group_id,
+                "name": group_data['name'],
+                "recurring_events": group_recurring_events
+            })
+    
+    # Handle remaining ungrouped events with auto-grouping
+    ungrouped_events = []
+    for title, events_data in grouped_events.items():
+        # events_data already has correct structure: {title, event_count, events}
+        if events_data.get('events'):  # Only include if there are actual events
+            ungrouped_events.append(events_data)
+    
+    # Create auto-groups for ungrouped events
+    if ungrouped_events:
+        recurring_auto_group, unique_auto_group = assign_ungrouped_to_auto_groups(ungrouped_events, domain_key)
+        
+        # Add auto-groups to response (only if they have events)
+        if recurring_auto_group['recurring_events']:
+            groups_with_events.append(recurring_auto_group)
+        
+        if unique_auto_group['recurring_events']:
+            groups_with_events.append(unique_auto_group)
+    
+    # Return response with all events in groups (no ungrouped_events array)
+    return {
+        "groups": groups_with_events
+    }
+
+
 def build_domain_events_response(grouped_events: Dict[str, List[Dict[str, Any]]], 
                                 groups_data: List[Dict[str, Any]],
                                 recurring_assignments: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Build domain events response matching OpenAPI specification.
+    
+    LEGACY FUNCTION: Use build_domain_events_with_auto_groups for new implementations.
     
     Args:
         grouped_events: Events grouped by title

@@ -491,11 +491,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GroupWithEvents'
-        ungrouped_events:
-          type: array
-          items:
-            $ref: '#/components/schemas/RecurringEvent'
-          description: "Recurring events not assigned to any group"
+          description: "All events organized into groups. Ungrouped events are automatically assigned to 'Other Recurring Events' or 'Special Events' groups."
 
     GroupWithEvents:
       type: object
@@ -503,13 +499,16 @@ components:
         id:
           type: integer
           example: 1
+          description: "Group ID. Auto-created groups use string IDs like 'exter_auto_recurring'"
         name:
           type: string
           example: "BCC Events"
+          description: "Group name. Auto-created groups use names like '📅 Other Recurring Events' or '🎯 Special Events'"
         recurring_events:
           type: array
           items:
             $ref: '#/components/schemas/RecurringEvent'
+          description: "All events in this group, including both manually assigned and auto-assigned events"
 
     RecurringEvent:
       type: object

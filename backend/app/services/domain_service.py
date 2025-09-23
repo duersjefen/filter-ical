@@ -12,7 +12,7 @@ from ..models.calendar import Calendar, Event, Group, RecurringEventGroup, Assig
 from ..data.grouping import (
     load_domain_config, get_domain_config, create_group_data, create_recurring_event_group_data,
     create_assignment_rule_data, apply_assignment_rules, build_domain_events_response,
-    validate_group_data, validate_assignment_rule_data
+    build_domain_events_with_auto_groups, validate_group_data, validate_assignment_rule_data
 )
 from ..data.ical_parser import group_events_by_title
 from .calendar_service import get_calendar_by_domain, sync_calendar_events
@@ -300,14 +300,14 @@ def get_recurring_event_assignments(db: Session, domain_key: str) -> List[Recurr
 
 def build_domain_events_response_data(db: Session, domain_key: str) -> Dict[str, Any]:
     """
-    Build complete domain events response.
+    Build complete domain events response with auto-grouping.
     
     Args:
         db: Database session
         domain_key: Domain identifier
         
     Returns:
-        Domain events response matching OpenAPI schema
+        Domain events response with all events in groups (no ungrouped_events)
         
     I/O Operation - Orchestrates database queries with pure functions.
     """
@@ -335,7 +335,50 @@ def build_domain_events_response_data(db: Session, domain_key: str) -> Dict[str,
         for assignment in assignments
     ]
     
-    # Build response using pure function
+    # Build response using new auto-grouping function
+    return build_domain_events_with_auto_groups(events_by_title, groups_data, assignments_data, domain_key)
+
+
+def build_domain_events_response_data_legacy(db: Session, domain_key: str) -> Dict[str, Any]:
+    """
+    Build domain events response with ungrouped_events array (legacy).
+    
+    LEGACY FUNCTION: Use build_domain_events_response_data for new implementations.
+    
+    Args:
+        db: Database session
+        domain_key: Domain identifier
+        
+    Returns:
+        Domain events response matching legacy OpenAPI schema
+        
+    I/O Operation - Orchestrates database queries with pure functions.
+    """
+    # Get events and transform for processing
+    events = get_domain_events(db, domain_key)
+    
+    # Group events by title using pure function
+    events_by_title = group_events_by_title(events)
+    
+    # Get groups and assignments from database
+    groups = get_domain_groups(db, domain_key)
+    assignments = get_recurring_event_assignments(db, domain_key)
+    
+    # Transform to dictionaries for pure function
+    groups_data = [
+        {"id": group.id, "name": group.name}
+        for group in groups
+    ]
+    
+    assignments_data = [
+        {
+            "group_id": assignment.group_id,
+            "recurring_event_title": assignment.recurring_event_title
+        }
+        for assignment in assignments
+    ]
+    
+    # Build response using legacy function
     return build_domain_events_response(events_by_title, groups_data, assignments_data)
 
 

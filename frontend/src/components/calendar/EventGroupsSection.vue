@@ -15,12 +15,8 @@
         :has-selections="hasSelections"
         :all-expanded="allGroupsExpanded"
         :all-collapsed="allGroupsCollapsed"
-        :all-subscribed="allEventsSelected(allGroups, [
-          ...props.ungroupedEventTypes,
-          ...props.ungroupedRecurringEventTypes, 
-          ...props.ungroupedUniqueEventTypes
-        ])"
-        :total-groups="Object.keys(allGroups).length"
+        :all-subscribed="allEventsSelected(allGroups, [])"
+        :total-groups="Object.keys(props.groups || {}).length"
         :subscribed-count="subscribedGroups.size"
         :group-stats-text="getGroupBreakdownSummary()"
         @unsubscribe-all="unsubscribeFromAllGroups"
@@ -31,42 +27,11 @@
 
       <!-- Groups Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <!-- Regular Groups -->
+        <!-- All Groups (including auto-created groups from backend) -->
         <GroupCard
-          v-for="group in Object.values(groups || {})"
+          v-for="group in Object.values(props.groups || {})"
           :key="group.id"
           :group="group"
-          :selected-event-types="selectedEventTypes"
-          :subscribed-groups="subscribedGroups"
-          :expanded-groups="expandedGroups"
-          :domain-id="domainId || 'default'"
-          @toggle-group="toggleGroupSubscription"
-          @toggle-event-type="toggleEventType"
-          @expand-group="toggleExpansion"
-          @subscribe-to-group="toggleGroupSubscription"
-          @select-all-event-types="handleSelectAllEventTypes"
-        />
-
-        <!-- Virtual Groups (Recurring and Unique Activities) -->
-        <GroupCard
-          v-if="recurringActivitiesGroup"
-          :key="recurringActivitiesGroup.id"
-          :group="recurringActivitiesGroup"
-          :selected-event-types="selectedEventTypes"
-          :subscribed-groups="subscribedGroups"
-          :expanded-groups="expandedGroups"
-          :domain-id="domainId || 'default'"
-          @toggle-group="toggleGroupSubscription"
-          @toggle-event-type="toggleEventType"
-          @expand-group="toggleExpansion"
-          @subscribe-to-group="toggleGroupSubscription"
-          @select-all-event-types="handleSelectAllEventTypes"
-        />
-
-        <GroupCard
-          v-if="uniqueActivitiesGroup"
-          :key="uniqueActivitiesGroup.id"
-          :group="uniqueActivitiesGroup"
           :selected-event-types="selectedEventTypes"
           :subscribed-groups="subscribedGroups"
           :expanded-groups="expandedGroups"
@@ -92,9 +57,6 @@ import GroupCard from './GroupCard.vue'
 const props = defineProps({
   hasGroups: { type: Boolean, default: false },
   groups: { type: Object, default: () => ({}) },
-  ungroupedEventTypes: { type: Array, default: () => [] },
-  ungroupedRecurringEventTypes: { type: Array, default: () => [] },
-  ungroupedUniqueEventTypes: { type: Array, default: () => [] },
   domainId: { type: String, default: null },
   showGroupsSection: { type: Boolean, default: true }
 })
@@ -126,61 +88,12 @@ const {
   getGroupBreakdownSummary
 } = useUnifiedSelection()
 
-// Virtual groups for ungrouped event types
-const recurringActivitiesGroup = computed(() => {
-  if (!props.ungroupedRecurringEventTypes || props.ungroupedRecurringEventTypes.length === 0) {
-    return null
-  }
-  
-  const eventTypes = {}
-  props.ungroupedRecurringEventTypes.forEach(eventType => {
-    eventTypes[eventType.name] = {
-      count: eventType.count || 0,
-      is_recurring: true
-    }
-  })
-  
-  return {
-    id: 'virtual-recurring',
-    name: '🔄 Recurring Activities',
-    description: 'Regular weekly/monthly events and recurring activities',
-    event_types: eventTypes,
-    color: '#f97316' // orange-500
-  }
-})
+// All groups are now real groups (including auto-created ones from backend)
+// No virtual group logic needed - backend handles auto-grouping
 
-const uniqueActivitiesGroup = computed(() => {
-  if (!props.ungroupedUniqueEventTypes || props.ungroupedUniqueEventTypes.length === 0) {
-    return null
-  }
-  
-  const eventTypes = {}
-  props.ungroupedUniqueEventTypes.forEach(eventType => {
-    eventTypes[eventType.name] = {
-      count: eventType.count || 0,
-      is_recurring: false
-    }
-  })
-  
-  return {
-    id: 'virtual-unique',
-    name: '📅 Unique Activities',
-    description: 'One-time events and special occasions',
-    event_types: eventTypes,
-    color: '#3b82f6' // blue-500
-  }
-})
-
-// Computed properties for UI state
+// Computed properties for UI state  
 const allGroups = computed(() => {
-  const groups = { ...(props.groups || {}) }
-  if (recurringActivitiesGroup.value) {
-    groups[recurringActivitiesGroup.value.id] = recurringActivitiesGroup.value
-  }
-  if (uniqueActivitiesGroup.value) {
-    groups[uniqueActivitiesGroup.value.id] = uniqueActivitiesGroup.value
-  }
-  return groups
+  return { ...(props.groups || {}) }
 })
 
 const effectiveSelectedEventTypes = computed(() => {
@@ -222,13 +135,8 @@ const allGroupsSubscribed = computed(() => {
 // allEventsSelected is now provided by unified selection system
 
 const selectionSummary = computed(() => {
-  // Combine all ungrouped event types for comprehensive summary
-  const allUngroupedTypes = [
-    ...props.ungroupedEventTypes,
-    ...props.ungroupedRecurringEventTypes,
-    ...props.ungroupedUniqueEventTypes
-  ]
-  const summary = getSelectionSummary(allGroups.value, allUngroupedTypes)
+  // All event types are now in groups (no ungrouped types)
+  const summary = getSelectionSummary(allGroups.value, [])
   
   // Add compact text using our enhanced format
   const compactText = getGroupBreakdownSummary()

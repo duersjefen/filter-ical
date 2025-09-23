@@ -22,9 +22,6 @@
         v-if="shouldShowGroups"
         :has-groups="appStore.hasGroups"
         :groups="appStore.groups"
-        :ungrouped-event-types="appStore.ungroupedEventTypes"
-        :ungrouped-recurring-event-types="appStore.ungroupedRecurringEventTypes"
-        :ungrouped-unique-event-types="appStore.ungroupedUniqueEventTypes"
         :domain-id="props.domainContext?.id || 'default'"
         :show-groups-section="showGroupsSection"
         @selection-changed="handleGroupSelectionChanged"
@@ -385,13 +382,13 @@ const loadCalendarData = async (calendarId) => {
     const eventsResult = await api.safeExecute(async () => {
       const response = await axios.get(apiEndpoint)
       
-      // Domain endpoints return {groups: Array, ungrouped_events: Array}
+      // Domain endpoints return {groups: Array} with all events in groups
       // Calendar endpoints return {events: Array}
       if (isDomainCalendar) {
         // Transform domain structure to expected eventTypes format
         const eventTypes = {}
         
-        // Process groups
+        // Process all groups (including auto-created groups from backend)
         if (response.data.groups) {
           for (const group of response.data.groups) {
             for (const recurringEvent of group.recurring_events || []) {
@@ -401,18 +398,6 @@ const loadCalendarData = async (calendarId) => {
                 count: recurringEvent.event_count,
                 events: Array.isArray(actualEvents) ? actualEvents : []
               }
-            }
-          }
-        }
-        
-        // Process ungrouped events
-        if (response.data.ungrouped_events) {
-          for (const recurringEvent of response.data.ungrouped_events) {
-            // Handle double-nested structure: recurringEvent.events.events contains actual events array
-            const actualEvents = recurringEvent.events?.events || recurringEvent.events || []
-            eventTypes[recurringEvent.title] = {
-              count: recurringEvent.event_count,
-              events: Array.isArray(actualEvents) ? actualEvents : []
             }
           }
         }
@@ -524,20 +509,8 @@ const navigateToCalendar = () => {
   // The function exists to fulfill the event handler requirement from FilteredCalendarSection
 }
 
-// Handle assigning ungrouped events to groups
-const handleAssignEventToGroup = async ({ eventId, groupId }) => {
-  console.log(`🔄 Assigning event ${eventId} to group ${groupId}`)
-  
-  const result = await appStore.assignEventToGroup(eventId, groupId)
-  
-  if (result.success) {
-    console.log('✅ Event successfully assigned to group')
-    // The store will handle updating the UI state automatically
-  } else {
-    console.error('❌ Failed to assign event to group:', result.error)
-    // Could show user notification here
-  }
-}
+// Event assignment is now handled automatically by backend auto-grouping
+// No manual assignment needed - all events are automatically grouped
 
 const loadFilterIntoPage = (filterData) => {
   // Clear current selection
