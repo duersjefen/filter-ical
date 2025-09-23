@@ -1,97 +1,38 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
   title: iCal Viewer API
-  description: |
-    **Simplified iCal filtering and management API with public-first access.**
-    
-    This specification defines the minimal API surface for core iCal viewer functionality:
-    - Import calendar sources from iCal URLs
-    - View and filter events by event types
-    - Create shareable filtered calendar links
-    - Generate filtered iCal exports
-    
-    ## Key Features:
-    - **Contract-driven**: Implementation must match this spec exactly
-    - **Public-first**: No authentication required - all data is public
-    - **Event type filtering**: Filter events by their type/category
-    - **Shareable links**: Create permanent URLs for filtered calendars
-    - **Simple architecture**: Focused on core functionality only
-    
-  version: "2.0.0"
-  contact:
-    name: iCal Viewer API
-    url: https://filter-ical.de
-
-servers:
-  - url: http://localhost:3000
-    description: Development server
-  - url: https://filter-ical.de
-    description: Production server
+  version: 1.0.0
+  description: Contract-first API for iCal calendar management with domain support
+  servers:
+    - url: http://localhost:3000
+      description: Development server
 
 paths:
-  # ===============================================
-  # Calendar Management APIs
-  # ===============================================
-  
-  /api/calendars:
-    get:
-      summary: Get calendars
-      description: Fetch all imported calendar sources
-      tags:
-        - Calendars
-      responses:
-        '200':
-          description: Successfully retrieved calendars
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - calendars
-                properties:
-                  calendars:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Calendar'
-              example:
-                calendars:
-                  - id: "cal_001"
-                    name: "Work Calendar"
-                    url: "https://example.com/work.ics"
-                    user_id: "public"
-                    created_at: "2024-01-15T10:30:00Z"
-        '500':
-          $ref: '#/components/responses/InternalError'
-    
+  # Regular calendar management (user-added calendars)
+  /calendars:
     post:
-      summary: Create new calendar
-      description: Import a new calendar from an iCal URL
-      tags:
-        - Calendars
+      summary: Add a user calendar
+      parameters:
+        - name: username
+          in: query
+          schema:
+            type: string
+          description: Optional username to associate the calendar with
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - name
-                - url
+              required: [name, source_url]
               properties:
                 name:
                   type: string
-                  minLength: 3
-                  maxLength: 100
-                  description: Calendar display name
-                  example: "Team Events"
-                url:
+                  example: "My Work Calendar"
+                source_url:
                   type: string
                   format: uri
-                  description: iCal URL to import from
-                  example: "https://example.com/team.ics"
-            example:
-              name: "Team Events"
-              url: "https://example.com/team.ics"
+                  example: "https://example.com/calendar.ics"
       responses:
         '201':
           description: Calendar created successfully
@@ -99,631 +40,234 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Calendar'
-              example:
-                id: "cal_003"
-                name: "Team Events"
-                url: "https://example.com/team.ics"
-                user_id: "public"
-                created_at: "2024-01-17T09:15:00Z"
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/calendars/{calendar_id}:
-    delete:
-      summary: Delete calendar
-      description: Remove a calendar and all associated data
-      tags:
-        - Calendars
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    get:
+      summary: List user calendars
       parameters:
-        - name: calendar_id
+        - name: username
+          in: query
+          schema:
+            type: string
+          description: Optional username to filter by
+      responses:
+        '200':
+          description: List of calendars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Calendar'
+
+  /calendars/{calendarId}:
+    delete:
+      summary: Delete a user calendar
+      parameters:
+        - name: calendarId
           in: path
           required: true
           schema:
+            type: integer
+        - name: username
+          in: query
+          schema:
             type: string
-          description: Unique calendar identifier
-          example: "cal_001"
       responses:
         '204':
-          description: Calendar deleted successfully
+          description: Calendar deleted
         '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+          description: Calendar not found
 
-  # ===============================================
-  # Calendar Data APIs
-  # ===============================================
-
-  /api/calendar/{calendar_id}/events:
+  /calendars/{calendarId}/events:
     get:
-      summary: Get calendar events
-      description: Retrieve individual events, optionally filtered by event type. If no event_type parameter is provided, returns all events grouped by type.
-      tags:
-        - Calendar Data
+      summary: Get calendar events (flat structure for user calendars)
       parameters:
-        - name: calendar_id
+        - name: calendarId
           in: path
           required: true
           schema:
-            type: string
-          description: Unique calendar identifier
-          example: "cal_001"
-        - name: event_type
+            type: integer
+        - name: username
           in: query
-          required: false
           schema:
             type: string
-          description: Optional filter to return only events of this type
-          example: "Volleyball"
       responses:
         '200':
-          description: Successfully retrieved events (grouped by type if no filter, or individual events if event_type filter provided)
+          description: Calendar events
           content:
             application/json:
               schema:
                 type: object
-                required:
-                  - events
-                properties:
-                  events:
-                    oneOf:
-                      - type: object
-                        additionalProperties:
-                          type: object
-                          required:
-                            - count
-                            - events
-                          properties:
-                            count:
-                              type: integer
-                              minimum: 0
-                              description: Number of future event instances in this event type
-                            events:
-                              type: array
-                              items:
-                                $ref: '#/components/schemas/Event'
-                              description: Array of full event objects in this event type
-                        description: Events grouped by type (when no event_type filter)
-                      - type: array
-                        items:
-                          $ref: '#/components/schemas/Event'
-                        description: Individual events list (when event_type filter is provided)
-              example:
-                events:
-                  "Weekly Team Meeting":
-                    count: 3
-                    events:
-                      - id: "evt_001"
-                        title: "Weekly Team Meeting"
-                        start: "2025-09-20T10:00:00Z"
-                        end: "2025-09-20T11:00:00Z"
-                        event_type: "Work"
-                        description: "Weekly team sync meeting"
-                        location: "Conference Room A"
-                      - id: "evt_008"
-                        title: "Weekly Team Meeting"
-                        start: "2025-09-27T10:00:00Z"
-                        end: "2025-09-27T11:00:00Z"
-                        event_type: "Work"
-                        description: "Weekly team sync meeting"
-                        location: "Conference Room A"
-                  "Daily Standup":
-                    count: 2
-                    events:
-                      - id: "evt_002"
-                        title: "Daily Standup"
-                        start: "2025-09-17T09:00:00Z"
-                        end: "2025-09-17T09:15:00Z"
-                        event_type: "Work"
-                        description: "Daily team standup"
-                        location: null
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/calendar/{calendar_id}/raw-events:
-    get:
-      summary: Get individual calendar events
-      description: Retrieve all events as a flat array for detailed processing
-      tags:
-        - Calendar Data
-      parameters:
-        - name: calendar_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique calendar identifier
-          example: "cal_001"
-      responses:
-        '200':
-          description: Successfully retrieved individual events
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - events
                 properties:
                   events:
                     type: array
                     items:
                       $ref: '#/components/schemas/Event'
-              example:
-                events:
-                  - id: "evt_001"
-                    title: "Team Meeting"
-                    start: "2025-09-20T10:00:00Z"
-                    end: "2025-09-20T11:00:00Z"
-                    event_type: "Work"
-                    description: "Weekly sync"
-                    location: "Room A"
-                  - id: "evt_002"
-                    title: "Project Review"
-                    start: "2025-09-21T14:00:00Z"
-                    end: "2025-09-21T15:00:00Z"
-                    event_type: "Meeting"
-                    description: "Quarterly review"
-                    location: "Room B"
         '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+          description: Calendar not found
 
-  /api/calendar/{calendar_id}/groups:
-    get:
-      summary: Get calendar events organized by groups
-      description: Returns events grouped by admin-configured groups, or empty if no groups exist for this calendar's domain
-      tags:
-        - Calendar Data
-      parameters:
-        - name: calendar_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique calendar identifier
-          example: "cal_001"
-      responses:
-        '200':
-          description: Successfully retrieved grouped events
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - has_groups
-                  - groups
-                  - ungrouped_events
-                properties:
-                  has_groups:
-                    type: boolean
-                    description: Whether this calendar's domain has configured groups
-                    example: true
-                  groups:
-                    type: object
-                    additionalProperties:
-                      $ref: '#/components/schemas/Group'
-                    description: Root-level groups organized by group ID, with nested children
-                  ungrouped_events:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Event'
-                    description: Events that are not assigned to any group
-              example:
-                has_groups: true
-                groups:
-                  "grp_sports":
-                    id: "grp_sports"
-                    name: "Sports"
-                    description: "All sports activities"
-                    color: "#3B82F6"
-                    parent_group_id: null
-                    created_at: "2024-01-15T10:30:00Z"
-                    children:
-                      - id: "grp_football"
-                        name: "Football"
-                        description: "Football training and matches"
-                        color: "#10B981"
-                        parent_group_id: "grp_sports"
-                        created_at: "2024-01-15T10:35:00Z"
-                        children: []
-                        events:
-                          - id: "evt_001"
-                            title: "Football Training"
-                            start: "2025-09-20T18:00:00Z"
-                            end: "2025-09-20T20:00:00Z"
-                            event_type: "Football"
-                            description: "Weekly football training"
-                            location: "Sports Field"
-                      - id: "grp_volleyball"
-                        name: "Volleyball"
-                        description: "Volleyball activities"
-                        color: "#F59E0B"
-                        parent_group_id: "grp_sports"
-                        created_at: "2024-01-15T10:40:00Z"
-                        children: []
-                        events:
-                          - id: "evt_002"
-                            title: "Volleyball Match"
-                            start: "2025-09-21T19:00:00Z"
-                            end: "2025-09-21T21:00:00Z"
-                            event_type: "Volleyball"
-                            description: "Weekly volleyball match"
-                            location: "Gym Hall"
-                    events:
-                      - id: "evt_003"
-                        title: "General Sports Meeting"
-                        start: "2025-09-22T17:00:00Z"
-                        end: "2025-09-22T18:00:00Z"
-                        event_type: "Meeting"
-                        description: "Monthly sports committee meeting"
-                        location: "Club House"
-                ungrouped_events:
-                  - id: "evt_003"
-                    title: "Random Meeting"
-                    start: "2025-09-22T14:00:00Z"
-                    end: "2025-09-22T15:00:00Z"
-                    event_type: "Meeting"
-                    description: "Unassigned meeting"
-                    location: "TBD"
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/events/{event_id}/groups/{group_id}:
+  /calendars/{calendarId}/filters:
     post:
-      summary: Assign event to group
-      description: Manually assign an event to a specific group for categorization
-      tags:
-        - Event Groups
+      summary: Create filter for user calendar
       parameters:
-        - name: event_id
+        - name: calendarId
           in: path
           required: true
           schema:
-            type: string
-          description: Unique event identifier
-          example: "evt_001"
-        - name: group_id
-          in: path
-          required: true
+            type: integer
+        - name: username
+          in: query
           schema:
             type: string
-          description: Unique group identifier
-          example: "grp_exter01"
-      responses:
-        '200':
-          description: Event successfully assigned to group (or already assigned)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Success message
-                  assignment_id:
-                    type: string
-                    description: Unique assignment identifier
-                  event_title:
-                    type: string
-                    description: Title of the assigned event
-                  group_name:
-                    type: string
-                    description: Name of the group
-              example:
-                message: "Event successfully assigned to group"
-                assignment_id: "evg_12345678"
-                event_title: "Fußball Training"
-                group_name: "Fußball"
-        '404':
-          description: Event or group not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  detail:
-                    type: string
-              example:
-                detail: "Event not found"
-        '500':
-          $ref: '#/components/responses/InternalError'
-    delete:
-      summary: Remove event from group
-      description: Remove an event from a specific group
-      tags:
-        - Event Groups
-      parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique event identifier
-          example: "evt_001"
-        - name: group_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique group identifier
-          example: "grp_exter01"
-      responses:
-        '200':
-          description: Event successfully removed from group
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Success message
-                  event_title:
-                    type: string
-                    description: Title of the removed event
-                  group_name:
-                    type: string
-                    description: Name of the group
-              example:
-                message: "Event successfully removed from group"
-                event_title: "Fußball Training"
-                group_name: "Fußball"
-        '404':
-          description: Assignment not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  detail:
-                    type: string
-              example:
-                detail: "Event is not assigned to this group"
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # ===============================================
-  # Filtered Calendars APIs
-  # ===============================================
-
-  /api/filtered-calendars:
-    get:
-      summary: Get filtered calendars
-      description: Retrieve all created filtered calendar links
-      tags:
-        - Filtered Calendars
-      responses:
-        '200':
-          description: Successfully retrieved filtered calendars
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - filtered_calendars
-                properties:
-                  filtered_calendars:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/FilteredCalendar'
-              example:
-                filtered_calendars:
-                  - id: "fc_001"
-                    name: "Work Events Only"
-                    public_token: "abc123def456"
-                    calendar_url: "https://filter-ical.de/cal/abc123def456"
-                    preview_url: "https://filter-ical.de/preview/abc123def456"
-                    source_calendar_id: "cal_001"
-                    selected_groups: ["grp_work", "grp_meetings"]
-                    selected_events: ["evt_001", "evt_002"]
-                    created_at: "2024-01-18T09:00:00Z"
-                    updated_at: "2024-01-18T09:00:00Z"
-        '500':
-          $ref: '#/components/responses/InternalError'
-    
-    post:
-      summary: Create filtered calendar
-      description: Create a new filtered calendar with shareable link
-      tags:
-        - Filtered Calendars
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - source_calendar_id
-                - name
-                - selected_groups
-                - selected_events
+              required: [name]
               properties:
-                source_calendar_id:
-                  type: string
-                  description: ID of the source calendar to filter
-                  example: "cal_001"
                 name:
                   type: string
-                  minLength: 3
-                  maxLength: 100
-                  description: Name for the filtered calendar
-                  example: "Work Events Only"
-                selected_groups:
+                  example: "Work meetings only"
+                subscribed_event_ids:
                   type: array
                   items:
-                    type: string
-                  description: Group IDs that are selected
-                  example: ["grp_sports", "grp_meetings"]
-                selected_events:
-                  type: array
-                  items:
-                    type: string
-                  description: Individual event IDs that are selected
-                  example: ["evt_001", "evt_002"]
-            example:
-              source_calendar_id: "cal_001"
-              name: "Work Events Only"
-              selected_groups: ["grp_sports", "grp_meetings"]
-              selected_events: ["evt_001", "evt_002"]
+                    type: integer
+                  example: [1, 2, 5]
       responses:
         '201':
-          description: Filtered calendar created successfully
+          description: Filter created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FilteredCalendar'
+                $ref: '#/components/schemas/Filter'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid input
         '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/filtered-calendars/{filtered_calendar_id}:
-    put:
-      summary: Update filtered calendar
-      description: Update an existing filtered calendar's name or filter configuration
-      tags:
-        - Filtered Calendars
+          description: Calendar not found
+    
+    get:
+      summary: List filters for user calendar
       parameters:
-        - name: filtered_calendar_id
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: username
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Filter'
+        '404':
+          description: Calendar not found
+
+  # Domain-specific endpoints (auto-created from domains.yaml)
+  /domains/{domain}/events:
+    get:
+      summary: Get domain calendar events (grouped structure)
+      parameters:
+        - name: domain
           in: path
           required: true
           schema:
             type: string
-          description: Unique filtered calendar identifier
-          example: "fc_001"
+          example: "exter"
+        - name: username
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Domain events with groups
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainEventsResponse'
+        '404':
+          description: Domain not found
+
+  /domains/{domain}/groups:
+    get:
+      summary: Get groups for domain calendar
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+        '404':
+          description: Domain not found
+    
+    post:
+      summary: Create a new group (admin)
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [name]
               properties:
                 name:
                   type: string
-                  minLength: 3
-                  maxLength: 100
-                  description: Updated name for the filtered calendar
-                  example: "Updated Work Events"
-                selected_groups:
-                  type: array
-                  items:
-                    type: string
-                  description: Updated group IDs that are selected
-                  example: ["grp_sports", "grp_meetings", "grp_training"]
-                selected_events:
-                  type: array
-                  items:
-                    type: string
-                  description: Updated individual event IDs that are selected
-                  example: ["evt_001", "evt_002", "evt_003"]
-            example:
-              name: "Updated Work Events"
-              selected_groups: ["grp_sports", "grp_meetings", "grp_training"]
-              selected_events: ["evt_001", "evt_002", "evt_003"]
+                  example: "BCC Events"
       responses:
-        '200':
-          description: Filtered calendar updated successfully
+        '201':
+          description: Group created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FilteredCalendar'
+                $ref: '#/components/schemas/Group'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid input
         '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-    
-    delete:
-      summary: Delete filtered calendar
-      description: Remove a filtered calendar and its public access link
-      tags:
-        - Filtered Calendars
+          description: Domain not found
+
+  /domains/{domain}/groups/{groupId}/assign-recurring-events:
+    put:
+      summary: Manually assign recurring events to group (admin)
       parameters:
-        - name: filtered_calendar_id
+        - name: domain
           in: path
           required: true
           schema:
             type: string
-          description: Unique filtered calendar identifier
-          example: "fc_001"
-      responses:
-        '204':
-          description: Filtered calendar deleted successfully
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # ===============================================
-  # Public Calendar Access
-  # ===============================================
-
-  /cal/{token}:
-    get:
-      summary: Get public filtered calendar
-      description: Access a filtered calendar using its public token (no authentication required). Supports both /cal/{token} and /cal/{token}.ics URLs for calendar app compatibility.
-      tags:
-        - Public Access
-      parameters:
-        - name: token
+        - name: groupId
           in: path
           required: true
           schema:
-            type: string
-          description: Public access token for the filtered calendar (with or without .ics extension)
-          example: "abc123def456"
-      responses:
-        '200':
-          description: Successfully retrieved public calendar data
-          content:
-            text/calendar:
-              schema:
-                type: string
-                description: iCal format calendar data
-                example: |
-                  BEGIN:VCALENDAR
-                  VERSION:2.0
-                  PRODID:-//iCal Viewer//Filter-iCal.de//EN
-                  BEGIN:VEVENT
-                  DTSTART:20240118T100000Z
-                  DTEND:20240118T110000Z
-                  SUMMARY:Team Meeting
-                  CATEGORIES:Work
-                  END:VEVENT
-                  END:VCALENDAR
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # ===============================================
-  # iCal Generation API
-  # ===============================================
-
-  /api/calendar/{calendar_id}/generate:
-    post:
-      summary: Generate filtered iCal content
-      description: Create filtered iCal content from a calendar based on group and event filters
-      tags:
-        - iCal Generation
-      parameters:
-        - name: calendar_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique calendar identifier
-          example: "cal_001"
+            type: integer
       requestBody:
         required: true
         content:
@@ -731,726 +275,359 @@ paths:
             schema:
               type: object
               properties:
-                selected_groups:
+                recurring_event_titles:
                   type: array
                   items:
                     type: string
-                  description: Group IDs to include in the filtered calendar
-                  example: ["grp_portal", "grp_meetings"]
-                selected_events:
-                  type: array
-                  items:
-                    type: string
-                  description: Individual event IDs to include in the filtered calendar
-                  example: ["evt_001", "evt_002"]
+                  example: ["Weekly Team Meeting", "Monthly Review"]
       responses:
         '200':
-          description: Successfully generated filtered iCal content
+          description: Recurring events assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "2 recurring events assigned to group"
+        '404':
+          description: Domain or group not found
+
+  /domains/{domain}/assignment-rules:
+    post:
+      summary: Create auto-assignment rule (admin)
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rule_type, rule_value, target_group_id]
+              properties:
+                rule_type:
+                  type: string
+                  enum: [title_contains, description_contains]
+                  example: "title_contains"
+                rule_value:
+                  type: string
+                  example: "Event"
+                target_group_id:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentRule'
+        '400':
+          description: Invalid input
+        '404':
+          description: Domain not found
+
+    get:
+      summary: List assignment rules for domain
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of assignment rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssignmentRule'
+
+  /domains/{domain}/filters:
+    post:
+      summary: Create filter for domain calendar
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: "BCC Events + Selected Meetings"
+                subscribed_event_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 5]
+                subscribed_group_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 3]
+      responses:
+        '201':
+          description: Filter created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+        '400':
+          description: Invalid input
+        '404':
+          description: Domain not found
+    
+    get:
+      summary: List filters for domain calendar
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Filter'
+        '404':
+          description: Domain not found
+
+  # Dynamic iCal Export
+  /ical/{uuid}.ics:
+    get:
+      summary: Export filtered calendar as iCal file
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Filtered iCal file
           content:
             text/calendar:
               schema:
                 type: string
-                description: iCal format calendar data
                 example: |
                   BEGIN:VCALENDAR
                   VERSION:2.0
-                  PRODID:-//iCal Viewer//Filter-iCal.de//EN
+                  PRODID:-//iCal Viewer//EN
                   BEGIN:VEVENT
-                  DTSTART:20240118T100000Z
-                  DTEND:20240118T110000Z
+                  UID:example@icalviewer.com
+                  DTSTART:20241201T100000Z
+                  DTEND:20241201T110000Z
                   SUMMARY:Team Meeting
-                  CATEGORIES:Work
                   END:VEVENT
                   END:VCALENDAR
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # ===============================================
-  # Domain Configuration APIs
-  # ===============================================
-
-  /api/domains:
-    get:
-      summary: Get available domains
-      description: Retrieve list of all configured domains with their calendar configurations
-      tags:
-        - Domains
-      responses:
-        '200':
-          description: Successfully retrieved available domains
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - domains
-                properties:
-                  domains:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Domain'
-              example:
-                domains:
-                  - id: "exter"
-                    name: "Exter Portal"
-                    calendar_name: "Portal Calendar"
-                    calendar_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/domains/{domain_id}:
-    get:
-      summary: Get domain configuration
-      description: Retrieve configuration for a specific domain including its default calendar
-      tags:
-        - Domains
-      parameters:
-        - name: domain_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique domain identifier
-          example: "exter"
-      responses:
-        '200':
-          description: Successfully retrieved domain configuration
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Domain'
-              example:
-                id: "exter"
-                name: "Exter Portal"
-                calendar_name: "Portal Calendar"
-                calendar_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/domains/{domain_id}/events:
-    get:
-      summary: Get real-time events for a domain
-      description: |
-        Fetch and parse events directly from domain's iCal source in real-time.
-        This endpoint provides the core domain event data without requiring user calendar creation.
-        
-        **Event Filtering**: Returns only recent (1 week back) and future events. See EventFiltering schema for details.
-      tags:
-        - Domains
-      parameters:
-        - name: domain_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique domain identifier
-          example: "exter"
-        - name: event_type
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Filter events by specific event type
-          example: "Volleyball"
-      responses:
-        '200':
-          description: Successfully retrieved domain events
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - events
-                  - metadata
-                properties:
-                  events:
-                    oneOf:
-                      - type: object
-                        additionalProperties:
-                          type: object
-                          properties:
-                            count:
-                              type: integer
-                              description: Number of events of this type
-                            events:
-                              type: array
-                              items:
-                                $ref: '#/components/schemas/Event'
-                              description: Array of events in this event type
-                        description: Events grouped by type (when no event_type filter)
-                      - type: array
-                        items:
-                          $ref: '#/components/schemas/Event'
-                        description: Individual events list (when event_type filter is provided)
-                  metadata:
-                    type: object
-                    required:
-                      - domain_id
-                      - last_updated
-                      - total_events
-                      - source_url
-                    properties:
-                      domain_id:
-                        type: string
-                        description: Domain identifier
-                        example: "exter"
-                      last_updated:
-                        type: string
-                        format: date-time
-                        description: When domain events were last fetched
-                        example: "2025-09-19T07:30:00Z"
-                      total_events:
-                        type: integer
-                        description: Total number of events in domain
-                        example: 42
-                      source_url:
-                        type: string
-                        format: uri
-                        description: Original iCal source URL
-                        example: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
-                      cache_expires:
-                        type: string
-                        format: date-time
-                        description: When cached data expires
-                        example: "2025-09-19T07:35:00Z"
-              example:
-                events:
-                  "Volleyball":
-                    count: 3
-                    events:
-                      - id: "evt_volleyball_001"
-                        title: "Volleyball Training"
-                        start: "2025-09-20T18:00:00Z"
-                        end: "2025-09-20T19:30:00Z"
-                        event_type: "Volleyball"
-                        description: "Weekly volleyball training session"
-                        location: "Sports Hall"
-                  "Musik Band":
-                    count: 2
-                    events:
-                      - id: "evt_band_001"
-                        title: "Band Practice"
-                        start: "2025-09-21T19:00:00Z"
-                        end: "2025-09-21T21:00:00Z"
-                        event_type: "Musik Band"
-                        description: "Weekly band rehearsal"
-                        location: "Music Room"
-                metadata:
-                  domain_id: "exter"
-                  last_updated: "2025-09-19T07:30:00Z"
-                  total_events: 42
-                  source_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
-                  cache_expires: "2025-09-19T07:35:00Z"
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/domains/{domain_id}/groups:
-    get:
-      summary: Get domain-specific event groups
-      description: |
-        Retrieve event groups configured for this domain with current event assignments.
-        Groups provide organized filtering of domain events by category.
-        
-        **Event Filtering**: All event counts within groups reflect only recent (1 week back) and future events. See EventFiltering schema for details.
-      tags:
-        - Domains
-      parameters:
-        - name: domain_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique domain identifier
-          example: "exter"
-      responses:
-        '200':
-          description: Successfully retrieved domain groups
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - has_groups
-                  - domain_id
-                  - groups
-                properties:
-                  has_groups:
-                    type: boolean
-                    description: Whether this domain has any groups configured
-                    example: true
-                  domain_id:
-                    type: string
-                    description: Domain identifier
-                    example: "exter"
-                  groups:
-                    type: object
-                    additionalProperties:
-                      $ref: '#/components/schemas/Group'
-                    description: Groups available for this domain
-                  ungrouped_event_types:
-                    type: array
-                    items:
-                      type: string
-                    description: Event types not assigned to any group
-                    example: ["Other Event", "Miscellaneous"]
-              example:
-                has_groups: true
-                domain_id: "exter"
-                groups:
-                  "group_sports":
-                    id: "group_sports"
-                    name: "⚽ Sports & Recreation"
-                    description: "Sports activities and physical recreation"
-                    color: "#3B82F6"
-                    parent_group_id: null
-                    event_types:
-                      "Volleyball":
-                        name: "Volleyball"
-                        count: 3
-                        events: []
-                      "Eiszeit (Jugend)":
-                        name: "Eiszeit (Jugend)"
-                        count: 2
-                        events: []
-                ungrouped_event_types: ["Other Event"]
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /api/domains/{domain_id}/types:
-    get:
-      summary: Get available event types for domain
-      description: |
-        Retrieve all event types available in this domain's calendar data.
-        Useful for building dynamic filters and understanding domain content.
-        
-        **Event Filtering**: Returns only event types that have recent (1 week back) or future events. See EventFiltering schema for details.
-      tags:
-        - Domains
-      parameters:
-        - name: domain_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique domain identifier
-          example: "exter"
-      responses:
-        '200':
-          description: Successfully retrieved domain event types
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - domain_id
-                  - event_types
-                  - total_count
-                properties:
-                  domain_id:
-                    type: string
-                    description: Domain identifier
-                    example: "exter"
-                  event_types:
-                    type: array
-                    items:
-                      type: object
-                      required:
-                        - name
-                        - count
-                      properties:
-                        name:
-                          type: string
-                          description: Event type name
-                          example: "Volleyball"
-                        count:
-                          type: integer
-                          description: Number of events of this type
-                          example: 3
-                        last_event:
-                          type: string
-                          format: date-time
-                          description: Date of most recent event of this type
-                          example: "2025-09-25T18:00:00Z"
-                    description: Available event types with counts
-                  total_count:
-                    type: integer
-                    description: Total number of events across all types
-                    example: 42
-              example:
-                domain_id: "exter"
-                event_types:
-                  - name: "Volleyball"
-                    count: 3
-                    last_event: "2025-09-25T18:00:00Z"
-                  - name: "Musik Band"
-                    count: 2
-                    last_event: "2025-09-24T19:00:00Z"
-                  - name: "Tweens"
-                    count: 5
-                    last_event: "2025-09-26T16:00:00Z"
-                total_count: 42
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # ===============================================
-  # Health Check
-  # ===============================================
-
-  /health:
-    get:
-      summary: Health check
-      description: Check if the API is running
-      tags:
-        - Health
-      responses:
-        '200':
-          description: API is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "healthy"
-                  message:
-                    type: string
-                    example: "iCal Viewer API is running"
-
-# ===============================================
-# Component Definitions
-# ===============================================
+          description: Filter not found
 
 components:
   schemas:
-    EventFiltering:
-      type: object
-      description: |
-        **Event Filtering Behavior**
-        
-        All event-related endpoints in this API implement consistent filtering:
-        - **Recent Events**: Events from 1 week ago through present day
-        - **Future Events**: All events scheduled for future dates
-        - **Excluded**: Events older than 1 week are excluded from all responses
-        
-        This filtering applies to:
-        - Event counts in group responses
-        - Individual event lists
-        - Generated filtered iCal files
-        - All domain event endpoints
-        
-        **Rationale**: Calendar applications should focus on upcoming events with minimal recent context.
-        
     Calendar:
       type: object
-      required:
-        - id
-        - name
-        - url
-        - user_id
-        - created_at
       properties:
         id:
-          type: string
-          description: Unique calendar identifier
-          example: "cal_001"
+          type: integer
+          example: 1
         name:
           type: string
-          description: Calendar display name
-          example: "Work Calendar"
-        url:
+          example: "My Work Calendar"
+        source_url:
           type: string
           format: uri
-          description: Source iCal URL
-          example: "https://example.com/work.ics"
-        user_id:
+          example: "https://example.com/calendar.ics"
+        type:
           type: string
-          description: Always 'public' for public-first access
-          example: "public"
-        created_at:
+          enum: [user, domain]
+          example: "user"
+        domain_key:
+          type: string
+          description: "Only present for domain calendars"
+          example: "exter"
+        username:
+          type: string
+          example: "john_doe"
+        last_fetched:
           type: string
           format: date-time
-          description: Calendar creation timestamp
           example: "2024-01-15T10:30:00Z"
+
+    DomainEventsResponse:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupWithEvents'
+        ungrouped_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecurringEvent'
+          description: "Recurring events not assigned to any group"
+
+    GroupWithEvents:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "BCC Events"
+        recurring_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecurringEvent'
+
+    RecurringEvent:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Weekly Team Meeting"
+        event_count:
+          type: integer
+          example: 4
+          description: "Number of individual events with this title"
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
 
     Event:
       type: object
-      required:
-        - id
-        - title
-        - start
-        - end
-        - event_type
       properties:
         id:
-          type: string
-          description: Unique event identifier
-          example: "evt_001"
+          type: integer
+          example: 1
         title:
           type: string
-          description: Event title/summary
-          example: "Team Meeting"
-        start:
+          example: "Weekly Team Meeting"
+        start_time:
           type: string
           format: date-time
-          description: Event start time (ISO 8601)
-          example: "2024-01-18T10:00:00Z"
-        end:
+          example: "2024-01-15T10:00:00Z"
+        end_time:
           type: string
           format: date-time
-          description: Event end time (ISO 8601)
-          example: "2024-01-18T11:00:00Z"
-        event_type:
-          type: string
-          description: Event type/category
-          example: "Work"
+          example: "2024-01-15T11:00:00Z"
         description:
           type: string
-          description: Event description (optional)
-          example: "Weekly team sync meeting"
+          example: "Weekly sync meeting for the development team"
         location:
           type: string
-          description: Event location (optional)
           example: "Conference Room A"
-
-
-    FilteredCalendar:
-      type: object
-      required:
-        - id
-        - name
-        - public_token
-        - calendar_url
-        - preview_url
-        - source_calendar_id
-        - selected_groups
-        - selected_events
-        - created_at
-        - updated_at
-      properties:
-        id:
+        uid:
           type: string
-          description: Unique filtered calendar identifier
-          example: "fc_001"
-        name:
-          type: string
-          description: Filtered calendar display name
-          example: "Work Events Only"
-        public_token:
-          type: string
-          description: Public access token for sharing
-          example: "abc123def456"
-        calendar_url:
-          type: string
-          format: uri
-          description: Public subscription URL with .ics extension for calendar app compatibility
-          example: "https://filter-ical.de/cal/abc123def456.ics"
-        preview_url:
-          type: string
-          format: uri
-          description: Preview URL for filtered calendar
-          example: "https://filter-ical.de/preview/abc123def456"
-        source_calendar_id:
-          type: string
-          description: Source calendar identifier
-          example: "cal_001"
-        selected_groups:
-          type: array
-          items:
-            type: string
-          description: Group IDs that are subscribed/selected
-          example: ["grp_sports", "grp_meetings"]
-        selected_events:
-          type: array
-          items:
-            type: string
-          description: Individual event IDs that are selected
-          example: ["evt_001", "evt_002"]
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-          example: "2024-01-18T09:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: "2024-01-18T15:30:00Z"
+          example: "weekly-meeting-001@example.com"
 
     Group:
       type: object
-      required:
-        - id
-        - name
-        - color
-        - events
       properties:
         id:
-          type: string
-          description: Unique group identifier
-          example: "grp_portal"
-        name:
-          type: string
-          description: Group display name
-          example: "Portal Events"
-        description:
-          type: string
-          description: Optional group description
-          example: "Events related to portal activities"
-        color:
-          type: string
-          description: UI color for the group
-          example: "#3B82F6"
-        parent_group_id:
-          type: string
-          nullable: true
-          description: Parent group ID for nested structure (null for root groups)
-          example: "grp_department"
-        children:
-          type: array
-          items:
-            type: object
-            description: Child group with same structure as parent (recursive nesting supported)
-          description: Child groups (recursive nested structure)
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/Event'
-          description: Events assigned to this group (legacy format for compatibility)
-        event_types:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/EventType'
-          description: Events organized by event type for multi-level selection
-        created_at:
-          type: string
-          format: date-time
-          description: Group creation timestamp
-          example: "2024-01-15T10:30:00Z"
-
-    EventType:
-      type: object
-      required:
-        - name
-        - count
-        - events
-      properties:
-        name:
-          type: string
-          description: Event type name (recurring event title)
-          example: "Volleyball"
-        count:
           type: integer
-          description: Number of events of this type
-          example: 24
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/Event'
-          description: Individual events of this type
-      description: Event type with grouped individual events for multi-level selection
-
-    Domain:
-      type: object
-      required:
-        - id
-        - name
-        - calendar_url
-      properties:
-        id:
-          type: string
-          description: Unique domain identifier
-          example: "exter"
+          example: 1
         name:
           type: string
-          description: Name of the calendar for this domain
-          example: "Portal Calendar"
-        calendar_url:
+          example: "BCC Events"
+        domain_key:
           type: string
-          format: uri
-          description: iCal URL for the domain's calendar
-          example: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+          example: "exter"
+
+    AssignmentRule:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        rule_type:
+          type: string
+          enum: [title_contains, description_contains]
+          example: "title_contains"
+        rule_value:
+          type: string
+          example: "Event"
+        target_group_id:
+          type: integer
+          example: 1
+
+    Filter:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "BCC Events + Work Meetings"
+        calendar_id:
+          type: integer
+          description: "Present for user calendar filters"
+          example: 1
+        domain_key:
+          type: string
+          description: "Present for domain calendar filters"
+          example: "exter"
+        username:
+          type: string
+          example: "john_doe"
+        subscribed_event_ids:
+          type: array
+          items:
+            type: integer
+          example: [1, 2, 5]
+        subscribed_group_ids:
+          type: array
+          items:
+            type: integer
+          example: [1, 3]
+          description: "Only present for domain calendar filters"
+        link_uuid:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        export_url:
+          type: string
+          example: "/ical/550e8400-e29b-41d4-a716-446655440000.ics"
 
     Error:
       type: object
-      required:
-        - detail
       properties:
+        error:
+          type: string
+          example: "Invalid calendar URL"
         detail:
           type: string
-          description: Human-readable error message
-          example: "Calendar not found"
-
-  responses:
-    BadRequest:
-      description: Bad Request - Invalid input data
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            validation_error:
-              summary: Validation error
-              value:
-                detail: "Name is required and must be at least 3 characters"
-            invalid_url:
-              summary: Invalid URL
-              value:
-                detail: "Calendar URL must be a valid HTTP/HTTPS URL"
-
-    NotFound:
-      description: Not Found - Resource does not exist
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            calendar_not_found:
-              summary: Calendar not found
-              value:
-                detail: "Calendar not found"
-            token_not_found:
-              summary: Public token not found
-              value:
-                detail: "Public calendar not found or access token invalid"
-
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            detail: "Internal server error occurred"
-
-# ===============================================
-# Tags for Organization
-# ===============================================
-
-tags:
-  - name: Calendars
-    description: Basic calendar import and management operations
-  - name: Calendar Data
-    description: Event data retrieval and event type information
-  - name: Filtered Calendars
-    description: Create and manage filtered calendar views with shareable links
-  - name: Public Access
-    description: Public access to filtered calendars via tokens
-  - name: iCal Generation
-    description: Generate filtered iCal content for export
-  - name: Domains
-    description: Domain-specific calendar configurations
-  - name: Health
-    description: API health check endpoint
+          example: "The provided URL is not a valid iCal endpoint"

@@ -1,18 +1,40 @@
+# Core FastAPI dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-sqlmodel==0.0.14
-alembic==1.13.1
-httpx==0.25.2
-icalendar==6.3.1
-recurring-ical-events==2.2.2
 pydantic==2.5.0
-python-multipart==0.0.6
-pytest==7.4.3
-pyyaml==6.0.1
-requests==2.31.0
-jsonschema==4.20.0
-openapi-spec-validator==0.7.1
-prance==23.6.21
-apscheduler==3.10.4
-python-dotenv==1.0.0
+pydantic-settings==2.1.0
 
+# Database
+sqlalchemy==2.0.23
+
+# Cache
+redis==5.0.1
+
+# HTTP and iCal processing
+httpx==0.25.2
+icalendar==5.0.11
+requests==2.31.0
+
+# YAML processing for domains.yaml
+PyYAML==6.0.1
+
+# Background tasks
+APScheduler==3.10.4
+
+# Testing and Development
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Contract testing
+openapi-core==0.18.2
+jsonschema==4.20.0
+
+# Development tools
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+
+# Production
+gunicorn==21.2.0

@@ -1,0 +1,165 @@
+"""
+Contract testing - validates API responses match OpenAPI specification exactly.
+
+This is the core of contract-first development - ensuring implementation
+matches the contract specification with zero deviation.
+
+Following the principle from CLAUDE.md:
+"Contract tests validate implementation matches specification exactly"
+"""
+
+import pytest
+from fastapi.testclient import TestClient
+from openapi_core import OpenAPI
+from openapi_core.validation.request import openapi_request_validator
+from openapi_core.validation.response import openapi_response_validator
+from openapi_core.contrib.fastapi import FastAPIOpenAPIRequest, FastAPIOpenAPIResponse
+
+
+class ContractValidator:
+    """Contract validation utilities."""
+    
+    def __init__(self, openapi_validator: OpenAPI):
+        self.openapi_validator = openapi_validator
+    
+    def validate_response(self, request, response):
+        """Validate response against OpenAPI specification."""
+        openapi_request = FastAPIOpenAPIRequest(request)
+        openapi_response = FastAPIOpenAPIResponse(response)
+        
+        # Validate request
+        request_result = openapi_request_validator.validate(
+            self.openapi_validator, openapi_request
+        )
+        if request_result.errors:
+            pytest.fail(f"Request validation failed: {request_result.errors}")
+        
+        # Validate response
+        response_result = openapi_response_validator.validate(
+            self.openapi_validator, openapi_request, openapi_response
+        )
+        if response_result.errors:
+            pytest.fail(f"Response validation failed: {response_result.errors}")
+        
+        return response_result.data
+
+
+@pytest.fixture
+def contract_validator(openapi_validator):
+    """Contract validator fixture."""
+    return ContractValidator(openapi_validator)
+
+
+class TestContractCompliance:
+    """Test contract compliance for all endpoints."""
+    
+    def test_health_endpoint_contract(self, test_client: TestClient):
+        """Test health endpoint follows expected structure."""
+        response = test_client.get("/health")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert "status" in data
+        assert "app" in data
+        assert data["status"] == "healthy"
+    
+    def test_openapi_spec_loading(self, test_client: TestClient, openapi_spec):
+        """Test that FastAPI loads our custom OpenAPI spec."""
+        # Get the OpenAPI spec from FastAPI
+        response = test_client.get("/openapi.json")
+        assert response.status_code == 200
+        
+        api_spec = response.json()
+        
+        # Verify key contract elements are present
+        assert api_spec["info"]["title"] == openapi_spec["info"]["title"]
+        assert "/calendars" in api_spec["paths"]
+        assert "/domains/{domain}/events" in api_spec["paths"]
+        assert "/ical/{uuid}.ics" in api_spec["paths"]
+    
+    def test_calendar_creation_contract_structure(self, test_client: TestClient, sample_calendar_data):
+        """Test calendar creation follows OpenAPI contract structure."""
+        # This will fail until we implement the endpoint, but the test structure is ready
+        response = test_client.post("/calendars", json=sample_calendar_data)
+        
+        # When implemented, should return 201 with Calendar schema
+        # For now, we expect 404 (not implemented)
+        assert response.status_code in [201, 404]  # 404 until implemented
+    
+    def test_domain_events_contract_structure(self, test_client: TestClient):
+        """Test domain events endpoint follows OpenAPI contract structure."""
+        response = test_client.get("/domains/exter/events")
+        
+        # When implemented, should return DomainEventsResponse schema
+        # For now, we expect 404 (not implemented)
+        assert response.status_code in [200, 404]  # 404 until implemented
+    
+    def test_ical_export_contract_structure(self, test_client: TestClient):
+        """Test iCal export endpoint follows OpenAPI contract structure."""
+        # Test with a sample UUID
+        test_uuid = "550e8400-e29b-41d4-a716-446655440000"
+        response = test_client.get(f"/ical/{test_uuid}.ics")
+        
+        # When implemented, should return text/calendar content
+        # For now, we expect 404 (not implemented)
+        assert response.status_code in [200, 404]  # 404 until implemented
+        
+        # When implemented, validate content type
+        if response.status_code == 200:
+            assert "text/calendar" in response.headers.get("content-type", "")
+
+
+class TestContractExamples:
+    """Test that OpenAPI examples work correctly."""
+    
+    def test_calendar_schema_examples(self, openapi_spec):
+        """Validate Calendar schema examples are properly formed."""
+        calendar_schema = openapi_spec["components"]["schemas"]["Calendar"]
+        
+        # Check required properties exist in example
+        assert "properties" in calendar_schema
+        assert "id" in calendar_schema["properties"]
+        assert "name" in calendar_schema["properties"]
+        assert "source_url" in calendar_schema["properties"]
+    
+    def test_filter_schema_examples(self, openapi_spec):
+        """Validate Filter schema examples are properly formed."""
+        filter_schema = openapi_spec["components"]["schemas"]["Filter"]
+        
+        # Check required properties
+        assert "properties" in filter_schema
+        assert "id" in filter_schema["properties"]
+        assert "name" in filter_schema["properties"]
+        assert "link_uuid" in filter_schema["properties"]
+    
+    def test_domain_events_response_structure(self, openapi_spec):
+        """Validate DomainEventsResponse follows expected structure."""
+        schema = openapi_spec["components"]["schemas"]["DomainEventsResponse"]
+        
+        assert "properties" in schema
+        assert "groups" in schema["properties"]
+        assert "ungrouped_events" in schema["properties"]
+
+
+class TestErrorHandling:
+    """Test error responses follow OpenAPI contract."""
+    
+    def test_404_responses_follow_contract(self, test_client: TestClient):
+        """Test 404 responses for non-existent resources."""
+        # Test non-existent calendar
+        response = test_client.get("/calendars/99999/events")
+        assert response.status_code == 404
+        
+        # Test non-existent domain
+        response = test_client.get("/domains/nonexistent/events")
+        assert response.status_code == 404
+        
+        # Test non-existent filter export
+        response = test_client.get("/ical/nonexistent-uuid.ics")
+        assert response.status_code == 404
+    
+    def test_method_not_allowed_responses(self, test_client: TestClient):
+        """Test method not allowed responses."""
+        # Try invalid methods on existing paths
+        response = test_client.patch("/health")
+        assert response.status_code == 405

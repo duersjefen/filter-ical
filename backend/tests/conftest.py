@@ -1,76 +1,117 @@
 """
-Test configuration for contract validation tests
-Ensures proper database setup with new schema
+Test configuration and fixtures for contract-first testing.
+
+This follows industry best practices for FastAPI testing with:
+- Isolated test database
+- FastAPI TestClient  
+- Contract validation fixtures
+- Clean test data setup/teardown
 """
-import os
+
 import pytest
+import yaml
 from pathlib import Path
-from dotenv import load_dotenv
-from sqlmodel import SQLModel
+from typing import Generator, Dict, Any
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from openapi_core import OpenAPI
 
-# Load testing environment before importing app modules
-load_dotenv(Path(__file__).parent.parent / ".env.testing")
-
-# Import after environment is set
-from app.database import engine, create_db_and_tables, get_session
-from app.models import Calendar, Event
-from datetime import datetime, timedelta
+from app.main import create_application
+from app.core.database import Base, get_db
+from app.core.config import settings
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_database():
-    """Create test database with fresh schema"""
-    # Ensure we're in testing mode
-    os.environ["TESTING"] = "true"
+@pytest.fixture(scope="session")
+def test_db_engine():
+    """Create test database engine."""
+    # Use in-memory SQLite for speed
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     
-    # Create all tables with the new schema
-    SQLModel.metadata.drop_all(engine)  # Clean slate
-    create_db_and_tables()  # Create with new schema
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
     
-    yield
+    yield engine
     
-    # Cleanup after tests
-    SQLModel.metadata.drop_all(engine)
+    # Cleanup
+    Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture(scope="function")
+def test_db_session(test_db_engine):
+    """Create test database session with rollback."""
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
+    session = TestingSessionLocal()
+    
+    yield session
+    
+    session.rollback()
+    session.close()
+
+
+@pytest.fixture(scope="function")
+def test_client(test_db_session) -> Generator[TestClient, None, None]:
+    """
+    Create FastAPI test client with test database.
+    
+    This overrides the database dependency to use our test database
+    instead of the production database.
+    """
+    def override_get_db():
+        try:
+            yield test_db_session
+        finally:
+            pass
+    
+    # Create app with test settings
+    settings.testing = True
+    app = create_application()
+    app.dependency_overrides[get_db] = override_get_db
+    
+    with TestClient(app) as client:
+        yield client
+    
+    # Cleanup
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="session")
+def openapi_spec() -> Dict[str, Any]:
+    """Load OpenAPI specification for contract testing."""
+    spec_path = Path(__file__).parent.parent / "openapi.yaml"
+    with open(spec_path, 'r') as f:
+        return yaml.safe_load(f)
+
+
+@pytest.fixture(scope="session")
+def openapi_validator(openapi_spec) -> OpenAPI:
+    """Create OpenAPI validator for contract testing."""
+    return OpenAPI.from_dict(openapi_spec)
 
 
 @pytest.fixture
-def session():
-    """Provide a database session for tests"""
-    return next(get_session())
+def sample_calendar_data():
+    """Sample calendar data for testing."""
+    return {
+        "name": "Test Calendar",
+        "source_url": "https://example.com/test.ics"
+    }
 
 
 @pytest.fixture
-def sample_calendar_with_events(session):
-    """Create a sample calendar with test events"""
-    # Create test calendar
-    calendar = Calendar(
-        id="test_cal_123",
-        name="Test Calendar",
-        url="https://example.com/test.ics",
-        user_id="public"
-    )
-    session.add(calendar)
-    session.commit()
-    session.refresh(calendar)
-    
-    # Add sample events
-    work_event = Event(
-        title="Work Event",
-        start=datetime.utcnow() + timedelta(days=1),
-        end=datetime.utcnow() + timedelta(days=1, hours=1),
-        calendar_id=calendar.id,
-        category="Work"
-    )
-    
-    personal_event = Event(
-        title="Personal Event", 
-        start=datetime.utcnow() + timedelta(days=2),
-        end=datetime.utcnow() + timedelta(days=2, hours=2),
-        calendar_id=calendar.id,
-        category="Personal"
-    )
-    
-    session.add_all([work_event, personal_event])
-    session.commit()
-    
-    return calendar
+def sample_domain_filter_data():
+    """Sample domain filter data for testing."""
+    return {
+        "name": "Test Domain Filter",
+        "subscribed_event_ids": [1, 2],
+        "subscribed_group_ids": [1]
+    }
+
+
+@pytest.fixture
+def sample_user_filter_data():
+    """Sample user filter data for testing."""
+    return {
+        "name": "Test User Filter", 
+        "subscribed_event_ids": [1, 2, 3]
+    }

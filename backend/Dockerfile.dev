@@ -17,11 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install development dependencies for hot reloading
 RUN pip install --no-cache-dir watchdog
 
-# Copy configuration files if they exist
-COPY config/ ./config/
-
-# Copy OpenAPI specification if it exists  
+# Copy OpenAPI specification and domains configuration
 COPY openapi.yaml ./
+COPY domains.yaml ./
 
 # Create data directory for database
 RUN mkdir -p /app/data

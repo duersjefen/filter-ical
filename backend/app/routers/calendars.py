@@ -1,0 +1,244 @@
+"""
+Calendars router for user calendar management.
+
+Implements user calendar endpoints from OpenAPI specification.
+"""
+
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from ..core.database import get_db
+from ..services.calendar_service import (
+    create_calendar, get_calendars, get_calendar_by_id, delete_calendar,
+    get_calendar_events, sync_calendar_events, create_filter, get_filters
+)
+
+router = APIRouter()
+
+
+@router.post("")
+async def add_calendar(
+    calendar_data: dict,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Add a user calendar."""
+    try:
+        # Validate request data
+        if "name" not in calendar_data:
+            raise HTTPException(status_code=400, detail="Calendar name is required")
+        if "source_url" not in calendar_data:
+            raise HTTPException(status_code=400, detail="Source URL is required")
+        
+        # Create calendar
+        success, calendar, error = create_calendar(
+            db=db,
+            name=calendar_data["name"],
+            source_url=calendar_data["source_url"],
+            username=username
+        )
+        if not success:
+            raise HTTPException(status_code=400, detail=error)
+        
+        # Sync calendar events
+        sync_success, event_count, sync_error = await sync_calendar_events(db, calendar)
+        if not sync_success:
+            # Calendar created but sync failed - still return calendar with warning
+            pass
+        
+        # Return calendar data matching OpenAPI schema
+        return {
+            "id": calendar.id,
+            "name": calendar.name,
+            "source_url": calendar.source_url,
+            "type": calendar.type,
+            "domain_key": calendar.domain_key,
+            "username": calendar.username,
+            "last_fetched": calendar.last_fetched.isoformat() if calendar.last_fetched else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("")
+async def list_calendars(
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """List user calendars."""
+    try:
+        # Get calendars from database
+        calendars = get_calendars(db, username=username)
+        
+        # Transform to OpenAPI schema format
+        calendars_response = []
+        for calendar in calendars:
+            calendars_response.append({
+                "id": calendar.id,
+                "name": calendar.name,
+                "source_url": calendar.source_url,
+                "type": calendar.type,
+                "domain_key": calendar.domain_key,
+                "username": calendar.username,
+                "last_fetched": calendar.last_fetched.isoformat() if calendar.last_fetched else None
+            })
+        
+        return calendars_response
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/{calendar_id}")
+async def delete_user_calendar(
+    calendar_id: int,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Delete a user calendar."""
+    try:
+        # Delete calendar
+        success, error = delete_calendar(db, calendar_id, username=username)
+        if not success:
+            if "not found" in error.lower():
+                raise HTTPException(status_code=404, detail="Calendar not found")
+            else:
+                raise HTTPException(status_code=400, detail=error)
+        
+        # Return 204 No Content on successful deletion
+        return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/{calendar_id}/events")
+async def get_calendar_events_endpoint(
+    calendar_id: int,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Get calendar events (flat structure for user calendars)."""
+    try:
+        # Verify calendar exists and user has access
+        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        if not calendar:
+            raise HTTPException(status_code=404, detail="Calendar not found")
+        
+        # Get events
+        events = get_calendar_events(db, calendar_id)
+        
+        # Transform to OpenAPI schema format
+        events_response = []
+        for event in events:
+            events_response.append({
+                "id": event.id,
+                "title": event.title,
+                "start_time": event.start_time.isoformat() if event.start_time else None,
+                "end_time": event.end_time.isoformat() if event.end_time else None,
+                "description": event.description or "",
+                "location": event.location,
+                "uid": event.uid
+            })
+        
+        return {
+            "events": events_response
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/{calendar_id}/filters")
+async def create_calendar_filter(
+    calendar_id: int,
+    filter_data: dict,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Create filter for user calendar."""
+    try:
+        # Verify calendar exists and user has access
+        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        if not calendar:
+            raise HTTPException(status_code=404, detail="Calendar not found")
+        
+        # Validate request data
+        if "name" not in filter_data:
+            raise HTTPException(status_code=400, detail="Filter name is required")
+        
+        # Create filter
+        success, filter_obj, error = create_filter(
+            db=db,
+            name=filter_data["name"],
+            calendar_id=calendar_id,
+            username=username,
+            subscribed_event_ids=filter_data.get("subscribed_event_ids", [])
+        )
+        if not success:
+            raise HTTPException(status_code=400, detail=error)
+        
+        # Return filter data matching OpenAPI schema
+        return {
+            "id": filter_obj.id,
+            "name": filter_obj.name,
+            "calendar_id": filter_obj.calendar_id,
+            "domain_key": filter_obj.domain_key,
+            "username": filter_obj.username,
+            "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
+            "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
+            "link_uuid": filter_obj.link_uuid,
+            "export_url": f"/ical/{filter_obj.link_uuid}.ics"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/{calendar_id}/filters")
+async def get_calendar_filters(
+    calendar_id: int,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """List filters for user calendar."""
+    try:
+        # Verify calendar exists and user has access
+        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        if not calendar:
+            raise HTTPException(status_code=404, detail="Calendar not found")
+        
+        # Get filters
+        filters = get_filters(db, calendar_id=calendar_id, username=username)
+        
+        # Transform to OpenAPI schema format
+        filters_response = []
+        for filter_obj in filters:
+            filters_response.append({
+                "id": filter_obj.id,
+                "name": filter_obj.name,
+                "calendar_id": filter_obj.calendar_id,
+                "domain_key": filter_obj.domain_key,
+                "username": filter_obj.username,
+                "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
+                "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
+                "link_uuid": filter_obj.link_uuid,
+                "export_url": f"/ical/{filter_obj.link_uuid}.ics"
+            })
+        
+        return filters_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

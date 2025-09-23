@@ -1,0 +1,13 @@
+# Domain Configuration
+# Each domain can have its own default calendar that loads automatically
+# when users visit the domain-specific route (e.g., /exter)
+
+domains:
+  exter:
+    name: "Exter Kalendar"
+    calendar_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+
+  # Future domains can be added here:
+  # company1:
+  #   name: "Company One"
+  #   calendar_url: "https://company1.com/events.ics"
