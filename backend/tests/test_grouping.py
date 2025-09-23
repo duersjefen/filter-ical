@@ -19,7 +19,9 @@ from app.data.grouping import (
     apply_assignment_rules,
     build_domain_events_response,
     validate_group_data,
-    validate_assignment_rule_data
+    validate_assignment_rule_data,
+    _extract_categories_from_raw_ical,
+    _event_matches_rule
 )
 
 
@@ -516,3 +518,160 @@ class TestValidation:
         
         assert is_valid is False
         assert "positive integer" in error
+    
+    def test_validate_assignment_rule_data_valid_category_contains(self):
+        """Test validating valid category_contains rule."""
+        is_valid, error = validate_assignment_rule_data("category_contains", "Event", 1)
+        
+        assert is_valid is True
+        assert error == ""
+
+
+@pytest.mark.unit
+class TestCategoryAssignmentRules:
+    """Test category-based assignment rule functions."""
+    
+    def test_extract_categories_from_raw_ical_basic(self):
+        """Test extracting categories from raw iCal content."""
+        raw_ical = """BEGIN:VEVENT
+DTSTART:20250101T100000Z
+DTEND:20250101T110000Z
+SUMMARY:Test Event
+CATEGORY:Event
+CATEGORY:Deutschland
+DESCRIPTION:Test description
+END:VEVENT"""
+        
+        categories = _extract_categories_from_raw_ical(raw_ical)
+        
+        assert len(categories) == 2
+        assert "Event" in categories
+        assert "Deutschland" in categories
+    
+    def test_extract_categories_from_raw_ical_empty(self):
+        """Test extracting categories from empty raw iCal content."""
+        categories = _extract_categories_from_raw_ical("")
+        assert categories == []
+        
+        categories = _extract_categories_from_raw_ical(None)
+        assert categories == []
+    
+    def test_extract_categories_from_raw_ical_no_categories(self):
+        """Test extracting categories when no CATEGORY lines exist."""
+        raw_ical = """BEGIN:VEVENT
+DTSTART:20250101T100000Z
+SUMMARY:Test Event
+END:VEVENT"""
+        
+        categories = _extract_categories_from_raw_ical(raw_ical)
+        assert categories == []
+    
+    def test_extract_categories_from_raw_ical_mixed_case(self):
+        """Test extracting categories with mixed case (iCal is case-insensitive)."""
+        raw_ical = """BEGIN:VEVENT
+CATEGORY:Event
+category:Training
+CaTEGORY:Deutschland
+END:VEVENT"""
+        
+        categories = _extract_categories_from_raw_ical(raw_ical)
+        # iCal property names are case-insensitive, so all should be extracted
+        assert len(categories) == 3
+        assert "Event" in categories
+        assert "Training" in categories
+        assert "Deutschland" in categories
+    
+    def test_event_matches_rule_category_contains(self):
+        """Test event matching with category_contains rule."""
+        event = {
+            "title": "Test Event",
+            "description": "Test description", 
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Test Event
+CATEGORY:Event
+CATEGORY:Training
+END:VEVENT"""
+        }
+        
+        # Test matching rule
+        rule = {
+            "rule_type": "category_contains",
+            "rule_value": "Event",
+            "target_group_id": 1
+        }
+        
+        assert _event_matches_rule(event, rule) is True
+        
+        # Test non-matching rule
+        rule_no_match = {
+            "rule_type": "category_contains",
+            "rule_value": "NonExistent",
+            "target_group_id": 1
+        }
+        
+        assert _event_matches_rule(event, rule_no_match) is False
+    
+    def test_event_matches_rule_category_contains_case_insensitive(self):
+        """Test event matching with category_contains rule is case insensitive."""
+        event = {
+            "title": "Test Event",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Test Event
+CATEGORY:Event
+END:VEVENT"""
+        }
+        
+        # Test case insensitive matching
+        rule = {
+            "rule_type": "category_contains",
+            "rule_value": "event",  # lowercase
+            "target_group_id": 1
+        }
+        
+        assert _event_matches_rule(event, rule) is True
+    
+    def test_apply_assignment_rules_with_categories(self):
+        """Test applying assignment rules with category-based rules."""
+        events = [
+            {
+                "title": "BCC Community Event",
+                "raw_ical": """BEGIN:VEVENT
+SUMMARY:BCC Community Event
+CATEGORY:Event
+END:VEVENT"""
+            },
+            {
+                "title": "Deutschland Training",
+                "raw_ical": """BEGIN:VEVENT
+SUMMARY:Deutschland Training  
+CATEGORY:Deutschland
+END:VEVENT"""
+            },
+            {
+                "title": "Regular Meeting",
+                "raw_ical": """BEGIN:VEVENT
+SUMMARY:Regular Meeting
+END:VEVENT"""
+            }
+        ]
+        
+        rules = [
+            {
+                "rule_type": "category_contains",
+                "rule_value": "Event",
+                "target_group_id": 1
+            },
+            {
+                "rule_type": "category_contains", 
+                "rule_value": "Deutschland",
+                "target_group_id": 2
+            }
+        ]
+        
+        assignments = apply_assignment_rules(events, rules)
+        
+        assert 1 in assignments
+        assert 2 in assignments
+        assert "BCC Community Event" in assignments[1]
+        assert "Deutschland Training" in assignments[2]
+        assert len(assignments) == 2  # Only events with categories get assigned

@@ -117,7 +117,7 @@ class AssignmentRule(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     domain_key = Column(String(100), nullable=False, index=True)
-    rule_type = Column(String(50), nullable=False)  # 'title_contains', 'description_contains'
+    rule_type = Column(String(50), nullable=False)  # 'title_contains', 'description_contains', 'category_contains'
     rule_value = Column(String(500), nullable=False)
     target_group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
     created_at = Column(DateTime, default=func.now())

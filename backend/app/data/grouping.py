@@ -175,6 +175,36 @@ def apply_assignment_rules(events: List[Dict[str, Any]],
     return group_assignments
 
 
+def _extract_categories_from_raw_ical(raw_ical: str) -> List[str]:
+    """
+    Extract CATEGORY values from raw iCal content.
+    
+    Args:
+        raw_ical: Raw iCal event content
+        
+    Returns:
+        List of category values found in the iCal content
+        
+    Pure function - deterministic text parsing.
+    """
+    categories = []
+    if not raw_ical:
+        return categories
+    
+    for line in raw_ical.split('\n'):
+        line = line.strip()
+        # Case-insensitive matching for CATEGORY lines
+        if line.upper().startswith('CATEGORY:'):
+            # Find the colon and extract everything after it
+            colon_index = line.find(':')
+            if colon_index != -1:
+                category = line[colon_index + 1:].strip()
+                if category:
+                    categories.append(category)
+    
+    return categories
+
+
 def _event_matches_rule(event: Dict[str, Any], rule: Dict[str, Any]) -> bool:
     """
     Check if event matches assignment rule.
@@ -199,6 +229,9 @@ def _event_matches_rule(event: Dict[str, Any], rule: Dict[str, Any]) -> bool:
         description = event.get('description', '').lower()
         return rule_value in description
     
+    elif rule_type == 'category_contains':
+        categories = _extract_categories_from_raw_ical(event.get('raw_ical', ''))
+        return any(rule_value in cat.lower() for cat in categories)
     
     return False
 
@@ -463,7 +496,7 @@ def validate_assignment_rule_data(rule_type: str, rule_value: str,
         
     Pure function - validation without side effects.
     """
-    valid_rule_types = ['title_contains', 'description_contains']
+    valid_rule_types = ['title_contains', 'description_contains', 'category_contains']
     
     if rule_type not in valid_rule_types:
         return False, f"Rule type must be one of: {', '.join(valid_rule_types)}"

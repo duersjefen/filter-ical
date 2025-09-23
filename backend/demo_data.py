@@ -11,7 +11,7 @@ Fixes applied:
 from typing import List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 
-from app.models.calendar import Calendar, Group, RecurringEventGroup
+from app.models.calendar import Calendar, Group, RecurringEventGroup, AssignmentRule
 from app.core.database import get_session_sync
 
 
@@ -65,6 +65,15 @@ def create_demo_groups_data() -> List[Dict[str, Any]]:
         {
             "domain_key": "exter",
             "name": "⛪ Gottesdienste & Versammlungen"
+        },
+        # Category-based groups for external domain integration
+        {
+            "domain_key": "exter",
+            "name": "🎉 BCC Event"
+        },
+        {
+            "domain_key": "exter", 
+            "name": "🇩🇪 DCG Events"
         }
     ]
 
@@ -287,6 +296,28 @@ def create_demo_event_assignments() -> List[Dict[str, Any]]:
     ]
 
 
+def create_demo_assignment_rules_data() -> List[Dict[str, Any]]:
+    """
+    Create demo assignment rules for category-based grouping.
+    Returns assignment rule data compatible with AssignmentRule model fields.
+    """
+    return [
+        # Category-based rules for external calendar integration
+        {
+            "domain_key": "exter",
+            "rule_type": "category_contains",
+            "rule_value": "Event",
+            "group_name": "🎉 BCC Event"  # Will be resolved to group_id
+        },
+        {
+            "domain_key": "exter",
+            "rule_type": "category_contains", 
+            "rule_value": "Deutschland",
+            "group_name": "🇩🇪 DCG Events"  # Will be resolved to group_id
+        }
+    ]
+
+
 def create_groups_and_get_mapping(session: Session) -> Tuple[bool, Dict[str, int], str]:
     """
     Create demo groups and return name-to-id mapping.
@@ -381,6 +412,61 @@ def create_recurring_event_assignments(session: Session, name_to_id: Dict[str, i
         return False, f"Failed to create assignments: {str(e)}"
 
 
+def create_assignment_rules(session: Session, name_to_id: Dict[str, int]) -> Tuple[bool, str]:
+    """
+    Create assignment rules for automatic categorization.
+    
+    Args:
+        session: Database session
+        name_to_id: Mapping of group names to database IDs
+        
+    Returns:
+        Tuple of (success, error_message)
+    """
+    try:
+        rules_data = create_demo_assignment_rules_data()
+        created_count = 0
+        
+        for rule_data in rules_data:
+            group_name = rule_data["group_name"]
+            
+            # Get group ID from name
+            if group_name not in name_to_id:
+                print(f"⚠️ Warning: Group '{group_name}' not found, skipping assignment rule")
+                continue
+                
+            group_id = name_to_id[group_name]
+            
+            # Check if rule already exists
+            existing_rule = session.query(AssignmentRule).filter(
+                AssignmentRule.domain_key == rule_data["domain_key"],
+                AssignmentRule.rule_type == rule_data["rule_type"],
+                AssignmentRule.rule_value == rule_data["rule_value"],
+                AssignmentRule.target_group_id == group_id
+            ).first()
+            
+            if not existing_rule:
+                # Create new assignment rule
+                new_rule = AssignmentRule(
+                    domain_key=rule_data["domain_key"],
+                    rule_type=rule_data["rule_type"],
+                    rule_value=rule_data["rule_value"],
+                    target_group_id=group_id
+                )
+                session.add(new_rule)
+                created_count += 1
+        
+        if created_count > 0:
+            print(f"✅ Created {created_count} demo assignment rules")
+        else:
+            print("📋 Demo assignment rules already exist")
+            
+        return True, ""
+        
+    except Exception as e:
+        return False, f"Failed to create assignment rules: {str(e)}"
+
+
 def seed_demo_data() -> bool:
     """
     Seed the database with demo data for exter domain.
@@ -416,7 +502,13 @@ def seed_demo_data() -> bool:
             print(f"❌ Error creating assignments: {error}")
             return False
         
-        # 4. Commit all changes
+        # 4. Create assignment rules for automatic categorization
+        success, error = create_assignment_rules(session, name_to_id)
+        if not success:
+            print(f"❌ Error creating assignment rules: {error}")
+            return False
+        
+        # 5. Commit all changes
         session.commit()
         print("✅ Demo data seeding completed successfully")
         return True
