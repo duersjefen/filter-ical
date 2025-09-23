@@ -349,27 +349,29 @@ const fetchEventTypeEvents = async (eventTypeName) => {
   }
   
   try {
-    // Handle domain ID format - strip 'cal_domain_' prefix if present
-    const cleanDomainId = props.domainId.startsWith('cal_domain_') 
-      ? props.domainId.replace('cal_domain_', '') 
-      : props.domainId
+    // For domain calendars, events are already included in the group data
+    // Find the recurring event with matching title
+    const recurringEvent = props.group.recurring_events?.find(
+      event => event.title === eventTypeName
+    )
     
-    const response = await fetch(`/api/domains/${cleanDomainId}/types/${encodeURIComponent(eventTypeName)}/events`)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch events: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    
-    // Backend now handles consistent filtering (recent + future events)
-    // No need for additional frontend filtering
-    eventTypeEvents.value[eventTypeName] = {
-      events: data.events || [],
-      loading: false,
-      error: null
+    if (recurringEvent && recurringEvent.events) {
+      // Events are already available in the group data - no API call needed!
+      eventTypeEvents.value[eventTypeName] = {
+        events: Array.isArray(recurringEvent.events) ? recurringEvent.events : [],
+        loading: false,
+        error: null
+      }
+    } else {
+      // Fallback if events not found in group data
+      eventTypeEvents.value[eventTypeName] = {
+        events: [],
+        loading: false,
+        error: `No events found for ${eventTypeName}`
+      }
     }
   } catch (error) {
-    console.error('Error fetching event type events:', error)
+    console.error('Error loading event type events:', error)
     eventTypeEvents.value[eventTypeName] = {
       events: [],
       loading: false,

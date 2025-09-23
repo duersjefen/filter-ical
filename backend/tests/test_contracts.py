@@ -10,38 +10,36 @@ Following the principle from CLAUDE.md:
 
 import pytest
 from fastapi.testclient import TestClient
-from openapi_core import OpenAPI
-from openapi_core.validation.request import openapi_request_validator
-from openapi_core.validation.response import openapi_response_validator
-from openapi_core.contrib.fastapi import FastAPIOpenAPIRequest, FastAPIOpenAPIResponse
+from openapi_core import Spec, validate_request, validate_response
+from .conftest import FastAPIRequestAdapter, FastAPIResponseAdapter
 
 
 class ContractValidator:
     """Contract validation utilities."""
     
-    def __init__(self, openapi_validator: OpenAPI):
+    def __init__(self, openapi_validator: Spec):
         self.openapi_validator = openapi_validator
     
     def validate_response(self, request, response):
         """Validate response against OpenAPI specification."""
-        openapi_request = FastAPIOpenAPIRequest(request)
-        openapi_response = FastAPIOpenAPIResponse(response)
+        # Create adapters for the new openapi-core API
+        request_adapter = FastAPIRequestAdapter(request)
+        response_adapter = FastAPIResponseAdapter(response)
         
-        # Validate request
-        request_result = openapi_request_validator.validate(
-            self.openapi_validator, openapi_request
-        )
-        if request_result.errors:
+        # Validate request using new API
+        request_result = validate_request(request_adapter, self.openapi_validator)
+        if request_result and hasattr(request_result, 'errors') and request_result.errors:
             pytest.fail(f"Request validation failed: {request_result.errors}")
         
-        # Validate response
-        response_result = openapi_response_validator.validate(
-            self.openapi_validator, openapi_request, openapi_response
-        )
-        if response_result.errors:
+        # Validate response using new API
+        response_result = validate_response(request_adapter, response_adapter, self.openapi_validator)
+        if response_result and hasattr(response_result, 'errors') and response_result.errors:
             pytest.fail(f"Response validation failed: {response_result.errors}")
         
-        return response_result.data
+        # Return response data if available
+        if response_result and hasattr(response_result, 'data'):
+            return response_result.data
+        return None
 
 
 @pytest.fixture

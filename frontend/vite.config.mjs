@@ -17,7 +17,25 @@ export default defineConfig({
     port: 8000,
     strictPort: true, // Fail if port 8000 is not available, don't try other ports
     proxy: {
-      '/api': {
+      '/calendars': {
+        target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV 
+          ? 'http://backend-dev:3000'  // Docker container communication
+          : 'http://localhost:3000',   // Native development
+        changeOrigin: true
+      },
+      '/domains': {
+        target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV 
+          ? 'http://backend-dev:3000'  // Docker container communication
+          : 'http://localhost:3000',   // Native development
+        changeOrigin: true
+      },
+      '/ical': {
+        target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV 
+          ? 'http://backend-dev:3000'  // Docker container communication
+          : 'http://localhost:3000',   // Native development
+        changeOrigin: true
+      },
+      '/test': {
         target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV 
           ? 'http://backend-dev:3000'  // Docker container communication
           : 'http://localhost:3000',   // Native development

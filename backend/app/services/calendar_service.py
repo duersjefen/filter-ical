@@ -5,6 +5,7 @@ IMPERATIVE SHELL - Orchestrates pure functions with I/O operations.
 """
 
 import httpx
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -207,12 +208,33 @@ async def sync_calendar_events(db: Session, calendar: Calendar) -> Tuple[bool, i
         if not parse_success:
             return False, 0, parse_error
         
+        # Filter out events older than 1 week (much simpler approach)
+        one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        filtered_events = []
+        for event_data in events_data:
+            # Check event start time
+            start_time = event_data.get('start_time')
+            if start_time:
+                try:
+                    # start_time is already a datetime object from the parser
+                    if isinstance(start_time, str):
+                        start_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                    # Only keep events from the last week or future
+                    if start_time >= one_week_ago:
+                        filtered_events.append(event_data)
+                except (ValueError, AttributeError):
+                    # If we can't parse the date, keep the event to be safe
+                    filtered_events.append(event_data)
+            else:
+                # If no start time, keep the event
+                filtered_events.append(event_data)
+        
         # Clear existing events for this calendar
         db.query(Event).filter(Event.calendar_id == calendar.id).delete()
         
-        # Create new events
+        # Create new events (only recent/future ones)
         event_count = 0
-        for event_data in events_data:
+        for event_data in filtered_events:
             # Transform to database format using pure function
             db_event_data = create_event_data(calendar.id, event_data)
             event = Event(**db_event_data)

@@ -213,8 +213,9 @@ const loadIndividualEvents = async () => {
     if (props.eventTypeData.events && Array.isArray(props.eventTypeData.events)) {
       individualEvents.value = props.eventTypeData.events
     } else {
-      // Fallback: fetch from API
-      const response = await fetch(`/api/calendar/${props.calendarId}/events?event_type=${encodeURIComponent(props.eventTypeName)}`)
+      // For domain calendars, events should already be in eventTypeData
+      // If not, try the updated API structure (no /api prefix)
+      const response = await fetch(`/calendars/${props.calendarId}/events?event_type=${encodeURIComponent(props.eventTypeName)}`)
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)
       }

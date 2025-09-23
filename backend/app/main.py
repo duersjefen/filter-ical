@@ -138,10 +138,10 @@ def create_application() -> FastAPI:
     
     # Import and include routers
     from .routers import calendars, domains, ical_export, test
-    app.include_router(calendars.router, prefix="/api/calendars", tags=["calendars"])
-    app.include_router(domains.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(calendars.router, prefix="/calendars", tags=["calendars"])
+    app.include_router(domains.router, prefix="/domains", tags=["domains"])
     app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
-    app.include_router(test.router, prefix="/api/test", tags=["test"])
+    app.include_router(test.router, prefix="/test", tags=["test"])
     
     # Health check endpoint
     @app.get("/health")

@@ -2,24 +2,28 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 export const API_ENDPOINTS = {
-  // Authentication
-  LOGIN: '/login',
-  LOGOUT: '/logout',
+  // Health (no /api prefix)
+  HEALTH: '/health',
   
-  // Calendars
+  // Regular calendar management (user-added calendars)
   CALENDARS: '/calendars',
-  CALENDAR_EVENTS: (id) => `/calendars/${id}/events`,
   CALENDAR_DELETE: (id) => `/calendars/${id}`,
+  CALENDAR_EVENTS: (id) => `/calendars/${id}/events`,
   
-  // Filters
-  FILTERS: '/filters',
-  FILTER_DELETE: (id) => `/filters/${id}`,
+  // Calendar filters  
+  CALENDAR_FILTERS: (id) => `/calendars/${id}/filters`,
+  CALENDAR_FILTER_DELETE: (calId, filterId) => `/calendars/${calId}/filters/${filterId}`,
   
-  // Export
-  EXPORT_ICAL: '/export/ical',
+  // Domain-specific endpoints (auto-created from domains.yaml)
+  DOMAINS: '/domains',
+  DOMAIN_EVENTS: (domain) => `/domains/${domain}/events`,
+  DOMAIN_GROUPS: (domain) => `/domains/${domain}/groups`,
+  DOMAIN_FILTERS: (domain) => `/domains/${domain}/filters`,
+  DOMAIN_ASSIGNMENT_RULES: (domain) => `/domains/${domain}/assignment-rules`,
+  DOMAIN_ASSIGN_RECURRING_EVENTS: (domain, groupId) => `/domains/${domain}/groups/${groupId}/assign-recurring-events`,
   
-  // Health
-  HEALTH: '/health'
+  // Dynamic iCal Export
+  ICAL_EXPORT: (uuid) => `/ical/${uuid}.ics`,
 }
 
 export const HTTP_STATUS = {

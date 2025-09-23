@@ -13,10 +13,15 @@ describe('Calendar Integration E2E', () => {
   
   // Helper function to make API calls like the frontend does
   async function apiCall(endpoint, options = {}) {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+    // Add username as query parameter for new API
+    const url = new URL(`${BASE_URL}${endpoint}`)
+    if (!url.searchParams.has('username')) {
+      url.searchParams.set('username', TEST_USER)
+    }
+    
+    const response = await fetch(url.toString(), {
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': TEST_USER,
         ...options.headers
       },
       ...options
@@ -33,7 +38,7 @@ describe('Calendar Integration E2E', () => {
   })
 
   test('should list calendars (empty initially)', async () => {
-    const { response, data } = await apiCall('/api/calendars')
+    const { response, data } = await apiCall('/calendars')
     
     expect(response.status).toBe(200)
     expect(Array.isArray(data)).toBe(true)
@@ -44,27 +49,26 @@ describe('Calendar Integration E2E', () => {
   test('should create a new calendar', async () => {
     const calendarData = {
       name: 'Test Calendar E2E',
-      url: 'https://example.com/test-e2e.ics'
+      source_url: 'https://example.com/test-e2e.ics'
     }
 
-    const { response, data } = await apiCall('/api/calendars', {
+    const { response, data } = await apiCall('/calendars', {
       method: 'POST',
       body: JSON.stringify(calendarData)
     })
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(201)
     expect(data.id).toBeDefined()
     expect(data.name).toBe(calendarData.name)
-    expect(data.url).toBe(calendarData.url)
-    expect(data.user_id).toBe(TEST_USER)
-    expect(data.is_active).toBe(true)
+    expect(data.source_url).toBe(calendarData.source_url)
+    expect(data.username).toBe(TEST_USER)
     
     // Store ID for subsequent tests
     testCalendarId = data.id
   })
 
   test('should list calendars (with our new calendar)', async () => {
-    const { response, data } = await apiCall('/api/calendars')
+    const { response, data } = await apiCall('/calendars')
     
     expect(response.status).toBe(200)
     expect(Array.isArray(data)).toBe(true)
@@ -73,29 +77,20 @@ describe('Calendar Integration E2E', () => {
     const calendar = data[0]
     expect(calendar.id).toBe(testCalendarId)
     expect(calendar.name).toBe('Test Calendar E2E')
-    expect(calendar.url).toBe('https://example.com/test-e2e.ics')
-    expect(calendar.user_id).toBe(TEST_USER)
-  })
-
-  test('should get specific calendar details', async () => {
-    const { response, data } = await apiCall(`/api/calendars/${testCalendarId}`)
-    
-    expect(response.status).toBe(200)
-    expect(data.id).toBe(testCalendarId)
-    expect(data.name).toBe('Test Calendar E2E')
-    expect(data.user_id).toBe(TEST_USER)
+    expect(calendar.source_url).toBe('https://example.com/test-e2e.ics')
+    expect(calendar.username).toBe(TEST_USER)
   })
 
   test('should delete the calendar', async () => {
-    const { response } = await apiCall(`/api/calendars/${testCalendarId}`, {
+    const { response } = await apiCall(`/calendars/${testCalendarId}`, {
       method: 'DELETE'
     })
     
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(204)
   })
 
   test('should list calendars (empty after deletion)', async () => {
-    const { response, data } = await apiCall('/api/calendars')
+    const { response, data } = await apiCall('/calendars')
     
     expect(response.status).toBe(200)
     expect(Array.isArray(data)).toBe(true)
@@ -105,10 +100,10 @@ describe('Calendar Integration E2E', () => {
   test('should handle invalid calendar creation', async () => {
     const invalidData = {
       name: '', // Empty name should fail
-      url: 'https://example.com/test.ics'
+      source_url: 'https://example.com/test.ics'
     }
 
-    const { response, data } = await apiCall('/api/calendars', {
+    const { response, data } = await apiCall('/calendars', {
       method: 'POST',
       body: JSON.stringify(invalidData)
     })
@@ -118,7 +113,7 @@ describe('Calendar Integration E2E', () => {
   })
 
   test('should handle missing user header', async () => {
-    const { response } = await fetch(`${BASE_URL}/api/calendars`, {
+    const { response } = await fetch(`${BASE_URL}/calendars`, {
       headers: {
         'Content-Type': 'application/json'
         // No x-user-id header

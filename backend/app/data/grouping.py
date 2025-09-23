@@ -243,33 +243,26 @@ def build_domain_events_response(grouped_events: Dict[str, List[Dict[str, Any]]]
         group_recurring_events = []
         for title in assigned_titles:
             if title in grouped_events:
+                # grouped_events[title] already has correct structure: {title, event_count, events}
                 events_for_title = grouped_events[title]
-                
-                recurring_event = {
-                    "title": title,
-                    "event_count": len(events_for_title),
-                    "events": events_for_title
-                }
-                group_recurring_events.append(recurring_event)
+                group_recurring_events.append(events_for_title)
                 
                 # Remove from grouped_events so they don't appear as ungrouped
                 del grouped_events[title]
         
-        if group_recurring_events:  # Only include groups that have events
+        # Only include groups that have events with actual event data
+        if group_recurring_events and any(event_data.get('events') for event_data in group_recurring_events):
             groups_with_events.append({
                 "id": group_id,
                 "name": group_data['name'],
                 "recurring_events": group_recurring_events
             })
     
-    # Remaining events are ungrouped
-    for title, events in grouped_events.items():
-        recurring_event = {
-            "title": title,
-            "event_count": len(events),
-            "events": events
-        }
-        ungrouped_events.append(recurring_event)
+    # Remaining events are ungrouped (only include those with actual events)
+    for title, events_data in grouped_events.items():
+        # events_data already has correct structure: {title, event_count, events}
+        if events_data.get('events'):  # Only include if there are actual events
+            ungrouped_events.append(events_data)
     
     return {
         "groups": groups_with_events,

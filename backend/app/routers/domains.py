@@ -22,6 +22,37 @@ from ..services.cache_service import get_or_build_domain_events
 router = APIRouter()
 
 
+@router.get("/{domain}")
+async def get_domain_config(domain: str):
+    """Get domain configuration from domains.yaml."""
+    try:
+        # Load domain configuration
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        # Check if domain exists in configuration
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Return the domain configuration
+        domain_config = config['domains'][domain]
+        return {
+            "success": True,
+            "data": {
+                "domain_key": domain,
+                "name": domain_config.get("name", domain),
+                "calendar_url": domain_config.get("calendar_url", ""),
+                **domain_config  # Include any additional config fields
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @router.get("/{domain}/events")
 async def get_domain_events(
     domain: str,
