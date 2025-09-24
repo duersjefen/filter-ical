@@ -1,0 +1,121 @@
+/**
+ * Event classification and grouping utilities
+ * Pure functions for event processing logic
+ */
+
+/**
+ * Get the key used for filtering events by title
+ */
+export function getRecurringEventKey(event) {
+  return event.title || event.summary || 'Untitled Event'
+}
+
+/**
+ * Get the key used for grouping events by type in preview
+ */
+export function getEventGroupKey(event) {
+  return event.title || event.summary || 'Unknown Event Type'
+}
+
+/**
+ * Transform recurring events object to sorted array
+ */
+export function transformRecurringEventsToArray(recurringEventsData) {
+  if (!recurringEventsData) return []
+  if (Array.isArray(recurringEventsData)) return recurringEventsData
+  
+  return Object.entries(recurringEventsData).map(([name, recurringEventData]) => {
+    const count = recurringEventData.count || 0
+    const typeEvents = recurringEventData.events || []
+    
+    return {
+      name,
+      count,
+      events: typeEvents
+    }
+  }).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+}
+
+/**
+ * Filter recurring events by search term
+ */
+export function filterRecurringEventsBySearch(recurringEvents, searchTerm) {
+  if (!searchTerm.trim()) return recurringEvents
+  
+  const searchLower = searchTerm.toLowerCase()
+  return recurringEvents.filter(recurringEvent => 
+    recurringEvent.name.toLowerCase().includes(searchLower)
+  )
+}
+
+/**
+ * Separate recurring events by count (main vs single)
+ */
+export function categorizeRecurringEvents(recurringEvents) {
+  const main = recurringEvents.filter(event => event.count > 1)
+  const single = recurringEvents.filter(event => event.count === 1)
+  
+  return { main, single }
+}
+
+/**
+ * Calculate total count for selected recurring events
+ */
+export function calculateSelectedRecurringEventsCount(recurringEvents, selectedRecurringEventNames) {
+  return recurringEvents
+    .filter(recurringEvent => selectedRecurringEventNames.includes(recurringEvent.name))
+    .reduce((sum, recurringEvent) => sum + recurringEvent.count, 0)
+}
+
+/**
+ * Filter events by selected recurring event names
+ */
+export function filterEventsBySelection(events, selectedRecurringEventNames) {
+  if (selectedRecurringEventNames.length === 0) return []
+  
+  const selectedSet = new Set(selectedRecurringEventNames)
+  return events.filter(event => {
+    const recurringEventKey = getRecurringEventKey(event)
+    return selectedSet.has(recurringEventKey)
+  })
+}
+
+/**
+ * Filter out past events, keeping only future events
+ */
+export function filterFutureEvents(events) {
+  const now = new Date()
+  
+  return events.filter(event => {
+    const eventStart = event.start || event.dtstart
+    if (!eventStart) return true // Keep events without start dates
+    
+    return new Date(eventStart) >= now
+  })
+}
+
+/**
+ * Calculate recurring event statistics
+ */
+export function calculateRecurringEventStats(recurringEvents) {
+  const { main, single } = categorizeRecurringEvents(recurringEvents)
+  
+  return {
+    totalRecurringEvents: recurringEvents.length,
+    recurringRecurringEvents: main.length,
+    uniqueRecurringEvents: single.length,
+    totalEvents: recurringEvents.reduce((sum, event) => sum + event.count, 0),
+    recurringEvents: main.reduce((sum, event) => sum + event.count, 0),
+    uniqueEvents: single.length
+  }
+}
+
+/**
+ * Classify recurring event type
+ */
+export function classifyRecurringEvent(recurringEvents, recurringEventName) {
+  const recurringEvent = recurringEvents.find(et => et.name === recurringEventName)
+  if (!recurringEvent) return 'unknown'
+  
+  return recurringEvent.count === 1 ? 'unique' : 'recurring'
+}
