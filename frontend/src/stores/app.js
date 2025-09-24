@@ -342,8 +342,6 @@ export const useAppStore = defineStore('app', () => {
   
   const groups = ref({})
   const hasGroups = ref(false)
-  const selectedGroups = ref(new Set())
-  const selectedEvents = ref(new Set()) // Individual event selections
 
   // Create filtering composable with current state
   const eventFiltering = useEventFiltering(events, {
@@ -459,8 +457,6 @@ export const useAppStore = defineStore('app', () => {
         
       }
 
-      // Reset selections when loading new calendar
-      selectedGroups.value = new Set()
       
       console.log('📊 Calendar data loaded:', {
         hasGroups: hasGroups.value,
@@ -495,8 +491,6 @@ export const useAppStore = defineStore('app', () => {
       }
       
 
-      // Reset selections when loading new domain
-      selectedGroups.value = new Set()
       
       console.log('📊 Domain groups data loaded (simplified):', {
         domainName,
@@ -509,17 +503,6 @@ export const useAppStore = defineStore('app', () => {
     return result
   }
 
-  const toggleGroup = (groupId) => {
-    const newGroups = new Set(selectedGroups.value)
-
-    if (newGroups.has(groupId)) {
-      newGroups.delete(groupId)
-    } else {
-      newGroups.add(groupId)
-    }
-
-    selectedGroups.value = newGroups
-  }
 
   // Individual event selection removed - groups now work with event types
 
@@ -696,8 +679,8 @@ export const useAppStore = defineStore('app', () => {
     
     const filterData = {
       name: `Generated Filter ${new Date().toISOString()}`,
-      subscribed_event_ids: Array.from(selectedEvents.value),
-      subscribed_group_ids: Array.from(selectedGroups.value)
+      subscribed_event_ids: [],
+      subscribed_group_ids: []
     }
     
     try {
@@ -761,10 +744,8 @@ export const useAppStore = defineStore('app', () => {
     // ===============================================
     groups,
     hasGroups,
-      selectedGroups,
     loadCalendarGroups,
     loadDomainGroups,
-    toggleGroup,
 
     // ===============================================
     // SAVED FILTERS
