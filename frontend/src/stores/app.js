@@ -481,8 +481,9 @@ export const useAppStore = defineStore('app', () => {
       groups.value = {}
       if (domainData.groups) {
         domainData.groups.forEach(group => {
-          groups.value[group.id] = {
-            id: group.id,
+          const groupId = String(group.id)
+          groups.value[groupId] = {
+            id: groupId,
             name: group.name,
             description: group.description,
             recurring_events: group.recurring_events || []
