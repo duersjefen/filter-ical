@@ -207,10 +207,6 @@ export function useFilteredCalendarAPI() {
     }
   }
 
-  // Clear error helper
-  const clearError = () => {
-    error.value = null
-  }
 
   return {
     // State
