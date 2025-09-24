@@ -186,7 +186,7 @@ export const useAppStore = defineStore('app', () => {
 
   const deleteCalendar = async (calendarId) => {
     // Prevent deletion of domain calendars
-    if (calendarId.startsWith('cal_domain_')) {
+    if (String(calendarId).startsWith('cal_domain_')) {
       return { 
         success: false, 
         error: 'Domain calendars cannot be deleted by users. Please contact your administrator.' 
@@ -196,9 +196,14 @@ export const useAppStore = defineStore('app', () => {
     const currentUserId = getUserId()
     const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
     
-    const calendarIndex = calendars.value.findIndex(cal => cal.id === calendarId)
+    // Convert calendarId to number for consistent comparison
+    const numericCalendarId = typeof calendarId === 'string' ? parseInt(calendarId, 10) : calendarId
+    
+    const calendarIndex = calendars.value.findIndex(cal => cal.id === numericCalendarId)
     if (calendarIndex === -1) {
-      return { success: false, error: 'Calendar not found in local list' }
+      const availableIds = calendars.value.map(c => c.id).join(', ')
+      console.error(`Calendar ${calendarId} not found. Available: ${availableIds}`)
+      return { success: false, error: 'Calendar not found. It may have already been deleted.' }
     }
     
     const calendarToDelete = calendars.value[calendarIndex]
@@ -209,7 +214,7 @@ export const useAppStore = defineStore('app', () => {
       console.log('🔐 User logged in - deleting from server first')
       
       try {
-        const result = await del(`/calendars/${calendarId}?username=${currentUserId}`)
+        const result = await del(`/calendars/${numericCalendarId}?username=${currentUserId}`)
         
         if (result.success) {
           // Server deletion succeeded - remove from local list

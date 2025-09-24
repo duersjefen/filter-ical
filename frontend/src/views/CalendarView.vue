@@ -281,7 +281,7 @@ const loadCalendarData = async (calendarId) => {
     
     // For domain calendars, create a system-managed calendar reference
     // Domain calendars are NOT user calendars and should not be mixed with user calendar lists
-    if (props.domainContext && calendarId.startsWith('cal_')) {
+    if (props.domainContext && String(calendarId).startsWith('cal_')) {
       // Domain calendars are system-managed - create reference without API dependency
       selectedCalendar.value = {
         id: calendarId,
@@ -297,32 +297,46 @@ const loadCalendarData = async (calendarId) => {
         await appStore.fetchCalendars()
       }
       
-      const calendar = appStore.calendars.find(c => c.id === calendarId)
+      // Convert calendarId to number for database lookup since IDs are numeric
+      const numericCalendarId = typeof calendarId === 'string' ? parseInt(calendarId, 10) : calendarId
+      
+      // Validate that we have a valid numeric ID
+      if (isNaN(numericCalendarId)) {
+        console.error(`❌ Invalid calendar ID: ${calendarId}`)
+        setError(`Invalid calendar ID: ${calendarId}`)
+        return
+      }
+      
+      const calendar = appStore.calendars.find(c => c.id === numericCalendarId)
       if (calendar) {
         selectedCalendar.value = calendar
       } else {
-        console.error(`❌ User calendar ${calendarId} not found in available calendars`)
-        setError(`Calendar ${calendarId} not found`)
+        // More helpful error message
+        const availableIds = appStore.calendars.map(c => c.id).join(', ')
+        console.error(`❌ Calendar ${numericCalendarId} not found. Available calendars: ${availableIds}`)
+        setError(`Calendar not found. The calendar may have been deleted or you may not have access to it.`)
         return
       }
     }
     
     // Simplified: Load groups data directly - no conversion needed
     console.log('🔄 Loading groups data...')
-    const isDomainCalendar = props.domainContext || calendarId.startsWith('cal_domain_')
+    const isDomainCalendar = props.domainContext || String(calendarId).startsWith('cal_domain_')
     let domainName = null
     
     if (isDomainCalendar && props.domainContext?.domain_key) {
       domainName = props.domainContext.domain_key
-    } else if (isDomainCalendar && calendarId.startsWith('cal_domain_')) {
-      domainName = calendarId.replace('cal_domain_', '')
+    } else if (isDomainCalendar && String(calendarId).startsWith('cal_domain_')) {
+      domainName = String(calendarId).replace('cal_domain_', '')
     }
 
     // Load groups data first - this contains all events
     if (isDomainCalendar && domainName) {
       await appStore.loadDomainGroups(domainName)
     } else {
-      await appStore.loadCalendarGroups(calendarId)
+      // Use numeric calendar ID for API calls
+      const numericCalendarId = typeof calendarId === 'string' ? parseInt(calendarId, 10) : calendarId
+      await appStore.loadCalendarGroups(numericCalendarId)
     }
     
     console.log('✅ Groups loaded:', {
