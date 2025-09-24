@@ -47,7 +47,7 @@
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
         @clear-all="clearSelection"
-        @select-all="handleSelectAllRecurringEvents"
+        @select-all="handleSelectAllEvents"
         @update:search-term="recurringEventSearch = $event"
         @toggle-recurring-event="unifiedToggleRecurringEvent"
         @toggle-expansion="toggleRecurringEventExpansion"
@@ -211,6 +211,8 @@ const {
   selectRecurringEvents,
   clearSelection,
   subscribeAndSelectAllGroups,
+  selectAllGroups,
+  unsubscribeFromAllGroups,
   getGroupBreakdownSummary
 } = useSelection()
 
@@ -579,34 +581,26 @@ const findGroupInChildren = (children, groupId) => {
 }
 
 // Unified event selection handlers
-const handleSelectAllRecurringEvents = () => {
-  // Get all available event types from the current data
-  const allRecurringEvents = []
-  
-  // Add main event types
+const handleSelectAllEvents = () => {
+  // Select recurring events (events that happen multiple times)
   if (mainRecurringEvents.value) {
-    allRecurringEvents.push(...Object.keys(mainRecurringEvents.value))
+    const recurringEventTitles = Object.keys(mainRecurringEvents.value)
+    selectRecurringEvents(recurringEventTitles)
   }
   
-  // Add single event types
-  if (singleRecurringEvents.value) {
-    allRecurringEvents.push(...singleRecurringEvents.value.map(et => et.name))
-  }
-  
-  // Remove duplicates and select all using unified system
-  const uniqueRecurringEvents = [...new Set(allRecurringEvents)]
-  selectRecurringEvents(uniqueRecurringEvents)
+  // Select unique/single events (events that happen only once)
+  selectAllSingleEvents()
 }
 
-// Bulk group action handlers  
+// Event View group action handlers - subscription-only (no selection changes)
 const handleSubscribeAllGroups = () => {
-  // Use the same function as groups view for consistency (subscribe + select)
-  subscribeAndSelectAllGroups()
+  // Event View: Subscribe to all groups only, don't change selections
+  selectAllGroups()
 }
 
 const handleUnsubscribeAllGroups = () => {
-  // Clear all subscriptions and selections for consistency
-  clearSelection()
+  // Event View: Unsubscribe from all groups only, don't change selections
+  unsubscribeFromAllGroups()
 }
 
 onMounted(async () => {

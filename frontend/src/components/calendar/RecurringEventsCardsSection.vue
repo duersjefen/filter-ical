@@ -114,7 +114,7 @@
             @click="selectAllVisible"
             class="px-4 py-2 bg-emerald-500 dark:bg-emerald-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-emerald-600 dark:hover:bg-emerald-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
           >
-            ✓ {{ $t('recurringEvents.selectVisible', { count: filteredMainRecurringEvents.length }) }}
+            ✓ {{ $t('recurringEvents.selectVisible', { count: filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }) }}
           </button>
         </template>
         
@@ -348,7 +348,7 @@
               class="px-6 py-2.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <span>📤</span>
-              <span>Unsubscribe & Deselect all</span>
+              <span>Unsubscribe from All Groups</span>
             </button>
           </div>
           

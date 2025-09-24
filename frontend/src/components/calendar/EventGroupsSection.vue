@@ -19,8 +19,8 @@
         :total-groups="Object.keys(props.groups || {}).length"
         :subscribed-count="subscribedGroups.size"
         :group-stats-text="getGroupBreakdownSummary()"
-        @unsubscribe-from-all="unsubscribeFromAllGroups"
-        @subscribe-to-all="selectAllGroups"
+        @unsubscribe-from-all="unsubscribeAndDeselectAllGroups"
+        @subscribe-to-all="subscribeAndSelectAllGroups"
         @expand-all="expandAllGroups"
         @collapse-all="collapseAllGroups"
       />
@@ -83,7 +83,9 @@ const {
   collapseAllGroups,
   handleSelectAllRecurringEvents,
   allEventsSelected,
-  getGroupBreakdownSummary
+  getGroupBreakdownSummary,
+  subscribeAndSelectAllGroups,
+  unsubscribeAndDeselectAllGroups
 } = useSelection()
 
 // All groups are now real groups (including auto-created ones from backend)

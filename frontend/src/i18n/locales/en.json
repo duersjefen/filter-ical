@@ -68,7 +68,7 @@
     "excludedRecurringEvents": "{count} selected • Export will EXCLUDE these",
     "selectRecurringEventsBelow": "Select events below",
     "clearAll": "Clear All",
-    "selectAll": "Select All",
+    "selectAll": "Select All Events",
     "clearVisible": "Clear Visible",
     "selectVisible": "Select Visible ({count})",
     "eventsCount": "{count} events",

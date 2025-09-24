@@ -70,7 +70,7 @@
     "excludedRecurringEvents": "{count} ausgewählt • Export wird diese AUSSCHLIESSEN",
     "selectRecurringEventsBelow": "Event-Typen unten auswählen",
     "clearAll": "Alle löschen",
-    "selectAll": "Alle auswählen",
+    "selectAll": "Alle Events auswählen",
     "clearVisible": "Sichtbare löschen",
     "selectVisible": "Sichtbare auswählen ({count})",
     "eventsCount": "{count} Events",
