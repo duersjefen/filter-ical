@@ -325,7 +325,7 @@ const loadCalendarData = async (calendarId) => {
     recurringEventsKeys: recurringEvents.value ? Object.keys(recurringEvents.value).length : 'null'
   })
   
-  const result = await api.safeExecute(async () => {
+  try {
     
     // For domain calendars, create a system-managed calendar reference
     // Domain calendars are NOT user calendars and should not be mixed with user calendar lists
@@ -438,14 +438,10 @@ const loadCalendarData = async (calendarId) => {
         hasGroupsType: typeof appStore.hasGroups
       })
       
-      return { success: true }
-  })
-  
-  if (result.success) {
     console.log('✅ Calendar data loaded successfully')
-  } else {
-    console.error('❌ Failed to load calendar data:', result.error)
-    // Error is automatically set by API composable
+  } catch (error) {
+    console.error('❌ Failed to load calendar data:', error)
+    setError(error.message || 'Failed to load calendar data')
   }
   
   console.log('🏁 Loading complete. Final state:', {
