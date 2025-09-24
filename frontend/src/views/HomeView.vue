@@ -100,8 +100,8 @@
             <div class="flex flex-col space-y-3">
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base">{{ calendar.name }}</h3>
-                <a :href="calendar.url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline font-medium transition-colors duration-200 hover:underline text-xs truncate block">
-                  {{ calendar.url.length > 35 ? calendar.url.substring(0, 35) + '...' : calendar.url }}
+                <a :href="calendar.source_url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline font-medium transition-colors duration-200 hover:underline text-xs truncate block">
+                  {{ calendar.source_url?.length > 35 ? calendar.source_url.substring(0, 35) + '...' : calendar.source_url }}
                 </a>
               </div>
               <div class="flex flex-col gap-2">
@@ -137,8 +137,8 @@
                   <strong class="text-gray-900 dark:text-gray-100 font-semibold text-base">{{ calendar.name }}</strong>
                 </td>
                 <td class="px-6 py-4">
-                  <a :href="calendar.url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline break-all font-medium transition-colors duration-200 hover:underline">
-                    {{ calendar.url.length > 60 ? calendar.url.substring(0, 60) + '...' : calendar.url }}
+                  <a :href="calendar.source_url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline break-all font-medium transition-colors duration-200 hover:underline">
+                    {{ calendar.source_url?.length > 60 ? calendar.source_url.substring(0, 60) + '...' : calendar.source_url }}
                   </a>
                 </td>
                 <td class="px-6 py-4">
