@@ -930,22 +930,20 @@ const getCountDisplayClass = (groupId) => {
   const selectedCount = getGroupSelectedCount(groupId)
   const totalCount = getGroupTotalCount(props.groups[groupId])
   
-  if (isSubscribed) {
-    if (selectedCount === totalCount && totalCount > 0) {
-      // SUBSCRIBED & ALL SELECTED - White text on dark green
-      return 'bg-green-600 dark:bg-green-500 text-white'
-    } else {
-      // SUBSCRIBED but NOT ALL SELECTED - White text on blue (requested change)
-      return 'bg-blue-600 dark:bg-blue-500 text-white'
-    }
-  } else if (selectedCount === totalCount && totalCount > 0) {
-    // ALL SELECTED manually - White text on dark blue
+  // Priority 1: ALL SELECTED always gets green (regardless of subscription)
+  if (selectedCount === totalCount && totalCount > 0) {
+    return 'bg-green-600 dark:bg-green-500 text-white'
+  }
+  // Priority 2: SUBSCRIBED but not all selected gets blue 
+  else if (isSubscribed && selectedCount < totalCount) {
     return 'bg-blue-600 dark:bg-blue-500 text-white'
-  } else if (selectedCount > 0) {
-    // PARTIALLY selected - Dark blue text on light blue
+  }
+  // Priority 3: PARTIALLY selected (not subscribed) gets light blue
+  else if (selectedCount > 0) {
     return 'bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-100'
-  } else {
-    // NOT SELECTED - Gray
+  }
+  // Priority 4: NOT SELECTED gets gray
+  else {
     return 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
   }
 }

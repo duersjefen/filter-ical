@@ -646,5 +646,14 @@ watch(() => unifiedSelectedRecurringEvents.value.length, (newLength) => {
     console.log('🔄 Auto-deactivating "Show Selected Only" - no events selected')
     showSelectedOnly.value = false
   }
-})
+}, { immediate: true }) // Run immediately to handle page load state
+
+// Additional safety check on component mount for any timing issues
+watch([() => unifiedSelectedRecurringEvents.value, () => showSelectedOnly.value], ([selection, showSelected]) => {
+  // If showSelectedOnly is active but no events are selected, deactivate it
+  if (showSelected && selection.length === 0) {
+    console.log('🔄 Safety check: Auto-deactivating "Show Selected Only" - no events selected on mount')
+    showSelectedOnly.value = false
+  }
+}, { immediate: true })
 </script>

@@ -112,12 +112,8 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
     }
   })
 
-  // Watch for when selectedRecurringEvents becomes empty and auto-turn off showSelectedOnly
-  watch(selectedRecurringEvents, (newRecurringEvents) => {
-    if (newRecurringEvents.length === 0 && showSelectedOnly.value) {
-      showSelectedOnly.value = false
-    }
-  }, { deep: true })
+  // Note: showSelectedOnly auto-deactivation is now handled in CalendarView 
+  // using the unified selection system for consistency
 
   // Auto-save filter state changes to localStorage
   let saveTimeout = null
