@@ -202,10 +202,10 @@ const props = defineProps({
 
 const emit = defineEmits([
   'toggle-group',
-  'toggle-event-type',
+  'toggle-recurring-event',
   'expand-group', 
   'subscribe-to-group',
-  'select-all-event-types'
+  'select-all-recurring-events'
 ])
 
 // State for expanded recurring events and their events
@@ -296,7 +296,7 @@ const toggleGroup = () => {
 }
 
 const toggleRecurringEvent = (eventTitle) => {
-  emit('toggle-event-type', eventTitle)
+  emit('toggle-recurring-event', eventTitle)
 }
 
 const expandGroup = () => {

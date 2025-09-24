@@ -68,11 +68,39 @@ export function useFilteredCalendarAPI() {
    * API Operations (Imperative Shell)
    */
 
-  const loadFilteredCalendars = async () => {
-    const result = await get('/api/filtered-calendars')
+  const loadFilteredCalendars = async (calendarIdOrDomain) => {
+    if (!calendarIdOrDomain) {
+      console.warn('Cannot load filtered calendars without calendar ID or domain')
+      return
+    }
     
-    if (result.success && result.data && result.data.filtered_calendars) {
-      filteredCalendars.value = result.data.filtered_calendars.map(transformFilteredCalendar)
+    // Determine if this is a domain calendar or regular calendar
+    let endpoint
+    if (typeof calendarIdOrDomain === 'string' && calendarIdOrDomain.startsWith('cal_domain_')) {
+      // Domain calendar: extract domain from cal_domain_exter -> exter
+      const domain = calendarIdOrDomain.replace('cal_domain_', '')
+      endpoint = `/domains/${domain}/filters`
+    } else {
+      // Regular calendar
+      endpoint = `/calendars/${calendarIdOrDomain}/filters`
+    }
+    
+    const result = await get(endpoint)
+    
+    if (result.success && result.data) {
+      // Backend returns array directly, not wrapped in filtered_calendars
+      const filters = Array.isArray(result.data) ? result.data : []
+      filteredCalendars.value = filters.map(filter => ({
+        id: filter.id,
+        name: filter.name,
+        calendar_id: filter.calendar_id,
+        domain_key: filter.domain_key,
+        username: filter.username,
+        subscribed_event_ids: filter.subscribed_event_ids || [],
+        subscribed_group_ids: filter.subscribed_group_ids || [],
+        link_uuid: filter.link_uuid,
+        export_url: filter.export_url || `/ical/${filter.link_uuid}.ics`
+      }))
     } else if (!result.success) {
       console.error('Error loading filtered calendars:', result.error)
     }
@@ -84,16 +112,48 @@ export function useFilteredCalendarAPI() {
       return false
     }
 
+    if (!sourceCalendarId) {
+      setError('Calendar ID is required')
+      return false
+    }
+
     creating.value = true
     
-    const payload = createFilteredCalendarPayload(sourceCalendarId, name, selectedGroups, selectedEvents)
-    const result = await post('/api/filtered-calendars', payload)
+    // Map to backend filter format
+    const payload = {
+      name: name.trim(),
+      subscribed_group_ids: selectedGroups || [],
+      subscribed_event_ids: selectedEvents || []
+    }
+    
+    // Determine if this is a domain calendar or regular calendar
+    let endpoint
+    if (typeof sourceCalendarId === 'string' && sourceCalendarId.startsWith('cal_domain_')) {
+      // Domain calendar: extract domain from cal_domain_exter -> exter
+      const domain = sourceCalendarId.replace('cal_domain_', '')
+      endpoint = `/domains/${domain}/filters`
+    } else {
+      // Regular calendar
+      endpoint = `/calendars/${sourceCalendarId}/filters`
+    }
+    
+    const result = await post(endpoint, payload)
     
     creating.value = false
     
     if (result.success && result.data) {
-      const newCalendar = transformFilteredCalendar(result.data)
-      filteredCalendars.value.push(newCalendar)
+      const newFilter = {
+        id: result.data.id,
+        name: result.data.name,
+        calendar_id: result.data.calendar_id,
+        domain_key: result.data.domain_key,
+        username: result.data.username,
+        subscribed_event_ids: result.data.subscribed_event_ids || [],
+        subscribed_group_ids: result.data.subscribed_group_ids || [],
+        link_uuid: result.data.link_uuid,
+        export_url: result.data.export_url || `/ical/${result.data.link_uuid}.ics`
+      }
+      filteredCalendars.value.push(newFilter)
       return true
     } else {
       console.error('Error creating filtered calendar:', result.error)
@@ -101,62 +161,20 @@ export function useFilteredCalendarAPI() {
     }
   }
 
-  const updateFilteredCalendar = async (calendarId, updates) => {
-    if (!calendarId) {
-      setError('Calendar ID is required')
-      return false
-    }
-
-    updating.value = true
-
-    const payload = {
-      name: updates.name?.trim(),
-      selected_groups: updates.selected_groups,
-      selected_events: updates.selected_events
-    }
-
-    // Remove undefined values
-    Object.keys(payload).forEach(key => {
-      if (payload[key] === undefined) {
-        delete payload[key]
-      }
-    })
-
-    const result = await put(`/api/filtered-calendars/${calendarId}`, payload)
-    
-    updating.value = false
-    
-    if (result.success && result.data) {
-      const updatedCalendar = transformFilteredCalendar(result.data)
-      filteredCalendars.value = updateFilteredCalendarInList(
-        filteredCalendars.value, 
-        updatedCalendar
-      )
-      return true
-    } else {
-      console.error('Error updating filtered calendar:', result.error)
-      return false
-    }
+  const updateFilteredCalendar = async (filterId, updates) => {
+    // TODO: Backend doesn't currently support updating individual filters
+    // For now, this functionality is not available
+    console.warn('Filter update functionality not yet implemented in backend')
+    setError('Filter updates not yet supported')
+    return false
   }
 
-  const deleteFilteredCalendar = async (calendarId) => {
-    if (!calendarId) {
-      setError('Calendar ID is required')
-      return false
-    }
-
-    const result = await del(`/api/filtered-calendars/${calendarId}`)
-    
-    if (result.success) {
-      filteredCalendars.value = removeFilteredCalendarFromList(
-        filteredCalendars.value, 
-        calendarId
-      )
-      return true
-    } else {
-      console.error('Error deleting filtered calendar:', result.error)
-      return false
-    }
+  const deleteFilteredCalendar = async (filterId) => {
+    // TODO: Backend doesn't currently support deleting individual filters
+    // For now, this functionality is not available
+    console.warn('Filter deletion functionality not yet implemented in backend')
+    setError('Filter deletion not yet supported')
+    return false
   }
 
   const getPublicCalendar = async (token) => {

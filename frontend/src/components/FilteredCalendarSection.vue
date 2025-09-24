@@ -248,7 +248,7 @@
       </div>
 
       <!-- Empty state - only show if no existing calendars and no events selected -->
-      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedRecurringEvents.length === 0" class="text-center py-6">
+      <div v-else-if="filteredCalendars.length === 0 && selectedRecurringEvents.length === 0" class="text-center py-6">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
           {{ $t('filteredCalendar.noFiltered') }}
@@ -984,11 +984,9 @@ watch([() => props.selectedRecurringEvents], () => {
 
 // Lifecycle
 onMounted(async () => {
-  // Always load filtered calendars since they are global, not specific to one source calendar
-  await loadFilteredCalendars()
-  
-  // Only auto-populate form name if we have a selected calendar
+  // Load filtered calendars for the selected calendar
   if (props.selectedCalendar?.id) {
+    await loadFilteredCalendars(props.selectedCalendar.id)
     updateFormName()
   }
 })
