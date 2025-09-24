@@ -269,6 +269,129 @@ export const useSelectionStore = defineStore('selection', () => {
   }
 
   // ===============================================
+  // UI HELPER FUNCTIONS
+  // ===============================================
+  
+  /**
+   * Get recurring events from a group (only those with count > 0)
+   */
+  const getGroupRecurringEvents = (group) => {
+    if (!group || !group.recurring_events) return []
+    return group.recurring_events.filter(recurringEvent => {
+      return recurringEvent.event_count > 0
+    }).map(recurringEvent => recurringEvent.title)
+  }
+  
+  /**
+   * Check if group is fully selected (all recurring events individually selected)
+   */
+  const isGroupFullySelected = (group) => {
+    const recurringEvents = getGroupRecurringEvents(group)
+    return recurringEvents.length > 0 && 
+           recurringEvents.every(eventTitle => isRecurringEventSelected(eventTitle))
+  }
+  
+  /**
+   * Check if group is partially selected (some but not all recurring events selected)
+   */
+  const isGroupPartiallySelected = (group) => {
+    const recurringEvents = getGroupRecurringEvents(group)
+    const selectedCount = recurringEvents.filter(eventTitle => isRecurringEventSelected(eventTitle)).length
+    return selectedCount > 0 && selectedCount < recurringEvents.length
+  }
+  
+  /**
+   * Get group selection state for UI display
+   */
+  const getGroupSelectionState = (group, groupId) => {
+    const isSubscribed = isGroupSubscribed(groupId)
+    const recurringEvents = getGroupRecurringEvents(group)
+    const individuallySelected = recurringEvents.filter(eventTitle => isRecurringEventSelected(eventTitle)).length
+    
+    if (isSubscribed) {
+      return { type: 'subscribed', count: recurringEvents.length }
+    } else if (individuallySelected === recurringEvents.length && recurringEvents.length > 0) {
+      return { type: 'fully_selected', count: individuallySelected }
+    } else if (individuallySelected > 0) {
+      return { type: 'partially_selected', count: individuallySelected }
+    } else {
+      return { type: 'none_selected', count: 0 }
+    }
+  }
+  
+  /**
+   * Toggle selection of all recurring events in a group
+   */
+  const toggleGroupSelection = (group) => {
+    const recurringEvents = getGroupRecurringEvents(group)
+    if (recurringEvents.length === 0) return
+    
+    if (isGroupFullySelected(group)) {
+      // Deselect all recurring events in group
+      deselectRecurringEvents(recurringEvents)
+    } else {
+      // Select all recurring events in group
+      selectRecurringEvents(recurringEvents)
+    }
+  }
+  
+  /**
+   * Get group breakdown summary for compact display
+   */
+  const getGroupBreakdownSummary = (groups = {}) => {
+    const totalGroups = Object.keys(groups).length
+    const subscribedGroupsCount = subscribedGroups.value.size
+    
+    // Get all unique recurring events across all groups (prevents double counting)
+    const allUniqueRecurringEvents = new Set()
+    const effectivelySelectedRecurringEvents = new Set()
+    
+    // First pass: collect all unique recurring events
+    Object.entries(groups).forEach(([groupId, group]) => {
+      if (group && group.recurring_events) {
+        group.recurring_events.forEach((recurringEvent) => {
+          if (recurringEvent.event_count > 0) {
+            allUniqueRecurringEvents.add(recurringEvent.title)
+            
+            // Check if this recurring event is effectively selected
+            // (either through group subscription OR individual selection)
+            if (subscribedGroups.value.has(groupId) || selectedRecurringEvents.value.includes(recurringEvent.title)) {
+              effectivelySelectedRecurringEvents.add(recurringEvent.title)
+            }
+          }
+        })
+      }
+    })
+    
+    const totalAvailableEvents = allUniqueRecurringEvents.size
+    const effectiveSelectedEvents = effectivelySelectedRecurringEvents.size
+    
+    if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
+      return 'No events or groups selected'
+    }
+    
+    const parts = []
+    
+    // Events part - now shows unique event types
+    if (effectiveSelectedEvents > 0) {
+      parts.push(`${effectiveSelectedEvents}/${totalAvailableEvents} Events`)
+    } else if (totalAvailableEvents > 0) {
+      parts.push(`0/${totalAvailableEvents} Events`)
+    }
+    
+    // Groups part with special cases
+    if (subscribedGroupsCount === 0) {
+      parts.push('No groups')
+    } else if (subscribedGroupsCount === totalGroups && totalGroups > 0) {
+      parts.push('All groups')
+    } else {
+      parts.push(`${subscribedGroupsCount}/${totalGroups} Groups`)
+    }
+    
+    return parts.join(' & ')
+  }
+
+  // ===============================================
   // RETURN PUBLIC API
   // ===============================================
   
@@ -316,6 +439,14 @@ export const useSelectionStore = defineStore('selection', () => {
     
     // Summary and analysis
     getSelectionSummary,
+    
+    // UI helper functions
+    getGroupRecurringEvents,
+    isGroupFullySelected,
+    isGroupPartiallySelected,
+    getGroupSelectionState,
+    toggleGroupSelection,
+    getGroupBreakdownSummary,
     
     // Legacy compatibility (temporarily maintain old names for gradual migration)
     selectedRecurringEvents: selectedRecurringEvents,
