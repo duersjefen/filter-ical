@@ -143,8 +143,7 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
 
   function clearAllSingleEvents() {
     const singleRecurringEventNames = singleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
-    const remaining = selectedRecurringEvents.value.filter(name => !singleRecurringEventNames.includes(name))
-    selectionStore.selectRecurringEvents(remaining)
+    selectionStore.deselectRecurringEvents(singleRecurringEventNames)
   }
 
 

@@ -160,56 +160,55 @@
         <div 
           v-for="recurringEvent in filteredMainRecurringEvents" 
           :key="recurringEvent.name"
-          class="rounded-lg border-2 transition-all duration-200"
-          :class="selectedRecurringEvents.includes(recurringEvent.name) 
-            ? 'border-green-500 bg-green-50 dark:bg-green-900/30' 
-            : 'border-gray-200 dark:border-gray-700'"
+          class="border rounded-lg transition-all duration-200 cursor-pointer group/item"
+          :class="selectedRecurringEvents.includes(recurringEvent.name)
+            ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500 shadow-sm' 
+            : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm'"
+          @click="$emit('toggle-recurring-event', recurringEvent.name)"
+          :title="`Click to ${selectedRecurringEvents.includes(recurringEvent.name) ? 'deselect' : 'select'} ${recurringEvent.name}`"
         >
-          <!-- Recurring Event Header -->
-          <div 
-            class="flex items-center gap-3 p-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-            :class="expandedRecurringEvents.has(recurringEvent.name) ? 'rounded-t-lg' : 'rounded-lg'"
-            @click="$emit('toggle-recurring-event', recurringEvent.name)"
-          >
-            <!-- Checkbox -->
-            <div class="flex-shrink-0">
-              <div 
-                class="w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200"
-                :class="selectedRecurringEvents.includes(recurringEvent.name) 
-                  ? 'bg-green-500 border-green-500 text-white' 
-                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'"
-              >
-                <span v-if="selectedRecurringEvents.includes(recurringEvent.name)">✓</span>
-              </div>
-            </div>
-            
-            <!-- Recurring Event Info -->
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2">
-                <span class="font-medium text-gray-800 dark:text-gray-200 text-xs leading-tight truncate">{{ recurringEvent.name }}</span>
-                <span class="flex-shrink-0 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">
-                  {{ recurringEvent.count }}
-                </span>
-              </div>
-            </div>
-            
-            <!-- Expand Button -->
-            <button 
-              @click.stop="$emit('toggle-expansion', recurringEvent.name)"
-              class="flex-shrink-0 w-10 h-6 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white dark:hover:bg-gray-600"
-              :class="expandedRecurringEvents.has(recurringEvent.name) 
-                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' 
-                : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          <!-- Recurring Event Header - Entire row clickable -->
+          <div class="flex items-center gap-3 p-3 transition-colors">
+            <!-- Recurring Event Checkbox -->
+            <div 
+              class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
+              :class="selectedRecurringEvents.includes(recurringEvent.name)
+                ? 'bg-blue-500 border-blue-500 text-white' 
+                : 'border-gray-300 dark:border-gray-400 bg-white dark:bg-gray-700 group-hover/item:border-blue-400'"
             >
-              <svg 
-                class="w-4 h-4 transition-transform duration-200" 
-                :class="{ 'rotate-90': expandedRecurringEvents.has(recurringEvent.name) }"
-                fill="currentColor" 
-                viewBox="0 0 20 20"
+              <span v-if="selectedRecurringEvents.includes(recurringEvent.name)">✓</span>
+            </div>
+            
+            <!-- Recurring Event Info - Enhanced Layout -->
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                {{ recurringEvent.name }}
+              </div>
+            </div>
+            
+            <!-- Count badge and expansion arrow -->
+            <div class="flex items-center gap-2">
+              <!-- Event count badge beside dropdown arrow -->
+              <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors">
+                {{ recurringEvent.count }}
+              </div>
+              
+              <!-- Expansion Arrow (larger and standardized) -->
+              <button
+                @click.stop="$emit('toggle-expansion', recurringEvent.name)"
+                class="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors flex-shrink-0"
+                title="Click to view individual events"
               >
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-              </svg>
-            </button>
+                <svg 
+                  class="w-5 h-5 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-transform duration-300" 
+                  :class="{ 'rotate-90': expandedRecurringEvents.has(recurringEvent.name) }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
           
           <!-- Expandable Events List -->
@@ -253,76 +252,105 @@
       <!-- Unique Events Section -->
       <div 
         v-if="filteredSingleRecurringEvents.length > 0" 
-        class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl border-2 border-purple-200 dark:border-purple-700 overflow-hidden"
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
       >
-        <!-- Singles Header - Fully Clickable -->
+        <!-- Singles Header - Entire area clickable for expand/collapse -->
         <div 
-          class="flex items-center justify-between p-4 cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-800/30 transition-colors duration-200"
-          :class="showSingleEvents ? '' : ''"
-          @click="handleSinglesCardClick"
+          class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
+          @click="$emit('toggle-singles-visibility')"
+          :title="showSingleEvents ? 'Click to collapse unique events list' : 'Click to expand and see all unique events'"
         >
           <div class="flex items-center gap-3">
-            <div 
-              class="w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200"
-              :class="areAllSinglesSelected
-                ? 'bg-purple-500 border-purple-500 text-white' 
-                : 'border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700'"
-            >
-              <span v-if="areAllSinglesSelected">✓</span>
-            </div>
-            <span class="font-semibold text-purple-800 dark:text-purple-300">📄 {{ $t('recurringEvents.uniqueEvents') }}</span>
-            <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 text-xs rounded-full font-medium">
-              {{ selectedSinglesCount }}/{{ filteredSingleRecurringEvents.length }}
-            </span>
-          </div>
-          <button 
-            @click.stop="showSingleEvents = !showSingleEvents"
-            class="px-3 py-1 bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-800/50 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1"
-          >
-            {{ showSingleEvents ? $t('recurringEvents.hideSingleEvents') : $t('recurringEvents.showSingleEvents') }}
+            <!-- Chevron icon -->
             <svg 
-              class="w-3 h-3 transition-transform duration-200" 
+              class="w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300 flex-shrink-0" 
               :class="{ 'rotate-90': showSingleEvents }"
               fill="currentColor" 
               viewBox="0 0 20 20"
             >
               <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
-          </button>
+            
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+                📄 {{ $t('recurringEvents.uniqueEvents') }}
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ selectedSinglesCount }}/{{ filteredSingleRecurringEvents.length }} events selected
+              </p>
+            </div>
+            
+            <!-- Selection count badge -->
+            <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 mr-3">
+              {{ selectedSinglesCount }}/{{ filteredSingleRecurringEvents.length }}
+            </div>
+            
+            <!-- Select/Deselect All Button (always visible) -->
+            <button
+              @click.stop="handleSinglesToggle"
+              class="px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1 z-10 relative"
+              :class="areAllSinglesSelected
+                ? 'bg-gray-500 hover:bg-gray-600 text-white'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'"
+            >
+              <span v-if="areAllSinglesSelected">✗ Deselect All</span>
+              <span v-else>✓ Select All</span>
+            </button>
+          </div>
         </div>
 
         <!-- Singles List (when expanded) -->
-        <div v-if="showSingleEvents" class="border-t border-purple-200 dark:border-purple-700 p-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
-          <div 
-            v-for="recurringEvent in filteredSingleRecurringEvents"
-            :key="recurringEvent.name"
-            class="flex items-center gap-2 p-2 rounded-lg border transition-all duration-200 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/30"
-            :class="selectedRecurringEvents.includes(recurringEvent.name) 
-              ? 'border-purple-500 bg-purple-100 dark:bg-purple-900/50' 
-              : 'border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-700'"
-            @click="$emit('toggle-recurring-event', recurringEvent.name)"
-          >
-            <!-- Checkbox -->
+        <div v-if="showSingleEvents" class="p-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
             <div 
-              class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs font-bold transition-all duration-200 flex-shrink-0"
-              :class="selectedRecurringEvents.includes(recurringEvent.name) 
-                ? 'bg-purple-500 border-purple-500 text-white' 
-                : 'border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700'"
+              v-for="recurringEvent in filteredSingleRecurringEvents"
+              :key="recurringEvent.name"
+              class="border rounded-lg transition-all duration-200 cursor-pointer group/item"
+              :class="selectedRecurringEvents.includes(recurringEvent.name)
+                ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500 shadow-sm' 
+                : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm'"
+              @click="$emit('toggle-recurring-event', recurringEvent.name)"
+              :title="`Click to ${selectedRecurringEvents.includes(recurringEvent.name) ? 'deselect' : 'select'} ${recurringEvent.name}`"
             >
-              <span v-if="selectedRecurringEvents.includes(recurringEvent.name)">✓</span>
-            </div>
-            
-            <!-- Event Info -->
-            <div class="flex-1 min-w-0">
-              <div class="font-medium text-purple-800 dark:text-purple-300 text-xs leading-tight mb-1 truncate">{{ recurringEvent.name }}</div>
-              <div class="flex flex-col gap-1 text-xs text-purple-600 dark:text-purple-400">
-                <span class="truncate">📅 {{ formatDateRange(recurringEvent.events[0]) }}</span>
-                <span v-if="recurringEvent.events[0].location" class="truncate">📍 {{ recurringEvent.events[0].location }}</span>
+              <!-- Event Header - Entire row clickable -->
+              <div class="flex items-center gap-3 p-3 transition-colors">
+                <!-- Event Checkbox -->
+                <div 
+                  class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
+                  :class="selectedRecurringEvents.includes(recurringEvent.name)
+                    ? 'bg-blue-500 border-blue-500 text-white' 
+                    : 'border-gray-300 dark:border-gray-400 bg-white dark:bg-gray-700 group-hover/item:border-blue-400'"
+                >
+                  <span v-if="selectedRecurringEvents.includes(recurringEvent.name)">✓</span>
+                </div>
+                
+                <!-- Event Info - Enhanced Layout -->
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors mb-1">
+                    {{ recurringEvent.name }}
+                  </div>
+                  <!-- Event Details -->
+                  <div class="space-y-0.5 h-8 flex flex-col justify-start">
+                    <div class="text-xs text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
+                      <span>📅</span>
+                      <span>{{ formatDateRange(recurringEvent.events[0]) }}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 min-h-[1rem]">
+                      <template v-if="recurringEvent.events[0].location">
+                        <span>📍</span>
+                        <span class="truncate">{{ recurringEvent.events[0].location }}</span>
+                      </template>
+                      <template v-else>
+                        <!-- Reserve space for consistency -->
+                        <span class="opacity-0">📍</span>
+                        <span class="opacity-0">No location</span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
       
@@ -563,5 +591,14 @@ const showSingleEvents = computed({
   get: () => props.showSingleEvents,
   set: (value) => emit('toggle-singles-visibility', value)
 })
+
+// Handle singles toggle button explicitly
+function handleSinglesToggle() {
+  if (areAllSinglesSelected.value) {
+    emit('clear-all-singles')
+  } else {
+    emit('select-all-singles')
+  }
+}
 
 </script>

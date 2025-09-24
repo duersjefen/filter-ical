@@ -117,6 +117,10 @@ export const useSelectionStore = defineStore('selection', () => {
     )
   }
 
+  const replaceSelection = (recurringEventTitles) => {
+    selectedRecurringEvents.value = [...recurringEventTitles]
+  }
+
   // ===============================================
   // GROUP SUBSCRIPTION OPERATIONS
   // ===============================================
@@ -417,6 +421,7 @@ export const useSelectionStore = defineStore('selection', () => {
     toggleRecurringEvent,
     selectRecurringEvents,
     deselectRecurringEvents,
+    replaceSelection,
     
     // Group subscription operations
     isGroupSubscribed,
@@ -464,6 +469,7 @@ export const useSelectionStore = defineStore('selection', () => {
     toggleRecurringEvent: toggleRecurringEvent,
     selectRecurringEvents: selectRecurringEvents,
     deselectRecurringEvents: deselectRecurringEvents,
+    replaceSelection: replaceSelection,
     isRecurringEventEffectivelySelected: isRecurringEventEffectivelySelected
   }
 })
