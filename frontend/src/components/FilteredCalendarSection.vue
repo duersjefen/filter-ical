@@ -931,8 +931,13 @@ const getCountDisplayClass = (groupId) => {
   const totalCount = getGroupTotalCount(props.groups[groupId])
   
   if (isSubscribed) {
-    // SUBSCRIBED - White text on dark green
-    return 'bg-green-600 dark:bg-green-500 text-white'
+    if (selectedCount === totalCount && totalCount > 0) {
+      // SUBSCRIBED & ALL SELECTED - White text on dark green
+      return 'bg-green-600 dark:bg-green-500 text-white'
+    } else {
+      // SUBSCRIBED but NOT ALL SELECTED - White text on blue (requested change)
+      return 'bg-blue-600 dark:bg-blue-500 text-white'
+    }
   } else if (selectedCount === totalCount && totalCount > 0) {
     // ALL SELECTED manually - White text on dark blue
     return 'bg-blue-600 dark:bg-blue-500 text-white'
