@@ -46,7 +46,7 @@
         :summary-text="getGroupBreakdownSummary()"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
-        @clear-all="clearSelection"
+        @clear-all="handleClearAllEvents"
         @select-all="handleSelectAllEvents"
         @update:search-term="recurringEventSearch = $event"
         @toggle-recurring-event="unifiedToggleRecurringEvent"
@@ -582,14 +582,26 @@ const findGroupInChildren = (children, groupId) => {
 
 // Unified event selection handlers
 const handleSelectAllEvents = () => {
-  // Select recurring events (events that happen multiple times)
-  if (mainRecurringEvents.value) {
-    const recurringEventTitles = Object.keys(mainRecurringEvents.value)
-    selectRecurringEvents(recurringEventTitles)
-  }
+  // Get ALL event types (both recurring and unique) for unified selection
+  const allEventTitles = [
+    ...(mainRecurringEvents.value?.map(event => event.name) || []),
+    ...(singleRecurringEvents.value?.map(event => event.name) || [])
+  ]
   
-  // Select unique/single events (events that happen only once)
-  selectAllSingleEvents()
+  // Use unified selection system for all events consistently
+  if (allEventTitles.length > 0) {
+    selectRecurringEvents(allEventTitles)
+  }
+}
+
+const handleClearAllEvents = () => {
+  // Clear all selections using the unified system
+  clearSelection()
+  
+  // Auto-deactivate "Show Selected Only" when no events are selected
+  if (showSelectedOnly.value) {
+    showSelectedOnly.value = false
+  }
 }
 
 // Event View group action handlers - subscription-only (no selection changes)
@@ -625,6 +637,14 @@ watch(() => props.id || route.params.id, (newCalendarId, oldCalendarId) => {
     console.log('🔄 Route changed, updating calendar ID:', newCalendarId)
     updateCalendarId(newCalendarId)
     loadCalendarData(newCalendarId)
+  }
+})
+
+// Watch for selection changes and auto-deactivate "Show Selected Only" when no events are selected
+watch(() => unifiedSelectedRecurringEvents.value.length, (newLength) => {
+  if (newLength === 0 && showSelectedOnly.value) {
+    console.log('🔄 Auto-deactivating "Show Selected Only" - no events selected')
+    showSelectedOnly.value = false
   }
 })
 </script>

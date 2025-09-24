@@ -120,7 +120,7 @@
         
         <!-- Show Selected Only / Show All Toggle -->
         <button
-          v-if="selectedRecurringEvents.length > 0"
+          v-if="selectedRecurringEvents.length > 0 && !searchTerm.trim()"
           @click="$emit('toggle-selected-only')"
           class="px-3 py-2 border-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
           :class="showSelectedOnly 
@@ -259,7 +259,7 @@
         <div 
           class="flex items-center justify-between p-4 cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-800/30 transition-colors duration-200"
           :class="showSingleEvents ? '' : ''"
-          @click="areAllSinglesSelected ? $emit('clear-all-singles') : $emit('select-all-singles')"
+          @click="handleSinglesCardClick"
         >
           <div class="flex items-center gap-3">
             <div 
@@ -496,6 +496,50 @@ function clearAllVisible() {
       emit('toggle-recurring-event', name)
     }
   })
+}
+
+function handleSinglesCardClick() {
+  // During filtering: select/deselect only visible filtered unique events
+  if (props.searchTerm.trim()) {
+    const visibleSingleNames = filteredSingleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+    const allVisibleSelected = visibleSingleNames.every(name => props.selectedRecurringEvents.includes(name))
+    
+    if (allVisibleSelected) {
+      // Deselect visible unique events
+      visibleSingleNames.forEach(name => {
+        if (props.selectedRecurringEvents.includes(name)) {
+          emit('toggle-recurring-event', name)
+        }
+      })
+    } else {
+      // Select visible unique events
+      visibleSingleNames.forEach(name => {
+        if (!props.selectedRecurringEvents.includes(name)) {
+          emit('toggle-recurring-event', name)
+        }
+      })
+    }
+  } else {
+    // No filtering: select/deselect ALL unique events using unified system
+    const allSingleNames = filteredSingleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+    const allSelected = allSingleNames.every(name => props.selectedRecurringEvents.includes(name))
+    
+    if (allSelected) {
+      // Deselect all unique events
+      allSingleNames.forEach(name => {
+        if (props.selectedRecurringEvents.includes(name)) {
+          emit('toggle-recurring-event', name)
+        }
+      })
+    } else {
+      // Select all unique events
+      allSingleNames.forEach(name => {
+        if (!props.selectedRecurringEvents.includes(name)) {
+          emit('toggle-recurring-event', name)
+        }
+      })
+    }
+  }
 }
 
 const emit = defineEmits([
