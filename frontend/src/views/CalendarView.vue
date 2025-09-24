@@ -16,7 +16,7 @@
     </div>
 
     <!-- Main Content -->
-    <template v-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length > 0">
+    <template v-if="!loading && events.length > 0 && recurringEvents && Object.keys(recurringEvents).length > 0">
       <!-- Show Groups Interface Based on User Choice -->
       <EventGroupsSection
         v-if="shouldShowGroups"
@@ -30,31 +30,31 @@
       />
       
       <!-- Show Event Types Interface Based on User Choice -->
-      <EventTypeCardsSection
+      <RecurringEventsCardsSection
         v-if="shouldShowTypes"
-        :event-types="mainEventTypes"
-        :main-event-types="mainEventTypes"
-        :single-event-types="singleEventTypes"
-        :all-event-types="eventTypesSortedByCount"
-        :selected-event-types="unifiedSelectedEventTypes"
-        :expanded-event-types="expandedEventTypes"
+        :recurring-events="mainRecurringEvents"
+        :main-recurring-events="mainRecurringEvents"
+        :single-recurring-events="singleRecurringEvents"
+        :all-recurring-events="recurringEventsSortedByCount"
+        :selected-recurring-events="unifiedSelectedRecurringEvents"
+        :expanded-recurring-events="expandedRecurringEvents"
         :show-single-events="showSingleEvents"
-        :show-event-types-section="showEventTypesSection"
+        :show-recurring-events-section="showRecurringEventsSection"
         :show-selected-only="showSelectedOnly"
-        :search-term="eventTypeSearch"
+        :search-term="recurringEventSearch"
         :has-groups="appStore.hasGroups"
         :summary-text="eventGroupSummary"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
         @clear-all="clearSelection"
-        @select-all="handleSelectAllEventTypes"
-        @update:search-term="eventTypeSearch = $event"
-        @toggle-event-type="unifiedToggleEventType"
-        @toggle-expansion="toggleEventTypeExpansion"
+        @select-all="handleSelectAllRecurringEvents"
+        @update:search-term="recurringEventSearch = $event"
+        @toggle-recurring-event="unifiedToggleRecurringEvent"
+        @toggle-expansion="toggleRecurringEventExpansion"
         @toggle-singles-visibility="showSingleEvents = !showSingleEvents"
         @select-all-singles="selectAllSingleEvents"
         @clear-all-singles="clearAllSingleEvents"
-        @toggle-event-types-section="showEventTypesSection = !showEventTypesSection"
+        @toggle-recurring-events-section="showRecurringEventsSection = !showRecurringEventsSection"
         @toggle-selected-only="showSelectedOnly = !showSelectedOnly"
         @subscribe-all-groups="handleSubscribeAllGroups"
         @unsubscribe-all-groups="handleUnsubscribeAllGroups"
@@ -66,11 +66,11 @@
       <!-- This manages global filtered calendars that may exist from any source calendar -->
       <FilteredCalendarSection
         :selected-calendar="selectedCalendar"
-        :selected-event-types="unifiedSelectedEventTypes"
+        :selected-recurring-events="unifiedSelectedRecurringEvents"
         :selected-groups="selectedGroups"
         :subscribed-groups="subscribedGroups"
-        :main-event-types="mainEventTypes"
-        :single-event-types="singleEventTypes"
+        :main-recurring-events="mainRecurringEvents"
+        :single-recurring-events="singleRecurringEvents"
         :groups="appStore.groups"
         :has-groups="appStore.hasGroups"
         @navigate-to-calendar="navigateToCalendar"
@@ -78,27 +78,27 @@
       />
 
       <PreviewEventsSection
-        :selected-event-types="unifiedSelectedEventTypes"
+        :selected-recurring-events="unifiedSelectedRecurringEvents"
         :sorted-preview-events="sortedPreviewEvents"
         :preview-group="previewGroup"
         :grouped-preview-events="groupedPreviewEvents"
         :all-events="events"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
-        :getEventTypeKey="getEventTypeKey"
+        :getRecurringEventKey="getRecurringEventKey"
         @update:preview-group="previewGroup = $event"
       />
     </template>
 
     <!-- Event types not loaded fallback -->
-    <template v-else-if="!loading && events.length > 0 && eventTypes && Object.keys(eventTypes).length === 0">
+    <template v-else-if="!loading && events.length > 0 && recurringEvents && Object.keys(recurringEvents).length === 0">
       <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
         <div class="text-6xl mb-4">📂</div>
         <p class="text-amber-800 dark:text-amber-200 mb-3 font-semibold text-lg">
-          {{ $t('calendar.loadingEventTypesOrNotFound') }}
+          {{ $t('calendar.loadingRecurringEventsOrNotFound') }}
         </p>
         <p class="text-amber-700 dark:text-amber-300 text-sm font-medium">
-          {{ $t('calendar.loadingEventTypesDescription') }}
+          {{ $t('calendar.loadingRecurringEventsDescription') }}
         </p>
       </div>
     </template>
@@ -116,7 +116,7 @@
     </template>
 
     <!-- Event Types not loaded fallback -->
-    <template v-else-if="!loading && !eventTypes">
+    <template v-else-if="!loading && !recurringEvents">
       <div class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
         <div class="text-6xl mb-4">📅</div>
         <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">{{ $t('calendar.noEventsFound') }}</h3>
@@ -140,7 +140,7 @@ import { API_ENDPOINTS } from '../constants/api'
 import axios from 'axios'
 import {
   HeaderSection,
-  EventTypeCardsSection,
+  RecurringEventsCardsSection,
   PreviewEventsSection
 } from '../components/calendar'
 import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
@@ -151,11 +151,12 @@ const router = useRouter()
 const route = useRoute()
 const api = useAPI()
 
-// Local reactive data - much simpler than store delegation
-const loading = ref(false)
-const error = ref(null)
+// Extract loading and error state from API composable
+const { loading, error, clearError, setError } = api
+
+// Local reactive data 
 const events = ref([])
-const eventTypes = ref({})
+const recurringEvents = ref({})
 const selectedCalendar = ref(null)
 const selectedGroups = ref([])
 
@@ -176,41 +177,41 @@ const props = defineProps({
 
 // Use calendar composable with local data and calendar ID for persistence
 const {
-  selectedEventTypes,
-  expandedEventTypes,
+  selectedRecurringEvents,
+  expandedRecurringEvents,
   showSingleEvents,
-  showEventTypesSection,
+  showRecurringEventsSection,
   showGroupsSection,
   showSelectedOnly,
-  eventTypeSearch,
+  recurringEventSearch,
   previewGroup,
-  eventTypesSortedByCount,
-  mainEventTypes,
-  singleEventTypes,
-  selectedEventTypesCount,
+  recurringEventsSortedByCount,
+  mainRecurringEvents,
+  singleRecurringEvents,
+  selectedRecurringEventsCount,
   sortedPreviewEvents,
   groupedPreviewEvents,
-  getEventTypeKey,
+  getRecurringEventKey,
   formatDateTime,
   formatDateRange,
-  toggleEventType,
-  toggleEventTypeExpansion,
-  selectAllEventTypes,
-  clearAllEventTypes,
+  toggleRecurringEvent,
+  toggleRecurringEventExpansion,
+  selectAllRecurringEvents,
+  clearAllRecurringEvents,
   selectAllSingleEvents,
   clearAllSingleEvents,
   updateCalendarId,
   // No preferences loading needed
-} = useCalendar(events, eventTypes, props.id)
+} = useCalendar(events, recurringEvents, props.id)
 
 // Get unified event selection system (SINGLE SOURCE OF TRUTH)
 const { 
   subscribeToGroup, 
   unsubscribeFromGroup, 
   subscribedGroups,
-  selectedEventTypes: unifiedSelectedEventTypes,
-  toggleEventType: unifiedToggleEventType,
-  selectEventTypes,
+  selectedRecurringEvents: unifiedSelectedRecurringEvents,
+  toggleRecurringEvent: unifiedToggleRecurringEvent,
+  selectRecurringEvents,
   clearSelection,
 } = useUnifiedSelection()
 
@@ -258,14 +259,14 @@ const shouldShowTypes = computed(() => {
 const eventGroupSummary = computed(() => {
   const totalGroups = appStore.groups ? Object.keys(appStore.groups).length : 0
   const subscribedGroupsCount = selectedGroups.value ? selectedGroups.value.length : 0
-  const selectedEventsCount = selectedEventTypes.value ? selectedEventTypes.value.length : 0
+  const selectedEventsCount = selectedRecurringEvents.value ? selectedRecurringEvents.value.length : 0
   
   // Calculate total available events
   let totalAvailableEvents = 0
-  if (eventTypes.value) {
-    Object.values(eventTypes.value).forEach(eventType => {
-      if (eventType && eventType.count > 0) {
-        totalAvailableEvents += 1 // Count event types, not individual events
+  if (recurringEvents.value) {
+    Object.values(recurringEvents.value).forEach(recurringEvent => {
+      if (recurringEvent && recurringEvent.count > 0) {
+        totalAvailableEvents += 1 // Count recurring events, not individual events
       }
     })
   }
@@ -316,19 +317,18 @@ const handleSwitchToGroups = () => {
   handleViewModeChange('groups')
 }
 
-// Simple, direct data loading
+// Simple, direct data loading with proper error handling
 const loadCalendarData = async (calendarId) => {
   console.log('🔄 Loading calendar data for:', calendarId)
-  loading.value = true
-  error.value = null
+  clearError() // Use API composable's error clearing
   
   console.log('🔄 Initial state:', {
     loading: loading.value,
     eventsLength: events.value.length,
-    eventTypesKeys: eventTypes.value ? Object.keys(eventTypes.value).length : 'null'
+    recurringEventsKeys: recurringEvents.value ? Object.keys(recurringEvents.value).length : 'null'
   })
   
-  try {
+  const result = await api.safeExecute(async () => {
     
     // For domain calendars, create a system-managed calendar reference
     // Domain calendars are NOT user calendars and should not be mixed with user calendar lists
@@ -353,13 +353,13 @@ const loadCalendarData = async (calendarId) => {
         selectedCalendar.value = calendar
       } else {
         console.error(`❌ User calendar ${calendarId} not found in available calendars`)
-        error.value = `Calendar ${calendarId} not found`
+        setError(`Calendar ${calendarId} not found`)
         return
       }
     }
     
-    // Detect if this is a domain calendar and choose appropriate endpoint
-    
+    // Simplified: Load groups data directly - no conversion needed
+    console.log('🔄 Loading groups data...')
     const isDomainCalendar = props.domainContext || calendarId.startsWith('cal_domain_')
     let domainName = null
     
@@ -368,137 +368,98 @@ const loadCalendarData = async (calendarId) => {
     } else if (isDomainCalendar && calendarId.startsWith('cal_domain_')) {
       domainName = calendarId.replace('cal_domain_', '')
     }
-    
-    
-    let apiEndpoint, apiPath
+
+    // Load groups data first - this contains all events
     if (isDomainCalendar && domainName) {
-      apiEndpoint = API_ENDPOINTS.DOMAIN_EVENTS(domainName)
-      apiPath = 'domain events'
+      await appStore.loadDomainGroups(domainName)
     } else {
-      apiEndpoint = API_ENDPOINTS.CALENDAR_EVENTS(calendarId)
-      apiPath = 'calendar events'
+      await appStore.loadCalendarGroups(calendarId)
     }
     
-    const eventsResult = await api.safeExecute(async () => {
-      const response = await axios.get(apiEndpoint)
-      
-      // Domain endpoints return {groups: Array} with all events in groups
-      // Calendar endpoints return {events: Array}
-      if (isDomainCalendar) {
-        // Transform domain structure to expected eventTypes format
-        const eventTypes = {}
-        
-        // Process all groups (including auto-created groups from backend)
-        if (response.data.groups) {
-          for (const group of response.data.groups) {
-            for (const recurringEvent of group.recurring_events || []) {
-              // Handle double-nested structure: recurringEvent.events.events contains actual events array
-              const actualEvents = recurringEvent.events?.events || recurringEvent.events || []
-              eventTypes[recurringEvent.title] = {
-                count: recurringEvent.event_count,
-                events: Array.isArray(actualEvents) ? actualEvents : []
-              }
-            }
-          }
-        }
-        
-        return eventTypes
-      } else {
-        return response.data.events
-      }
+    console.log('✅ Groups loaded:', {
+      hasGroups: appStore.hasGroups,
+      groupsCount: appStore.groups ? Object.keys(appStore.groups).length : 0
     })
+
+    // Extract events and recurringEvents from loaded groups - no API conversion needed
+    const extractedRecurringEvents = {}
+    const allEvents = []
     
-    if (eventsResult.success) {
-      // Backend returns {events: {eventTypeName: {count: N, events: [...]}, ...}}
-      console.log('✅ API response received. Raw data structure:', {
-        hasData: !!eventsResult.data,
-        dataKeys: eventsResult.data ? Object.keys(eventsResult.data) : 'null',
-        firstEventType: eventsResult.data ? Object.keys(eventsResult.data)[0] : 'null'
-      })
-      
-      // Extract event types object
-      
-      eventTypes.value = eventsResult.data
-      console.log('✅ EventTypes assigned:', {
-        eventTypesKeys: eventTypes.value ? Object.keys(eventTypes.value).length : 'eventTypes is null',
-        eventTypeNames: eventTypes.value ? Object.keys(eventTypes.value) : 'eventTypes is null'
-      })
-      
-      // Extract unique events from all event types
-      const allEvents = []
-      try {
-        if (eventTypes.value) {
-          Object.values(eventTypes.value).forEach(eventType => {
-            if (eventType && eventType.events && Array.isArray(eventType.events)) {
-              console.log(`🔍 Adding ${eventType.events.length} events from eventType`)
-              allEvents.push(...eventType.events)
-            }
-          })
-        } else {
-          console.warn('⚠️ eventTypes.value is null or undefined')
-        }
-      } catch (extractError) {
-        console.error('❌ Error extracting events:', extractError)
-        throw extractError
+    try {
+      // Extract from groups loaded into appStore
+      if (appStore.groups && Object.keys(appStore.groups).length > 0) {
+        Object.values(appStore.groups).forEach(group => {
+          if (group.recurring_events) {
+            group.recurring_events.forEach(recurringEvent => {
+              // Extract events from this recurring event
+              const actualEvents = recurringEvent.events?.events || recurringEvent.events || []
+              if (Array.isArray(actualEvents)) {
+                allEvents.push(...actualEvents)
+                
+                // Create recurringEvent structure for compatibility
+                extractedRecurringEvents[recurringEvent.title] = {
+                  count: recurringEvent.event_count || actualEvents.length,
+                  events: actualEvents
+                }
+              }
+            })
+          }
+        })
+        
+        recurringEvents.value = extractedRecurringEvents
+        events.value = allEvents
+        
+        console.log('✅ Data extracted from groups:', {
+          recurringEventsCount: Object.keys(extractedRecurringEvents).length,
+          eventsCount: allEvents.length,
+          recurringEventNames: Object.keys(extractedRecurringEvents)
+        })
+      } else {
+        console.warn('⚠️ No groups data available')
+        recurringEvents.value = {}
+        events.value = []
       }
-      events.value = allEvents
-      console.log('✅ Events extracted:', {
-        eventsLength: events.value.length,
-        sampleEventTitle: events.value[0]?.title
-      })
+    } catch (extractError) {
+      console.error('❌ Error extracting data from groups:', extractError)
+      throw extractError
+    }
       
       // Debug the conditional rendering requirements
       console.log('🎯 Conditional rendering check:', {
         loading: loading.value,
         eventsLength: events.value.length,
-        eventTypesExists: !!eventTypes.value,
-        eventTypesKeysLength: Object.keys(eventTypes.value).length,
-        shouldShow: !loading.value && events.value.length > 0 && eventTypes.value && Object.keys(eventTypes.value).length > 0
+        recurringEventsExists: !!recurringEvents.value,
+        recurringEventsKeysLength: Object.keys(recurringEvents.value).length,
+        shouldShow: !loading.value && events.value.length > 0 && recurringEvents.value && Object.keys(recurringEvents.value).length > 0
       })
 
-      // Load groups data - use domain endpoint for domain calendars
-      console.log('🔄 Loading groups data...')
-      if (isDomainCalendar && domainName) {
-        await appStore.loadDomainGroups(domainName)
-      } else {
-        await appStore.loadCalendarGroups(calendarId)
-      }
-      console.log('✅ Groups loaded:', {
-        hasGroups: appStore.hasGroups,
-        groupsCount: appStore.groups ? Object.keys(appStore.groups).length : 0
-      })
+      // Groups already loaded above
       
       // Debug: Force re-render check
       console.log('🐛 DEBUG: hasGroups reactivity check:', {
         hasGroupsValue: appStore.hasGroups,
         hasGroupsType: typeof appStore.hasGroups
       })
-    } else {
-      console.error('❌ API call failed:', eventsResult)
-      console.error('❌ Error details:', {
-        success: eventsResult.success,
-        error: eventsResult.error,
-        data: eventsResult.data
-      })
-    }
-    
-  } catch (err) {
-    console.error('Error loading calendar data:', err)
-    error.value = 'Failed to load calendar data'
-  } finally {
-    loading.value = false
-    console.log('🏁 Loading complete. Final state:', {
-      loading: loading.value,
-      eventsLength: events.value.length,
-      eventTypesKeys: eventTypes.value ? Object.keys(eventTypes.value).length : 'null',
-      shouldShow: !loading.value && events.value.length > 0 && eventTypes.value && Object.keys(eventTypes.value).length > 0
-    })
+      
+      return { success: true }
+  })
+  
+  if (result.success) {
+    console.log('✅ Calendar data loaded successfully')
+  } else {
+    console.error('❌ Failed to load calendar data:', result.error)
+    // Error is automatically set by API composable
   }
+  
+  console.log('🏁 Loading complete. Final state:', {
+    loading: loading.value,
+    eventsLength: events.value.length,
+    recurringEventsKeys: recurringEvents.value ? Object.keys(recurringEvents.value).length : 'null',
+    shouldShow: !loading.value && events.value.length > 0 && recurringEvents.value && Object.keys(recurringEvents.value).length > 0
+  })
 }
 
-const clearError = () => {
-  error.value = null
-}
+// clearError is now provided by API composable
 
 const navigateHome = () => {
   router.push('/home')
@@ -514,15 +475,15 @@ const navigateToCalendar = () => {
 
 const loadFilterIntoPage = (filterData) => {
   // Clear current selection
-  clearAllEventTypes()
+  clearAllRecurringEvents()
   
   
   // Select the event types from the filter
-  filterData.eventTypes.forEach(eventTypeName => {
-    toggleEventType(eventTypeName)
+  filterData.recurringEvents.forEach(recurringEventName => {
+    toggleRecurringEvent(recurringEventName)
   })
   
-  console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.eventTypes.length} event types in ${filterData.mode} mode`)
+  console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.recurringEvents.length} recurring events`)
 }
 
 // Handle selection changes from the new multi-level selection system (old complex)
@@ -530,11 +491,11 @@ const handleSelectionChanged = (selection) => {
   console.log('📊 Selection changed:', selection)
   
   // Resolve hierarchical group selections into a flat list of event types
-  const resolvedEventTypes = resolveGroupSelectionsToEventTypes(selection)
-  console.log('📋 Resolved event types:', resolvedEventTypes)
+  const resolvedRecurringEvents = resolveGroupSelectionsToRecurringEvents(selection)
+  console.log('📋 Resolved recurring events:', resolvedRecurringEvents)
   
-  // Update the selectedEventTypes to integrate with existing filter system
-  selectedEventTypes.value = resolvedEventTypes
+  // Update the selectedRecurringEvents to integrate with existing filter system
+  selectedRecurringEvents.value = resolvedRecurringEvents
 }
 
 // Handle selection changes from the dual selection system
@@ -542,19 +503,19 @@ const handleGroupSelectionChanged = (selectionData) => {
   console.log('🎯 Unified selection changed:', selectionData)
   
   // Extract data from the unified selection format
-  const { groups, eventTypes, events, subscribedGroups } = selectionData
+  const { groups, recurringEvents, events, subscribedGroups } = selectionData
   
   console.log('🔧 Processing unified selection:', {
     subscribedGroups: subscribedGroups,
     groups: groups,
-    eventTypes: eventTypes,
+    recurringEvents: recurringEvents,
     events: events
   })
   
   // Store legacy selectedGroups for compatibility (will be removed later)
   selectedGroups.value = groups || []
   
-  // Note: No need to manually update selectedEventTypes here anymore
+  // Note: No need to manually update selectedRecurringEvents here anymore
   // The unified system handles this automatically through useEventSelection
   // The Events and Groups views now share the same selection state
   
@@ -568,35 +529,35 @@ const handleSimpleSelectionChanged = (selectionData) => {
   if (selectionData.mode === 'enhanced') {
     // Handle enhanced selection data with both groups and individual event types
     console.log('🔧 Processing enhanced selection:', {
-      eventTypes: selectionData.selectedEventTypes,
+      recurringEvents: selectionData.selectedRecurringEvents,
       groups: selectionData.selectedGroups
     })
     
     // Store both selected groups and individual event types
-    selectedEventTypes.value = selectionData.selectedEventTypes
+    selectedRecurringEvents.value = selectionData.selectedRecurringEvents
     selectedGroups.value = selectionData.selectedGroups
   } else {
     // Legacy support: direct array of event types
-    selectedEventTypes.value = selectionData
+    selectedRecurringEvents.value = selectionData
     selectedGroups.value = []
   }
 }
 
 // Helper function to resolve hierarchical group selections into event types
-const resolveGroupSelectionsToEventTypes = (selection) => {
-  const eventTypes = new Set()
+const resolveGroupSelectionsToRecurringEvents = (selection) => {
+  const recurringEvents = new Set()
   
   // Get all event types from explicit event type selections
-  selection.eventTypes.forEach(eventType => {
-    eventTypes.add(eventType)
+  selection.recurringEvents.forEach(recurringEvent => {
+    recurringEvents.add(recurringEvent)
   })
   
   // Get all event types from selected groups (including nested groups)
   if (appStore.groups) {
     selection.groups.forEach(groupId => {
-      const eventTypesFromGroup = getEventTypesFromGroup(groupId, appStore.groups)
-      eventTypesFromGroup.forEach(eventType => {
-        eventTypes.add(eventType)
+      const recurringEventsFromGroup = getRecurringEventsFromGroup(groupId, appStore.groups)
+      recurringEventsFromGroup.forEach(recurringEvent => {
+        recurringEvents.add(recurringEvent)
       })
     })
   }
@@ -604,35 +565,35 @@ const resolveGroupSelectionsToEventTypes = (selection) => {
   // Add individual events (these are already event-specific, not type-specific)
   // Individual events will be handled differently by the filter system
   
-  return Array.from(eventTypes)
+  return Array.from(recurringEvents)
 }
 
 // Recursive helper to extract all event types from a group and its children
-const getEventTypesFromGroup = (groupId, groups) => {
-  const eventTypes = new Set()
+const getRecurringEventsFromGroup = (groupId, groups) => {
+  const recurringEvents = new Set()
   
   // Find the group
   const group = findGroupById(groupId, groups)
-  if (!group) return eventTypes
+  if (!group) return recurringEvents
   
-  // Add direct event types from this group
-  if (group.event_types) {
-    Object.keys(group.event_types).forEach(eventType => {
-      eventTypes.add(eventType)
+  // Add direct recurring events from this group
+  if (group.recurring_events) {
+    group.recurring_events.forEach(recurringEvent => {
+      recurringEvents.add(recurringEvent.title)
     })
   }
   
-  // Recursively add event types from children
+  // Recursively add recurring events from children
   if (group.children) {
     group.children.forEach(child => {
-      const childEventTypes = getEventTypesFromGroup(child.id, groups)
-      childEventTypes.forEach(eventType => {
-        eventTypes.add(eventType)
+      const childRecurringEvents = getRecurringEventsFromGroup(child.id, groups)
+      childRecurringEvents.forEach(recurringEvent => {
+        recurringEvents.add(recurringEvent)
       })
     })
   }
   
-  return eventTypes
+  return recurringEvents
 }
 
 // Helper to find a group by ID in the hierarchical structure
@@ -664,44 +625,34 @@ const findGroupInChildren = (children, groupId) => {
 }
 
 // Unified event selection handlers
-const handleSelectAllEventTypes = () => {
+const handleSelectAllRecurringEvents = () => {
   // Get all available event types from the current data
-  const allEventTypes = []
+  const allRecurringEvents = []
   
   // Add main event types
-  if (mainEventTypes.value) {
-    allEventTypes.push(...Object.keys(mainEventTypes.value))
+  if (mainRecurringEvents.value) {
+    allRecurringEvents.push(...Object.keys(mainRecurringEvents.value))
   }
   
   // Add single event types
-  if (singleEventTypes.value) {
-    allEventTypes.push(...singleEventTypes.value.map(et => et.name))
+  if (singleRecurringEvents.value) {
+    allRecurringEvents.push(...singleRecurringEvents.value.map(et => et.name))
   }
   
   // Remove duplicates and select all using unified system
-  const uniqueEventTypes = [...new Set(allEventTypes)]
-  selectEventTypes(uniqueEventTypes)
+  const uniqueRecurringEvents = [...new Set(allRecurringEvents)]
+  selectRecurringEvents(uniqueRecurringEvents)
 }
 
 // Bulk group action handlers  
 const handleSubscribeAllGroups = () => {
-  // Get all available groups
-  const allGroups = { ...(appStore.groups || {}) }
-  
-  // Subscribe to each group using the shared event selection system
-  Object.entries(allGroups).forEach(([groupId, group]) => {
-    subscribeToGroup(groupId, group)
-  })
+  // Use the same function as groups view for consistency (subscribe + select)
+  subscribeAndSelectAllGroups()
 }
 
 const handleUnsubscribeAllGroups = () => {
-  // Get all available groups
-  const allGroups = { ...(appStore.groups || {}) }
-  
-  // Unsubscribe from each group using the shared event selection system
-  Object.entries(allGroups).forEach(([groupId, group]) => {
-    unsubscribeFromGroup(groupId, group)
-  })
+  // Clear all subscriptions and selections for consistency
+  clearSelection()
 }
 
 onMounted(async () => {

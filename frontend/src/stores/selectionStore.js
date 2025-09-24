@@ -2,7 +2,7 @@
  * Unified Selection Store - Single Source of Truth
  * 
  * This store replaces the dual selection systems that were causing sync issues:
- * - useCalendar's selectedEventTypes (Events view)
+ * - useCalendar's selectedRecurringEvents (Events view)
  * - useEventSelection's state (Groups view)
  * 
  * Now both views share identical selection state through this centralized store.
@@ -15,44 +15,44 @@ export const useSelectionStore = defineStore('selection', () => {
   // CORE SELECTION STATE - SINGLE SOURCE OF TRUTH
   // ===============================================
   
-  // Individual event types selected (across all views)
-  const selectedEventTypes = ref([])
+  // Individual recurring events selected (across all views)
+  const selectedRecurringEvents = ref([])
   
   // Groups that user subscribed to (includes future events)
   const subscribedGroups = ref(new Set())
   
-  // UI expansion state for groups and event types
+  // UI expansion state for groups and recurring events
   const expandedGroups = ref(new Set())
-  const expandedEventTypes = ref(new Set())
+  const expandedRecurringEvents = ref(new Set())
 
   // ===============================================
   // COMPUTED PROPERTIES - UNIFIED LOGIC
   // ===============================================
   
   /**
-   * Get all effectively selected event types
+   * Get all effectively selected recurring events
    * Combines individual selections + subscribed group events
    */
-  const effectiveSelectedEventTypes = computed(() => {
-    const selected = [...selectedEventTypes.value]
+  const effectiveSelectedRecurringEvents = computed(() => {
+    const selected = [...selectedRecurringEvents.value]
     
-    // Add event types from subscribed groups
+    // Add recurring events from subscribed groups
     // Note: groups data comes from app store
     return selected
   })
   
   /**
-   * Check if a specific event type is effectively selected
+   * Check if a specific recurring event is effectively selected
    * (either individually or through group subscription)
    */
-  const isEventTypeEffectivelySelected = (eventType, groups = {}) => {
+  const isRecurringEventEffectivelySelected = (recurringEventTitle, groups = {}) => {
     // Direct individual selection
-    if (selectedEventTypes.value.includes(eventType)) return true
+    if (selectedRecurringEvents.value.includes(recurringEventTitle)) return true
     
-    // Check if event type is in any subscribed group
+    // Check if recurring event is in any subscribed group
     for (const groupId of subscribedGroups.value) {
       const group = groups[groupId]
-      if (group && group.event_types && group.event_types[eventType]) {
+      if (group && group.recurring_events && group.recurring_events.some(event => event.title === recurringEventTitle)) {
         return true
       }
     }
@@ -62,64 +62,58 @@ export const useSelectionStore = defineStore('selection', () => {
   /**
    * Check if all available events are selected
    */
-  const allEventsSelected = (groups = {}, ungroupedEventTypes = []) => {
-    // Get all available event types from all sources
-    const allAvailableEventTypes = new Set()
+  const allEventsSelected = (groups = {}) => {
+    // Get all available recurring events from all sources
+    const allAvailableRecurringEvents = new Set()
     
-    // Add event types from all groups
+    // Add recurring events from all groups
     Object.values(groups).forEach(group => {
-      if (group.event_types) {
-        Object.keys(group.event_types).forEach(eventType => {
-          if (group.event_types[eventType].count > 0) {
-            allAvailableEventTypes.add(eventType)
+      if (group.recurring_events) {
+        group.recurring_events.forEach(recurringEvent => {
+          if (recurringEvent.event_count > 0) {
+            allAvailableRecurringEvents.add(recurringEvent.title)
           }
         })
       }
     })
     
-    // Add ungrouped event types
-    ungroupedEventTypes.forEach(eventType => {
-      if (eventType.count > 0) {
-        allAvailableEventTypes.add(eventType.name || eventType)
-      }
-    })
     
-    // Check if all available event types are effectively selected
-    for (const eventType of allAvailableEventTypes) {
-      if (!isEventTypeEffectivelySelected(eventType, groups)) {
+    // Check if all available recurring events are effectively selected
+    for (const recurringEventTitle of allAvailableRecurringEvents) {
+      if (!isRecurringEventEffectivelySelected(recurringEventTitle, groups)) {
         return false
       }
     }
     
-    return allAvailableEventTypes.size > 0
+    return allAvailableRecurringEvents.size > 0
   }
 
   // ===============================================
-  // INDIVIDUAL EVENT TYPE OPERATIONS
+  // INDIVIDUAL RECURRING EVENT OPERATIONS
   // ===============================================
   
-  const isEventTypeSelected = (eventType) => {
-    return selectedEventTypes.value.includes(eventType)
+  const isRecurringEventSelected = (recurringEventTitle) => {
+    return selectedRecurringEvents.value.includes(recurringEventTitle)
   }
   
-  const toggleEventType = (eventType) => {
-    const index = selectedEventTypes.value.indexOf(eventType)
+  const toggleRecurringEvent = (recurringEventTitle) => {
+    const index = selectedRecurringEvents.value.indexOf(recurringEventTitle)
     if (index > -1) {
-      selectedEventTypes.value.splice(index, 1)
+      selectedRecurringEvents.value.splice(index, 1)
     } else {
-      selectedEventTypes.value.push(eventType)
+      selectedRecurringEvents.value.push(recurringEventTitle)
     }
   }
   
-  const selectEventTypes = (eventTypes) => {
-    // Add event types that aren't already selected
-    const newTypes = eventTypes.filter(type => !selectedEventTypes.value.includes(type))
-    selectedEventTypes.value.push(...newTypes)
+  const selectRecurringEvents = (recurringEventTitles) => {
+    // Add recurring events that aren't already selected
+    const newTitles = recurringEventTitles.filter(title => !selectedRecurringEvents.value.includes(title))
+    selectedRecurringEvents.value.push(...newTitles)
   }
   
-  const deselectEventTypes = (eventTypes) => {
-    selectedEventTypes.value = selectedEventTypes.value.filter(
-      type => !eventTypes.includes(type)
+  const deselectRecurringEvents = (recurringEventTitles) => {
+    selectedRecurringEvents.value = selectedRecurringEvents.value.filter(
+      title => !recurringEventTitles.includes(title)
     )
   }
 
@@ -159,12 +153,12 @@ export const useSelectionStore = defineStore('selection', () => {
     // Subscribe to group
     subscribeToGroup(groupId, group)
     
-    // Also select all event types in this group
-    if (group?.event_types) {
-      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
-        return group.event_types[eventType].count > 0
-      })
-      selectEventTypes(groupEventTypes)
+    // Also select all recurring events in this group
+    if (group?.recurring_events) {
+      const groupRecurringEvents = group.recurring_events.filter(recurringEvent => {
+        return recurringEvent.event_count > 0
+      }).map(recurringEvent => recurringEvent.title)
+      selectRecurringEvents(groupRecurringEvents)
     }
   }
   
@@ -176,12 +170,12 @@ export const useSelectionStore = defineStore('selection', () => {
     // Unsubscribe from group
     unsubscribeFromGroup(groupId, group)
     
-    // Also deselect all event types in this group
-    if (group?.event_types) {
-      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
-        return group.event_types[eventType].count > 0
-      })
-      deselectEventTypes(groupEventTypes)
+    // Also deselect all recurring events in this group
+    if (group?.recurring_events) {
+      const groupRecurringEvents = group.recurring_events.filter(recurringEvent => {
+        return recurringEvent.event_count > 0
+      }).map(recurringEvent => recurringEvent.title)
+      deselectRecurringEvents(groupRecurringEvents)
     }
   }
 
@@ -206,7 +200,7 @@ export const useSelectionStore = defineStore('selection', () => {
   }
   
   const clearSelection = () => {
-    selectedEventTypes.value = []
+    selectedRecurringEvents.value = []
     subscribedGroups.value.clear()
   }
 
@@ -240,54 +234,37 @@ export const useSelectionStore = defineStore('selection', () => {
   // ===============================================
   
   /**
-   * Get comprehensive selection summary for display
+   * Get comprehensive selection summary for display - Fixed double counting
    */
-  const getSelectionSummary = (groups = {}, ungroupedTypes = []) => {
-    const totalEventTypes = new Set()
-    const effectivelySelectedTypes = new Set()
+  const getSelectionSummary = (groups = {}) => {
+    const totalRecurringEvents = new Set()
+    const effectivelySelectedEvents = new Set()
     
-    // Count event types from groups (only those with events)
+    // Count unique recurring events from groups (only those with events)
     Object.values(groups).forEach(group => {
-      if (group.event_types) {
-        Object.keys(group.event_types).forEach(eventType => {
-          if (group.event_types[eventType].count > 0) {
-            totalEventTypes.add(eventType)
+      if (group.recurring_events) {
+        group.recurring_events.forEach(recurringEvent => {
+          if (recurringEvent.event_count > 0) {
+            totalRecurringEvents.add(recurringEvent.title)
           }
         })
       }
     })
     
-    // Count ungrouped event types (only those with count > 0)
-    ungroupedTypes.forEach(typeObj => {
-      if (typeObj.count > 0) {
-        totalEventTypes.add(typeObj.name)
-      }
-    })
     
-    // Count effectively selected: subscribed groups + individual selections
-    totalEventTypes.forEach(eventType => {
-      if (isEventTypeEffectivelySelected(eventType, groups)) {
-        effectivelySelectedTypes.add(eventType)
-      }
-    })
-    
-    // Add individual selections from NON-subscribed groups
-    Object.entries(groups).forEach(([groupId, group]) => {
-      if (!subscribedGroups.value.has(groupId) && group.event_types) {
-        Object.keys(group.event_types).forEach(eventType => {
-          if (group.event_types[eventType].count > 0 && selectedEventTypes.value.includes(eventType)) {
-            effectivelySelectedTypes.add(eventType)
-          }
-        })
+    // Count effectively selected recurring events (no double counting)
+    totalRecurringEvents.forEach(recurringEventTitle => {
+      if (isRecurringEventEffectivelySelected(recurringEventTitle, groups)) {
+        effectivelySelectedEvents.add(recurringEventTitle)
       }
     })
     
     return {
-      selected: effectivelySelectedTypes.size,
-      total: totalEventTypes.size,
+      selected: effectivelySelectedEvents.size,
+      total: totalRecurringEvents.size,
       subscribed: subscribedGroups.value.size,
-      individual: selectedEventTypes.value.length,
-      text: `${effectivelySelectedTypes.size} of ${totalEventTypes.size} event types selected`
+      individual: selectedRecurringEvents.value.length,
+      text: `${effectivelySelectedEvents.size} of ${totalRecurringEvents.size} recurring events selected`
     }
   }
 
@@ -297,19 +274,19 @@ export const useSelectionStore = defineStore('selection', () => {
   
   return {
     // Direct reactive refs (not wrapped in computed)
-    selectedEventTypes,
+    selectedRecurringEvents,
     subscribedGroups,
     expandedGroups,
-    expandedEventTypes,
+    expandedRecurringEvents,
     
     // Computed properties for derived values
-    effectiveSelectedEventTypes,
+    effectiveSelectedRecurringEvents,
     
-    // Individual event type operations
-    isEventTypeSelected,
-    toggleEventType,
-    selectEventTypes,
-    deselectEventTypes,
+    // Individual recurring event operations
+    isRecurringEventSelected,
+    toggleRecurringEvent,
+    selectRecurringEvents,
+    deselectRecurringEvents,
     
     // Group subscription operations
     isGroupSubscribed,
@@ -334,10 +311,20 @@ export const useSelectionStore = defineStore('selection', () => {
     collapseAllGroups,
     
     // Methods for checking selection state
-    isEventTypeEffectivelySelected,
+    isRecurringEventEffectivelySelected,
     allEventsSelected,
     
     // Summary and analysis
-    getSelectionSummary
+    getSelectionSummary,
+    
+    // Legacy compatibility (temporarily maintain old names for gradual migration)
+    selectedRecurringEvents: selectedRecurringEvents,
+    expandedRecurringEvents: expandedRecurringEvents,
+    effectiveSelectedRecurringEvents: effectiveSelectedRecurringEvents,
+    isRecurringEventSelected: isRecurringEventSelected,
+    toggleRecurringEvent: toggleRecurringEvent,
+    selectRecurringEvents: selectRecurringEvents,
+    deselectRecurringEvents: deselectRecurringEvents,
+    isRecurringEventEffectivelySelected: isRecurringEventEffectivelySelected
   }
 })

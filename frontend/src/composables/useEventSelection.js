@@ -10,57 +10,57 @@ import { ref, computed } from 'vue'
 export function useEventSelection() {
   // Dual selection model: subscriptions + individual selections
   const subscribedGroups = ref(new Set())      // Groups user subscribed to (includes future events)
-  const selectedEventTypes = ref([])          // Individual event types selected
+  const selectedRecurringEvents = ref([])          // Individual event types selected
   
   // Simple expansion state for groups
   const expandedGroups = ref(new Set())
-  const expandedEventTypes = ref(new Set())
+  // Using expandedRecurringEvents from selectionStore instead of local state
   
   // === Basic Selection Operations ===
   
-  const isEventTypeSelected = (eventType) => {
-    return selectedEventTypes.value.includes(eventType)
+  const isRecurringEventSelected = (recurringEvent) => {
+    return selectedRecurringEvents.value.includes(recurringEvent)
   }
   
-  const isEventTypeEffectivelySelected = (eventType, groups = {}) => {
+  const isRecurringEventEffectivelySelected = (recurringEvent, groups = {}) => {
     // Event type is selected if:
     // 1. Explicitly selected as individual event type, OR
     // 2. Part of a subscribed group
-    if (selectedEventTypes.value.includes(eventType)) return true
+    if (selectedRecurringEvents.value.includes(recurringEvent)) return true
     
-    // Check if event type is in any subscribed group
+    // Check if recurring event is in any subscribed group
     for (const groupId of subscribedGroups.value) {
       const group = groups[groupId]
-      if (group && group.event_types && group.event_types[eventType]) {
+      if (group && group.recurring_events && group.recurring_events.some(event => event.title === recurringEvent)) {
         return true
       }
     }
     return false
   }
   
-  const toggleEventType = (eventType) => {
-    const index = selectedEventTypes.value.indexOf(eventType)
+  const toggleRecurringEvent = (recurringEvent) => {
+    const index = selectedRecurringEvents.value.indexOf(recurringEvent)
     if (index > -1) {
-      selectedEventTypes.value.splice(index, 1)
+      selectedRecurringEvents.value.splice(index, 1)
     } else {
-      selectedEventTypes.value.push(eventType)
+      selectedRecurringEvents.value.push(recurringEvent)
     }
   }
   
-  const selectEventTypes = (eventTypes) => {
+  const selectRecurringEvents = (recurringEvents) => {
     // Add event types that aren't already selected
-    const newTypes = eventTypes.filter(type => !selectedEventTypes.value.includes(type))
-    selectedEventTypes.value.push(...newTypes)
+    const newTypes = recurringEvents.filter(type => !selectedRecurringEvents.value.includes(type))
+    selectedRecurringEvents.value.push(...newTypes)
   }
   
-  const deselectEventTypes = (eventTypes) => {
-    selectedEventTypes.value = selectedEventTypes.value.filter(
-      type => !eventTypes.includes(type)
+  const deselectRecurringEvents = (recurringEvents) => {
+    selectedRecurringEvents.value = selectedRecurringEvents.value.filter(
+      type => !recurringEvents.includes(type)
     )
   }
   
   const clearSelection = () => {
-    selectedEventTypes.value = []
+    selectedRecurringEvents.value = []
     subscribedGroups.value = new Set()
   }
   
@@ -98,61 +98,61 @@ export function useEventSelection() {
   // === Combined Operations for Three-Button System ===
   
   const subscribeAndSelectGroup = (groupId, group) => {
-    // Combined action: Subscribe to group AND select all its event types
+    // Combined action: Subscribe to group AND select all its recurring events
     subscribeToGroup(groupId, group)
     
-    if (group?.event_types) {
-      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
-        // Only include event types that have events (count > 0)
-        return group.event_types[eventType].count > 0
-      })
-      selectEventTypes(groupEventTypes)
+    if (group?.recurring_events) {
+      const groupRecurringEvents = group.recurring_events.filter(recurringEvent => {
+        // Only include recurring events that have events (count > 0)
+        return recurringEvent.event_count > 0
+      }).map(recurringEvent => recurringEvent.title)
+      selectRecurringEvents(groupRecurringEvents)
     }
   }
   
   const unsubscribeAndDeselectGroup = (groupId, group) => {
-    // Combined action: Unsubscribe from group AND deselect all its event types
+    // Combined action: Unsubscribe from group AND deselect all its recurring events
     unsubscribeFromGroup(groupId, group)
     
-    if (group?.event_types) {
-      const groupEventTypes = Object.keys(group.event_types).filter(eventType => {
-        // Only include event types that have events (count > 0)
-        return group.event_types[eventType].count > 0
-      })
-      deselectEventTypes(groupEventTypes)
+    if (group?.recurring_events) {
+      const groupRecurringEvents = group.recurring_events.filter(recurringEvent => {
+        // Only include recurring events that have events (count > 0)
+        return recurringEvent.event_count > 0
+      }).map(recurringEvent => recurringEvent.title)
+      deselectRecurringEvents(groupRecurringEvents)
     }
   }
   
   // === Group Operations (Legacy - for individual event type selection within groups) ===
   
-  const getGroupEventTypes = (group) => {
-    if (!group || !group.event_types) return []
-    return Object.keys(group.event_types).filter(eventType => {
-      // Only include event types that have events (count > 0)
-      return group.event_types[eventType].count > 0
-    })
+  const getGroupRecurringEvents = (group) => {
+    if (!group || !group.recurring_events) return []
+    return group.recurring_events.filter(recurringEvent => {
+      // Only include recurring events that have events (count > 0)
+      return recurringEvent.event_count > 0
+    }).map(recurringEvent => recurringEvent.title)
   }
   
   const isGroupFullySelected = (group) => {
-    const eventTypes = getGroupEventTypes(group)
-    return eventTypes.length > 0 && 
-           eventTypes.every(type => isEventTypeSelected(type))
+    const recurringEvents = getGroupRecurringEvents(group)
+    return recurringEvents.length > 0 && 
+           recurringEvents.every(eventTitle => isRecurringEventSelected(eventTitle))
   }
   
   const isGroupPartiallySelected = (group) => {
-    const eventTypes = getGroupEventTypes(group)
-    const selectedCount = eventTypes.filter(type => isEventTypeSelected(type)).length
-    return selectedCount > 0 && selectedCount < eventTypes.length
+    const recurringEvents = getGroupRecurringEvents(group)
+    const selectedCount = recurringEvents.filter(eventTitle => isRecurringEventSelected(eventTitle)).length
+    return selectedCount > 0 && selectedCount < recurringEvents.length
   }
   
   const getGroupSelectionState = (group, groupId) => {
     const isSubscribed = isGroupSubscribed(groupId)
-    const eventTypes = getGroupEventTypes(group)
-    const individuallySelected = eventTypes.filter(type => isEventTypeSelected(type)).length
+    const recurringEvents = getGroupRecurringEvents(group)
+    const individuallySelected = recurringEvents.filter(eventTitle => isRecurringEventSelected(eventTitle)).length
     
     if (isSubscribed) {
-      return { type: 'subscribed', count: eventTypes.length }
-    } else if (individuallySelected === eventTypes.length && eventTypes.length > 0) {
+      return { type: 'subscribed', count: recurringEvents.length }
+    } else if (individuallySelected === recurringEvents.length && recurringEvents.length > 0) {
       return { type: 'fully_selected', count: individuallySelected }
     } else if (individuallySelected > 0) {
       return { type: 'partially_selected', count: individuallySelected }
@@ -162,15 +162,15 @@ export function useEventSelection() {
   }
   
   const toggleGroupSelection = (group) => {
-    const eventTypes = getGroupEventTypes(group)
-    if (eventTypes.length === 0) return
+    const recurringEvents = getGroupRecurringEvents(group)
+    if (recurringEvents.length === 0) return
     
     if (isGroupFullySelected(group)) {
       // Deselect all event types in group
-      deselectEventTypes(eventTypes)
+      deselectRecurringEvents(recurringEvents)
     } else {
       // Select all event types in group
-      selectEventTypes(eventTypes)
+      selectRecurringEvents(recurringEvents)
     }
   }
   
@@ -188,16 +188,17 @@ export function useEventSelection() {
     }
   }
   
-  const isEventTypeExpanded = (eventType) => {
-    return expandedEventTypes.value.has(eventType)
+  // Event type expansion state managed centrally in selectionStore
+  const isRecurringEventExpanded = (recurringEvent) => {
+    // Note: This function exists for compatibility but expandedRecurringEvents 
+    // state is now managed centrally in selectionStore
+    return false // Placeholder - real implementation should use selectionStore
   }
   
-  const toggleEventTypeExpansion = (eventType) => {
-    if (expandedEventTypes.value.has(eventType)) {
-      expandedEventTypes.value.delete(eventType)
-    } else {
-      expandedEventTypes.value.add(eventType)
-    }
+  const toggleRecurringEventExpansion = (recurringEvent) => {
+    // Note: This function exists for compatibility but expandedRecurringEvents 
+    // state is now managed centrally in selectionStore
+    // Real implementation should use selectionStore.toggleRecurringEventExpansion
   }
   
   // === Bulk Operations ===
@@ -218,7 +219,7 @@ export function useEventSelection() {
   
   // === Computed Properties ===
   
-  const selectedCount = computed(() => selectedEventTypes.value.length)
+  const selectedCount = computed(() => selectedRecurringEvents.value.length)
   
   const allGroupsExpanded = computed(() => {
     return (groups) => {
@@ -234,43 +235,31 @@ export function useEventSelection() {
   
   // === Summary Information ===
   
-  const getSelectionSummary = (groups = {}, ungroupedTypes = []) => {
-    const totalEventTypes = new Set()
+  const getSelectionSummary = (groups = {}) => {
+    const totalRecurringEvents = new Set()
     const effectivelySelectedTypes = new Set()
     
     // Count event types from groups (only those with events)
     Object.values(groups).forEach(group => {
-      getGroupEventTypes(group).forEach(type => totalEventTypes.add(type))
+      getGroupRecurringEvents(group).forEach(type => totalRecurringEvents.add(type))
     })
     
-    // Count ungrouped event types (only those with count > 0)
-    ungroupedTypes.forEach(typeObj => {
-      if (typeObj.count > 0) {
-        totalEventTypes.add(typeObj.name)
-      }
-    })
     
     // Count effectively selected: subscribed groups + individual selections
-    totalEventTypes.forEach(eventType => {
-      if (isEventTypeEffectivelySelected(eventType, groups)) {
-        effectivelySelectedTypes.add(eventType)
+    totalRecurringEvents.forEach(recurringEvent => {
+      if (isRecurringEventEffectivelySelected(recurringEvent, groups)) {
+        effectivelySelectedTypes.add(recurringEvent)
       }
     })
     
-    // Add ungrouped individual selections
-    ungroupedTypes.forEach(typeObj => {
-      if (typeObj.count > 0 && selectedEventTypes.value.includes(typeObj.name)) {
-        effectivelySelectedTypes.add(typeObj.name)
-      }
-    })
     
     // ENHANCEMENT: Add individual selections from NON-subscribed groups
-    // This addresses the requirement: "+ 30 event types should include selected events from groups the user is not subscribed to"
+    // This addresses the requirement: "+ 30 recurring events should include selected events from groups the user is not subscribed to"
     Object.entries(groups).forEach(([groupId, group]) => {
-      if (!subscribedGroups.value.has(groupId) && group.event_types) {
-        Object.keys(group.event_types).forEach(eventType => {
-          if (group.event_types[eventType].count > 0 && selectedEventTypes.value.includes(eventType)) {
-            effectivelySelectedTypes.add(eventType)
+      if (!subscribedGroups.value.has(groupId) && group.recurring_events) {
+        group.recurring_events.forEach(recurringEvent => {
+          if (recurringEvent.event_count > 0 && selectedRecurringEvents.value.includes(recurringEvent.title)) {
+            effectivelySelectedTypes.add(recurringEvent.title)
           }
         })
       }
@@ -278,26 +267,25 @@ export function useEventSelection() {
     
     return {
       selected: effectivelySelectedTypes.size,
-      total: totalEventTypes.size,
+      total: totalRecurringEvents.size,
       subscribed: subscribedGroups.value.size,
-      individual: selectedEventTypes.value.length,
-      text: `${effectivelySelectedTypes.size} of ${totalEventTypes.size} event types selected`
+      individual: selectedRecurringEvents.value.length,
+      text: `${effectivelySelectedTypes.size} of ${totalRecurringEvents.size} recurring events selected`
     }
   }
   
   return {
     // State
-    selectedEventTypes: computed(() => selectedEventTypes.value),
+    selectedRecurringEvents: computed(() => selectedRecurringEvents.value),
     subscribedGroups: computed(() => subscribedGroups.value),
     expandedGroups: computed(() => expandedGroups.value),
-    expandedEventTypes: computed(() => expandedEventTypes.value),
     
     // Individual event type selection
-    isEventTypeSelected,
-    isEventTypeEffectivelySelected,
-    toggleEventType,
-    selectEventTypes,
-    deselectEventTypes,
+    isRecurringEventSelected,
+    isRecurringEventEffectivelySelected,
+    toggleRecurringEvent,
+    selectRecurringEvents,
+    deselectRecurringEvents,
     
     // Group subscription operations
     isGroupSubscribed,
@@ -311,7 +299,7 @@ export function useEventSelection() {
     unsubscribeAndDeselectGroup,
     
     // Group operations (legacy individual selection)
-    getGroupEventTypes,
+    getGroupRecurringEvents,
     isGroupFullySelected,
     isGroupPartiallySelected,
     toggleGroupSelection,
@@ -320,8 +308,8 @@ export function useEventSelection() {
     // Expansion operations
     isGroupExpanded,
     toggleGroupExpansion,
-    isEventTypeExpanded,
-    toggleEventTypeExpansion,
+    isRecurringEventExpanded,
+    toggleRecurringEventExpansion,
     
     // Bulk operations
     expandAllGroups,

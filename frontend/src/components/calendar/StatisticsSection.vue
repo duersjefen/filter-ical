@@ -15,12 +15,12 @@
           <div class="text-sm text-gray-600 font-medium">Selected Events</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">{{ eventTypes.length }}</div>
-          <div class="text-sm text-gray-600 font-medium">Available Event Types</div>
+          <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">{{ recurringEvents.length }}</div>
+          <div class="text-sm text-gray-600 font-medium">Available Recurring Events</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl sm:text-3xl font-bold text-orange-600 mb-1">{{ selectedEventTypesCount }}</div>
-          <div class="text-sm text-gray-600 font-medium">Selected Event Types</div>
+          <div class="text-2xl sm:text-3xl font-bold text-orange-600 mb-1">{{ selectedRecurringEventsCount }}</div>
+          <div class="text-sm text-gray-600 font-medium">Selected Recurring Events</div>
         </div>
       </div>
     </div>
@@ -30,8 +30,8 @@
 <script setup>
 defineProps({
   statistics: Object,
-  eventTypes: Array,
+  recurringEvents: Array,
   selectedEventsCount: Number,
-  selectedEventTypesCount: Number
+  selectedRecurringEventsCount: Number
 })
 </script>

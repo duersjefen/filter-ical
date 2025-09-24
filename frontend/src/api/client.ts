@@ -71,7 +71,7 @@ class ContractValidator {
     const events = obj.events as Record<string, unknown>
     
     // Validate grouped events structure
-    for (const [eventType, eventData] of Object.entries(events)) {
+    for (const [recurringEvent, eventData] of Object.entries(events)) {
       if (!eventData || typeof eventData !== 'object') return false
       const group = eventData as Record<string, unknown>
       

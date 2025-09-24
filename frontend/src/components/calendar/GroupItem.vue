@@ -91,9 +91,9 @@
             :is-partially-selected="hasPartialSubgroupSelection(subgroup)"
             :selected-items="selectedItems"
             :expanded-groups="expandedGroups"
-            :expanded-event-types="expandedEventTypes"
+            :expanded-recurring-events="expandedRecurringEvents"
             @toggle-selection="$emit('toggle-selection', `group:${subgroup.id}`)"
-            @toggle-event-type="$emit('toggle-selection', $event)"
+            @toggle-recurring-event="$emit('toggle-selection', $event)"
             @toggle-individual-event="$emit('toggle-selection', $event)"
             @toggle-expansion="$emit('toggle-expansion', $event)"
           />
@@ -101,18 +101,18 @@
       </div>
       
       <!-- Direct Event Types -->
-      <div v-if="group.event_types && Object.keys(group.event_types).length > 0" class="p-4 space-y-3">
-        <h5 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Event Types</h5>
+      <div v-if="group.recurring_events && group.recurring_events.length > 0" class="p-4 space-y-3">
+        <h5 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Recurring Events</h5>
         <div class="pl-4 space-y-2">
-          <EventTypeItem
-            v-for="(eventTypeData, eventTypeName) in group.event_types"
-            :key="eventTypeName"
-            :event-type-name="eventTypeName"
-            :event-type-data="eventTypeData"
-            :is-selected="selectedItems.has(`event_type:${eventTypeName}`)"
+          <RecurringEventItem
+            v-for="recurringEvent in group.recurring_events"
+            :key="recurringEvent.title"
+            :recurring-event-name="recurringEvent.title"
+            :recurring-event-data="{ name: recurringEvent.title, count: recurringEvent.event_count, events: recurringEvent.events }"
+            :is-selected="selectedItems.has(`recurring_event:${recurringEvent.title}`)"
             :selected-items="selectedItems"
-            :expanded-event-types="expandedEventTypes"
-            @toggle-selection="$emit('toggle-selection', `event_type:${eventTypeName}`)"
+            :expanded-recurring-events="expandedRecurringEvents"
+            @toggle-selection="$emit('toggle-selection', `recurring_event:${recurringEventName}`)"
             @toggle-individual-event="$emit('toggle-selection', $event)"
             @toggle-expansion="$emit('toggle-expansion', $event)"
           />
@@ -126,7 +126,7 @@
 <script setup>
 import { computed } from 'vue'
 import SubgroupItem from './SubgroupItem.vue'
-import EventTypeItem from './EventTypeItem.vue'
+import RecurringEventItem from './RecurringEventItem.vue'
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -134,7 +134,7 @@ const props = defineProps({
   isPartiallySelected: { type: Boolean, default: false },
   selectedItems: { type: Set, default: () => new Set() },
   expandedGroups: { type: Set, default: () => new Set() },
-  expandedEventTypes: { type: Set, default: () => new Set() }
+  expandedRecurringEvents: { type: Set, default: () => new Set() }
 })
 
 const emit = defineEmits([
@@ -146,21 +146,21 @@ const isExpanded = computed(() => props.expandedGroups.has(props.group.id))
 
 const hasExpandableContent = computed(() => {
   return (props.group.children && props.group.children.length > 0) ||
-         (props.group.event_types && Object.keys(props.group.event_types).length > 0)
+         (props.group.recurring_events && Object.keys(props.group.recurring_events).length > 0)
 })
 
 const childCount = computed(() => {
   const childrenCount = props.group.children ? props.group.children.length : 0
-  const eventTypesCount = props.group.event_types ? Object.keys(props.group.event_types).length : 0
-  return childrenCount + eventTypesCount
+  const recurringEventsCount = props.group.recurring_events ? Object.keys(props.group.recurring_events).length : 0
+  return childrenCount + recurringEventsCount
 })
 
 const totalEventCount = computed(() => {
   let count = 0
   
   // Count events in direct event types
-  if (props.group.event_types) {
-    count += Object.values(props.group.event_types).reduce((sum, eventType) => sum + eventType.count, 0)
+  if (props.group.recurring_events) {
+    count += Object.values(props.group.recurring_events).reduce((sum, recurringEvent) => sum + recurringEvent.count, 0)
   }
   
   // Count events in children recursively
@@ -176,8 +176,8 @@ const totalEventCount = computed(() => {
 const calculateGroupEventCount = (group) => {
   let count = 0
   
-  if (group.event_types) {
-    count += Object.values(group.event_types).reduce((sum, eventType) => sum + eventType.count, 0)
+  if (group.recurring_events) {
+    count += Object.values(group.recurring_events).reduce((sum, recurringEvent) => sum + recurringEvent.count, 0)
   }
   
   if (group.children) {
@@ -209,9 +209,9 @@ const hasPartialSubgroupSelection = (subgroup) => {
   if (subgroupSelected) return false // If whole subgroup is selected, not partial
   
   // Check event types in subgroup
-  if (subgroup.event_types) {
-    for (const eventTypeName of Object.keys(subgroup.event_types)) {
-      if (props.selectedItems.has(`event_type:${eventTypeName}`)) {
+  if (subgroup.recurring_events) {
+    for (const recurringEventName of Object.keys(subgroup.recurring_events)) {
+      if (props.selectedItems.has(`recurring_event:${recurringEventName}`)) {
         return true
       }
     }

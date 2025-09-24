@@ -7,7 +7,7 @@ import { computed } from 'vue'
 
 export function useEventFiltering(events, filters) {
   /**
-   * Filter events by selected types/event types
+   * Filter events by selected types/recurring events
    */
   const filterByTypes = (eventList, selectedTypes) => {
     if (!selectedTypes || selectedTypes.size === 0) return eventList
@@ -79,7 +79,7 @@ export function useEventFiltering(events, filters) {
     let result = [...events.value]
     
     // Apply filters in sequence
-    result = filterByTypes(result, filters.selectedEventTypes)
+    result = filterByTypes(result, filters.selectedRecurringEvents)
     result = filterByKeyword(result, filters.keywordFilter)
     result = filterByDateRange(result, filters.dateRange)
     
@@ -105,7 +105,7 @@ export function useEventFiltering(events, filters) {
       total: totalEvents,
       filtered: filteredCount,
       upcoming: upcomingEvents,
-      eventTypes: filters.eventTypes ? Object.keys(filters.eventTypes).length : 0
+      recurringEvents: filters.recurringEvents ? Object.keys(filters.recurringEvents).length : 0
     }
   })
 
@@ -114,7 +114,7 @@ export function useEventFiltering(events, filters) {
    */
   const createFilterConfig = (filters) => {
     return {
-      selectedEventTypes: Array.from(filters.selectedEventTypes || []),
+      selectedRecurringEvents: Array.from(filters.selectedRecurringEvents || []),
       keywordFilter: filters.keywordFilter || '',
       dateRange: filters.dateRange || { start: null, end: null },
       sortBy: filters.sortBy || 'date',
@@ -126,7 +126,7 @@ export function useEventFiltering(events, filters) {
    * Helper function to apply filter configuration to filters object
    */
   const applyFilterConfig = (config, filtersRef) => {
-    filtersRef.selectedEventTypes = new Set(config.selectedEventTypes || [])
+    filtersRef.selectedRecurringEvents = new Set(config.selectedRecurringEvents || [])
     filtersRef.keywordFilter = config.keywordFilter || ''
     filtersRef.dateRange = config.dateRange || { start: null, end: null }
     filtersRef.sortBy = config.sortBy || 'date'

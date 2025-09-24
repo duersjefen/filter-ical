@@ -324,10 +324,10 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   
   const events = ref([])
-  const eventTypes = ref({})
+  const recurringEvents = ref({})
   
   // Event filtering state
-  const selectedEventTypes = ref(new Set())
+  const selectedRecurringEvents = ref(new Set())
   const keywordFilter = ref('')
   const dateRange = ref({
     start: null,
@@ -342,20 +342,17 @@ export const useAppStore = defineStore('app', () => {
   
   const groups = ref({})
   const hasGroups = ref(false)
-  const ungroupedEventTypes = ref([])
-  const ungroupedRecurringEventTypes = ref([])
-  const ungroupedUniqueEventTypes = ref([])
   const selectedGroups = ref(new Set())
   const selectedEvents = ref(new Set()) // Individual event selections
 
   // Create filtering composable with current state
   const eventFiltering = useEventFiltering(events, {
-    selectedEventTypes,
+    selectedRecurringEvents,
     keywordFilter,
     dateRange,
     sortBy,
     sortDirection,
-    eventTypes
+    recurringEvents
   })
 
   // Use filtered events and statistics from the composable
@@ -372,40 +369,40 @@ export const useAppStore = defineStore('app', () => {
     return result
   }
 
-  const loadCalendarEventTypes = async (calendarId) => {
+  const loadCalendarRecurringEvents = async (calendarId) => {
     const result = await get(`/calendars/${calendarId}/events`)
 
     if (result.success) {
       // Process events into event types format
-      const eventTypeMap = {}
+      const recurringEventMap = {}
       if (result.data.events) {
         result.data.events.forEach(event => {
-          const eventType = event.title
-          if (!eventTypeMap[eventType]) {
-            eventTypeMap[eventType] = {
+          const recurringEvent = event.title
+          if (!recurringEventMap[recurringEvent]) {
+            recurringEventMap[recurringEvent] = {
               count: 0,
               events: []
             }
           }
-          eventTypeMap[eventType].count++
-          eventTypeMap[eventType].events.push(event)
+          recurringEventMap[recurringEvent].count++
+          recurringEventMap[recurringEvent].events.push(event)
         })
       }
-      eventTypes.value = eventTypeMap
+      recurringEvents.value = recurringEventMap
     }
 
     return result
   }
 
   // Event filtering methods
-  const toggleEventType = (eventType) => {
-    const types = new Set(selectedEventTypes.value)
-    if (types.has(eventType)) {
-      types.delete(eventType)
+  const toggleRecurringEvent = (recurringEvent) => {
+    const types = new Set(selectedRecurringEvents.value)
+    if (types.has(recurringEvent)) {
+      types.delete(recurringEvent)
     } else {
-      types.add(eventType)
+      types.add(recurringEvent)
     }
-    selectedEventTypes.value = types
+    selectedRecurringEvents.value = types
   }
 
   const setKeywordFilter = (keyword) => {
@@ -422,15 +419,15 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const clearAllFilters = () => {
-    selectedEventTypes.value = new Set()
+    selectedRecurringEvents.value = new Set()
     keywordFilter.value = ''
     dateRange.value = { start: null, end: null }
     sortBy.value = 'date'
     sortDirection.value = 'asc'
   }
 
-  const selectAllEventTypes = () => {
-    selectedEventTypes.value = new Set(Object.keys(eventTypes.value))
+  const selectAllRecurringEvents = () => {
+    selectedRecurringEvents.value = new Set(Object.keys(recurringEvents.value))
   }
 
   // Groups methods
@@ -442,27 +439,24 @@ export const useAppStore = defineStore('app', () => {
       // User calendars don't have groups in the new API, they have flat event structure
       hasGroups.value = false
       groups.value = {}
-      ungroupedEventTypes.value = []
 
       // Process events from the new API response format
       if (result.data.events) {
         // Events is an array of individual events, we need to group them by title
-        const eventTypeMap = {}
+        const recurringEventMap = {}
         result.data.events.forEach(event => {
-          const eventType = event.title
-          if (!eventTypeMap[eventType]) {
-            eventTypeMap[eventType] = {
-              name: eventType,
+          const recurringEvent = event.title
+          if (!recurringEventMap[recurringEvent]) {
+            recurringEventMap[recurringEvent] = {
+              name: recurringEvent,
               count: 0,
               events: []
             }
           }
-          eventTypeMap[eventType].count++
-          eventTypeMap[eventType].events.push(event)
+          recurringEventMap[recurringEvent].count++
+          recurringEventMap[recurringEvent].events.push(event)
         })
         
-        // Add all event types to ungrouped since user calendars don't have groups
-        ungroupedEventTypes.value = Object.keys(eventTypeMap)
       }
 
       // Reset selections when loading new calendar
@@ -470,8 +464,7 @@ export const useAppStore = defineStore('app', () => {
       
       console.log('📊 Calendar data loaded:', {
         hasGroups: hasGroups.value,
-        groupsCount: Object.keys(groups.value).length,
-        ungroupedEventTypesCount: ungroupedEventTypes.value.length
+        groupsCount: Object.keys(groups.value).length
       })
     }
 
@@ -483,62 +476,33 @@ export const useAppStore = defineStore('app', () => {
     const result = await get(`/domains/${domainName}/events`)
 
     if (result.success) {
-      // Adapt the new API response to the format expected by frontend
+      // Use backend format directly - no complex conversion needed
       const domainData = result.data
       
       hasGroups.value = domainData.groups && domainData.groups.length > 0
       
-      // Convert groups array to object format for frontend compatibility
+      // Simple direct mapping - keep backend structure
       groups.value = {}
       if (domainData.groups) {
         domainData.groups.forEach(group => {
           groups.value[group.id] = {
             id: group.id,
             name: group.name,
-            // Convert recurring_events to event_types format
-            event_types: {}
-          }
-          
-          if (group.recurring_events) {
-            group.recurring_events.forEach(recurringEvent => {
-              groups.value[group.id].event_types[recurringEvent.title] = {
-                name: recurringEvent.title,
-                count: recurringEvent.event_count,
-                events: recurringEvent.events || []
-              }
-            })
+            description: group.description,
+            recurring_events: group.recurring_events || []
           }
         })
       }
       
-      // Handle ungrouped events
-      ungroupedEventTypes.value = []
-      ungroupedRecurringEventTypes.value = []
-      ungroupedUniqueEventTypes.value = []
-      
-      if (domainData.ungrouped_events) {
-        domainData.ungrouped_events.forEach(recurringEvent => {
-          const eventTypeName = recurringEvent.title
-          ungroupedEventTypes.value.push(eventTypeName)
-          
-          if (recurringEvent.event_count > 1) {
-            ungroupedRecurringEventTypes.value.push(eventTypeName)
-          } else {
-            ungroupedUniqueEventTypes.value.push(eventTypeName)
-          }
-        })
-      }
 
       // Reset selections when loading new domain
       selectedGroups.value = new Set()
       
-      console.log('📊 Domain groups data loaded:', {
+      console.log('📊 Domain groups data loaded (simplified):', {
         domainName,
         hasGroups: hasGroups.value,
         groupsCount: Object.keys(groups.value).length,
-        ungroupedEventTypesCount: ungroupedEventTypes.value.length,
-        ungroupedRecurringCount: ungroupedRecurringEventTypes.value.length,
-        ungroupedUniqueCount: ungroupedUniqueEventTypes.value.length
+        groupNames: Object.values(groups.value).map(g => g.name)
       })
     }
 
@@ -603,7 +567,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const saveFilter = async (name, config) => {
-    const filterName = name || `Filter ${config.selectedEventTypes?.length || 0} types`
+    const filterName = name || `Filter ${config.selectedRecurringEvents?.length || 0} types`
     
     const newFilter = {
       id: 'filter_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
@@ -639,7 +603,7 @@ export const useAppStore = defineStore('app', () => {
 
   const createFilterConfig = () => {
     return eventFiltering.createFilterConfig({
-      selectedEventTypes,
+      selectedRecurringEvents,
       keywordFilter,
       dateRange,
       sortBy,
@@ -649,7 +613,7 @@ export const useAppStore = defineStore('app', () => {
 
   const loadFilter = (filter) => {
     eventFiltering.applyFilterConfig(filter.config, {
-      selectedEventTypes,
+      selectedRecurringEvents,
       keywordFilter,
       dateRange,
       sortBy,
@@ -726,7 +690,7 @@ export const useAppStore = defineStore('app', () => {
   // ICAL GENERATION SECTION
   // ===============================================
   
-  const generateIcal = async ({ calendarId, selectedEventTypes, filterMode }) => {
+  const generateIcal = async ({ calendarId, selectedRecurringEvents }) => {
     // Use the new filter creation + iCal export workflow
     // First create a filter, then use its UUID to get the iCal
     
@@ -775,32 +739,29 @@ export const useAppStore = defineStore('app', () => {
     // EVENTS & FILTERING
     // ===============================================
     events,
-    eventTypes,
+    recurringEvents,
     filteredEvents,
     statistics,
-    selectedEventTypes,
+    selectedRecurringEvents,
     keywordFilter,
     dateRange,
     sortBy,
     sortDirection,
     loadCalendarEvents,
-    loadCalendarEventTypes,
-    toggleEventType,
+    loadCalendarRecurringEvents,
+    toggleRecurringEvent,
     setKeywordFilter,
     setDateRange,
     setSorting,
     clearAllFilters,
-    selectAllEventTypes,
+    selectAllRecurringEvents,
 
     // ===============================================
     // GROUPS
     // ===============================================
     groups,
     hasGroups,
-    ungroupedEventTypes,
-    ungroupedRecurringEventTypes,
-    ungroupedUniqueEventTypes,
-    selectedGroups,
+      selectedGroups,
     loadCalendarGroups,
     loadDomainGroups,
     toggleGroup,

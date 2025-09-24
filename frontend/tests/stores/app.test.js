@@ -63,19 +63,19 @@ describe('App Store', () => {
       expect(store.filteredEvents[0].summary).toBe('Meeting');
     });
 
-    it('filteredEvents applies event type filter correctly', () => {
+    it('filteredEvents applies recurring events filter correctly', () => {
       const store = useAppStore();
       store.events = [
         { id: 1, summary: 'Meeting', description: 'Team meeting', dtstart: '2024-01-01' },
         { id: 2, summary: 'Workshop', description: 'Training session', dtstart: '2024-01-02' }
       ];
-      store.selectedEventTypes.add('Meeting');
+      store.selectedRecurringEvents.add('Meeting');
 
       expect(store.filteredEvents).toHaveLength(1);
       expect(store.filteredEvents[0].summary).toBe('Meeting');
     });
 
-    it('eventTypes returns unique event summaries', () => {
+    it('recurringEvents returns unique event summaries', () => {
       const store = useAppStore();
       store.events = [
         { id: 1, summary: 'Meeting', description: 'Team meeting', dtstart: '2024-01-01' },
@@ -83,7 +83,7 @@ describe('App Store', () => {
         { id: 3, summary: 'Workshop', description: 'Training session', dtstart: '2024-01-03' }
       ];
 
-      expect(store.eventTypes).toEqual(['Meeting', 'Workshop']);
+      expect(store.recurringEvents).toEqual(['Meeting', 'Workshop']);
     });
   });
 
@@ -157,13 +157,13 @@ describe('App Store', () => {
     it('clearFilters resets all filter state', () => {
       const store = useAppStore();
       store.keywordFilter = 'test';
-      store.selectedEventTypes.add('Meeting');
+      store.selectedRecurringEvents.add('Meeting');
       store.dateRange = { start: new Date(), end: new Date() };
       
       store.clearFilters();
       
       expect(store.keywordFilter).toBe('');
-      expect(store.selectedEventTypes.size).toBe(0);
+      expect(store.selectedRecurringEvents.size).toBe(0);
       expect(store.dateRange.start).toBe(null);
       expect(store.dateRange.end).toBe(null);
     });
@@ -177,14 +177,14 @@ describe('App Store', () => {
       expect(store.error).toBe(null);
     });
 
-    it('toggleEventType adds and removes event types', () => {
+    it('toggleRecurringEvent adds and removes recurring events', () => {
       const store = useAppStore();
       
-      store.toggleEventType('Meeting');
-      expect(store.selectedEventTypes.has('Meeting')).toBe(true);
+      store.toggleRecurringEvent('Meeting');
+      expect(store.selectedRecurringEvents.has('Meeting')).toBe(true);
       
-      store.toggleEventType('Meeting');
-      expect(store.selectedEventTypes.has('Meeting')).toBe(false);
+      store.toggleRecurringEvent('Meeting');
+      expect(store.selectedRecurringEvents.has('Meeting')).toBe(false);
     });
   });
 

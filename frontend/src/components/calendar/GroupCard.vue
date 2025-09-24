@@ -73,70 +73,70 @@
         
         <!-- Select All Only Button -->
         <button
-          @click.stop="toggleSelectAllEventTypes"
+          @click.stop="toggleSelectAllRecurringEvents"
           class="flex-1 px-3 py-2 text-xs rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-1"
-          :class="areAllEventTypesSelected 
+          :class="areAllRecurringEventsSelected 
             ? 'bg-green-500 hover:bg-green-600 text-white' 
             : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
-          :title="areAllEventTypesSelected ? 'Deselect all event types' : 'Select all event types for current view'"
+          :title="areAllRecurringEventsSelected ? 'Deselect all recurring events' : 'Select all recurring events for current view'"
         >
-          <span v-if="areAllEventTypesSelected">✓ Deselect All</span>
+          <span v-if="areAllRecurringEventsSelected">✓ Deselect All</span>
           <span v-else>☐ Select All</span>
         </button>
       </div>
     </div>
     
-    <!-- Expandable Event Types List -->
-    <div v-if="isExpanded && hasEventTypes" class="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
+    <!-- Expandable Recurring Events List -->
+    <div v-if="isExpanded && hasRecurringEvents" class="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
       <div class="p-3 space-y-2">
         <div class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">
-          Events ({{ eventTypesCount }})
+          Events ({{ recurringEventsCount }})
         </div>
         
-        <!-- Event Type Checkboxes (sorted by count, descending) -->
+        <!-- Recurring Event Checkboxes (sorted by count, descending) -->
         <div class="space-y-1">
           <div
-            v-for="[eventTypeName, eventTypeData] in sortedEventTypes"
-            :key="eventTypeName"
+            v-for="recurringEvent in sortedRecurringEvents"
+            :key="recurringEvent.title"
             class="border rounded-md transition-all duration-200"
-            :class="isEventTypeSelected(eventTypeName)
+            :class="isRecurringEventSelected(recurringEvent.title)
               ? 'border-blue-300 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-600' 
               : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'"
           >
-            <!-- Event Type Header -->
+            <!-- Recurring Event Header -->
             <div class="flex items-center gap-2 p-2 transition-colors">
-              <!-- Event Type Checkbox -->
+              <!-- Recurring Event Checkbox -->
               <div 
                 class="w-3 h-3 rounded border flex items-center justify-center text-xs transition-all flex-shrink-0"
-                :class="isEventTypeSelected(eventTypeName)
+                :class="isRecurringEventSelected(recurringEvent.title)
                   ? 'bg-blue-500 border-blue-500 text-white' 
                   : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'"
               >
-                <span v-if="isEventTypeSelected(eventTypeName)">✓</span>
+                <span v-if="isRecurringEventSelected(recurringEvent.title)">✓</span>
               </div>
               
-              <!-- Event Type Info - Fully Clickable for Selection -->
+              <!-- Recurring Event Info - Fully Clickable for Selection -->
               <div 
                 class="flex-1 min-w-0 cursor-pointer rounded p-1 -m-1 transition-colors duration-200"
-                :class="isEventTypeSelected(eventTypeName)
+                :class="isRecurringEventSelected(recurringEvent.title)
                   ? 'hover:bg-blue-100 dark:hover:bg-blue-800/30' 
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'"
-                @click.stop="toggleEventType(eventTypeName)"
-                :title="`Click to ${isEventTypeSelected(eventTypeName) ? 'deselect' : 'select'} ${eventTypeName}`"
+                @click.stop="toggleRecurringEvent(recurringEvent.title)"
+                :title="`Click to ${isRecurringEventSelected(recurringEvent.title) ? 'deselect' : 'select'} ${recurringEvent.title}`"
               >
                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {{ eventTypeName }}
+                  {{ recurringEvent.title }}
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ eventTypeData.count }} events
+                  {{ recurringEvent.event_count }} events
                 </div>
               </div>
               
               <!-- Expansion Arrow -->
               <button
-                @click.stop="toggleEventTypeExpansion(eventTypeName)"
+                @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
                 class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                :class="{ 'transform rotate-180': isEventTypeExpanded(eventTypeName) }"
+                :class="{ 'transform rotate-180': isRecurringEventExpanded(recurringEvent.title) }"
                 title="Click to view individual events"
               >
                 <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -146,21 +146,21 @@
             </div>
             
             <!-- Individual Events List -->
-            <div v-if="isEventTypeExpanded(eventTypeName)" class="border-t border-gray-100 dark:border-gray-700 bg-gray-25 dark:bg-gray-900/20">
+            <div v-if="isRecurringEventExpanded(recurringEvent.title)" class="border-t border-gray-100 dark:border-gray-700 bg-gray-25 dark:bg-gray-900/20">
               <!-- Loading State -->
-              <div v-if="eventTypeEvents[eventTypeName]?.loading" class="p-3 text-center">
+              <div v-if="recurringEventEvents[recurringEvent.title]?.loading" class="p-3 text-center">
                 <div class="text-xs text-gray-500 dark:text-gray-400">Loading events...</div>
               </div>
               
               <!-- Error State -->
-              <div v-else-if="eventTypeEvents[eventTypeName]?.error" class="p-3 text-center">
-                <div class="text-xs text-red-500">Error: {{ eventTypeEvents[eventTypeName].error }}</div>
+              <div v-else-if="recurringEventEvents[recurringEvent.title]?.error" class="p-3 text-center">
+                <div class="text-xs text-red-500">Error: {{ recurringEventEvents[recurringEvent.title].error }}</div>
               </div>
               
               <!-- Events List (Concise Display) -->
-              <div v-else-if="eventTypeEvents[eventTypeName]?.events?.length" class="space-y-1">
+              <div v-else-if="recurringEventEvents[recurringEvent.title]?.events?.length" class="space-y-1">
                 <div 
-                  v-for="event in eventTypeEvents[eventTypeName].events" 
+                  v-for="event in recurringEventEvents[recurringEvent.title].events" 
                   :key="event.id"
                   class="px-2 py-1.5 bg-gray-50 dark:bg-gray-800/30 rounded text-xs"
                 >
@@ -194,7 +194,7 @@ import { formatDateRange } from '@/utils/dates'
 
 const props = defineProps({
   group: { type: Object, required: true },
-  selectedEventTypes: { type: Array, default: () => [] },
+  selectedRecurringEvents: { type: Array, default: () => [] },
   subscribedGroups: { type: Set, default: () => new Set() },
   expandedGroups: { type: Set, default: () => new Set() },
   domainId: { type: String, required: true }
@@ -208,60 +208,60 @@ const emit = defineEmits([
   'select-all-event-types'
 ])
 
-// State for expanded event types and their events
-const expandedEventTypes = ref(new Set())
-const eventTypeEvents = ref({}) // eventTypeName -> {events: [...], loading: false}
+// State for expanded recurring events and their events
+const expandedRecurringEvents = ref(new Set())
+const recurringEventEvents = ref({}) // eventTitle -> {events: [...], loading: false}
 
 // Computed properties
-const hasEventTypes = computed(() => {
-  return props.group.event_types && Object.keys(props.group.event_types).length > 0
+const hasRecurringEvents = computed(() => {
+  return props.group.recurring_events && props.group.recurring_events.length > 0
 })
 
-const eventTypesCount = computed(() => {
-  return hasEventTypes.value ? Object.keys(props.group.event_types).length : 0
+const recurringEventsCount = computed(() => {
+  return hasRecurringEvents.value ? props.group.recurring_events.length : 0
 })
 
 const eventCountDisplay = computed(() => {
-  if (!hasEventTypes.value) return '0/0 events selected'
+  if (!hasRecurringEvents.value) return '0/0 events selected'
   
-  const totalEventTypes = eventTypesCount.value
-  const selectedCount = selectedGroupEventTypes.value.length
+  const totalRecurringEvents = recurringEventsCount.value
+  const selectedCount = selectedGroupRecurringEvents.value.length
   
-  return `${selectedCount}/${totalEventTypes} events selected`
+  return `${selectedCount}/${totalRecurringEvents} events selected`
 })
 
-// Sort event types by count (descending) for better UX
-const sortedEventTypes = computed(() => {
-  if (!hasEventTypes.value) return []
+// Sort recurring events by count (descending) for better UX
+const sortedRecurringEvents = computed(() => {
+  if (!hasRecurringEvents.value) return []
   
-  return Object.entries(props.group.event_types)
-    .sort(([, a], [, b]) => (b.count || 0) - (a.count || 0))
+  return props.group.recurring_events
+    .sort((a, b) => (b.event_count || 0) - (a.event_count || 0))
 })
 
 const isExpanded = computed(() => {
   return props.expandedGroups.has(props.group.id)
 })
 
-const groupEventTypes = computed(() => {
-  return hasEventTypes.value ? Object.keys(props.group.event_types) : []
+const groupRecurringEventTitles = computed(() => {
+  return hasRecurringEvents.value ? props.group.recurring_events.map(event => event.title) : []
 })
 
-const selectedGroupEventTypes = computed(() => {
-  return groupEventTypes.value.filter(eventType => 
-    props.selectedEventTypes.includes(eventType)
+const selectedGroupRecurringEvents = computed(() => {
+  return groupRecurringEventTitles.value.filter(eventTitle => 
+    props.selectedRecurringEvents.includes(eventTitle)
   )
 })
 
 const isGroupSelected = computed(() => {
-  return groupEventTypes.value.length > 0 && 
-         groupEventTypes.value.every(eventType => 
-           props.selectedEventTypes.includes(eventType)
+  return groupRecurringEventTitles.value.length > 0 && 
+         groupRecurringEventTitles.value.every(eventTitle => 
+           props.selectedRecurringEvents.includes(eventTitle)
          )
 })
 
 const isPartiallySelected = computed(() => {
-  return selectedGroupEventTypes.value.length > 0 && 
-         selectedGroupEventTypes.value.length < groupEventTypes.value.length
+  return selectedGroupRecurringEvents.value.length > 0 && 
+         selectedGroupRecurringEvents.value.length < groupRecurringEventTitles.value.length
 })
 
 // New computed properties for Subscribe and Select All buttons
@@ -269,29 +269,34 @@ const isGroupSubscribed = computed(() => {
   return props.subscribedGroups.has(props.group.id)
 })
 
-const areAllEventTypesSelected = computed(() => {
-  return groupEventTypes.value.length > 0 && 
-         groupEventTypes.value.every(eventType => 
-           props.selectedEventTypes.includes(eventType)
+const areAllRecurringEventsSelected = computed(() => {
+  return groupRecurringEventTitles.value.length > 0 && 
+         groupRecurringEventTitles.value.every(eventTitle => 
+           props.selectedRecurringEvents.includes(eventTitle)
          )
 })
 
 // Combined state computed property
 const isBothSubscribedAndSelected = computed(() => {
-  return isGroupSubscribed.value && areAllEventTypesSelected.value
+  return isGroupSubscribed.value && areAllRecurringEventsSelected.value
+})
+
+// Get recurring events from group (for emit payloads)
+const groupRecurringEvents = computed(() => {
+  return groupRecurringEventTitles.value
 })
 
 // Methods
-const isEventTypeSelected = (eventTypeName) => {
-  return props.selectedEventTypes.includes(eventTypeName)
+const isRecurringEventSelected = (eventTitle) => {
+  return props.selectedRecurringEvents.includes(eventTitle)
 }
 
 const toggleGroup = () => {
   emit('toggle-group', props.group.id)
 }
 
-const toggleEventType = (eventTypeName) => {
-  emit('toggle-event-type', eventTypeName)
+const toggleRecurringEvent = (eventTitle) => {
+  emit('toggle-event-type', eventTitle)
 }
 
 const expandGroup = () => {
@@ -303,11 +308,11 @@ const toggleGroupSubscription = () => {
   emit('subscribe-to-group', props.group.id)
 }
 
-const toggleSelectAllEventTypes = () => {
-  emit('select-all-event-types', {
+const toggleSelectAllRecurringEvents = () => {
+  emit('select-all-recurring-events', {
     groupId: props.group.id,
-    eventTypes: groupEventTypes.value,
-    selectAll: !areAllEventTypesSelected.value
+    recurringEvents: groupRecurringEvents.value,
+    selectAll: !areAllRecurringEventsSelected.value
   })
 }
 
@@ -316,9 +321,9 @@ const toggleSubscribeAndSelect = () => {
   if (isBothSubscribedAndSelected.value) {
     // If both are active, deactivate both
     emit('subscribe-to-group', props.group.id)  // Toggle subscription off
-    emit('select-all-event-types', {
+    emit('select-all-recurring-events', {
       groupId: props.group.id,
-      eventTypes: groupEventTypes.value,
+      recurringEvents: groupRecurringEvents.value,
       selectAll: false  // Deselect all
     })
   } else {
@@ -326,10 +331,10 @@ const toggleSubscribeAndSelect = () => {
     if (!isGroupSubscribed.value) {
       emit('subscribe-to-group', props.group.id)  // Subscribe
     }
-    if (!areAllEventTypesSelected.value) {
-      emit('select-all-event-types', {
+    if (!areAllRecurringEventsSelected.value) {
+      emit('select-all-recurring-events', {
         groupId: props.group.id,
-        eventTypes: groupEventTypes.value,
+        recurringEvents: groupRecurringEvents.value,
         selectAll: true  // Select all
       })
     }
@@ -337,49 +342,49 @@ const toggleSubscribeAndSelect = () => {
 }
 
 // Event type expansion methods
-const isEventTypeExpanded = (eventTypeName) => {
-  return expandedEventTypes.value.has(eventTypeName)
+const isRecurringEventExpanded = (eventTitle) => {
+  return expandedRecurringEvents.value.has(eventTitle)
 }
 
-const toggleEventTypeExpansion = async (eventTypeName) => {
-  if (isEventTypeExpanded(eventTypeName)) {
-    expandedEventTypes.value.delete(eventTypeName)
+const toggleRecurringEventExpansion = async (eventTitle) => {
+  if (isRecurringEventExpanded(eventTitle)) {
+    expandedRecurringEvents.value.delete(eventTitle)
   } else {
-    expandedEventTypes.value.add(eventTypeName)
-    await fetchEventTypeEvents(eventTypeName)
+    expandedRecurringEvents.value.add(eventTitle)
+    await fetchRecurringEventEvents(eventTitle)
   }
 }
 
-const fetchEventTypeEvents = async (eventTypeName) => {
+const fetchRecurringEventEvents = async (eventTitle) => {
   // Set loading state
-  eventTypeEvents.value[eventTypeName] = {
+  recurringEventEvents.value[eventTitle] = {
     events: [],
     loading: true,
     error: null
   }
   
   try {
-    // Events are already processed and available in event_types
-    const eventTypeData = props.group.event_types?.[eventTypeName]
+    // Events are already processed and available in recurring_events
+    const recurringEventData = props.group.recurring_events?.find(event => event.title === eventTitle)
     
-    if (eventTypeData && eventTypeData.events) {
+    if (recurringEventData && recurringEventData.events) {
       // Events are already available in the group data - no API call needed!
-      eventTypeEvents.value[eventTypeName] = {
-        events: Array.isArray(eventTypeData.events) ? eventTypeData.events : [],
+      recurringEventEvents.value[eventTitle] = {
+        events: Array.isArray(recurringEventData.events) ? recurringEventData.events : [],
         loading: false,
         error: null
       }
     } else {
       // Fallback if events not found in group data
-      eventTypeEvents.value[eventTypeName] = {
+      recurringEventEvents.value[eventTitle] = {
         events: [],
         loading: false,
-        error: `No events found for ${eventTypeName}`
+        error: `No events found for ${eventTitle}`
       }
     }
   } catch (error) {
-    console.error('Error loading event type events:', error)
-    eventTypeEvents.value[eventTypeName] = {
+    console.error('Error loading recurring event events:', error)
+    recurringEventEvents.value[eventTitle] = {
       events: [],
       loading: false,
       error: error.message

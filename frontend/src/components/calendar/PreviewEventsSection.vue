@@ -1,6 +1,6 @@
 <template>
   <!-- Event Preview Section -->
-  <div v-if="selectedEventTypes.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+  <div v-if="selectedRecurringEvents.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
     <!-- Collapsible Header -->
     <div 
       class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -64,7 +64,7 @@
             class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
             :class="previewGroup === 'category' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
           >
-            <span class="hidden sm:inline">📂 {{ $t('preview.byEventType') }}</span>
+            <span class="hidden sm:inline">📂 {{ $t('preview.byRecurringEvent') }}</span>
             <span class="sm:hidden">📂</span>
           </button>
           <button 
@@ -94,8 +94,8 @@
             <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
               📍 {{ event.location }}
             </div>
-            <div v-if="getEventTypeKey(event) !== event.title" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
-              📂 {{ getEventTypeKey(event) }}
+            <div v-if="getRecurringEventKey(event) !== event.title" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              📂 {{ getRecurringEventKey(event) }}
             </div>
           </div>
         </div>
@@ -189,8 +189,8 @@
                   <div v-if="event.location" class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
                     📍 {{ event.location }}
                   </div>
-                  <div v-if="getEventTypeKey(event) !== event.title" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                    📂 {{ getEventTypeKey(event) }}
+                  <div v-if="getRecurringEventKey(event) !== event.title" class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                    📂 {{ getRecurringEventKey(event) }}
                   </div>
                 </div>
                 <div v-if="group.events.length > 10" class="text-center text-gray-500 dark:text-gray-400 italic p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium mt-3">
@@ -211,16 +211,15 @@
 import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
-  selectedEventTypes: { type: Array, default: () => [] },
+  selectedRecurringEvents: { type: Array, default: () => [] },
   sortedPreviewEvents: { type: Array, default: () => [] },
   previewGroup: { type: String, default: 'none' },
   previewOrder: { type: String, default: 'asc' },
   groupedPreviewEvents: { type: Array, default: () => [] },
-  filterMode: { type: String, default: 'include' },
   allEvents: { type: Array, default: () => [] },
   formatDateTime: { type: Function, required: true },
   formatDateRange: { type: Function, required: true },
-  getEventTypeKey: { type: Function, required: true }
+  getRecurringEventKey: { type: Function, required: true }
 })
 
 const emit = defineEmits([
@@ -247,23 +246,13 @@ const toggleGroupExpansion = (groupName) => {
   }
 }
 
-// Compute correct event count and message based on filter mode
+// Compute event count and message for selected recurring events
 const eventCountInfo = computed(() => {
-  if (props.filterMode === 'include') {
-    // Include mode: show selected events (they will be included)
-    return {
-      count: props.sortedPreviewEvents.length,
-      mobileMessage: 'eventsSelected',
-      desktopMessage: 'eventsFromSelection'
-    }
-  } else {
-    // Exclude mode: still show the preview events (events that will be included after exclusion)
-    // The sortedPreviewEvents already contains the correct filtered events to show
-    return {
-      count: props.sortedPreviewEvents.length,
-      mobileMessage: 'eventsIncluded', 
-      desktopMessage: 'eventsWillBeIncluded'
-    }
+  // Show selected events (simplified - no filter modes)
+  return {
+    count: props.sortedPreviewEvents.length,
+    mobileMessage: 'eventsSelected',
+    desktopMessage: 'eventsFromSelection'
   }
 })
 </script>

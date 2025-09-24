@@ -1,27 +1,29 @@
 import { ref, computed, watch } from 'vue'
 import { useAppStore } from '../stores/app'
+import { useSelectionStore } from '../stores/selectionStore'
 import { useUsername } from './useUsername'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
 
-export function useCalendar(eventsData = null, eventTypesData = null, initialCalendarId = null) {
+export function useCalendar(eventsData = null, recurringEventsData = null, initialCalendarId = null) {
   const appStore = useAppStore()
+  const selectionStore = useSelectionStore()
   const { getUserId } = useUsername()
   
   // Use provided data or fall back to store
   const events = eventsData || computed(() => appStore.events)
-  const eventTypes = eventTypesData || computed(() => appStore.eventTypes)
+  const recurringEvents = recurringEventsData || computed(() => appStore.recurringEvents)
   
   // Make calendar ID reactive to handle navigation between calendars
   const calendarId = ref(initialCalendarId)
   
   // Reactive state - these will be loaded from backend preferences
-  const selectedEventTypes = ref([])
-  const expandedEventTypes = ref([])
+  const selectedRecurringEvents = ref([])
+  // expandedRecurringEvents now managed centrally in selectionStore
   const showSingleEvents = ref(false)
-  const showEventTypesSection = ref(true)
+  const showRecurringEventsSection = ref(true)
   const showGroupsSection = ref(true)
   const showSelectedOnly = ref(false)
-  const eventTypeSearch = ref('')
+  const recurringEventSearch = ref('')
   const showPreview = ref(false)
   const previewGroup = ref(PREVIEW_GROUPS.NONE)
   const previewOrder = ref(SORT_ORDERS.ASC)
@@ -37,11 +39,11 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     try {
       const storageKey = getFilterStorageKey(calendarId.value)
       const filtersData = {
-        selectedEventTypes: selectedEventTypes.value,
-        eventTypeSearch: eventTypeSearch.value,
+        selectedRecurringEvents: selectedRecurringEvents.value,
+        recurringEventSearch: recurringEventSearch.value,
         showSingleEvents: showSingleEvents.value,
         showSelectedOnly: showSelectedOnly.value,
-        expandedEventTypes: expandedEventTypes.value,
+        // expandedRecurringEvents now managed centrally in selectionStore
         savedAt: new Date().toISOString()
       }
       localStorage.setItem(storageKey, JSON.stringify(filtersData))
@@ -61,11 +63,11 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
         // Validate data structure
         if (filtersData && typeof filtersData === 'object') {
           // Apply saved filters with validation
-          if (Array.isArray(filtersData.selectedEventTypes)) {
-            selectedEventTypes.value = filtersData.selectedEventTypes
+          if (Array.isArray(filtersData.selectedRecurringEvents)) {
+            selectedRecurringEvents.value = filtersData.selectedRecurringEvents
           }
-          if (typeof filtersData.eventTypeSearch === 'string') {
-            eventTypeSearch.value = filtersData.eventTypeSearch
+          if (typeof filtersData.recurringEventSearch === 'string') {
+            recurringEventSearch.value = filtersData.recurringEventSearch
           }
           if (typeof filtersData.showSingleEvents === 'boolean') {
             showSingleEvents.value = filtersData.showSingleEvents
@@ -73,9 +75,7 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
           if (typeof filtersData.showSelectedOnly === 'boolean') {
             showSelectedOnly.value = filtersData.showSelectedOnly
           }
-          if (Array.isArray(filtersData.expandedEventTypes)) {
-            expandedEventTypes.value = filtersData.expandedEventTypes
-          }
+          // expandedRecurringEvents now managed centrally in selectionStore
           
           console.log(`📂 Filters loaded for calendar: ${calendarId.value || 'default'} (user: ${getUserId()})`)
           return true
@@ -96,11 +96,11 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
       if (oldCalendarId) {
         const oldStorageKey = getFilterStorageKey(oldCalendarId)
         const currentFilters = {
-          selectedEventTypes: selectedEventTypes.value,
-          eventTypeSearch: eventTypeSearch.value,
+          selectedRecurringEvents: selectedRecurringEvents.value,
+          recurringEventSearch: recurringEventSearch.value,
           showSingleEvents: showSingleEvents.value,
           showSelectedOnly: showSelectedOnly.value,
-          expandedEventTypes: expandedEventTypes.value,
+          // expandedRecurringEvents now managed centrally in selectionStore
           savedAt: new Date().toISOString()
         }
         try {
@@ -116,9 +116,9 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     }
   })
 
-  // Watch for when selectedEventTypes becomes empty and auto-turn off showSelectedOnly
-  watch(selectedEventTypes, (newEventTypes) => {
-    if (newEventTypes.length === 0 && showSelectedOnly.value) {
+  // Watch for when selectedRecurringEvents becomes empty and auto-turn off showSelectedOnly
+  watch(selectedRecurringEvents, (newRecurringEvents) => {
+    if (newRecurringEvents.length === 0 && showSelectedOnly.value) {
       showSelectedOnly.value = false
     }
   }, { deep: true })
@@ -133,13 +133,13 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
   }
 
   // Watch filter state changes and auto-save
-  watch(selectedEventTypes, debouncedSave, { deep: true })
+  watch(selectedRecurringEvents, debouncedSave, { deep: true })
   watch(showSingleEvents, debouncedSave)
   watch(showSelectedOnly, debouncedSave)
-  watch(expandedEventTypes, debouncedSave, { deep: true })
+  // expandedRecurringEvents now managed centrally in selectionStore
   
   // Debounce search term more aggressively to avoid excessive saves
-  watch(eventTypeSearch, () => {
+  watch(recurringEventSearch, () => {
     if (saveTimeout) clearTimeout(saveTimeout)
     saveTimeout = setTimeout(() => {
       saveFiltersToLocalStorage()
@@ -147,15 +147,15 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
   })
 
   // Convert event types object to sorted array with events
-  const eventTypesSortedByCount = computed(() => {
-    if (!eventTypes.value) return []
-    if (Array.isArray(eventTypes.value)) return eventTypes.value
+  const recurringEventsSortedByCount = computed(() => {
+    if (!recurringEvents.value) return []
+    if (Array.isArray(recurringEvents.value)) return recurringEvents.value
     
-    // Convert object to array format - eventTypes.value now contains event types from /events endpoint
-    return Object.entries(eventTypes.value).map(([name, eventTypeData]) => {
-      // eventTypeData has structure: { count: number, events: [event objects] }
-      const count = eventTypeData.count || 0
-      const typeEvents = eventTypeData.events || []
+    // Convert object to array format - recurringEvents.value now contains event types from /events endpoint
+    return Object.entries(recurringEvents.value).map(([name, recurringEventData]) => {
+      // recurringEventData has structure: { count: number, events: [event objects] }
+      const count = recurringEventData.count || 0
+      const typeEvents = recurringEventData.events || []
       
       return {
         name,
@@ -166,36 +166,36 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
   })
 
   // Computed properties
-  const filteredEventTypes = computed(() => {
-    if (!eventTypeSearch.value.trim()) {
-      return eventTypesSortedByCount.value
+  const filteredRecurringEvents = computed(() => {
+    if (!recurringEventSearch.value.trim()) {
+      return recurringEventsSortedByCount.value
     }
     
-    const searchTerm = eventTypeSearch.value.toLowerCase()
-    return eventTypesSortedByCount.value.filter(eventType => 
-      eventType.name.toLowerCase().includes(searchTerm)
+    const searchTerm = recurringEventSearch.value.toLowerCase()
+    return recurringEventsSortedByCount.value.filter(recurringEvent => 
+      recurringEvent.name.toLowerCase().includes(searchTerm)
     )
   })
 
   // Recurring events: event types that occur multiple times (count > 1)
-  const mainEventTypes = computed(() => {
-    return filteredEventTypes.value.filter(eventType => eventType.count > 1)
+  const mainRecurringEvents = computed(() => {
+    return filteredRecurringEvents.value.filter(recurringEvent => recurringEvent.count > 1)
   })
 
   // Alias for backwards compatibility and clearer naming
-  const recurringEventTypes = computed(() => mainEventTypes.value)
+  const recurringRecurringEvents = computed(() => mainRecurringEvents.value)
 
   // Unique events: event types that occur only once (count === 1)
-  const singleEventTypes = computed(() => {
-    return filteredEventTypes.value.filter(eventType => eventType.count === 1)
+  const singleRecurringEvents = computed(() => {
+    return filteredRecurringEvents.value.filter(recurringEvent => recurringEvent.count === 1)
   })
 
   // Alias for more accurate naming
-  const uniqueEventTypes = computed(() => singleEventTypes.value)
+  const uniqueRecurringEvents = computed(() => singleRecurringEvents.value)
 
-  const unifiedEventTypes = computed(() => {
+  const unifiedRecurringEvents = computed(() => {
     // Combine and sort all event types by count (highest first), then alphabetically
-    return filteredEventTypes.value.sort((a, b) => {
+    return filteredRecurringEvents.value.sort((a, b) => {
       if (a.count !== b.count) {
         return b.count - a.count // Higher count first
       }
@@ -203,34 +203,34 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     })
   })
 
-  const selectedEventTypesCount = computed(() => {
-    return eventTypesSortedByCount.value
-      .filter(eventType => selectedEventTypes.value.includes(eventType.name))
-      .reduce((sum, eventType) => sum + eventType.count, 0)
+  const selectedRecurringEventsCount = computed(() => {
+    return recurringEventsSortedByCount.value
+      .filter(recurringEvent => selectedRecurringEvents.value.includes(recurringEvent.name))
+      .reduce((sum, recurringEvent) => sum + recurringEvent.count, 0)
   })
 
   const selectedEventsCount = computed(() => {
-    if (selectedEventTypes.value.length === 0) return 0
+    if (selectedRecurringEvents.value.length === 0) return 0
 
-    const selectedEventTypeNames = new Set(selectedEventTypes.value)
+    const selectedRecurringEventNames = new Set(selectedRecurringEvents.value)
     return events.value.filter(event => {
-      const eventType = getEventTypeKey(event)
-      const isInSelectedEventType = selectedEventTypeNames.has(eventType)
+      const recurringEvent = getRecurringEventKey(event)
+      const isInSelectedRecurringEvent = selectedRecurringEventNames.has(recurringEvent)
       
       // With groups, we only show selected event types (simple inclusion)
-      return isInSelectedEventType
+      return isInSelectedRecurringEvent
     }).length
   })
 
   const previewEvents = computed(() => {
-    if (selectedEventTypes.value.length === 0) return []
+    if (selectedRecurringEvents.value.length === 0) return []
 
-    const selectedEventTypeNames = new Set(selectedEventTypes.value)
+    const selectedRecurringEventNames = new Set(selectedRecurringEvents.value)
     const now = new Date()
     
     return events.value.filter(event => {
-      const eventType = getEventTypeKey(event)
-      const isInSelectedEventType = selectedEventTypeNames.has(eventType)
+      const recurringEvent = getRecurringEventKey(event)
+      const isInSelectedRecurringEvent = selectedRecurringEventNames.has(recurringEvent)
       
       // Check if event is in future (filter out past events)
       const eventStart = event.start || event.dtstart
@@ -238,9 +238,9 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
       
       // Apply both event type filter and future events filter
       // With groups, we only show selected event types (simple inclusion)
-      const passesEventTypeFilter = isInSelectedEventType
+      const passesRecurringEventFilter = isInSelectedRecurringEvent
         
-      return passesEventTypeFilter && isFutureEvent
+      return passesRecurringEventFilter && isFutureEvent
     })
   })
 
@@ -314,28 +314,28 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
   })
 
   // Three-tier event system analytics
-  const eventTypeStats = computed(() => {
+  const recurringEventStats = computed(() => {
     const stats = {
-      totalEventTypes: eventTypesSortedByCount.value.length,
-      recurringEventTypes: recurringEventTypes.value.length,
-      uniqueEventTypes: uniqueEventTypes.value.length,
-      totalEvents: eventTypesSortedByCount.value.reduce((sum, eventType) => sum + eventType.count, 0),
-      recurringEvents: recurringEventTypes.value.reduce((sum, eventType) => sum + eventType.count, 0),
-      uniqueEvents: uniqueEventTypes.value.length // Each unique type has exactly 1 event
+      totalRecurringEvents: recurringEventsSortedByCount.value.length,
+      recurringRecurringEvents: recurringRecurringEvents.value.length,
+      uniqueRecurringEvents: uniqueRecurringEvents.value.length,
+      totalEvents: recurringEventsSortedByCount.value.reduce((sum, recurringEvent) => sum + recurringEvent.count, 0),
+      recurringEvents: recurringRecurringEvents.value.reduce((sum, recurringEvent) => sum + recurringEvent.count, 0),
+      uniqueEvents: uniqueRecurringEvents.value.length // Each unique type has exactly 1 event
     }
     return stats
   })
 
   // Event type classification helper
-  function classifyEventType(eventTypeName) {
-    const eventType = eventTypesSortedByCount.value.find(et => et.name === eventTypeName)
-    if (!eventType) return 'unknown'
+  function classifyRecurringEvent(recurringEventName) {
+    const recurringEvent = recurringEventsSortedByCount.value.find(et => et.name === recurringEventName)
+    if (!recurringEvent) return 'unknown'
     
-    return eventType.count === 1 ? 'unique' : 'recurring'
+    return recurringEvent.count === 1 ? 'unique' : 'recurring'
   }
 
   // Methods
-  function getEventTypeKey(event) {
+  function getRecurringEventKey(event) {
     // Get the key used for filtering events (by title - what users select)
     return event.title || event.summary || 'Untitled Event'
   }
@@ -499,45 +499,45 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     }
   }
 
-  function toggleEventType(eventTypeName) {
-    const index = selectedEventTypes.value.indexOf(eventTypeName)
+  function toggleRecurringEvent(recurringEventName) {
+    const index = selectedRecurringEvents.value.indexOf(recurringEventName)
     if (index === -1) {
-      selectedEventTypes.value.push(eventTypeName)
+      selectedRecurringEvents.value.push(recurringEventName)
     } else {
-      selectedEventTypes.value.splice(index, 1)
+      selectedRecurringEvents.value.splice(index, 1)
     }
   }
 
-  function toggleEventTypeExpansion(eventTypeName) {
-    const index = expandedEventTypes.value.indexOf(eventTypeName)
-    if (index === -1) {
-      expandedEventTypes.value.push(eventTypeName)
+  function toggleRecurringEventExpansion(recurringEventName) {
+    // Delegate to centralized selectionStore
+    if (selectionStore.expandedRecurringEvents.has(recurringEventName)) {
+      selectionStore.expandedRecurringEvents.delete(recurringEventName)
     } else {
-      expandedEventTypes.value.splice(index, 1)
+      selectionStore.expandedRecurringEvents.add(recurringEventName)
     }
   }
 
-  function selectAllEventTypes() {
-    selectedEventTypes.value = filteredEventTypes.value.map(eventType => eventType.name)
+  function selectAllRecurringEvents() {
+    selectedRecurringEvents.value = filteredRecurringEvents.value.map(recurringEvent => recurringEvent.name)
   }
 
-  function clearAllEventTypes() {
-    selectedEventTypes.value = []
+  function clearAllRecurringEvents() {
+    selectedRecurringEvents.value = []
     showPreview.value = false
   }
 
   function selectAllSingleEvents() {
-    const singleEventNames = singleEventTypes.value.map(eventType => eventType.name)
-    singleEventNames.forEach(name => {
-      if (!selectedEventTypes.value.includes(name)) {
-        selectedEventTypes.value.push(name)
+    const singleRecurringEventNames = singleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+    singleRecurringEventNames.forEach(name => {
+      if (!selectedRecurringEvents.value.includes(name)) {
+        selectedRecurringEvents.value.push(name)
       }
     })
   }
 
   function clearAllSingleEvents() {
-    const singleEventNames = singleEventTypes.value.map(eventType => eventType.name)
-    selectedEventTypes.value = selectedEventTypes.value.filter(name => !singleEventNames.includes(name))
+    const singleRecurringEventNames = singleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+    selectedRecurringEvents.value = selectedRecurringEvents.value.filter(name => !singleRecurringEventNames.includes(name))
   }
 
 
@@ -549,7 +549,7 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
     try {
       const result = await appStore.generateIcal({
         calendarId: appStore.selectedCalendar.id,
-        selectedEventTypes: selectedEventTypes.value
+        selectedRecurringEvents: selectedRecurringEvents.value
       })
       
       if (result.success) {
@@ -588,43 +588,43 @@ export function useCalendar(eventsData = null, eventTypesData = null, initialCal
 
   return {
     // State
-    selectedEventTypes,
-    expandedEventTypes,
+    selectedRecurringEvents,
+    expandedRecurringEvents: selectionStore.expandedRecurringEvents,
     showSingleEvents,
-    showEventTypesSection,
+    showRecurringEventsSection,
     showGroupsSection,
     showSelectedOnly,
-    eventTypeSearch,
+    recurringEventSearch,
     showPreview,
     previewGroup,
     previewOrder,
     previewLimit,
     
     // Computed
-    eventTypesSortedByCount,
-    filteredEventTypes,
-    mainEventTypes,
-    singleEventTypes,
-    recurringEventTypes,
-    uniqueEventTypes,
-    unifiedEventTypes,
-    eventTypeStats,
-    selectedEventTypesCount,
+    recurringEventsSortedByCount,
+    filteredRecurringEvents,
+    mainRecurringEvents,
+    singleRecurringEvents,
+    recurringRecurringEvents,
+    uniqueRecurringEvents,
+    unifiedRecurringEvents,
+    recurringEventStats,
+    selectedRecurringEventsCount,
     selectedEventsCount,
     previewEvents,
     sortedPreviewEvents,
     groupedPreviewEvents,
     
     // Methods
-    getEventTypeKey,
+    getRecurringEventKey,
     getEventGroupKey,
-    classifyEventType,
+    classifyRecurringEvent,
     formatDateTime,
     formatDateRange,
-    toggleEventType,
-    toggleEventTypeExpansion,
-    selectAllEventTypes,
-    clearAllEventTypes,
+    toggleRecurringEvent,
+    toggleRecurringEventExpansion,
+    selectAllRecurringEvents,
+    clearAllRecurringEvents,
     selectAllSingleEvents,
     clearAllSingleEvents,
     togglePreviewOrder,

@@ -32,15 +32,15 @@
           v-for="group in sortedGroups"
           :key="group.id"
           :group="group"
-          :selected-event-types="selectedEventTypes"
+          :selected-recurring-events="selectedRecurringEvents"
           :subscribed-groups="subscribedGroups"
           :expanded-groups="expandedGroups"
           :domain-id="domainId || 'default'"
           @toggle-group="toggleGroupSubscription"
-          @toggle-event-type="toggleEventType"
+          @toggle-recurring-event="toggleRecurringEvent"
           @expand-group="toggleExpansion"
           @subscribe-to-group="toggleGroupSubscription"
-          @select-all-event-types="handleSelectAllEventTypes"
+          @select-all-recurring-events="handleSelectAllRecurringEvents"
         />
       </div>
     </div>
@@ -70,12 +70,12 @@ const emit = defineEmits([
 // Use unified selection system (single source of truth)
 const {
   subscribedGroups,
-  selectedEventTypes,
+  selectedRecurringEvents,
   subscribeToGroup,
   unsubscribeFromGroup,
-  toggleEventType,
+  toggleRecurringEvent,
   clearSelection,
-  isEventTypeEffectivelySelected,
+  isRecurringEventEffectivelySelected,
   getSelectionSummary,
   expandedGroups,
   toggleGroupExpansion,
@@ -83,7 +83,7 @@ const {
   collapseAllGroups,
   subscribeAndSelectAllGroups,
   unsubscribeFromAllGroups,
-  handleSelectAllEventTypes,
+  handleSelectAllRecurringEvents,
   allEventsSelected,
   getGroupBreakdownSummary
 } = useUnifiedSelection()
@@ -102,28 +102,28 @@ const sortedGroups = computed(() => {
   
   return groupsArray.sort((a, b) => {
     // Calculate total events for group a
-    const totalEventsA = a.event_types ? 
-      Object.values(a.event_types).reduce((sum, eventType) => sum + (eventType.count || 0), 0) : 0
+    const totalEventsA = a.recurring_events ? 
+      a.recurring_events.reduce((sum, recurringEvent) => sum + (recurringEvent.event_count || 0), 0) : 0
     
     // Calculate total events for group b  
-    const totalEventsB = b.event_types ?
-      Object.values(b.event_types).reduce((sum, eventType) => sum + (eventType.count || 0), 0) : 0
+    const totalEventsB = b.recurring_events ?
+      b.recurring_events.reduce((sum, recurringEvent) => sum + (recurringEvent.event_count || 0), 0) : 0
     
     // Sort descending (highest count first)
     return totalEventsB - totalEventsA
   })
 })
 
-const effectiveSelectedEventTypes = computed(() => {
+const effectiveSelectedRecurringEvents = computed(() => {
   // Combine individual selections with subscribed group selections
-  const selected = [...selectedEventTypes.value]
+  const selected = [...selectedRecurringEvents.value]
   
   for (const groupId of subscribedGroups.value) {
     const group = allGroups.value[groupId]
-    if (group && group.event_types) {
-      for (const eventType of Object.keys(group.event_types)) {
-        if (!selected.includes(eventType)) {
-          selected.push(eventType)
+    if (group && group.recurring_events) {
+      for (const recurringEvent of group.recurring_events) {
+        if (!selected.includes(recurringEvent.title)) {
+          selected.push(recurringEvent.title)
         }
       }
     }
@@ -133,7 +133,7 @@ const effectiveSelectedEventTypes = computed(() => {
 })
 
 const hasSelections = computed(() => {
-  return subscribedGroups.value.size > 0 || selectedEventTypes.value.length > 0
+  return subscribedGroups.value.size > 0 || selectedRecurringEvents.value.length > 0
 })
 
 const allGroupsExpanded = computed(() => {
@@ -186,15 +186,15 @@ const subscribeToAllGroups = () => {
 // Use unified expansion functions (toggleGroupExpansion, expandAllGroups, collapseAllGroups)
 const toggleExpansion = toggleGroupExpansion
 
-const getGroupEventTypes = (group) => {
-  if (!group || !group.event_types) return []
-  return Object.keys(group.event_types).filter(eventType => {
-    return group.event_types[eventType].count > 0
-  })
+const getGroupRecurringEvents = (group) => {
+  if (!group || !group.recurring_events) return []
+  return group.recurring_events.filter(recurringEvent => {
+    return recurringEvent.event_count > 0
+  }).map(recurringEvent => recurringEvent.title)
 }
 
 
-// handleSelectAllEventTypes is now provided by unified selection system
+// handleSelectAllRecurringEvents is now provided by unified selection system
 
 // getGroupBreakdownSummary is now provided by unified selection system
 
@@ -204,14 +204,14 @@ const getDetailedGroupSummary = () => {
   
   Object.entries(allGroups.value).forEach(([groupId, group]) => {
     const isSubscribed = subscribedGroups.value.has(groupId)
-    const groupEventTypes = getGroupEventTypes(group)
-    const selectedInGroup = groupEventTypes.filter(eventType => 
-      selectedEventTypes.value.includes(eventType)
+    const groupRecurringEvents = getGroupRecurringEvents(group)
+    const selectedInGroup = groupRecurringEvents.filter(recurringEvent => 
+      selectedRecurringEvents.value.includes(recurringEvent)
     ).length
     
     const checkbox = isSubscribed ? '☑' : '☐'
     const name = group.name || 'Unnamed Group'
-    const summary = `${checkbox} ${selectedInGroup}/${groupEventTypes.length} ${name}`
+    const summary = `${checkbox} ${selectedInGroup}/${groupRecurringEvents.length} ${name}`
     
     groupSummaries.push(summary)
   })
@@ -227,12 +227,12 @@ const getDetailedGroupSummary = () => {
 }
 
 // Watch for changes and emit to parent
-watch([subscribedGroups, selectedEventTypes], () => {
+watch([subscribedGroups, selectedRecurringEvents], () => {
   emit('selection-changed', {
     subscribedGroups: Array.from(subscribedGroups.value),
     groups: Array.from(subscribedGroups.value), // Legacy compatibility
-    eventTypes: selectedEventTypes.value,
-    events: effectiveSelectedEventTypes.value
+    recurringEvents: selectedRecurringEvents.value,
+    events: effectiveSelectedRecurringEvents.value
   })
 }, { deep: true })
 </script>

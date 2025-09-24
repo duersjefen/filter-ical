@@ -17,7 +17,7 @@
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>
-        <!-- Chevron icon with background circle (consistent with EventTypeCardsSection) -->
+        <!-- Chevron icon with background circle (consistent with RecurringEventsCardsSection) -->
         <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 pointer-events-none">
           <svg 
             class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
@@ -42,7 +42,7 @@
     >
       <div class="p-4 sm:p-6">
       <!-- Create/Update Form - Auto-show when events selected -->
-      <div v-if="selectedEventTypes.length > 0 || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
+      <div v-if="selectedRecurringEvents.length > 0 || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
              : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
@@ -182,16 +182,12 @@
                   <!-- Single line with filter info and date -->
                   <div class="flex items-center gap-3 text-xs mb-2">
                     <!-- Filter badge -->
-                    <span v-if="calendar.filter_config?.include_event_types?.length > 0" 
-                          class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded font-medium">
-                      ✅ {{ calendar.filter_config.include_event_types.length }} included
-                    </span>
-                    <span v-else-if="calendar.filter_config?.exclude_event_types?.length > 0" 
-                          class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-2 py-1 rounded font-medium">
-                      ❌ {{ calendar.filter_config.exclude_event_types.length }} excluded
-                    </span>
-                    <span v-else-if="calendar.filter_config?.filter_mode" 
+                    <span v-if="calendar.filter_config?.recurring_events?.length > 0" 
                           class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-medium">
+                      📂 {{ calendar.filter_config.recurring_events.length }} events
+                    </span>
+                    <span v-else
+                          class="bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200 px-2 py-1 rounded font-medium">
                       📋 All events
                     </span>
                     
@@ -206,14 +202,10 @@
                     </span>
                   </div>
                   
-                  <!-- Event types list (only if specific types selected) -->
-                  <div v-if="calendar.filter_config?.include_event_types?.length > 0 || calendar.filter_config?.exclude_event_types?.length > 0" 
+                  <!-- Recurring events list (only if specific events selected) -->
+                  <div v-if="calendar.filter_config?.recurring_events?.length > 0" 
                        class="text-xs text-gray-600 dark:text-gray-300">
-                    {{ getSmartEventTypeDisplay(
-                      calendar.filter_config?.include_event_types?.length > 0 
-                        ? calendar.filter_config.include_event_types 
-                        : calendar.filter_config.exclude_event_types || []
-                    ) }}
+                    {{ getSmartRecurringEventDisplay(calendar.filter_config.recurring_events) }}
                   </div>
                 </div>
 
@@ -256,7 +248,7 @@
       </div>
 
       <!-- Empty state - only show if no existing calendars and no events selected -->
-      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedEventTypes.length === 0" class="text-center py-6">
+      <div v-else-if="!showCreateForm && filteredCalendars.length === 0 && selectedRecurringEvents.length === 0" class="text-center py-6">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
           {{ $t('filteredCalendar.noFiltered') }}
@@ -376,7 +368,7 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  selectedEventTypes: {
+  selectedRecurringEvents: {
     type: Array,
     required: true
   },
@@ -388,15 +380,11 @@ const props = defineProps({
     type: Set,
     default: () => new Set()
   },
-  filterMode: {
-    type: String,
-    required: true
-  },
-  mainEventTypes: {
+  mainRecurringEvents: {
     type: Array,
     default: () => []
   },
-  singleEventTypes: {
+  singleRecurringEvents: {
     type: Array,
     default: () => []
   },
@@ -430,7 +418,7 @@ const {
 // Reactive state
 const isExpanded = ref(true) // Start expanded by default
 const showEditModal = ref(false)
-const hasEverHadEventTypes = ref(false) // Track if user has ever selected events
+const hasEverHadRecurringEvents = ref(false) // Track if user has ever selected events
 const isUpdateMode = ref(false) // Track if user is updating an existing filter
 const updateModeCalendar = ref(null) // Store the calendar being updated
 const createForm = ref({
@@ -461,11 +449,11 @@ const reactiveGroupBreakdown = computed(() => {
   // Process all groups and show detailed breakdown
   Object.entries(props.groups).forEach(([groupId, group]) => {
     const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
-    const groupEventTypes = getGroupEventTypes(group)
-    const selectedInGroup = groupEventTypes.filter(type => 
-      props.selectedEventTypes && props.selectedEventTypes.includes(type)
+    const groupRecurringEvents = getGroupRecurringEvents(group)
+    const selectedInGroup = groupRecurringEvents.filter(event => 
+      props.selectedRecurringEvents && props.selectedRecurringEvents.includes(event)
     ).length
-    const totalInGroup = groupEventTypes.length
+    const totalInGroup = groupRecurringEvents.length
     
     // Get group emoji/icon from name (first emoji) or use default
     const groupIcon = group.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '📋'
@@ -494,13 +482,13 @@ const shouldShowSection = computed(() => {
   }
   
   // Show if events are currently selected
-  if (props.selectedEventTypes.length > 0) {
+  if (props.selectedRecurringEvents.length > 0) {
     return true
   }
   
   // Show if user has ever selected events in this session
   // This prevents the section from disappearing during search/filter operations
-  if (hasEverHadEventTypes.value) {
+  if (hasEverHadRecurringEvents.value) {
     return true
   }
   
@@ -509,7 +497,7 @@ const shouldShowSection = computed(() => {
 
 // Auto-populate form name when groups/events selected
 const updateFormName = () => {
-  if ((props.selectedEventTypes.length > 0 || (props.selectedGroups && props.selectedGroups.size > 0)) && !createForm.value.name.trim()) {
+  if ((props.selectedRecurringEvents.length > 0 || (props.selectedGroups && props.selectedGroups.size > 0)) && !createForm.value.name.trim()) {
     const groupCount = props.selectedGroups ? props.selectedGroups.size : 0
     const suffix = groupCount > 0 ? t('filteredCalendar.groupSelection') : t('filteredCalendar.eventSelection')
     createForm.value.name = `${props.selectedCalendar.name} - ${suffix}`
@@ -532,11 +520,8 @@ const createFilteredCalendar = async () => {
   }
 
   const filterConfig = {
-    include_event_types: props.filterMode === 'include' ? props.selectedEventTypes : [],
-    exclude_event_types: props.filterMode === 'exclude' ? props.selectedEventTypes : [],
-    include_groups: props.filterMode === 'include' ? props.selectedGroups : [],
-    exclude_groups: props.filterMode === 'exclude' ? props.selectedGroups : [],
-    filter_mode: props.filterMode
+    recurring_events: props.selectedRecurringEvents,
+    groups: props.selectedGroups
   }
 
   let success = false
@@ -592,11 +577,10 @@ const cancelEditForm = () => {
 
 const updateFilteredCalendar = async () => {
   try {
-    // Create filter config based on current event type selection
+    // Create filter config based on current recurring events selection
     const filterConfig = {
-      include_event_types: props.filterMode === 'include' ? props.selectedEventTypes : [],
-      exclude_event_types: props.filterMode === 'exclude' ? props.selectedEventTypes : [],
-      filter_mode: props.filterMode
+      recurring_events: props.selectedRecurringEvents,
+      groups: props.selectedGroups
     }
     
     const success = await apiUpdateFiltered(
@@ -659,12 +643,8 @@ const loadFilterIntoPage = (calendar) => {
   const filterConfig = calendar.filter_config
   if (!filterConfig) return
   
-  // Determine the event types to select and the filter mode
-  const eventTypesToSelect = filterConfig.filter_mode === 'include' 
-    ? filterConfig.include_event_types || []
-    : filterConfig.exclude_event_types || []
-  
-  const filterMode = filterConfig.filter_mode || 'include'
+  // Get recurring events to select (simplified - no filter mode)
+  const recurringEventsToSelect = filterConfig.recurring_events || []
   
   // Enter update mode
   isUpdateMode.value = true
@@ -673,8 +653,7 @@ const loadFilterIntoPage = (calendar) => {
   
   // Emit to parent component to load the filter
   emit('load-filter', {
-    eventTypes: eventTypesToSelect,
-    mode: filterMode,
+    recurringEvents: recurringEventsToSelect,
     calendarName: calendar.name
   })
 }
@@ -745,49 +724,20 @@ const copyToClipboard = async (url) => {
   }
 }
 
-const getFilterEventTypes = (filterConfig) => {
-  const include = filterConfig?.include_event_types || []
-  const exclude = filterConfig?.exclude_event_types || []
-  
-  if (include.length > 0) {
-    return include
-  } else if (exclude.length > 0) {
-    return exclude.map(cat => `❌${cat}`)
-  }
-  
-  return []
+const getFilterRecurringEvents = (filterConfig) => {
+  return filterConfig?.recurring_events || []
 }
 
-// New helper functions for improved UX
-const hasIncludeEventTypes = (filterConfig) => {
-  return filterConfig?.include_event_types && filterConfig.include_event_types.length > 0
+// Helper to check if filter has specific recurring events
+const hasSpecificRecurringEvents = (filterConfig) => {
+  return filterConfig?.recurring_events && filterConfig.recurring_events.length > 0
 }
 
-const hasExcludeEventTypes = (filterConfig) => {
-  return filterConfig?.exclude_event_types && filterConfig.exclude_event_types.length > 0
-}
-
-const getIncludeEventTypes = (filterConfig) => {
-  return filterConfig?.include_event_types || []
-}
-
-const getExcludeEventTypes = (filterConfig) => {
-  return filterConfig?.exclude_event_types || []
-}
-
-const getIncludeEventTypesCount = (filterConfig) => {
-  return filterConfig?.include_event_types?.length || 0
-}
-
-const getExcludeEventTypesCount = (filterConfig) => {
-  return filterConfig?.exclude_event_types?.length || 0
-}
-
-const getGroupEventTypes = (group) => {
-  if (!group || !group.event_types) return []
-  return Object.keys(group.event_types).filter(eventType => {
-    return group.event_types[eventType].count > 0
-  })
+const getGroupRecurringEvents = (group) => {
+  if (!group || !group.recurring_events) return []
+  return group.recurring_events.filter(recurringEvent => {
+    return recurringEvent.event_count > 0
+  }).map(recurringEvent => recurringEvent.title)
 }
 
 const getDetailedGroupBreakdown = () => {
@@ -800,11 +750,11 @@ const getDetailedGroupBreakdown = () => {
   // Process all groups and show detailed breakdown
   Object.entries(props.groups).forEach(([groupId, group]) => {
     const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
-    const groupEventTypes = getGroupEventTypes(group)
-    const selectedInGroup = groupEventTypes.filter(type => 
-      props.selectedEventTypes && props.selectedEventTypes.includes(type)
+    const groupRecurringEvents = getGroupRecurringEvents(group)
+    const selectedInGroup = groupRecurringEvents.filter(event => 
+      props.selectedRecurringEvents && props.selectedRecurringEvents.includes(event)
     ).length
-    const totalInGroup = groupEventTypes.length
+    const totalInGroup = groupRecurringEvents.length
     
     // Get group emoji/icon from name (first emoji) or use default
     const groupIcon = group.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '📋'
@@ -824,37 +774,37 @@ const getDetailedGroupBreakdown = () => {
   return groupBreakdowns.join(', ')
 }
 
-const getGroupSubscriptionDisplay = (selectedEventTypes, selectedGroups) => {
+const getGroupSubscriptionDisplay = (selectedRecurringEvents, selectedGroups) => {
   if (!props.hasGroups || !props.groups) {
     // Fallback for non-group calendars
-    return getBasicEventTypeDisplay(selectedEventTypes)
+    return getBasicRecurringEventDisplay(selectedRecurringEvents)
   }
   
   // Return the detailed group breakdown instead of the old simple display
   return getDetailedGroupBreakdown()
 }
 
-const getSmartEventTypeDisplay = (selectedEventTypes) => {
-  if (!selectedEventTypes || selectedEventTypes.length === 0) return ''
+const getSmartRecurringEventDisplay = (selectedRecurringEvents) => {
+  if (!selectedRecurringEvents || selectedRecurringEvents.length === 0) return ''
   
   // Enhanced display for group-aware filtering
   if (props.hasGroups && props.groups && Object.keys(props.groups).length > 0) {
-    return getGroupAwareDisplay(selectedEventTypes)
+    return getGroupAwareDisplay(selectedRecurringEvents)
   }
   
   // Fallback to original logic for non-group calendars
-  return getBasicEventTypeDisplay(selectedEventTypes)
+  return getBasicRecurringEventDisplay(selectedRecurringEvents)
 }
 
-const getGroupAwareDisplay = (selectedEventTypes) => {
+const getGroupAwareDisplay = (selectedRecurringEvents) => {
   if (!props.groups || !props.selectedGroups) {
-    return getBasicEventTypeDisplay(selectedEventTypes)
+    return getBasicRecurringEventDisplay(selectedRecurringEvents)
   }
   
   const totalGroups = Object.keys(props.groups).length
   const subscribedGroups = props.selectedGroups.size || 0
   
-  if (subscribedGroups === 0 && (!selectedEventTypes || selectedEventTypes.length === 0)) {
+  if (subscribedGroups === 0 && (!selectedRecurringEvents || selectedRecurringEvents.length === 0)) {
     return 'No groups or events selected'
   }
   
@@ -865,7 +815,7 @@ const getGroupAwareDisplay = (selectedEventTypes) => {
     parts.push(`${subscribedGroups}/${totalGroups} groups subscribed`)
   }
   
-  const individualEvents = selectedEventTypes || []
+  const individualEvents = selectedRecurringEvents || []
   if (individualEvents.length > 0) {
     parts.push(`${individualEvents.length} individual events`)
   }
@@ -873,30 +823,30 @@ const getGroupAwareDisplay = (selectedEventTypes) => {
   return parts.join(' + ')
 }
 
-const getVirtualGroupSelection = (groupName, selectedEventTypes, selectedIndividualEventTypes) => {
+const getVirtualGroupSelection = (groupName, selectedRecurringEvents, selectedIndividualRecurringEvents) => {
   // This is a simplified version - in a real implementation, you'd check
   // against the actual virtual group event types from the store
   // For now, we'll just return null to avoid complexity
   return null
 }
 
-const getBasicEventTypeDisplay = (selectedEventTypes) => {
-  // Use proper event type data to distinguish main vs single event types
-  const mainEventTypeNames = props.mainEventTypes.map(eventType => eventType.name)
-  const singleEventTypeNames = props.singleEventTypes.map(eventType => eventType.name)
+const getBasicRecurringEventDisplay = (selectedRecurringEvents) => {
+  // Use proper recurring event data to distinguish main vs single recurring events
+  const mainRecurringEventNames = props.mainRecurringEvents.map(event => event.name)
+  const singleRecurringEventNames = props.singleRecurringEvents.map(event => event.name)
   
-  // Separate selected event types by their actual type (not name length heuristic)
-  const selectedMainTypes = selectedEventTypes.filter(cat => mainEventTypeNames.includes(cat))
-  const selectedSingleEvents = selectedEventTypes.filter(cat => singleEventTypeNames.includes(cat))
+  // Separate selected recurring events by their actual type (not name length heuristic)
+  const selectedMainEvents = selectedRecurringEvents.filter(event => mainRecurringEventNames.includes(event))
+  const selectedSingleEvents = selectedRecurringEvents.filter(event => singleRecurringEventNames.includes(event))
   
   let display = ''
   
-  // Show main event types first
-  if (selectedMainTypes.length > 0) {
-    if (selectedMainTypes.length <= 3) {
-      display = selectedMainTypes.join(', ')
+  // Show main recurring events first
+  if (selectedMainEvents.length > 0) {
+    if (selectedMainEvents.length <= 3) {
+      display = selectedMainEvents.join(', ')
     } else {
-      display = `${selectedMainTypes.slice(0, 2).join(', ')} and ${selectedMainTypes.length - 2} more events`
+      display = `${selectedMainEvents.slice(0, 2).join(', ')} and ${selectedMainEvents.length - 2} more events`
     }
   }
   
@@ -919,17 +869,17 @@ const getGroupSelectedCount = (groupId) => {
   const group = props.groups[groupId]
   if (!group) return 0
   
-  const groupEventTypes = getGroupEventTypes(group)
+  const groupRecurringEvents = getGroupRecurringEvents(group)
   
-  // Always count only the actually selected events from props.selectedEventTypes
+  // Always count only the actually selected events from props.selectedRecurringEvents
   // This works for both subscribed groups and individual selections
-  return groupEventTypes.filter(type => 
-    props.selectedEventTypes && props.selectedEventTypes.includes(type)
+  return groupRecurringEvents.filter(event => 
+    props.selectedRecurringEvents && props.selectedRecurringEvents.includes(event)
   ).length
 }
 
 const getGroupTotalCount = (group) => {
-  return getGroupEventTypes(group).length
+  return getGroupRecurringEvents(group).length
 }
 
 const getGroupDisplayName = (group) => {
@@ -996,36 +946,36 @@ const getCountDisplayClass = (groupId) => {
 }
 
 // Keep the old function for backward compatibility in existing calendars display
-const getConciseEventTypes = (eventTypes) => {
-  if (!eventTypes || eventTypes.length === 0) return ''
+const getConciseRecurringEvents = (recurringEvents) => {
+  if (!recurringEvents || recurringEvents.length === 0) return ''
   
   // For 1-2 items, show all
-  if (eventTypes.length <= 2) {
-    return eventTypes.join(', ')
+  if (recurringEvents.length <= 2) {
+    return recurringEvents.join(', ')
   }
   
   // For 3+ items, be more aggressive with truncation to avoid UI clutter
-  const firstEventType = eventTypes[0]
-  const remaining = eventTypes.length - 1
+  const firstEvent = recurringEvents[0]
+  const remaining = recurringEvents.length - 1
   
-  return `${firstEventType} and ${remaining} more...`
+  return `${firstEvent} and ${remaining} more...`
 }
 
-// Watch for event type changes to auto-populate form name and track user interaction
-watch([() => props.selectedEventTypes, () => props.filterMode], () => {
+// Watch for recurring event changes to auto-populate form name and track user interaction
+watch([() => props.selectedRecurringEvents], () => {
   updateFormName()
   
   // Track if user has ever selected events to prevent section from disappearing
-  if (props.selectedEventTypes.length > 0) {
-    hasEverHadEventTypes.value = true
+  if (props.selectedRecurringEvents.length > 0) {
+    hasEverHadRecurringEvents.value = true
   }
   
   // Exit update mode if no events are selected (with delay to allow parent to update props)
-  if (props.selectedEventTypes.length === 0 && isUpdateMode.value) {
+  if (props.selectedRecurringEvents.length === 0 && isUpdateMode.value) {
     // Use nextTick to allow parent component to process the load-filter event first
     setTimeout(() => {
       // Only exit if still no events after allowing time for parent to update
-      if (props.selectedEventTypes.length === 0 && isUpdateMode.value) {
+      if (props.selectedRecurringEvents.length === 0 && isUpdateMode.value) {
         exitUpdateMode()
       }
     }, 100)

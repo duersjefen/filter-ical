@@ -19,10 +19,10 @@ export function useUnifiedSelection() {
   
   // Extract reactive refs properly from stores
   const {
-    selectedEventTypes,
+    selectedRecurringEvents,
     subscribedGroups,
     expandedGroups,
-    expandedEventTypes
+    expandedRecurringEvents
   } = storeToRefs(selectionStore)
   
   // ===============================================
@@ -30,19 +30,19 @@ export function useUnifiedSelection() {
   // ===============================================
   
   /**
-   * Get all effectively selected event types
+   * Get all effectively selected recurring events
    * Integrates with app store's groups data
    */
-  const effectiveSelectedEventTypes = computed(() => {
-    const selected = [...selectedEventTypes.value]
+  const effectiveSelectedRecurringEvents = computed(() => {
+    const selected = [...selectedRecurringEvents.value]
     
-    // Add event types from subscribed groups
+    // Add recurring events from subscribed groups
     for (const groupId of subscribedGroups.value) {
       const group = appStore.groups[groupId]
-      if (group && group.event_types) {
-        for (const eventType of Object.keys(group.event_types)) {
-          if (group.event_types[eventType].count > 0 && !selected.includes(eventType)) {
-            selected.push(eventType)
+      if (group && group.recurring_events) {
+        for (const recurringEvent of group.recurring_events) {
+          if (recurringEvent.event_count > 0 && !selected.includes(recurringEvent.title)) {
+            selected.push(recurringEvent.title)
           }
         }
       }
@@ -52,37 +52,25 @@ export function useUnifiedSelection() {
   })
   
   /**
-   * Check if all events are selected (integrates with app store data)
+   * Check if all events are selected (simplified - no ungrouped events)
    */
-  const allEventsSelected = (groups, ungroupedEventTypes) => {
-    return selectionStore.allEventsSelected(
-      groups || appStore.groups || {}, 
-      ungroupedEventTypes || [
-        ...(appStore.ungroupedEventTypes || []),
-        ...(appStore.ungroupedRecurringEventTypes || []),
-        ...(appStore.ungroupedUniqueEventTypes || [])
-      ]
-    )
+  const allEventsSelected = (groups) => {
+    return selectionStore.allEventsSelected(groups || appStore.groups || {})
   }
   
   /**
-   * Check if event type is effectively selected (with app store groups)
+   * Check if recurring event is effectively selected (with app store groups)
    */
-  const isEventTypeEffectivelySelected = (eventType, groups) => {
-    return selectionStore.isEventTypeEffectivelySelected(eventType, groups || appStore.groups || {})
+  const isRecurringEventEffectivelySelected = (recurringEventTitle, groups) => {
+    return selectionStore.isRecurringEventEffectivelySelected(recurringEventTitle, groups || appStore.groups || {})
   }
   
   /**
-   * Get selection summary with app store data
+   * Get selection summary with app store data (simplified - no ungrouped events)
    */
   const selectionSummary = computed(() => {
-    const allUngroupedTypes = [
-      ...(appStore.ungroupedEventTypes || []),
-      ...(appStore.ungroupedRecurringEventTypes || []),
-      ...(appStore.ungroupedUniqueEventTypes || [])
-    ]
-    
-    const summary = selectionStore.getSelectionSummary(appStore.groups || {}, allUngroupedTypes)
+    // With simplified backend, everything is auto-grouped
+    const summary = selectionStore.getSelectionSummary(appStore.groups || {}, [])
     
     return {
       ...summary,
@@ -91,41 +79,36 @@ export function useUnifiedSelection() {
   })
   
   /**
-   * Get group breakdown summary for display
+   * Get group breakdown summary for display - Fixed to prevent double counting
    */
   const getGroupBreakdownSummary = () => {
     const groups = appStore.groups || {}
     const totalGroups = Object.keys(groups).length
     const subscribedGroupsCount = subscribedGroups.value.size
-    const selectedEventsCount = selectedEventTypes.value.length
     
-    // Calculate total available events across all groups
-    let totalAvailableEvents = 0
-    Object.values(groups).forEach(group => {
-      if (group.event_types) {
-        const groupEventTypes = Object.keys(group.event_types).filter(eventType => 
-          group.event_types[eventType].count > 0
-        )
-        totalAvailableEvents += groupEventTypes.length
-      }
-    })
+    // Get all unique recurring events across all groups (prevents double counting)
+    const allUniqueRecurringEvents = new Set()
+    const effectivelySelectedRecurringEvents = new Set()
     
-    // Calculate effective selected events (subscribed groups + individual selections)
-    let effectiveSelectedEvents = selectedEventsCount
-    subscribedGroups.value.forEach(groupId => {
-      const group = groups[groupId]
-      if (group && group.event_types) {
-        const groupEventTypes = Object.keys(group.event_types).filter(eventType => 
-          group.event_types[eventType].count > 0
-        )
-        // Add group events that aren't already counted as individual selections
-        groupEventTypes.forEach(eventType => {
-          if (!selectedEventTypes.value.includes(eventType)) {
-            effectiveSelectedEvents++
+    // First pass: collect all unique recurring events
+    Object.entries(groups).forEach(([groupId, group]) => {
+      if (group && group.recurring_events) {
+        group.recurring_events.forEach((recurringEvent) => {
+          if (recurringEvent.event_count > 0) {
+            allUniqueRecurringEvents.add(recurringEvent.title)
+            
+            // Check if this recurring event is effectively selected
+            // (either through group subscription OR individual selection)
+            if (subscribedGroups.value.has(groupId) || selectedRecurringEvents.value.includes(recurringEvent.title)) {
+              effectivelySelectedRecurringEvents.add(recurringEvent.title)
+            }
           }
         })
       }
     })
+    
+    const totalAvailableEvents = allUniqueRecurringEvents.size
+    const effectiveSelectedEvents = effectivelySelectedRecurringEvents.size
     
     if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
       return 'No events or groups selected'
@@ -133,9 +116,11 @@ export function useUnifiedSelection() {
     
     const parts = []
     
-    // Events part
+    // Events part - now shows unique event types
     if (effectiveSelectedEvents > 0) {
       parts.push(`${effectiveSelectedEvents}/${totalAvailableEvents} Events`)
+    } else if (totalAvailableEvents > 0) {
+      parts.push(`0/${totalAvailableEvents} Events`)
     }
     
     // Groups part with special cases
@@ -155,13 +140,13 @@ export function useUnifiedSelection() {
   // ===============================================
   
   /**
-   * Get event types from a group (only those with count > 0)
+   * Get recurring events from a group (only those with count > 0)
    */
-  const getGroupEventTypes = (group) => {
-    if (!group || !group.event_types) return []
-    return Object.keys(group.event_types).filter(eventType => {
-      return group.event_types[eventType].count > 0
-    })
+  const getGroupRecurringEvents = (group) => {
+    if (!group || !group.recurring_events) return []
+    return group.recurring_events.filter(recurringEvent => {
+      return recurringEvent.event_count > 0
+    }).map(recurringEvent => recurringEvent.title)
   }
   
   /**
@@ -169,14 +154,14 @@ export function useUnifiedSelection() {
    */
   const getGroupSelectionState = (group, groupId) => {
     const isSubscribed = selectionStore.isGroupSubscribed(groupId)
-    const eventTypes = getGroupEventTypes(group)
-    const individuallySelected = eventTypes.filter(type => 
-      selectionStore.isEventTypeSelected(type)
+    const recurringEvents = getGroupRecurringEvents(group)
+    const individuallySelected = recurringEvents.filter(title => 
+      selectionStore.isRecurringEventSelected(title)
     ).length
     
     if (isSubscribed) {
-      return { type: 'subscribed', count: eventTypes.length }
-    } else if (individuallySelected === eventTypes.length && eventTypes.length > 0) {
+      return { type: 'subscribed', count: recurringEvents.length }
+    } else if (individuallySelected === recurringEvents.length && recurringEvents.length > 0) {
       return { type: 'fully_selected', count: individuallySelected }
     } else if (individuallySelected > 0) {
       return { type: 'partially_selected', count: individuallySelected }
@@ -204,21 +189,21 @@ export function useUnifiedSelection() {
   }
   
   /**
-   * Handle "Select All Event Types" action for a group
+   * Handle "Select All Recurring Events" action for a group
    */
-  const handleSelectAllEventTypes = ({ groupId, eventTypes, selectAll }) => {
+  const handleSelectAllRecurringEvents = ({ groupId, recurringEvents, selectAll }) => {
     if (selectAll) {
-      // Select all event types in this group
-      eventTypes.forEach(eventType => {
-        if (!selectedEventTypes.value.includes(eventType)) {
-          selectionStore.toggleEventType(eventType)
+      // Select all recurring events in this group
+      recurringEvents.forEach(recurringEvent => {
+        if (!selectedRecurringEvents.value.includes(recurringEvent)) {
+          selectionStore.toggleRecurringEvent(recurringEvent)
         }
       })
     } else {
-      // Deselect all event types in this group
-      eventTypes.forEach(eventType => {
-        if (selectedEventTypes.value.includes(eventType)) {
-          selectionStore.toggleEventType(eventType)
+      // Deselect all recurring events in this group
+      recurringEvents.forEach(recurringEvent => {
+        if (selectedRecurringEvents.value.includes(recurringEvent)) {
+          selectionStore.toggleRecurringEvent(recurringEvent)
         }
       })
     }
@@ -230,21 +215,21 @@ export function useUnifiedSelection() {
   
   return {
     // Properly reactive refs from storeToRefs
-    selectedEventTypes,
+    selectedRecurringEvents,
     subscribedGroups,
     expandedGroups,
-    expandedEventTypes,
+    expandedRecurringEvents,
     
     // Computed properties with app store integration
-    effectiveSelectedEventTypes,
+    effectiveSelectedRecurringEvents,
     selectionSummary,
     
-    // Individual event type operations
-    isEventTypeSelected: selectionStore.isEventTypeSelected,
-    isEventTypeEffectivelySelected,
-    toggleEventType: selectionStore.toggleEventType,
-    selectEventTypes: selectionStore.selectEventTypes,
-    deselectEventTypes: selectionStore.deselectEventTypes,
+    // Individual recurring event operations
+    isRecurringEventSelected: selectionStore.isRecurringEventSelected,
+    isRecurringEventEffectivelySelected,
+    toggleRecurringEvent: selectionStore.toggleRecurringEvent,
+    selectRecurringEvents: selectionStore.selectRecurringEvents,
+    deselectRecurringEvents: selectionStore.deselectRecurringEvents,
     
     // Group subscription operations
     isGroupSubscribed: selectionStore.isGroupSubscribed,
@@ -269,22 +254,28 @@ export function useUnifiedSelection() {
     collapseAllGroups: selectionStore.collapseAllGroups,
     
     // Helper functions
-    getGroupEventTypes,
+    getGroupRecurringEvents,
     getGroupSelectionState,
     getGroupBreakdownSummary,
-    handleSelectAllEventTypes,
+    handleSelectAllRecurringEvents,
     
     // Selection checking methods
     allEventsSelected,
     
-    // Legacy compatibility functions (for gradual migration)
+    // Legacy compatibility functions (simplified - no ungrouped events)
     getSelectionSummary: () => selectionStore.getSelectionSummary(
       appStore.groups || {}, 
-      [
-        ...(appStore.ungroupedEventTypes || []),
-        ...(appStore.ungroupedRecurringEventTypes || []),
-        ...(appStore.ungroupedUniqueEventTypes || [])
-      ]
-    )
+      [] // No ungrouped events with auto-grouping backend
+    ),
+    
+    // Legacy compatibility exports (maintain old names for gradual migration)
+    selectedRecurringEvents: selectedRecurringEvents,
+    expandedRecurringEvents: expandedRecurringEvents,
+    effectiveSelectedRecurringEvents: effectiveSelectedRecurringEvents,
+    isRecurringEventSelected: selectionStore.isRecurringEventSelected,
+    isRecurringEventEffectivelySelected,
+    toggleRecurringEvent: selectionStore.toggleRecurringEvent,
+    selectRecurringEvents: selectionStore.selectRecurringEvents,
+    deselectRecurringEvents: selectionStore.deselectRecurringEvents
   }
 }
