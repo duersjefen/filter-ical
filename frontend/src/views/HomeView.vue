@@ -109,7 +109,7 @@
                   {{ $t('home.viewEvents') }}
                 </button>
                 <button 
-                  v-if="calendar.user_id !== 'default' && !calendar.id.startsWith('cal_domain_') && hasCustomUsername()"
+                  v-if="calendar.user_id !== 'default' && !String(calendar.id).startsWith('cal_domain_') && hasCustomUsername()"
                   @click="deleteCalendar(calendar.id)" 
                   class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg"
                   :disabled="appStore.loading"
@@ -147,7 +147,7 @@
                       {{ $t('home.viewEvents') }}
                     </button>
                     <button 
-                      v-if="calendar.user_id !== 'default' && !calendar.id.startsWith('cal_domain_') && hasCustomUsername()"
+                      v-if="calendar.user_id !== 'default' && !String(calendar.id).startsWith('cal_domain_') && hasCustomUsername()"
                       @click="deleteCalendar(calendar.id)" 
                       class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg whitespace-nowrap"
                       :disabled="appStore.loading"
