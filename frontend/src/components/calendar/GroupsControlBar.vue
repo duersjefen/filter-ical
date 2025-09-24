@@ -6,18 +6,18 @@
       <div v-if="!allSubscribed || !noSelections" class="flex gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
         <button
           v-if="hasSelections"
-          @click="$emit('unsubscribe-all')"
+          @click="$emit('unsubscribe-from-all')"
           class="px-3 py-2 text-sm border border-red-300 dark:border-red-600 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-red-600 dark:text-red-400"
         >
-          ✗ Unsubscribe & Deselect all
+          📤 Unsubscribe from All Groups
         </button>
         
         <button
           v-if="!allSubscribed"
-          @click="$emit('subscribe-and-select-all')"
+          @click="$emit('subscribe-to-all')"
           class="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
         >
-          📁 Subscribe & Select All
+          📥 Subscribe to All Groups
         </button>
       </div>
       
@@ -83,8 +83,8 @@ const noSelections = computed(() => {
 })
 
 defineEmits([
-  'unsubscribe-all',
-  'subscribe-and-select-all', 
+  'unsubscribe-from-all',
+  'subscribe-to-all',
   'expand-all',
   'collapse-all'
 ])

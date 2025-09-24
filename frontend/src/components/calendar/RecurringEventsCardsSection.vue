@@ -463,8 +463,17 @@ const hasAnyVisibleRecurringEvents = computed(() => {
 
 // Methods for visible event type selection
 function selectAllVisible() {
-  const visibleNames = filteredMainRecurringEvents.value.map(recurringEvent => recurringEvent.name)
-  visibleNames.forEach(name => {
+  // Select all visible main recurring events
+  const visibleMainNames = filteredMainRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+  visibleMainNames.forEach(name => {
+    if (!props.selectedRecurringEvents.includes(name)) {
+      emit('toggle-recurring-event', name)
+    }
+  })
+  
+  // Also select all visible single recurring events
+  const visibleSingleNames = filteredSingleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+  visibleSingleNames.forEach(name => {
     if (!props.selectedRecurringEvents.includes(name)) {
       emit('toggle-recurring-event', name)
     }
@@ -472,8 +481,17 @@ function selectAllVisible() {
 }
 
 function clearAllVisible() {
-  const visibleNames = filteredMainRecurringEvents.value.map(recurringEvent => recurringEvent.name)
-  visibleNames.forEach(name => {
+  // Clear all visible main recurring events
+  const visibleMainNames = filteredMainRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+  visibleMainNames.forEach(name => {
+    if (props.selectedRecurringEvents.includes(name)) {
+      emit('toggle-recurring-event', name)
+    }
+  })
+  
+  // Also clear all visible single recurring events
+  const visibleSingleNames = filteredSingleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+  visibleSingleNames.forEach(name => {
     if (props.selectedRecurringEvents.includes(name)) {
       emit('toggle-recurring-event', name)
     }

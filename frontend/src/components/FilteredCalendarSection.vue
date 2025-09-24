@@ -497,8 +497,8 @@ const shouldShowSection = computed(() => {
 
 // Auto-populate form name when groups/events selected
 const updateFormName = () => {
-  if ((props.selectedRecurringEvents.length > 0 || (props.selectedGroups && props.selectedGroups.size > 0)) && !createForm.value.name.trim()) {
-    const groupCount = props.selectedGroups ? props.selectedGroups.size : 0
+  if ((props.selectedRecurringEvents.length > 0 || (props.subscribedGroups && props.subscribedGroups.size > 0)) && !createForm.value.name.trim()) {
+    const groupCount = props.subscribedGroups ? props.subscribedGroups.size : 0
     const suffix = groupCount > 0 ? t('filteredCalendar.groupSelection') : t('filteredCalendar.eventSelection')
     createForm.value.name = `${props.selectedCalendar.name} - ${suffix}`
   }
@@ -521,7 +521,7 @@ const createFilteredCalendar = async () => {
 
   const filterConfig = {
     recurring_events: props.selectedRecurringEvents,
-    groups: props.selectedGroups
+    groups: Array.from(props.subscribedGroups || [])
   }
 
   let success = false
@@ -580,7 +580,7 @@ const updateFilteredCalendar = async () => {
     // Create filter config based on current recurring events selection
     const filterConfig = {
       recurring_events: props.selectedRecurringEvents,
-      groups: props.selectedGroups
+      groups: Array.from(props.subscribedGroups || [])
     }
     
     const success = await apiUpdateFiltered(
@@ -797,12 +797,12 @@ const getSmartRecurringEventDisplay = (selectedRecurringEvents) => {
 }
 
 const getGroupAwareDisplay = (selectedRecurringEvents) => {
-  if (!props.groups || !props.selectedGroups) {
+  if (!props.groups || !props.subscribedGroups) {
     return getBasicRecurringEventDisplay(selectedRecurringEvents)
   }
   
   const totalGroups = Object.keys(props.groups).length
-  const subscribedGroups = props.selectedGroups.size || 0
+  const subscribedGroups = props.subscribedGroups.size || 0
   
   if (subscribedGroups === 0 && (!selectedRecurringEvents || selectedRecurringEvents.length === 0)) {
     return 'No groups or events selected'
@@ -861,7 +861,7 @@ const getBasicRecurringEventDisplay = (selectedRecurringEvents) => {
 
 // New helper functions for improved group display
 const getGroupSubscriptionIcon = (groupId) => {
-  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
   return isSubscribed ? '✅' : '☐'
 }
 
@@ -890,7 +890,7 @@ const getGroupDisplayName = (group) => {
 }
 
 const getGroupSubscriptionStatus = (groupId) => {
-  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
   const selectedCount = getGroupSelectedCount(groupId)
   const totalCount = getGroupTotalCount(props.groups[groupId])
   
@@ -906,7 +906,7 @@ const getGroupSubscriptionStatus = (groupId) => {
 }
 
 const getGroupDisplayClass = (groupId) => {
-  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
   const selectedCount = getGroupSelectedCount(groupId)
   const totalCount = getGroupTotalCount(props.groups[groupId])
   
@@ -926,7 +926,7 @@ const getGroupDisplayClass = (groupId) => {
 }
 
 const getCountDisplayClass = (groupId) => {
-  const isSubscribed = props.selectedGroups && props.selectedGroups.includes(groupId)
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
   const selectedCount = getGroupSelectedCount(groupId)
   const totalCount = getGroupTotalCount(props.groups[groupId])
   
