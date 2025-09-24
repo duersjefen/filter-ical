@@ -214,18 +214,25 @@
           <!-- Expandable Events List -->
           <div 
             v-if="expandedRecurringEvents.has(recurringEvent.name)"
-            class="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-6 py-3 rounded-b-lg"
+            class="border-t border-gray-100 dark:border-gray-700 bg-gray-25 dark:bg-gray-900/20"
           >
-            <div class="space-y-3">
+            <!-- Events List (Compact Display) -->
+            <div class="space-y-1">
               <div 
                 v-for="event in recurringEvent.events" 
                 :key="event.uid"
-                class="py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0"
+                class="px-2 py-1.5 bg-gray-50 dark:bg-gray-800/30 rounded text-xs"
               >
+                <!-- Event Title (if different from recurring event name) -->
                 <div v-if="event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{{ event.title }}</div>
-                <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
-                  <span>📅 {{ formatDateRange(event) }}</span>
-                  <span v-if="event.location" class="break-words">📍 {{ event.location }}</span>
+                
+                <!-- Compact Event Details -->
+                <div class="text-gray-700 dark:text-gray-300">
+                  📅 {{ formatDateRange(event) }}
+                  <span v-if="event.is_recurring" class="ml-1">🔄</span>
+                </div>
+                <div v-if="event.location" class="text-gray-600 dark:text-gray-400 mt-0.5">
+                  📍 {{ event.location }}
                 </div>
               </div>
             </div>
