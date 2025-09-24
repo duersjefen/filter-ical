@@ -8,8 +8,18 @@
       @click="toggleExpanded"
       :title="isExpanded ? 'Minimize section' : 'Expand section'"
     >
-      <div class="flex items-center justify-between">
-        <div>
+      <div class="flex items-center gap-3">
+        <!-- Chevron icon (moved to left, matching groups card) -->
+        <svg 
+          class="w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300 flex-shrink-0" 
+          :class="{ 'rotate-90': isExpanded }"
+          fill="currentColor" 
+          viewBox="0 0 20 20"
+        >
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
+        
+        <div class="flex-1">
           <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
             🔗 {{ $t('filteredCalendar.title') }}
           </h3>
@@ -17,17 +27,6 @@
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>
-        <!-- Chevron icon with background circle (consistent with RecurringEventsCardsSection) -->
-        <button class="flex-shrink-0 p-2 rounded-full bg-white/50 dark:bg-gray-600/50 hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 pointer-events-none">
-          <svg 
-            class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform duration-200" 
-            :class="{ 'rotate-180': isExpanded }"
-            fill="currentColor" 
-            viewBox="0 0 20 20"
-          >
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </button>
       </div>
     </div>
 

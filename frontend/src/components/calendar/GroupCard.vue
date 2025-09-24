@@ -19,37 +19,32 @@
           <div class="font-bold text-lg text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
             {{ group.name }}
           </div>
-          <!-- Description and Selection Status -->
-          <div class="flex items-center gap-2 mt-1">
-            <div v-if="group.description" class="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {{ group.description }}
-            </div>
-            <!-- Selection Status Bubble -->
-            <div v-if="hasRecurringEvents" 
-                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
-                 :class="getSelectionBubbleClasses()"
-                 :title="eventCountDisplay"
-            >
-              {{ selectedGroupRecurringEvents.length }}/{{ recurringEventsCount }}
-            </div>
+          <!-- Description -->
+          <div v-if="group.description" class="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">
+            {{ group.description }}
           </div>
         </div>
         
-        <!-- Enhanced status indicators and arrow -->
-        <div class="flex items-center gap-2">
-          <!-- Selection Status Indicator -->
-          <div v-if="isGroupSelected" class="w-3 h-3 bg-blue-500 rounded-full"></div>
-          <div v-else-if="isPartiallySelected" class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+        <!-- Selection bubble and dropdown arrow -->
+        <div class="flex items-center gap-3">
+          <!-- Selection count bubble (moved from description area) -->
+          <div v-if="hasRecurringEvents" 
+               class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
+               :class="getSelectionBubbleClasses()"
+               :title="eventCountDisplay"
+          >
+            {{ selectedGroupRecurringEvents.length }}/{{ recurringEventsCount }}
+          </div>
           
-          <!-- Expansion Arrow -->
-          <div class="flex-shrink-0 p-2 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-all duration-200">
+          <!-- Expansion Arrow - updated to match event view style -->
+          <div class="flex-shrink-0">
             <svg 
-              class="w-5 h-5 text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all duration-200"
-              :class="{ 'rotate-180': isExpanded }"
+              class="w-4 h-4 text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-transform duration-300"
+              :class="{ 'rotate-90': isExpanded }"
               fill="currentColor" 
               viewBox="0 0 20 20"
             >
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
           </div>
         </div>
@@ -134,28 +129,34 @@
               
               <!-- Recurring Event Info - Enhanced Layout -->
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
-                    {{ recurringEvent.title }}
-                  </div>
-                  <!-- Event count badge beside title -->
-                  <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors">
-                    {{ recurringEvent.event_count }}
-                  </div>
+                <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                  {{ recurringEvent.title }}
                 </div>
               </div>
               
-              <!-- Expansion Arrow -->
-              <button
-                @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
-                class="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors flex-shrink-0"
-                :class="{ 'transform rotate-180': isRecurringEventExpanded(recurringEvent.title) }"
-                title="Click to view individual events"
-              >
-                <svg class="w-4 h-4 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-colors" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </button>
+              <!-- Count badge and expansion arrow -->
+              <div class="flex items-center gap-2">
+                <!-- Event count badge beside dropdown arrow -->
+                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors">
+                  {{ recurringEvent.event_count }}
+                </div>
+                
+                <!-- Expansion Arrow (larger and standardized) -->
+                <button
+                  @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
+                  class="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors flex-shrink-0"
+                  title="Click to view individual events"
+                >
+                  <svg 
+                    class="w-5 h-5 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-transform duration-300" 
+                    :class="{ 'rotate-90': isRecurringEventExpanded(recurringEvent.title) }"
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <!-- Individual Events List -->

@@ -37,14 +37,14 @@
       <div class="hidden sm:flex items-center justify-between">
         <!-- Left: Header Info with collapse button -->
         <div class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200" @click="$emit('toggle-recurring-events-section')">
-          <!-- Dropdown Icon -->
+          <!-- Dropdown Icon (standardized design) -->
           <svg 
-            class="w-5 h-5 text-gray-400 transition-transform duration-200"
-            :class="{ 'rotate-180': !props.showRecurringEventsSection }"
+            class="w-4 h-4 text-gray-400 transition-transform duration-300"
+            :class="{ 'rotate-90': props.showRecurringEventsSection }"
             fill="currentColor" 
             viewBox="0 0 20 20"
           >
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
           
           <div class="flex-1">
