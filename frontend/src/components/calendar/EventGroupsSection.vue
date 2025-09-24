@@ -82,7 +82,6 @@ const {
   expandAllGroups,
   collapseAllGroups,
   subscribeAndSelectAllGroups,
-  unsubscribeFromAllGroups,
   unsubscribeAndDeselectAllGroups,
   handleSelectAllRecurringEvents,
   allEventsSelected,

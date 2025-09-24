@@ -43,7 +43,7 @@
         :show-selected-only="showSelectedOnly"
         :search-term="recurringEventSearch"
         :has-groups="appStore.hasGroups"
-        :summary-text="eventGroupSummary"
+        :summary-text="getGroupBreakdownSummary()"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
         @clear-all="clearSelection"
@@ -210,7 +210,8 @@ const {
   toggleRecurringEvent: unifiedToggleRecurringEvent,
   selectRecurringEvents,
   clearSelection,
-  subscribeAndSelectAllGroups
+  subscribeAndSelectAllGroups,
+  getGroupBreakdownSummary
 } = useSelection()
 
 // View mode localStorage persistence functions
@@ -253,47 +254,6 @@ const shouldShowTypes = computed(() => {
   return !shouldShowGroups.value
 })
 
-// Computed property for the summary text that should appear in both card headers
-const eventGroupSummary = computed(() => {
-  const totalGroups = appStore.groups ? Object.keys(appStore.groups).length : 0
-  const subscribedGroupsCount = selectedGroups.value ? selectedGroups.value.length : 0
-  const selectedEventsCount = selectedRecurringEvents.value ? selectedRecurringEvents.value.length : 0
-  
-  // Calculate total available events
-  let totalAvailableEvents = 0
-  if (recurringEvents.value) {
-    Object.values(recurringEvents.value).forEach(recurringEvent => {
-      if (recurringEvent && recurringEvent.count > 0) {
-        totalAvailableEvents += 1 // Count recurring events, not individual events
-      }
-    })
-  }
-  
-  // Use the effective selected count
-  let effectiveSelectedEvents = selectedEventsCount
-  
-  if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
-    return 'No events or groups selected'
-  }
-  
-  const parts = []
-  
-  // Events part
-  if (effectiveSelectedEvents > 0 || totalAvailableEvents > 0) {
-    parts.push(`${effectiveSelectedEvents}/${totalAvailableEvents} Events`)
-  }
-  
-  // Groups part with special cases
-  if (subscribedGroupsCount === 0) {
-    parts.push('No groups')
-  } else if (subscribedGroupsCount === totalGroups && totalGroups > 0) {
-    parts.push('All groups')
-  } else {
-    parts.push(`${subscribedGroupsCount}/${totalGroups} Groups`)
-  }
-  
-  return parts.join(' & ')
-})
 
 
 // Handle view mode changes
