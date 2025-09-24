@@ -401,8 +401,22 @@ export const useAppStore = defineStore('app', () => {
           recurringEventMap[recurringEvent].events.push(event)
         })
         
+        // Store the processed data in reactive variables for CalendarView
+        recurringEvents.value = recurringEventMap
+        events.value = result.data.events || []
+        
+        console.log('✅ Personal calendar data loaded:', {
+          hasGroups: hasGroups.value,
+          eventsCount: events.value.length,
+          recurringEventsCount: Object.keys(recurringEvents.value).length,
+          recurringEventNames: Object.keys(recurringEvents.value)
+        })
+      } else {
+        // No events data - clear reactive variables
+        recurringEvents.value = {}
+        events.value = []
+        console.log('⚠️ No events data in personal calendar response')
       }
-
       
       console.log('📊 Calendar data loaded:', {
         hasGroups: hasGroups.value,
