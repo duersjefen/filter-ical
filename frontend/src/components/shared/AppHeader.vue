@@ -27,15 +27,16 @@
         <div v-if="isEditing" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-md border border-white/30 dark:border-gray-600 px-2 py-1.5 sm:px-3 sm:py-2">
           <div class="flex items-center gap-1.5 sm:gap-2">
             <input
-              ref="usernameInputRef"
+              ref="desktopUsernameInputRef"
               v-model="usernameInput"
               @keyup.enter="saveUsername"
               @keyup.escape="cancelEdit"
               @blur="saveUsername"
               type="text"
-              class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-xs sm:text-sm w-24 sm:w-32 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
-              :placeholder="$t('username.placeholder')"
+              class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-lg text-sm w-32 sm:w-40 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 shadow-sm"
+              placeholder="Enter your name"
               maxlength="20"
+              autocomplete="off"
             />
             <button 
               @click="saveUsername"
@@ -58,16 +59,16 @@
         <div 
           v-else-if="!hasCustomUsername()" 
           @click="startEdit"
-          class="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg shadow-md border border-white/20 px-2.5 py-1.5 sm:px-3 sm:py-2 cursor-pointer transition-all duration-300 hover:shadow-lg group"
+          class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-sm rounded-lg shadow-md border-2 border-blue-400/50 hover:border-blue-300/70 px-3 py-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 group"
         >
           <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-            <span class="text-white text-xs sm:text-sm font-medium group-hover:text-white/90">
+            <div class="w-2.5 h-2.5 bg-blue-300 rounded-full animate-pulse shadow-sm"></div>
+            <span class="text-white text-xs sm:text-sm font-semibold group-hover:text-blue-100 drop-shadow-sm">
               {{ contextMessage }}
             </span>
-            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/60 group-hover:text-white/80 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-            </svg>
+            <div class="ml-1 px-2 py-0.5 bg-white/20 rounded-full">
+              <span class="text-xs font-bold text-white">CLICK</span>
+            </div>
           </div>
         </div>
         
@@ -211,15 +212,16 @@
         <div v-if="isEditing" class="w-full max-w-sm bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/30 dark:border-gray-600 p-4">
           <div class="flex items-center gap-3">
             <input
-              ref="usernameInputRef"
+              ref="mobileUsernameInputRef"
               v-model="usernameInput"
               @keyup.enter="saveUsername"
               @keyup.escape="cancelEdit"
               @blur="saveUsername"
               type="text"
-              class="flex-1 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 px-4 py-3 rounded-xl text-base focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 touch-manipulation"
-              :placeholder="$t('username.placeholder')"
+              class="flex-1 bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-4 py-3 rounded-xl text-base focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 touch-manipulation shadow-sm"
+              placeholder="Enter your name"
               maxlength="20"
+              autocomplete="off"
             />
             <button 
               @click="saveUsername"
@@ -242,16 +244,18 @@
         <div 
           v-else-if="!hasCustomUsername()" 
           @click="startEdit"
-          class="w-full max-w-sm bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 cursor-pointer transition-all duration-200 hover:shadow-xl group touch-manipulation"
+          class="w-full max-w-sm bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 active:from-blue-500/40 active:to-purple-500/40 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-blue-400/50 hover:border-blue-300/70 p-4 cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-105 group touch-manipulation"
         >
-          <div class="flex items-center justify-center gap-3">
-            <div class="w-3 h-3 bg-amber-400 rounded-full animate-pulse shadow-sm"></div>
-            <span class="text-white text-base font-medium group-hover:text-white/90 text-center">
-              {{ contextMessage }}
-            </span>
-            <svg class="w-4 h-4 text-white/60 group-hover:text-white/80 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-            </svg>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-blue-300 rounded-full animate-pulse shadow-sm"></div>
+              <span class="text-white text-base font-semibold group-hover:text-blue-100 drop-shadow-sm">
+                {{ contextMessage }}
+              </span>
+            </div>
+            <div class="px-3 py-1 bg-white/20 rounded-full">
+              <span class="text-sm font-bold text-white">TAP TO LOGIN</span>
+            </div>
           </div>
         </div>
         
@@ -322,7 +326,8 @@ const { username, setUsername, clearUsername, hasCustomUsername, isValidUsername
 // Simple editing state
 const isEditing = ref(false)
 const usernameInput = ref('')
-const usernameInputRef = ref(null)
+const desktopUsernameInputRef = ref(null)
+const mobileUsernameInputRef = ref(null)
 
 // Context-aware message for anonymous mode
 const contextMessage = computed(() => {
@@ -338,9 +343,42 @@ const startEdit = async () => {
   isEditing.value = true
   usernameInput.value = username.value
   await nextTick()
-  if (usernameInputRef.value) {
-    usernameInputRef.value.focus()
-    usernameInputRef.value.select()
+  
+  // Focus the appropriate input based on which one is rendered
+  const focusInputs = () => {
+    let focused = false
+    
+    // Try desktop input first
+    if (desktopUsernameInputRef.value) {
+      try {
+        desktopUsernameInputRef.value.focus()
+        desktopUsernameInputRef.value.select()
+        focused = true
+      } catch (e) {
+        console.debug('Desktop input focus failed:', e)
+      }
+    }
+    
+    // Try mobile input if desktop didn't work
+    if (!focused && mobileUsernameInputRef.value) {
+      try {
+        mobileUsernameInputRef.value.focus()
+        mobileUsernameInputRef.value.select()
+        focused = true
+      } catch (e) {
+        console.debug('Mobile input focus failed:', e)
+      }
+    }
+    
+    return focused
+  }
+  
+  // Try immediately
+  if (!focusInputs()) {
+    // If that fails, try again after a short delay
+    setTimeout(() => {
+      focusInputs()
+    }, 50)
   }
 }
 
