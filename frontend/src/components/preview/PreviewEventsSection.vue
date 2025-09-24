@@ -64,6 +64,7 @@ const {
   groupEventsByMonth
 } = usePreview()
 
+
 // Local state
 const isExpanded = ref(false)
 const viewMode = ref('list')

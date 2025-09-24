@@ -15,6 +15,7 @@ export function useFilteredCalendarAPI() {
   const filteredCalendars = ref([])
   const creating = ref(false)
   const updating = ref(false)
+  const deleting = ref(false)
   
   const appStore = useAppStore()
 
@@ -170,11 +171,51 @@ export function useFilteredCalendarAPI() {
   }
 
   const deleteFilteredCalendar = async (filterId) => {
-    // TODO: Backend doesn't currently support deleting individual filters
-    // For now, this functionality is not available
-    console.warn('Filter deletion functionality not yet implemented in backend')
-    setError('Filter deletion not yet supported')
-    return false
+    if (!filterId) {
+      setError('Filter ID is required')
+      return false
+    }
+
+    // Find the filter in the current list to determine the endpoint
+    const filterToDelete = filteredCalendars.value.find(filter => filter.id === filterId)
+    if (!filterToDelete) {
+      setError('Filter not found')
+      return false
+    }
+
+    deleting.value = true
+
+    try {
+      let endpoint
+      if (filterToDelete.domain_key) {
+        // Domain calendar filter
+        endpoint = `/domains/${filterToDelete.domain_key}/filters/${filterId}`
+      } else if (filterToDelete.calendar_id) {
+        // User calendar filter
+        endpoint = `/calendars/${filterToDelete.calendar_id}/filters/${filterId}`
+      } else {
+        setError('Invalid filter: missing calendar_id or domain_key')
+        return false
+      }
+
+      const result = await del(endpoint)
+      
+      if (result.success) {
+        // Remove from local list
+        filteredCalendars.value = removeFilteredCalendarFromList(filteredCalendars.value, filterId)
+        return true
+      } else {
+        console.error('Error deleting filtered calendar:', result.error)
+        setError(result.error || 'Failed to delete filter')
+        return false
+      }
+    } catch (error) {
+      console.error('Error deleting filtered calendar:', error)
+      setError('Failed to delete filter')
+      return false
+    } finally {
+      deleting.value = false
+    }
   }
 
   const getPublicCalendar = async (token) => {
@@ -232,6 +273,7 @@ export function useFilteredCalendarAPI() {
     loading,
     creating,
     updating,
+    deleting,
     error,
     
     // API Operations

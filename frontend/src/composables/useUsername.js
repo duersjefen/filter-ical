@@ -1,6 +1,6 @@
 /**
  * Username Management Composable
- * Simple username state with localStorage persistence for data segregation
+ * Simple username state with localStorage persistence for UI preferences
  */
 import { ref, watch } from 'vue'
 

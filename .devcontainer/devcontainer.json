@@ -1,0 +1,50 @@
+{
+  "name": "iCal Viewer - Vue Frontend Development",
+  "dockerComposeFile": ["../docker-compose.dev.yml"],
+  "service": "frontend-dev",
+  "workspaceFolder": "/app",
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Vue.volar",
+        "ms-python.python",
+        "ms-vscode-remote.remote-containers", 
+        "GitHub.copilot"
+      ],
+      
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "sh",
+        "vue.server.hybridMode": true,
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "tailwindCSS.experimental.configFile": "tailwind.config.js",
+        "files.associations": {
+          "*.vue": "vue"
+        }
+      }
+    }
+  },
+  
+  "forwardPorts": [8000, 3000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Frontend Dev Server",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "Backend API Server", 
+      "onAutoForward": "silent"
+    }
+  },
+  
+  "postCreateCommand": "echo '🎉 Dev Container Ready! Vue language server should work perfectly now.'",
+  
+  "remoteUser": "devuser",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  }
+}

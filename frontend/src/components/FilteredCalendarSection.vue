@@ -73,7 +73,21 @@
           {{ $t('filteredCalendar.createTitle') }}
         </h4>
         
-        <form @submit.prevent="createFilteredCalendar" class="space-y-4">
+        <!-- Login Required Message for Anonymous Users -->
+        <div v-if="!hasCustomUsername()" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4">
+          <div class="flex items-center gap-2">
+            <div class="text-amber-600 dark:text-amber-400">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <p class="text-amber-800 dark:text-amber-200 text-sm font-medium">
+              Please set a username above to save filters
+            </p>
+          </div>
+        </div>
+        
+        <form @submit.prevent="createFilteredCalendar" class="space-y-4" :class="{ 'opacity-50 pointer-events-none': !hasCustomUsername() }">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('filteredCalendar.name') }}
@@ -122,7 +136,7 @@
           <div class="flex gap-3">
             <button
               type="submit"
-              :disabled="!createForm.name.trim() || creating"
+              :disabled="!createForm.name.trim() || creating || !hasCustomUsername()"
               class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               :class="isUpdateMode 
                 ? 'bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white' 
@@ -360,6 +374,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatDateTime as formatDateTimeUtil, formatDateRange as formatDateRangeUtil } from '@/utils/dates'
 import { useFilteredCalendarAPI } from '@/composables/useFilteredCalendarAPI'
+import { useUsername } from '@/composables/useUsername'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 
 // Props
@@ -404,6 +419,7 @@ const emit = defineEmits(['navigate-to-calendar', 'load-filter'])
 
 // Composables
 const { t } = useI18n()
+const { hasCustomUsername } = useUsername()
 const { 
   filteredCalendars, 
   loading, 
@@ -540,7 +556,8 @@ const createFilteredCalendar = async () => {
     success = await apiCreateFiltered(
       props.selectedCalendar.id,
       createForm.value.name,
-      filterConfig
+      filterConfig.groups,
+      filterConfig.recurring_events
     )
   }
 

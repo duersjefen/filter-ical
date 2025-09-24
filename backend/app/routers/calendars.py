@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 from ..core.database import get_db
 from ..services.calendar_service import (
     create_calendar, get_calendars, get_calendar_by_id, delete_calendar,
-    get_calendar_events, sync_calendar_events, create_filter, get_filters
+    get_calendar_events, sync_calendar_events, create_filter, get_filters,
+    delete_filter, get_filter_by_id
 )
 
 router = APIRouter()
@@ -237,6 +238,37 @@ async def get_calendar_filters(
             })
         
         return filters_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/{calendar_id}/filters/{filter_id}")
+async def delete_calendar_filter(
+    calendar_id: int,
+    filter_id: int,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Delete filter for user calendar."""
+    try:
+        # Verify calendar exists and user has access
+        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        if not calendar:
+            raise HTTPException(status_code=404, detail="Calendar not found")
+        
+        # Delete filter
+        success, error = delete_filter(db, filter_id, calendar_id=calendar_id, username=username)
+        if not success:
+            if "not found" in error.lower():
+                raise HTTPException(status_code=404, detail="Filter not found")
+            else:
+                raise HTTPException(status_code=400, detail=error)
+        
+        # Return 204 No Content on successful deletion
+        return None
         
     except HTTPException:
         raise

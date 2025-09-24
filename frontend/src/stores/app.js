@@ -21,9 +21,6 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   
   const initializeApp = () => {
-    // Load calendars from localStorage immediately
-    loadCalendarsFromLocalStorage()
-    
     // Set up username change detection for data source switching
     onUsernameChange((newUsername, oldUsername) => {
       console.log('🔄 App store detected username change - triggering data reload')
@@ -47,57 +44,12 @@ export const useAppStore = defineStore('app', () => {
     url: ''
   })
 
-  // localStorage persistence for calendars - dynamic based on username
-  const getCalendarsStorageKey = () => `icalViewer_calendars_${getUserId()}`
-  
-  // Clear anonymous localStorage data when user logs in
-  const clearAnonymousLocalStorage = () => {
-    try {
-      const keys = Object.keys(localStorage)
-      keys.forEach(key => {
-        if (key.startsWith('icalViewer_calendars_anon_') || key === 'icalViewer_calendars_public') {
-          localStorage.removeItem(key)
-          console.log('🧹 Cleared anonymous localStorage key:', key)
-        }
-      })
-    } catch (error) {
-      console.warn('Failed to clear anonymous localStorage:', error)
-    }
-  }
 
   const generateLocalCalendarId = () => {
     // Generate a local calendar ID with 'local_' prefix
     return 'local_' + Math.random().toString(36).substring(2, 11)
   }
 
-  const saveCalendarsToLocalStorage = () => {
-    try {
-      const storageKey = getCalendarsStorageKey()
-      localStorage.setItem(storageKey, JSON.stringify(calendars.value))
-      console.log(`Calendars saved to ${storageKey}`)
-    } catch (error) {
-      console.warn('Failed to save calendars to localStorage:', error)
-    }
-  }
-
-  const loadCalendarsFromLocalStorage = () => {
-    try {
-      const storageKey = getCalendarsStorageKey()
-      const saved = localStorage.getItem(storageKey)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
-          calendars.value = parsed
-          console.log(`Calendars loaded from ${storageKey}: ${parsed.length} calendars`)
-          return true
-        }
-      }
-      console.log(`No calendars found in ${storageKey}`)
-    } catch (error) {
-      console.warn('Failed to load calendars from localStorage:', error)
-    }
-    return false
-  }
 
   const fetchCalendars = async () => {
     console.log('🔄 fetchCalendars called with username:', getUserId())
@@ -112,7 +64,7 @@ export const useAppStore = defineStore('app', () => {
     })
     
     if (hasCustomUsername) {
-      // LOGGED IN: Load from server only, clear localStorage from any anonymous data
+      // LOGGED IN: Load from server only
       console.log('🔐 User is logged in - loading from server only')
       
       try {
@@ -132,9 +84,6 @@ export const useAppStore = defineStore('app', () => {
             firstCalendarName: calendars.value[0]?.name
           })
           
-          // Clear any anonymous localStorage data to prevent confusion
-          clearAnonymousLocalStorage()
-          
           return { success: true, data: calendars.value }
         } else {
           console.error('❌ Server load failed for logged in user:', result.error)
@@ -148,15 +97,14 @@ export const useAppStore = defineStore('app', () => {
       }
       
     } else {
-      // LOGGED OUT: Use localStorage only, no server sync
-      console.log('👤 User is anonymous - using localStorage only')
+      // LOGGED OUT: Read-only mode - no calendar management
+      console.log('👤 User is anonymous - read-only mode (login required for calendar management)')
       
-      const hasLocalData = loadCalendarsFromLocalStorage()
-      console.log('📦 localStorage data loaded:', { hasLocalData, count: calendars.value.length })
-      
+      calendars.value = []
       return { 
-        success: hasLocalData || calendars.value.length >= 0, 
-        data: calendars.value
+        success: true, 
+        data: [],
+        message: 'Login required for calendar management'
       }
     }
   }
@@ -231,15 +179,8 @@ export const useAppStore = defineStore('app', () => {
         source: 'local'
       }
 
-      // Add to calendars and save to localStorage
-      calendars.value.push(localCalendar)
-      saveCalendarsToLocalStorage()
-
-      // Reset form
-      newCalendar.value = { name: '', url: '' }
-
-      console.log('✅ Calendar created locally:', localCalendar)
-      return { success: true, data: localCalendar }
+      // Prevent calendar creation for anonymous users
+      return { success: false, error: 'Login required to create calendars' }
     }
   }
 
@@ -299,14 +240,11 @@ export const useAppStore = defineStore('app', () => {
       }
       
     } else {
-      // LOGGED OUT: Delete from localStorage only
-      console.log('👤 User anonymous - deleting locally only')
+      // LOGGED OUT: Read-only mode
+      console.log('👤 User anonymous - read-only mode')
       
-      calendars.value.splice(calendarIndex, 1)
-      saveCalendarsToLocalStorage()
-      
-      console.log('✅ Calendar deleted locally')
-      return { success: true }
+      // Prevent calendar deletion for anonymous users
+      return { success: false, error: 'Login required to delete calendars' }
     }
   }
 
@@ -486,39 +424,9 @@ export const useAppStore = defineStore('app', () => {
   
   const savedFilters = ref([])
 
-  // localStorage key for saved filters
-  const getSavedFiltersKey = () => `icalViewer_savedFilters_${getUserId()}`
-
   const fetchFilters = async () => {
-    try {
-      const storageKey = getSavedFiltersKey()
-      const saved = localStorage.getItem(storageKey)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
-          savedFilters.value = parsed
-          console.log(`Loaded ${parsed.length} saved filters from localStorage`)
-          return { success: true, data: { filters: parsed } }
-        }
-      }
-      console.log('No saved filters found in localStorage')
-      savedFilters.value = []
-      return { success: true, data: { filters: [] } }
-    } catch (error) {
-      console.warn('Failed to load filters from localStorage:', error)
-      savedFilters.value = []
-      return { success: false, error: 'Failed to load saved filters' }
-    }
-  }
-
-  const saveFiltersToStorage = () => {
-    try {
-      const storageKey = getSavedFiltersKey()
-      localStorage.setItem(storageKey, JSON.stringify(savedFilters.value))
-      console.log(`Saved ${savedFilters.value.length} filters to localStorage`)
-    } catch (error) {
-      console.warn('Failed to save filters to localStorage:', error)
-    }
+    // Note: Saved filters functionality not implemented in new backend yet
+    return { success: true, data: { filters: [] } }
   }
 
   const saveFilter = async (name, config) => {
@@ -533,9 +441,6 @@ export const useAppStore = defineStore('app', () => {
 
     // Add to filters list
     savedFilters.value.push(newFilter)
-    
-    // Save to localStorage
-    saveFiltersToStorage()
 
     return { success: true, data: newFilter }
   }
@@ -549,9 +454,6 @@ export const useAppStore = defineStore('app', () => {
 
     // Remove from filters list
     savedFilters.value.splice(filterIndex, 1)
-    
-    // Save to localStorage
-    saveFiltersToStorage()
 
     return { success: true }
   }

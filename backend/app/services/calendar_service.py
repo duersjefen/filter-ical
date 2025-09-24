@@ -371,3 +371,65 @@ def get_filter_by_uuid(db: Session, link_uuid: str) -> Optional[Filter]:
     I/O Operation - Database query.
     """
     return db.query(Filter).filter(Filter.link_uuid == link_uuid).first()
+
+
+def get_filter_by_id(db: Session, filter_id: int, calendar_id: Optional[int] = None,
+                     domain_key: Optional[str] = None, username: Optional[str] = None) -> Optional[Filter]:
+    """
+    Get filter by ID with ownership verification.
+    
+    Args:
+        db: Database session
+        filter_id: Filter ID
+        calendar_id: Calendar ID for user filters
+        domain_key: Domain key for domain filters
+        username: Username for user scoping
+        
+    Returns:
+        Filter object or None
+        
+    I/O Operation - Database query.
+    """
+    query = db.query(Filter).filter(Filter.id == filter_id)
+    
+    if calendar_id:
+        query = query.filter(Filter.calendar_id == calendar_id)
+    
+    if domain_key:
+        query = query.filter(Filter.domain_key == domain_key)
+    
+    if username:
+        query = query.filter(Filter.username == username)
+    
+    return query.first()
+
+
+def delete_filter(db: Session, filter_id: int, calendar_id: Optional[int] = None,
+                  domain_key: Optional[str] = None, username: Optional[str] = None) -> Tuple[bool, str]:
+    """
+    Delete filter from database.
+    
+    Args:
+        db: Database session
+        filter_id: Filter ID to delete
+        calendar_id: Calendar ID for user filters
+        domain_key: Domain key for domain filters
+        username: Username for user scoping
+        
+    Returns:
+        Tuple of (success, error_message)
+        
+    I/O Operation - Database deletion.
+    """
+    try:
+        filter_obj = get_filter_by_id(db, filter_id, calendar_id, domain_key, username)
+        if not filter_obj:
+            return False, "Filter not found"
+        
+        db.delete(filter_obj)
+        db.commit()
+        return True, ""
+        
+    except Exception as e:
+        db.rollback()
+        return False, f"Database error: {str(e)}"

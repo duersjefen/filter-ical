@@ -16,7 +16,7 @@ from ..services.domain_service import (
     assign_recurring_events_to_group, create_assignment_rule,
     get_assignment_rules, auto_assign_events_with_rules
 )
-from ..services.calendar_service import get_filters, create_filter
+from ..services.calendar_service import get_filters, create_filter, delete_filter
 from ..services.cache_service import get_or_build_domain_events
 
 router = APIRouter()
@@ -365,6 +365,40 @@ async def get_domain_filters(
             })
         
         return filters_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/{domain}/filters/{filter_id}")
+async def delete_domain_filter(
+    domain: str,
+    filter_id: int,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Delete filter for domain calendar."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Delete filter
+        success, error = delete_filter(db, filter_id, domain_key=domain, username=username)
+        if not success:
+            if "not found" in error.lower():
+                raise HTTPException(status_code=404, detail="Filter not found")
+            else:
+                raise HTTPException(status_code=400, detail=error)
+        
+        # Return 204 No Content on successful deletion
+        return None
         
     except HTTPException:
         raise

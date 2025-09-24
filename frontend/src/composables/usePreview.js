@@ -26,22 +26,8 @@ export function usePreview() {
     const allEvents = appStore.events || []
     const selection = selectionStore.selectedRecurringEvents
     
-    // DEBUG: Log data for troubleshooting
-    console.log('🔍 Preview Debug:', {
-      allEventsCount: allEvents.length,
-      selection: selection,
-      selectionLength: selection.length,
-      appStoreEvents: !!appStore.events,
-      appStoreEventsCount: appStore.events?.length || 0
-    })
-    
     const selectedEvents = filterEventsBySelection(allEvents, selection)
     const futureEvents = filterFutureEvents(selectedEvents)
-    
-    console.log('🔍 Preview Results:', {
-      selectedEventsCount: selectedEvents.length,
-      futureEventsCount: futureEvents.length
-    })
     
     return futureEvents
   })
@@ -59,9 +45,10 @@ export function usePreview() {
   
   /**
    * Check if preview should be visible
+   * Preview should show when there are actual filtered future events to display
    */
   const hasPreviewEvents = computed(() => {
-    return selectionStore.selectedRecurringEvents.length > 0
+    return sortedPreviewEvents.value.length > 0
   })
   
   /**

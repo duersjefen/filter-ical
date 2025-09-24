@@ -4,7 +4,6 @@ import { useSelectionStore } from '../stores/selectionStore'
 import { useUsername } from './useUsername'
 import { FILTER_MODES, PREVIEW_GROUPS, SORT_ORDERS, EVENT_LIMITS } from '../constants/ui'
 import { parseIcalDate, formatDateTime, formatDateRange } from '../utils/dateFormatting'
-import { getFilterStorageKey, saveFiltersData, loadFiltersData } from '../utils/localStorage'
 import {
   getRecurringEventKey,
   getEventGroupKey, 
@@ -42,99 +41,17 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
   const showSelectedOnly = ref(false)
   const recurringEventSearch = ref('')
   
-  // Filter persistence functions - now includes user ID for proper isolation
-
-  const saveFiltersToLocalStorage = () => {
-    const storageKey = getFilterStorageKey(calendarId.value, getUserId())
-    const filtersData = {
-      selectedRecurringEvents: selectedRecurringEvents.value,
-      recurringEventSearch: recurringEventSearch.value,
-      showSingleEvents: showSingleEvents.value,
-      showSelectedOnly: showSelectedOnly.value
-      // expandedRecurringEvents now managed centrally in selectionStore
-    }
-    
-    const result = saveFiltersData(storageKey, filtersData)
-    if (result.success) {
-      console.log(`💾 Filters saved for calendar: ${calendarId.value || 'default'} (user: ${getUserId()})`)
-    } else {
-      console.warn('Failed to save filters to localStorage:', result.error)
-    }
-  }
-
-  const loadFiltersFromLocalStorage = () => {
-    const storageKey = getFilterStorageKey(calendarId.value, getUserId())
-    const result = loadFiltersData(storageKey)
-    
-    if (result.success && result.data) {
-      const filtersData = result.data
-      
-      selectedRecurringEvents.value = filtersData.selectedRecurringEvents
-      recurringEventSearch.value = filtersData.recurringEventSearch
-      showSingleEvents.value = filtersData.showSingleEvents
-      showSelectedOnly.value = filtersData.showSelectedOnly
-      // expandedRecurringEvents now managed centrally in selectionStore
-      
-      console.log(`📂 Filters loaded for calendar: ${calendarId.value || 'default'} (user: ${getUserId()})`)
-      return true
-    } else if (result.error) {
-      console.warn('Failed to load filters from localStorage:', result.error)
-    }
-    return false
-  }
-
-  // Watch for calendar changes - save current filters and load new calendar's filters
+  // Watch for calendar changes - reset filter state
   watch(calendarId, (newCalendarId, oldCalendarId) => {
     if (oldCalendarId !== null && oldCalendarId !== newCalendarId) {
-      console.log(`🔄 Calendar changed from ${oldCalendarId} to ${newCalendarId} (user: ${getUserId()})`)
+      console.log(`🔄 Calendar changed from ${oldCalendarId} to ${newCalendarId} - resetting filters`)
       
-      // Save current filters for the old calendar
-      if (oldCalendarId) {
-        const oldStorageKey = getFilterStorageKey(oldCalendarId, getUserId())
-        const currentFilters = {
-          selectedRecurringEvents: selectedRecurringEvents.value,
-          recurringEventSearch: recurringEventSearch.value,
-          showSingleEvents: showSingleEvents.value,
-          showSelectedOnly: showSelectedOnly.value
-          // expandedRecurringEvents now managed centrally in selectionStore
-        }
-        const result = saveFiltersData(oldStorageKey, currentFilters)
-        if (result.success) {
-          console.log(`💾 Saved filters for old calendar: ${oldCalendarId} (user: ${getUserId()})`)
-        } else {
-          console.warn('Failed to save filters for old calendar:', result.error)
-        }
-      }
-      
-      // Load filters for the new calendar
-      loadFiltersFromLocalStorage()
+      // Reset filters when switching calendars
+      selectedRecurringEvents.value = new Set()
+      recurringEventSearch.value = ''
+      showSingleEvents.value = false
+      showSelectedOnly.value = false
     }
-  })
-
-  // Note: showSelectedOnly auto-deactivation is now handled in CalendarView 
-  // using the unified selection system for consistency
-
-  // Auto-save filter state changes to localStorage
-  let saveTimeout = null
-  const debouncedSave = () => {
-    if (saveTimeout) clearTimeout(saveTimeout)
-    saveTimeout = setTimeout(() => {
-      saveFiltersToLocalStorage()
-    }, 500) // 500ms debounce
-  }
-
-  // Watch filter state changes and auto-save
-  watch(selectedRecurringEvents, debouncedSave, { deep: true })
-  watch(showSingleEvents, debouncedSave)
-  watch(showSelectedOnly, debouncedSave)
-  // expandedRecurringEvents now managed centrally in selectionStore
-  
-  // Debounce search term more aggressively to avoid excessive saves
-  watch(recurringEventSearch, () => {
-    if (saveTimeout) clearTimeout(saveTimeout)
-    saveTimeout = setTimeout(() => {
-      saveFiltersToLocalStorage()
-    }, 1000) // 1 second debounce for search
   })
 
   // Convert event types object to sorted array with events
@@ -265,13 +182,7 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
     }
   }
 
-  // Load saved filter state when composable is initialized
-  const initializeFilters = () => {
-    loadFiltersFromLocalStorage()
-  }
-
-  // Call initialization immediately
-  initializeFilters()
+  // No filter initialization needed - filters start clean each session
 
   return {
     // State
@@ -308,10 +219,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
     selectAllSingleEvents,
     clearAllSingleEvents,
     generateIcalFile,
-    updateCalendarId,
-    
-    // Filter persistence functions
-    saveFiltersToLocalStorage,
-    loadFiltersFromLocalStorage
+    updateCalendarId
   }
 }

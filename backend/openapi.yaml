@@ -177,6 +177,30 @@ paths:
         '404':
           description: Calendar not found
 
+  /calendars/{calendarId}/filters/{filterId}:
+    delete:
+      summary: Delete filter for user calendar
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: filterId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: username
+          in: query
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Filter deleted
+        '404':
+          description: Filter or calendar not found
+
   # Domain-specific endpoints (auto-created from domains.yaml)
   /domains/{domain}/events:
     get:
@@ -420,6 +444,30 @@ paths:
                   $ref: '#/components/schemas/Filter'
         '404':
           description: Domain not found
+
+  /domains/{domain}/filters/{filterId}:
+    delete:
+      summary: Delete filter for domain calendar
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filterId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: username
+          in: query
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Filter deleted
+        '404':
+          description: Filter or domain not found
 
   # Dynamic iCal Export
   /ical/{uuid}.ics:
