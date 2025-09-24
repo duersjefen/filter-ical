@@ -78,15 +78,8 @@
       />
 
       <PreviewEventsSection
-        :selected-recurring-events="unifiedSelectedRecurringEvents"
-        :sorted-preview-events="sortedPreviewEvents"
-        :preview-group="previewGroup"
-        :grouped-preview-events="groupedPreviewEvents"
-        :all-events="events"
-        :formatDateTime="formatDateTime"
-        :formatDateRange="formatDateRange"
-        :getRecurringEventKey="getRecurringEventKey"
-        @update:preview-group="previewGroup = $event"
+        :get-recurring-event-key="getRecurringEventKey"
+        :selected-recurring-events="selectedRecurringEvents"
       />
     </template>
 
@@ -140,9 +133,9 @@ import { API_ENDPOINTS } from '../constants/api'
 import axios from 'axios'
 import {
   HeaderSection,
-  RecurringEventsCardsSection,
-  PreviewEventsSection
+  RecurringEventsCardsSection
 } from '../components/calendar'
+import PreviewEventsSection from '../components/preview/PreviewEventsSection.vue'
 import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
 import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 
@@ -181,13 +174,10 @@ const {
   showGroupsSection,
   showSelectedOnly,
   recurringEventSearch,
-  previewGroup,
   recurringEventsSortedByCount,
   mainRecurringEvents,
   singleRecurringEvents,
   selectedRecurringEventsCount,
-  sortedPreviewEvents,
-  groupedPreviewEvents,
   getRecurringEventKey,
   formatDateTime,
   formatDateRange,

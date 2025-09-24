@@ -38,10 +38,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
   const showGroupsSection = ref(true)
   const showSelectedOnly = ref(false)
   const recurringEventSearch = ref('')
-  const showPreview = ref(false)
-  const previewGroup = ref(PREVIEW_GROUPS.NONE)
-  const previewOrder = ref(SORT_ORDERS.ASC)
-  const previewLimit = ref(EVENT_LIMITS.PREVIEW_DEFAULT)
   
   // Filter persistence functions - now includes user ID for proper isolation
 
@@ -182,79 +178,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
     return filterEventsBySelection(events.value, selectedRecurringEvents.value).length
   })
 
-  const previewEvents = computed(() => {
-    const selectedEvents = filterEventsBySelection(events.value, selectedRecurringEvents.value)
-    return filterFutureEvents(selectedEvents)
-  })
-
-  const sortedPreviewEvents = computed(() => {
-    const events = [...previewEvents.value]
-    const multiplier = previewOrder.value === SORT_ORDERS.ASC ? 1 : -1
-    
-    return events.sort((a, b) => {
-      // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
-      const startFieldA = a.start || a.dtstart
-      const startFieldB = b.start || b.dtstart
-      const dateA = parseIcalDate(startFieldA)
-      const dateB = parseIcalDate(startFieldB)
-      return (dateA - dateB) * multiplier
-    })
-  })
-
-  const groupedPreviewEvents = computed(() => {
-    if (previewGroup.value === PREVIEW_GROUPS.NONE) return []
-
-    const groups = {}
-    
-    // First, group events and collect month date info for sorting
-    previewEvents.value.forEach(event => {
-      let groupKey
-      let sortKey
-      
-      if (previewGroup.value === PREVIEW_GROUPS.EVENT_TYPE) {
-        groupKey = getEventGroupKey(event)
-        sortKey = groupKey
-      } else if (previewGroup.value === PREVIEW_GROUPS.MONTH) {
-        // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
-        const startField = event.start || event.dtstart
-        // Use the improved parseIcalDate function instead of inline parsing
-        const date = parseIcalDate(startField)
-        groupKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
-        sortKey = date.getTime() // Use timestamp for chronological sorting
-      }
-      
-      if (!groups[groupKey]) {
-        groups[groupKey] = { name: groupKey, events: [], sortKey }
-      }
-      groups[groupKey].events.push(event)
-    })
-
-    // Sort groups and events within groups
-    const groupedArray = Object.values(groups)
-
-    if (previewGroup.value === PREVIEW_GROUPS.EVENT_TYPE) {
-      // Sort event type groups by event count (descending)
-      groupedArray.sort((a, b) => b.events.length - a.events.length)
-    } else if (previewGroup.value === PREVIEW_GROUPS.MONTH) {
-      // Sort month groups chronologically
-      groupedArray.sort((a, b) => a.sortKey - b.sortKey)
-      
-      // Sort events within each month group according to previewOrder
-      const multiplier = previewOrder.value === SORT_ORDERS.ASC ? 1 : -1
-      groupedArray.forEach(group => {
-        group.events.sort((a, b) => {
-          // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
-          const startFieldA = a.start || a.dtstart
-          const startFieldB = b.start || b.dtstart
-          const dateA = parseIcalDate(startFieldA)
-          const dateB = parseIcalDate(startFieldB)
-          return (dateA - dateB) * multiplier
-        })
-      })
-    }
-
-    return groupedArray
-  })
 
   // Three-tier event system analytics
   const recurringEventStats = computed(() => {
@@ -310,9 +233,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
   }
 
 
-  function togglePreviewOrder() {
-    previewOrder.value = previewOrder.value === SORT_ORDERS.ASC ? SORT_ORDERS.DESC : SORT_ORDERS.ASC
-  }
 
   async function generateIcalFile() {
     try {
@@ -364,10 +284,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
     showGroupsSection,
     showSelectedOnly,
     recurringEventSearch,
-    showPreview,
-    previewGroup,
-    previewOrder,
-    previewLimit,
     
     // Computed
     recurringEventsSortedByCount,
@@ -380,9 +296,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
     recurringEventStats,
     selectedRecurringEventsCount,
     selectedEventsCount,
-    previewEvents,
-    sortedPreviewEvents,
-    groupedPreviewEvents,
     
     // Methods
     getRecurringEventKey,
@@ -396,7 +309,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
     clearAllRecurringEvents,
     selectAllSingleEvents,
     clearAllSingleEvents,
-    togglePreviewOrder,
     generateIcalFile,
     updateCalendarId,
     
