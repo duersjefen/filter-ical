@@ -15,7 +15,8 @@ from ..services.domain_service import (
     load_domains_config, ensure_domain_calendar_exists,
     build_domain_events_response_data, get_domain_groups, create_group,
     assign_recurring_events_to_group, create_assignment_rule,
-    get_assignment_rules, auto_assign_events_with_rules
+    get_assignment_rules, auto_assign_events_with_rules,
+    get_available_recurring_events, update_group, delete_group, delete_assignment_rule
 )
 from ..services.calendar_service import get_filters, create_filter, delete_filter, get_filter_by_id
 from ..services.cache_service import get_or_build_domain_events
@@ -473,6 +474,142 @@ async def delete_domain_filter(
         if not success:
             if "not found" in error.lower():
                 raise HTTPException(status_code=404, detail="Filter not found")
+            else:
+                raise HTTPException(status_code=400, detail=error)
+        
+        # Return 204 No Content on successful deletion
+        return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# Admin endpoints for event-to-group management
+
+@router.get("/{domain}/recurring-events")
+async def get_domain_recurring_events(
+    domain: str,
+    db: Session = Depends(get_db)
+):
+    """Get available recurring events for assignment (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Get recurring events
+        recurring_events = get_available_recurring_events(db, domain)
+        
+        return recurring_events
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/{domain}/groups/{group_id}")
+async def update_domain_group(
+    domain: str,
+    group_id: int,
+    group_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Update group (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Validate request data
+        if "name" not in group_data:
+            raise HTTPException(status_code=400, detail="Group name is required")
+        
+        # Update group
+        success, group, error = update_group(db, group_id, domain, group_data["name"])
+        if not success:
+            if "not found" in error.lower():
+                raise HTTPException(status_code=404, detail=error)
+            else:
+                raise HTTPException(status_code=400, detail=error)
+        
+        # Return updated group data matching OpenAPI schema
+        return {
+            "id": group.id,
+            "name": group.name,
+            "domain_key": group.domain_key
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/{domain}/groups/{group_id}")
+async def delete_domain_group(
+    domain: str,
+    group_id: int,
+    db: Session = Depends(get_db)
+):
+    """Delete group and its assignments (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Delete group
+        success, error = delete_group(db, group_id, domain)
+        if not success:
+            if "not found" in error.lower():
+                raise HTTPException(status_code=404, detail=error)
+            else:
+                raise HTTPException(status_code=400, detail=error)
+        
+        # Return 204 No Content on successful deletion
+        return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/{domain}/assignment-rules/{rule_id}")
+async def delete_domain_assignment_rule(
+    domain: str,
+    rule_id: int,
+    db: Session = Depends(get_db)
+):
+    """Delete assignment rule (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Delete rule
+        success, error = delete_assignment_rule(db, rule_id, domain)
+        if not success:
+            if "not found" in error.lower():
+                raise HTTPException(status_code=404, detail=error)
             else:
                 raise HTTPException(status_code=400, detail=error)
         

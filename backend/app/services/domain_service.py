@@ -7,6 +7,7 @@ IMPERATIVE SHELL - Orchestrates pure functions with I/O operations.
 from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
 from ..models.calendar import Calendar, Event, Group, RecurringEventGroup, AssignmentRule
 from ..data.grouping import (
@@ -431,3 +432,150 @@ async def auto_assign_events_with_rules(db: Session, domain_key: str) -> Tuple[b
         
     except Exception as e:
         return False, 0, f"Auto-assignment error: {str(e)}"
+
+
+def get_available_recurring_events(db: Session, domain_key: str) -> List[Dict[str, Any]]:
+    """
+    Get all available recurring events for assignment (admin function).
+    
+    Args:
+        db: Database session
+        domain_key: Domain identifier
+        
+    Returns:
+        List of recurring event data with titles and counts
+        
+    I/O Operation - Database query with grouping.
+    """
+    events = get_domain_events(db, domain_key)
+    
+    # Group events by title using pure function
+    events_by_title = group_events_by_title(events)
+    
+    # Transform to admin response format
+    recurring_events = []
+    for title, events_data in events_by_title.items():
+        if events_data.get('events'):  # Only include if there are actual events
+            recurring_events.append({
+                "title": title,
+                "event_count": events_data.get('event_count', 0),
+                "sample_start_time": events_data.get('events', [{}])[0].get('start_time'),
+                "sample_location": events_data.get('events', [{}])[0].get('location')
+            })
+    
+    # Sort by event count (most recurring first) then by title
+    return sorted(recurring_events, key=lambda x: (-x['event_count'], x['title']))
+
+
+def update_group(db: Session, group_id: int, domain_key: str, name: str) -> Tuple[bool, Optional[Group], str]:
+    """
+    Update group name (admin function).
+    
+    Args:
+        db: Database session
+        group_id: Group ID to update
+        domain_key: Domain identifier for security
+        name: New group name
+        
+    Returns:
+        Tuple of (success, group_obj, error_message)
+        
+    I/O Operation - Database update with validation.
+    """
+    # Validate data using pure function
+    is_valid, error_msg = validate_group_data(name, domain_key)
+    if not is_valid:
+        return False, None, error_msg
+    
+    try:
+        # Get existing group
+        group = db.query(Group).filter(
+            Group.id == group_id,
+            Group.domain_key == domain_key
+        ).first()
+        
+        if not group:
+            return False, None, "Group not found"
+        
+        # Update group
+        group.name = name.strip()
+        group.updated_at = func.now()
+        
+        db.commit()
+        db.refresh(group)
+        
+        return True, group, ""
+        
+    except Exception as e:
+        db.rollback()
+        return False, None, f"Database error: {str(e)}"
+
+
+def delete_group(db: Session, group_id: int, domain_key: str) -> Tuple[bool, str]:
+    """
+    Delete group and its assignments (admin function).
+    
+    Args:
+        db: Database session
+        group_id: Group ID to delete
+        domain_key: Domain identifier for security
+        
+    Returns:
+        Tuple of (success, error_message)
+        
+    I/O Operation - Database deletion with cascade.
+    """
+    try:
+        # Get existing group
+        group = db.query(Group).filter(
+            Group.id == group_id,
+            Group.domain_key == domain_key
+        ).first()
+        
+        if not group:
+            return False, "Group not found"
+        
+        # Delete group (cascade will delete assignments and rules)
+        db.delete(group)
+        db.commit()
+        
+        return True, ""
+        
+    except Exception as e:
+        db.rollback()
+        return False, f"Database error: {str(e)}"
+
+
+def delete_assignment_rule(db: Session, rule_id: int, domain_key: str) -> Tuple[bool, str]:
+    """
+    Delete assignment rule (admin function).
+    
+    Args:
+        db: Database session
+        rule_id: Rule ID to delete
+        domain_key: Domain identifier for security
+        
+    Returns:
+        Tuple of (success, error_message)
+        
+    I/O Operation - Database deletion.
+    """
+    try:
+        # Get existing rule
+        rule = db.query(AssignmentRule).filter(
+            AssignmentRule.id == rule_id,
+            AssignmentRule.domain_key == domain_key
+        ).first()
+        
+        if not rule:
+            return False, "Assignment rule not found"
+        
+        # Delete rule
+        db.delete(rule)
+        db.commit()
+        
+        return True, ""
+        
+    except Exception as e:
+        db.rollback()
+        return False, f"Database error: {str(e)}"
