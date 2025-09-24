@@ -52,18 +52,17 @@ import PreviewList from '@/components/preview/PreviewList.vue'
 import PreviewGroups from '@/components/preview/PreviewGroups.vue'
 
 const props = defineProps({
-  getRecurringEventKey: { type: Function, required: true },
-  selectedRecurringEvents: { type: Object, required: true }
+  getRecurringEventKey: { type: Function, required: true }
 })
 
-// Use the preview composable with actual selections from UI
+// Use the preview composable with centralized selection store
 const {
   sortedPreviewEvents,
   hasPreviewEvents,
   previewEventCount,
   groupEventsByCategory,
   groupEventsByMonth
-} = usePreview(props.selectedRecurringEvents)
+} = usePreview()
 
 // Local state
 const isExpanded = ref(false)

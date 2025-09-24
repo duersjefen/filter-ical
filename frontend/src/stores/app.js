@@ -6,7 +6,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useHTTP } from '../composables/useHTTP'
-import { useEventFiltering } from '../composables/useEventFiltering'
 import { useUsername } from '../composables/useUsername'
 
 export const useAppStore = defineStore('app', () => {
@@ -327,7 +326,6 @@ export const useAppStore = defineStore('app', () => {
   const recurringEvents = ref({})
   
   // Event filtering state
-  const selectedRecurringEvents = ref(new Set())
   const keywordFilter = ref('')
   const dateRange = ref({
     start: null,
@@ -343,19 +341,6 @@ export const useAppStore = defineStore('app', () => {
   const groups = ref({})
   const hasGroups = ref(false)
 
-  // Create filtering composable with current state
-  const eventFiltering = useEventFiltering(events, {
-    selectedRecurringEvents,
-    keywordFilter,
-    dateRange,
-    sortBy,
-    sortDirection,
-    recurringEvents
-  })
-
-  // Use filtered events and statistics from the composable
-  const filteredEvents = eventFiltering.filteredEvents
-  const statistics = eventFiltering.statistics
 
   const loadCalendarEvents = async (calendarId) => {
     const result = await get(`/calendars/${calendarId}/events`)
@@ -393,15 +378,6 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // Event filtering methods
-  const toggleRecurringEvent = (recurringEvent) => {
-    const types = new Set(selectedRecurringEvents.value)
-    if (types.has(recurringEvent)) {
-      types.delete(recurringEvent)
-    } else {
-      types.add(recurringEvent)
-    }
-    selectedRecurringEvents.value = types
-  }
 
   const setKeywordFilter = (keyword) => {
     keywordFilter.value = keyword
@@ -417,15 +393,10 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const clearAllFilters = () => {
-    selectedRecurringEvents.value = new Set()
     keywordFilter.value = ''
     dateRange.value = { start: null, end: null }
     sortBy.value = 'date'
     sortDirection.value = 'asc'
-  }
-
-  const selectAllRecurringEvents = () => {
-    selectedRecurringEvents.value = new Set(Object.keys(recurringEvents.value))
   }
 
   // Groups methods
@@ -585,25 +556,6 @@ export const useAppStore = defineStore('app', () => {
     return { success: true }
   }
 
-  const createFilterConfig = () => {
-    return eventFiltering.createFilterConfig({
-      selectedRecurringEvents,
-      keywordFilter,
-      dateRange,
-      sortBy,
-      sortDirection
-    })
-  }
-
-  const loadFilter = (filter) => {
-    eventFiltering.applyFilterConfig(filter.config, {
-      selectedRecurringEvents,
-      keywordFilter,
-      dateRange,
-      sortBy,
-      sortDirection
-    })
-  }
 
   // ===============================================
   // FILTERED CALENDARS SECTION
@@ -724,21 +676,16 @@ export const useAppStore = defineStore('app', () => {
     // ===============================================
     events,
     recurringEvents,
-    filteredEvents,
-    statistics,
-    selectedRecurringEvents,
     keywordFilter,
     dateRange,
     sortBy,
     sortDirection,
     loadCalendarEvents,
     loadCalendarRecurringEvents,
-    toggleRecurringEvent,
     setKeywordFilter,
     setDateRange,
     setSorting,
     clearAllFilters,
-    selectAllRecurringEvents,
 
     // ===============================================
     // GROUPS
@@ -755,8 +702,6 @@ export const useAppStore = defineStore('app', () => {
     fetchFilters,
     saveFilter,
     deleteFilter,
-    createFilterConfig,
-    loadFilter,
 
     // ===============================================
     // FILTERED CALENDARS

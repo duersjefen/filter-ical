@@ -2,15 +2,17 @@
  * Preview Events Composable
  * Provides reactive preview data based on current selections
  * 
- * Uses: Accepts selectedRecurringEvents directly from the UI layer
+ * Uses: selectionStore as single source of truth for selections
  * Returns: Filtered and sorted events for preview display
  */
 import { computed } from 'vue'
 import { useAppStore } from '../stores/app'
+import { useSelectionStore } from '../stores/selectionStore'
 import { filterEventsBySelection, filterFutureEvents } from '../utils/eventHelpers'
 
-export function usePreview(selectedRecurringEvents) {
+export function usePreview() {
   const appStore = useAppStore()
+  const selectionStore = useSelectionStore()
   
   // ===============================================
   // CORE PREVIEW DATA COMPUTATION
@@ -18,11 +20,11 @@ export function usePreview(selectedRecurringEvents) {
   
   /**
    * Get all events that match the current selection
-   * Filters events based on selectedRecurringEvents from UI layer
+   * Uses selectionStore as single source of truth
    */
   const previewEvents = computed(() => {
     const allEvents = appStore.events || []
-    const selection = selectedRecurringEvents?.value || []
+    const selection = selectionStore.selectedRecurringEvents
     
     // DEBUG: Log data for troubleshooting
     console.log('🔍 Preview Debug:', {
@@ -59,7 +61,7 @@ export function usePreview(selectedRecurringEvents) {
    * Check if preview should be visible
    */
   const hasPreviewEvents = computed(() => {
-    return (selectedRecurringEvents?.value?.length || 0) > 0
+    return selectionStore.selectedRecurringEvents.length > 0
   })
   
   /**
@@ -155,6 +157,6 @@ export function usePreview(selectedRecurringEvents) {
     getGroupedEventsByMonth,
     
     // Selection integration
-    selectedRecurringEvents
+    selectionStore
   }
 }

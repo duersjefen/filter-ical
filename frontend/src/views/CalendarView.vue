@@ -79,7 +79,6 @@
 
       <PreviewEventsSection
         :get-recurring-event-key="getRecurringEventKey"
-        :selected-recurring-events="selectedRecurringEvents"
       />
     </template>
 

@@ -30,8 +30,11 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
   // Make calendar ID reactive to handle navigation between calendars
   const calendarId = ref(initialCalendarId)
   
-  // Reactive state - these will be loaded from backend preferences
-  const selectedRecurringEvents = ref([])
+  // Selection state - delegated to selectionStore as single source of truth
+  const selectedRecurringEvents = computed({
+    get: () => selectionStore.selectedRecurringEvents,
+    set: (value) => { selectionStore.selectedRecurringEvents = value }
+  })
   // expandedRecurringEvents now managed centrally in selectionStore
   const showSingleEvents = ref(false)
   const showRecurringEventsSection = ref(true)
@@ -192,12 +195,7 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
   // Methods
 
   function toggleRecurringEvent(recurringEventName) {
-    const index = selectedRecurringEvents.value.indexOf(recurringEventName)
-    if (index === -1) {
-      selectedRecurringEvents.value.push(recurringEventName)
-    } else {
-      selectedRecurringEvents.value.splice(index, 1)
-    }
+    selectionStore.toggleRecurringEvent(recurringEventName)
   }
 
   function toggleRecurringEventExpansion(recurringEventName) {
@@ -210,26 +208,26 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
   }
 
   function selectAllRecurringEvents() {
-    selectedRecurringEvents.value = filteredRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+    const eventNames = filteredRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+    selectionStore.selectRecurringEvents(eventNames)
   }
 
   function clearAllRecurringEvents() {
-    selectedRecurringEvents.value = []
-    showPreview.value = false
+    selectionStore.clearSelection()
   }
 
   function selectAllSingleEvents() {
     const singleRecurringEventNames = singleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
-    singleRecurringEventNames.forEach(name => {
-      if (!selectedRecurringEvents.value.includes(name)) {
-        selectedRecurringEvents.value.push(name)
-      }
-    })
+    const toAdd = singleRecurringEventNames.filter(name => !selectedRecurringEvents.value.includes(name))
+    if (toAdd.length > 0) {
+      selectionStore.selectRecurringEvents([...selectedRecurringEvents.value, ...toAdd])
+    }
   }
 
   function clearAllSingleEvents() {
     const singleRecurringEventNames = singleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
-    selectedRecurringEvents.value = selectedRecurringEvents.value.filter(name => !singleRecurringEventNames.includes(name))
+    const remaining = selectedRecurringEvents.value.filter(name => !singleRecurringEventNames.includes(name))
+    selectionStore.selectRecurringEvents(remaining)
   }
 
 
