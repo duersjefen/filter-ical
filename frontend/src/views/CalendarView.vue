@@ -133,7 +133,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
-import { useAPI } from '../composables/useAPI'
+import { useHTTP } from '../composables/useHTTP'
 import { useCalendar } from '../composables/useCalendar'
 import { useUnifiedSelection } from '../composables/useUnifiedSelection'
 import { API_ENDPOINTS } from '../constants/api'
@@ -149,10 +149,7 @@ import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
 const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
-const api = useAPI()
-
-// Extract loading and error state from API composable
-const { loading, error, clearError, setError } = api
+const { loading, error, clearError, setError } = useHTTP()
 
 // Local reactive data 
 const events = ref([])

@@ -5,7 +5,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useApiCall } from '../composables/useApiCall'
+import { useHTTP } from '../composables/useHTTP'
 import { useEventFiltering } from '../composables/useEventFiltering'
 import { useUsername } from '../composables/useUsername'
 
@@ -15,7 +15,7 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   
   const { getUserId, onUsernameChange } = useUsername()
-  const { get, post, put, del, loading, error, clearError, setError } = useApiCall()
+  const { get, post, put, del, loading, error, clearError, setError } = useHTTP()
 
   // ===============================================
   // PUBLIC ACCESS - NO AUTHENTICATION REQUIRED

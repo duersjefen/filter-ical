@@ -57,7 +57,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CalendarView from './CalendarView.vue'
-import { useApiCall } from '../composables/useApiCall'
+import { useHTTP } from '../composables/useHTTP'
 import { API_ENDPOINTS } from '../constants/api'
 
 export default {
@@ -72,7 +72,7 @@ export default {
     }
   },
   setup(props) {
-    const { get, post, loading, error } = useApiCall()
+    const { get, post, loading, error } = useHTTP()
 
     const domainConfig = ref(null)
     const calendarId = ref(null)

@@ -1,25 +1,22 @@
 /**
- * Composable for Filtered Calendar API operations
- * Following functional programming principles with pure functions
+ * Filtered Calendar API operations
+ * Business logic for creating and managing filtered calendars
  */
 
-import { ref, reactive } from 'vue'
-import axios from 'axios'
-import { useAPI } from './useAPI'
+import { ref } from 'vue'
+import { useHTTP } from './useHTTP'
 import { useAppStore } from '../stores/app'
 
 export function useFilteredCalendarAPI() {
+  // HTTP client
+  const { get, post, put, del, loading, error, clearError, setError } = useHTTP()
+  
   // State
   const filteredCalendars = ref([])
-  const loading = ref(false)
   const creating = ref(false)
   const updating = ref(false)
-  const error = ref(null)
   
-  // No authentication required for public access
   const appStore = useAppStore()
-
-  // Use axios directly for HTTP calls
 
   /**
    * Pure function: Create filtered calendar data payload
@@ -72,141 +69,107 @@ export function useFilteredCalendarAPI() {
    */
 
   const loadFilteredCalendars = async () => {
-    loading.value = true
-    error.value = null
+    const result = await get('/api/filtered-calendars')
     
-    try {
-      const response = await axios.get('/api/filtered-calendars', {
-        headers: {}
-      })
-      
-      if (response.data && response.data.filtered_calendars) {
-        filteredCalendars.value = response.data.filtered_calendars.map(transformFilteredCalendar)
-      }
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to load filtered calendars'
-      console.error('Error loading filtered calendars:', err)
-    } finally {
-      loading.value = false
+    if (result.success && result.data && result.data.filtered_calendars) {
+      filteredCalendars.value = result.data.filtered_calendars.map(transformFilteredCalendar)
+    } else if (!result.success) {
+      console.error('Error loading filtered calendars:', result.error)
     }
   }
 
   const createFilteredCalendar = async (sourceCalendarId, name, selectedGroups, selectedEvents) => {
     if (!name?.trim()) {
-      error.value = 'Name is required'
+      setError('Name is required')
       return false
     }
 
     creating.value = true
-    error.value = null
-
-    try {
-      const payload = createFilteredCalendarPayload(sourceCalendarId, name, selectedGroups, selectedEvents)
-      const response = await axios.post('/api/filtered-calendars', payload, {
-        headers: {}
-      })
-      
-      if (response.data) {
-        const newCalendar = transformFilteredCalendar(response.data)
-        filteredCalendars.value.push(newCalendar)
-        return true
-      }
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to create filtered calendar'
-      console.error('Error creating filtered calendar:', err)
+    
+    const payload = createFilteredCalendarPayload(sourceCalendarId, name, selectedGroups, selectedEvents)
+    const result = await post('/api/filtered-calendars', payload)
+    
+    creating.value = false
+    
+    if (result.success && result.data) {
+      const newCalendar = transformFilteredCalendar(result.data)
+      filteredCalendars.value.push(newCalendar)
+      return true
+    } else {
+      console.error('Error creating filtered calendar:', result.error)
       return false
-    } finally {
-      creating.value = false
     }
   }
 
   const updateFilteredCalendar = async (calendarId, updates) => {
     if (!calendarId) {
-      error.value = 'Calendar ID is required'
+      setError('Calendar ID is required')
       return false
     }
 
     updating.value = true
-    error.value = null
 
-    try {
-      const payload = {
-        name: updates.name?.trim(),
-        selected_groups: updates.selected_groups,
-        selected_events: updates.selected_events
+    const payload = {
+      name: updates.name?.trim(),
+      selected_groups: updates.selected_groups,
+      selected_events: updates.selected_events
+    }
+
+    // Remove undefined values
+    Object.keys(payload).forEach(key => {
+      if (payload[key] === undefined) {
+        delete payload[key]
       }
+    })
 
-      // Remove undefined values
-      Object.keys(payload).forEach(key => {
-        if (payload[key] === undefined) {
-          delete payload[key]
-        }
-      })
-
-      const response = await axios.put(`/api/filtered-calendars/${calendarId}`, payload, {
-        headers: {}
-      })
-      
-      if (response.data) {
-        const updatedCalendar = transformFilteredCalendar(response.data)
-        filteredCalendars.value = updateFilteredCalendarInList(
-          filteredCalendars.value, 
-          updatedCalendar
-        )
-        return true
-      }
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to update filtered calendar'
-      console.error('Error updating filtered calendar:', err)
+    const result = await put(`/api/filtered-calendars/${calendarId}`, payload)
+    
+    updating.value = false
+    
+    if (result.success && result.data) {
+      const updatedCalendar = transformFilteredCalendar(result.data)
+      filteredCalendars.value = updateFilteredCalendarInList(
+        filteredCalendars.value, 
+        updatedCalendar
+      )
+      return true
+    } else {
+      console.error('Error updating filtered calendar:', result.error)
       return false
-    } finally {
-      updating.value = false
     }
   }
 
   const deleteFilteredCalendar = async (calendarId) => {
     if (!calendarId) {
-      error.value = 'Calendar ID is required'
+      setError('Calendar ID is required')
       return false
     }
 
-    loading.value = true
-    error.value = null
-
-    try {
-      await axios.delete(`/api/filtered-calendars/${calendarId}`, {
-        headers: {}
-      })
-      
+    const result = await del(`/api/filtered-calendars/${calendarId}`)
+    
+    if (result.success) {
       filteredCalendars.value = removeFilteredCalendarFromList(
         filteredCalendars.value, 
         calendarId
       )
       return true
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to delete filtered calendar'
-      console.error('Error deleting filtered calendar:', err)
+    } else {
+      console.error('Error deleting filtered calendar:', result.error)
       return false
-    } finally {
-      loading.value = false
     }
   }
 
   const getPublicCalendar = async (token) => {
-    try {
-      const response = await axios.get(`/cal/${token}`, {
-        headers: {}
-      })
-      return response.data
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to load public calendar'
-      console.error('Error loading public calendar:', err)
+    const result = await get(`/cal/${token}`)
+    
+    if (result.success) {
+      return result.data
+    } else {
+      console.error('Error loading public calendar:', result.error)
       return null
     }
   }
 
-  // Note: Removed downloadFilteredCalendar function since we now provide
-  // calendar subscription URLs instead of forcing file downloads
 
   /**
    * Pure helper functions for validation

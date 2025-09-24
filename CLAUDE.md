@@ -37,6 +37,51 @@ This is a **production-ready Python + Vue 3 web application** with comprehensive
 3. **Refactor safely** → `make test` ensures no regression
 4. **Deploy** → `make deploy` (with real-time monitoring)
 
+### 🏗️ CRITICAL: Clean Code Organization - MANDATORY PRINCIPLES
+
+**I MUST follow clean naming and structure principles when refactoring:**
+
+**✅ NAMING RULES:**
+- **Name what it IS, not what it WAS** → `useAPI.js` not `useUnifiedAPI.js`
+- **No historical memory in names** → Don't reference previous states or merges
+- **Purpose-driven naming** → `useEventSelection.js` not `useEventSelectionFixed.js`
+- **Avoid "temporary" markers** → No `New`, `Updated`, `Fixed`, `Unified`, `Merged`
+
+**✅ COMMENT RULES:**
+- **Document current purpose only** → Explain what code does NOW
+- **No historical comments** → Don't explain what was consolidated/merged/replaced
+- **No archaeological layers** → Comments like "// Replaces useOldAPI.js" are forbidden
+- **Present-tense documentation** → Describe current functionality, not evolution
+
+**✅ DIRECTORY STRUCTURE RULES:**
+- **No single-file directories** → Don't create `/api/useAPI.js`, just `useAPI.js`
+- **Meaningful groupings only** → Only create subdirectories when you have 3+ related files
+- **Flat when possible** → Prefer `/composables/useAPI.js` over `/composables/api/useAPI.js`
+- **No premature organization** → Don't create structure for "future files"
+
+**❌ AVOID THESE PATTERNS:**
+```bash
+# BAD - Historical naming
+useUnifiedAPI.js
+useFixedSelection.js  
+useNewEventHandling.js
+
+# BAD - Unnecessary nesting
+/composables/api/useAPI.js        # Only 1 file in api/
+/components/shared/Button.vue     # Only 1 file in shared/
+
+# GOOD - Clean naming  
+useAPI.js
+useSelection.js
+useEvents.js
+
+# GOOD - Flat structure
+/composables/useAPI.js
+/components/Button.vue
+```
+
+**PURPOSE**: Clean code architecture should never reveal its refactoring history. Future developers should see a logical, purposeful structure, not archaeological layers of previous decisions.
+
 ### 📝 CRITICAL: Automatic TODO Management - MANDATORY BEHAVIOR
 
 **I MUST automatically manage the TODO.md file after completing substantial tasks:**
