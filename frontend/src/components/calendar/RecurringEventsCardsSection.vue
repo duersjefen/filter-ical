@@ -118,7 +118,7 @@
           </button>
         </template>
         
-        <!-- Show Selected Only Toggle - responsive text -->
+        <!-- Show Selected Only / Show All Toggle -->
         <button
           v-if="selectedRecurringEvents.length > 0"
           @click="$emit('toggle-selected-only')"
@@ -127,8 +127,8 @@
             ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50' 
             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
         >
-          <span class="hidden sm:inline">{{ showSelectedOnly ? '👁️ ' + $t('recurringEvents.showAllRecurringEvents') : '🎯 ' + $t('recurringEvents.showSelectedOnly') }}</span>
-          <span class="sm:hidden">{{ showSelectedOnly ? '👁️ ' + $t('common.all') : '🎯 ' + $t('common.select') }}</span>
+          <span class="hidden sm:inline">{{ showSelectedOnly ? '👁️ Show All' : '🎯 Show Selected Only' }}</span>
+          <span class="sm:hidden">{{ showSelectedOnly ? '👁️ All' : '🎯 Select' }}</span>
         </button>
         
       </div>
