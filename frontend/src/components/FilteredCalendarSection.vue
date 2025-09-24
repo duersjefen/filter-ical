@@ -236,15 +236,15 @@
 
                 <div class="flex flex-wrap gap-2 mt-2">
                   <button
-                    @click="copyToClipboard(calendar.calendar_url)"
+                    @click="copyToClipboard(getFullExportUrl(calendar))"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
-                    :class="copySuccess === calendar.calendar_url 
+                    :class="copySuccess === getFullExportUrl(calendar) 
                       ? 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-800' 
                       : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'"
                   >
-                    <span v-if="copySuccess === calendar.calendar_url">✅</span>
+                    <span v-if="copySuccess === getFullExportUrl(calendar)">✅</span>
                     <span v-else>📋</span>
-                    <span>{{ copySuccess === calendar.calendar_url 
+                    <span>{{ copySuccess === getFullExportUrl(calendar) 
                       ? $t('filteredCalendar.copied') 
                       : $t('filteredCalendar.copyUrl') }}</span>
                   </button>
@@ -386,6 +386,7 @@ import { useI18n } from 'vue-i18n'
 import { formatDateTime as formatDateTimeUtil, formatDateRange as formatDateRangeUtil } from '@/utils/dates'
 import { useFilteredCalendarAPI } from '@/composables/useFilteredCalendarAPI'
 import { useUsername } from '@/composables/useUsername'
+import { API_ENDPOINTS } from '@/constants/api'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 
 // Props
@@ -761,6 +762,22 @@ const getFilterRecurringEvents = (filterConfig) => {
 // Helper to check if filter has specific recurring events
 const hasSpecificRecurringEvents = (filterConfig) => {
   return filterConfig?.recurring_events && filterConfig.recurring_events.length > 0
+}
+
+// Helper to build full export URL from calendar object
+const getFullExportUrl = (calendar) => {
+  if (!calendar || !calendar.export_url) {
+    console.warn('Calendar object missing export_url:', calendar)
+    return ''
+  }
+  
+  // If we're in development, use localhost backend
+  if (import.meta.env.MODE === 'development') {
+    return `http://localhost:3000${calendar.export_url}`
+  }
+  
+  // Production URL
+  return `https://filter-ical.de${calendar.export_url}`
 }
 
 const getGroupRecurringEvents = (group) => {
