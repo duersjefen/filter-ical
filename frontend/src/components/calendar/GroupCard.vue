@@ -1,42 +1,57 @@
 <template>
-  <!-- Fixed template structure -->
+  <!-- Enhanced group card structure -->
   <div 
-    class="rounded-md border transition-all duration-150 bg-white dark:bg-gray-800"
+    class="rounded-lg border transition-all duration-200 bg-white dark:bg-gray-800 cursor-pointer hover:shadow-md hover:shadow-blue-500/10 dark:hover:shadow-blue-400/20 group"
     :class="isGroupSelected 
-      ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500' 
+      ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500 shadow-sm shadow-blue-500/20' 
       : isPartiallySelected
-        ? 'border-blue-300 bg-blue-50/30 dark:bg-blue-900/10 dark:border-blue-400'
-        : 'border-gray-200 dark:border-gray-600'"
+        ? 'border-blue-300 bg-blue-50/30 dark:bg-blue-900/10 dark:border-blue-400 shadow-sm shadow-blue-500/10'
+        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600'"
+    @click="expandGroup"
+    :title="`Click anywhere to expand/collapse ${group.name} details`"
   >
     <!-- Group Header -->
-    <div class="p-4">
-      <!-- Group Title and Info - Fully Clickable Header -->
-      <div 
-        class="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200"
-        @click="expandGroup"
-        title="Click anywhere to expand/collapse group details"
-      >
+    <div class="p-5">
+      <!-- Group Title and Info - Enhanced Layout -->
+      <div class="flex items-center gap-4">
         <div class="flex-1 min-w-0">
-          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+          <!-- Group Title -->
+          <div class="font-bold text-lg text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
             {{ group.name }}
           </div>
-          <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
-            {{ group.description || eventCountDisplay }}
+          <!-- Description and Selection Status -->
+          <div class="flex items-center gap-2 mt-1">
+            <div v-if="group.description" class="text-sm text-gray-500 dark:text-gray-400 truncate">
+              {{ group.description }}
+            </div>
+            <!-- Selection Status Bubble -->
+            <div v-if="hasRecurringEvents" 
+                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
+                 :class="getSelectionBubbleClasses()"
+                 :title="eventCountDisplay"
+            >
+              {{ selectedGroupRecurringEvents.length }}/{{ recurringEventsCount }}
+            </div>
           </div>
         </div>
         
-        <!-- Expansion Indicator -->
-        <div 
-          class="flex-shrink-0 p-1 rounded transition-colors duration-200"
-        >
-          <svg 
-            class="w-5 h-5 text-gray-400 transition-transform duration-200"
-            :class="{ 'rotate-180': isExpanded }"
-            fill="currentColor" 
-            viewBox="0 0 20 20"
-          >
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
+        <!-- Enhanced status indicators and arrow -->
+        <div class="flex items-center gap-2">
+          <!-- Selection Status Indicator -->
+          <div v-if="isGroupSelected" class="w-3 h-3 bg-blue-500 rounded-full"></div>
+          <div v-else-if="isPartiallySelected" class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+          
+          <!-- Expansion Arrow -->
+          <div class="flex-shrink-0 p-2 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-all duration-200">
+            <svg 
+              class="w-5 h-5 text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all duration-200"
+              :class="{ 'rotate-180': isExpanded }"
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
         </div>
       </div>
       
@@ -93,53 +108,51 @@
           Events ({{ recurringEventsCount }})
         </div>
         
-        <!-- Recurring Event Checkboxes (sorted by count, descending) -->
-        <div class="space-y-1">
+        <!-- Recurring Event Items (sorted by count, descending) -->
+        <div class="space-y-2">
           <div
             v-for="recurringEvent in sortedRecurringEvents"
             :key="recurringEvent.title"
-            class="border rounded-md transition-all duration-200"
+            class="border rounded-lg transition-all duration-200 cursor-pointer group/item"
             :class="isRecurringEventSelected(recurringEvent.title)
-              ? 'border-blue-300 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-600' 
-              : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'"
+              ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500 shadow-sm' 
+              : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm'"
+            @click.stop="toggleRecurringEvent(recurringEvent.title)"
+            :title="`Click to ${isRecurringEventSelected(recurringEvent.title) ? 'deselect' : 'select'} ${recurringEvent.title}`"
           >
-            <!-- Recurring Event Header -->
-            <div class="flex items-center gap-2 p-2 transition-colors">
+            <!-- Recurring Event Header - Entire row clickable -->
+            <div class="flex items-center gap-3 p-3 transition-colors">
               <!-- Recurring Event Checkbox -->
               <div 
-                class="w-3 h-3 rounded border flex items-center justify-center text-xs transition-all flex-shrink-0"
+                class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
                 :class="isRecurringEventSelected(recurringEvent.title)
                   ? 'bg-blue-500 border-blue-500 text-white' 
-                  : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'"
+                  : 'border-gray-300 dark:border-gray-400 bg-white dark:bg-gray-700 group-hover/item:border-blue-400'"
               >
                 <span v-if="isRecurringEventSelected(recurringEvent.title)">✓</span>
               </div>
               
-              <!-- Recurring Event Info - Fully Clickable for Selection -->
-              <div 
-                class="flex-1 min-w-0 cursor-pointer rounded p-1 -m-1 transition-colors duration-200"
-                :class="isRecurringEventSelected(recurringEvent.title)
-                  ? 'hover:bg-blue-100 dark:hover:bg-blue-800/30' 
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'"
-                @click.stop="toggleRecurringEvent(recurringEvent.title)"
-                :title="`Click to ${isRecurringEventSelected(recurringEvent.title) ? 'deselect' : 'select'} ${recurringEvent.title}`"
-              >
-                <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {{ recurringEvent.title }}
-                </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ recurringEvent.event_count }} events
+              <!-- Recurring Event Info - Enhanced Layout -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                    {{ recurringEvent.title }}
+                  </div>
+                  <!-- Event count badge beside title -->
+                  <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors">
+                    {{ recurringEvent.event_count }}
+                  </div>
                 </div>
               </div>
               
               <!-- Expansion Arrow -->
               <button
                 @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
-                class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                class="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors flex-shrink-0"
                 :class="{ 'transform rotate-180': isRecurringEventExpanded(recurringEvent.title) }"
                 title="Click to view individual events"
               >
-                <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-4 h-4 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-colors" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
               </button>
@@ -230,6 +243,11 @@ const eventCountDisplay = computed(() => {
   return `${selectedCount}/${totalRecurringEvents} events selected`
 })
 
+const totalEventCount = computed(() => {
+  if (!hasRecurringEvents.value) return 0
+  return props.group.recurring_events.reduce((total, event) => total + (event.event_count || 0), 0)
+})
+
 // Sort recurring events by count (descending) for better UX
 const sortedRecurringEvents = computed(() => {
   if (!hasRecurringEvents.value) return []
@@ -289,6 +307,22 @@ const groupRecurringEvents = computed(() => {
 // Methods
 const isRecurringEventSelected = (eventTitle) => {
   return props.selectedRecurringEvents.includes(eventTitle)
+}
+
+const getSelectionBubbleClasses = () => {
+  const selectedCount = selectedGroupRecurringEvents.value.length
+  const totalCount = recurringEventsCount.value
+  
+  if (selectedCount === 0) {
+    // None selected - subtle gray
+    return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+  } else if (selectedCount === totalCount) {
+    // All selected - success green
+    return 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+  } else {
+    // Partial selection - attention blue
+    return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+  }
 }
 
 const toggleGroup = () => {
