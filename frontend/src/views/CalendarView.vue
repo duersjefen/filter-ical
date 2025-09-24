@@ -419,16 +419,28 @@ const navigateToCalendar = () => {
 // No manual assignment needed - all events are automatically grouped
 
 const loadFilterIntoPage = (filterData) => {
-  // Clear current selection
-  clearAllRecurringEvents()
+  // Clear current selection using unified system
+  clearSelection()
   
+  // Handle group subscriptions first
+  if (filterData.groups && filterData.groups.length > 0) {
+    filterData.groups.forEach(groupId => {
+      // Convert string groupId to ensure compatibility
+      const groupIdStr = groupId.toString()
+      subscribeToGroup(groupIdStr)
+    })
+    console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.groups.length} subscribed groups`)
+  }
   
-  // Select the event types from the filter
-  filterData.recurringEvents.forEach(recurringEventName => {
-    toggleRecurringEvent(recurringEventName)
-  })
+  // Handle individual recurring event selections
+  if (filterData.recurringEvents && filterData.recurringEvents.length > 0) {
+    filterData.recurringEvents.forEach(recurringEventName => {
+      unifiedToggleRecurringEvent(recurringEventName)
+    })
+    console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.recurringEvents.length} individual recurring events`)
+  }
   
-  console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.recurringEvents.length} recurring events`)
+  console.log(`Loaded filter "${filterData.calendarName}" - Groups: ${filterData.groups?.length || 0}, Events: ${filterData.recurringEvents?.length || 0}`)
 }
 
 // Handle selection changes from the new multi-level selection system (old complex)

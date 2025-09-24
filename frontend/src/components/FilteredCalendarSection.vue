@@ -162,8 +162,8 @@
         </form>
       </div>
 
-      <!-- Existing Filtered Calendars -->
-      <div v-if="filteredCalendars.length > 0">
+      <!-- Existing Filtered Calendars (hidden during update mode) -->
+      <div v-if="filteredCalendars.length > 0 && !isUpdateMode">
         <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">
           {{ $t('filteredCalendar.yourFiltered') }} ({{ filteredCalendars.length }})
         </h4>
@@ -196,9 +196,9 @@
                   <!-- Single line with filter info and date -->
                   <div class="flex items-center gap-3 text-xs mb-2">
                     <!-- Filter badge -->
-                    <span v-if="calendar.filter_config?.recurring_events?.length > 0" 
-                          class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-medium">
-                      📂 {{ calendar.filter_config.recurring_events.length }} events
+                    <span v-if="getFilterSummary(calendar.filter_config).hasFilter" 
+                          :class="getFilterSummary(calendar.filter_config).badgeClass">
+                      {{ getFilterSummary(calendar.filter_config).text }}
                     </span>
                     <span v-else
                           class="bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200 px-2 py-1 rounded font-medium">
@@ -216,10 +216,22 @@
                     </span>
                   </div>
                   
-                  <!-- Recurring events list (only if specific events selected) -->
-                  <div v-if="calendar.filter_config?.recurring_events?.length > 0" 
-                       class="text-xs text-gray-600 dark:text-gray-300">
-                    {{ getSmartRecurringEventDisplay(calendar.filter_config.recurring_events) }}
+                  <!-- Filter details display -->
+                  <div class="text-xs text-gray-600 dark:text-gray-300">
+                    <div v-if="hasGroups && calendar.filter_config?.groups?.length > 0">
+                      <!-- Group-based filter display -->
+                      <div class="flex flex-wrap gap-2 mb-2">
+                        <span 
+                          v-for="groupId in calendar.filter_config.groups" 
+                          :key="groupId"
+                          v-if="groups[groupId]"
+                          class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+                        >
+                          <span>{{ getGroupDisplayName(groups[groupId]) }}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <!-- Remove redundant individual events display since we show it in the badge above -->
                   </div>
                 </div>
 
@@ -261,8 +273,8 @@
         </div>
       </div>
 
-      <!-- Empty state - only show if no existing calendars and no events selected -->
-      <div v-else-if="filteredCalendars.length === 0 && selectedRecurringEvents.length === 0" class="text-center py-6">
+      <!-- Empty state - only show if no existing calendars and no events selected (and not in update mode) -->
+      <div v-else-if="filteredCalendars.length === 0 && selectedRecurringEvents.length === 0 && !isUpdateMode" class="text-center py-6">
         <div class="text-6xl mb-4">📅</div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
           {{ $t('filteredCalendar.noFiltered') }}
@@ -660,17 +672,19 @@ const loadFilterIntoPage = (calendar) => {
   const filterConfig = calendar.filter_config
   if (!filterConfig) return
   
-  // Get recurring events to select (simplified - no filter mode)
+  // Get recurring events and groups to select
   const recurringEventsToSelect = filterConfig.recurring_events || []
+  const groupsToSelect = filterConfig.groups || []
   
   // Enter update mode
   isUpdateMode.value = true
   updateModeCalendar.value = calendar
   createForm.value.name = calendar.name
   
-  // Emit to parent component to load the filter
+  // Emit to parent component to load the filter with both events and groups
   emit('load-filter', {
     recurringEvents: recurringEventsToSelect,
+    groups: groupsToSelect,
     calendarName: calendar.name
   })
 }
@@ -974,6 +988,45 @@ const getConciseRecurringEvents = (recurringEvents) => {
   const remaining = recurringEvents.length - 1
   
   return `${firstEvent} and ${remaining} more...`
+}
+
+// New function to combine group and event counts into a single clear display
+const getFilterSummary = (filterConfig) => {
+  if (!filterConfig) {
+    return { hasFilter: false, text: '', badgeClass: '' }
+  }
+  
+  const groupCount = filterConfig.groups?.length || 0
+  const eventCount = filterConfig.recurring_events?.length || 0
+  
+  if (groupCount === 0 && eventCount === 0) {
+    return { hasFilter: false, text: '', badgeClass: '' }
+  }
+  
+  // Build combined text
+  const parts = []
+  if (groupCount > 0) {
+    parts.push(`📊 ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}`)
+  }
+  if (eventCount > 0) {
+    parts.push(`📂 ${eventCount} ${eventCount === 1 ? 'event' : 'events'}`)
+  }
+  
+  // Choose badge color based on primary selection type
+  let badgeClass
+  if (groupCount > 0) {
+    // Green for group-based filters (primary)
+    badgeClass = 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded font-medium'
+  } else {
+    // Blue for event-based filters
+    badgeClass = 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-medium'
+  }
+  
+  return {
+    hasFilter: true,
+    text: parts.join(' + '),
+    badgeClass
+  }
 }
 
 // Watch for recurring event changes to auto-populate form name and track user interaction

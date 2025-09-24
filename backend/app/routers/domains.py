@@ -7,6 +7,7 @@ Implements domain-specific endpoints from OpenAPI specification.
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from ..core.database import get_db
 from ..core.config import settings
@@ -16,7 +17,7 @@ from ..services.domain_service import (
     assign_recurring_events_to_group, create_assignment_rule,
     get_assignment_rules, auto_assign_events_with_rules
 )
-from ..services.calendar_service import get_filters, create_filter, delete_filter
+from ..services.calendar_service import get_filters, create_filter, delete_filter, get_filter_by_id
 from ..services.cache_service import get_or_build_domain_events
 
 router = APIRouter()
@@ -322,7 +323,14 @@ async def create_domain_filter(
             "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
             "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
             "link_uuid": filter_obj.link_uuid,
-            "export_url": f"/ical/{filter_obj.link_uuid}.ics"
+            "export_url": f"/ical/{filter_obj.link_uuid}.ics",
+            # Add filter_config for frontend compatibility
+            "filter_config": {
+                "recurring_events": filter_obj.subscribed_event_ids or [],
+                "groups": filter_obj.subscribed_group_ids or []
+            },
+            "created_at": filter_obj.created_at.isoformat() if filter_obj.created_at else None,
+            "updated_at": filter_obj.updated_at.isoformat() if filter_obj.updated_at else None
         }
         
     except HTTPException:
@@ -361,7 +369,14 @@ async def get_domain_filters(
                 "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
                 "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
                 "link_uuid": filter_obj.link_uuid,
-                "export_url": f"/ical/{filter_obj.link_uuid}.ics"
+                "export_url": f"/ical/{filter_obj.link_uuid}.ics",
+                # Add filter_config for frontend compatibility
+                "filter_config": {
+                    "recurring_events": filter_obj.subscribed_event_ids or [],
+                    "groups": filter_obj.subscribed_group_ids or []
+                },
+                "created_at": filter_obj.created_at.isoformat() if filter_obj.created_at else None,
+                "updated_at": filter_obj.updated_at.isoformat() if filter_obj.updated_at else None
             })
         
         return filters_response
@@ -369,6 +384,70 @@ async def get_domain_filters(
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/{domain}/filters/{filter_id}")
+async def update_domain_filter(
+    domain: str,
+    filter_id: int,
+    filter_data: dict,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Update an existing domain filter."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Get existing filter to verify it exists and user has access
+        existing_filter = get_filter_by_id(db, filter_id)
+        if not existing_filter or existing_filter.domain_key != domain:
+            raise HTTPException(status_code=404, detail="Filter not found")
+        
+        if username and existing_filter.username != username:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Update the filter
+        if "name" in filter_data:
+            existing_filter.name = filter_data["name"].strip()
+        if "subscribed_event_ids" in filter_data:
+            existing_filter.subscribed_event_ids = filter_data["subscribed_event_ids"]
+        if "subscribed_group_ids" in filter_data:
+            existing_filter.subscribed_group_ids = filter_data["subscribed_group_ids"]
+        
+        existing_filter.updated_at = func.now()
+        db.commit()
+        db.refresh(existing_filter)
+        
+        # Return updated filter data
+        return {
+            "id": existing_filter.id,
+            "name": existing_filter.name,
+            "domain_key": existing_filter.domain_key,
+            "username": existing_filter.username,
+            "subscribed_event_ids": existing_filter.subscribed_event_ids or [],
+            "subscribed_group_ids": existing_filter.subscribed_group_ids or [],
+            "link_uuid": existing_filter.link_uuid,
+            "export_url": f"/ical/{existing_filter.link_uuid}.ics",
+            # Add filter_config for frontend compatibility
+            "filter_config": {
+                "recurring_events": existing_filter.subscribed_event_ids or [],
+                "groups": existing_filter.subscribed_group_ids or []
+            },
+            "created_at": existing_filter.created_at.isoformat() if existing_filter.created_at else None,
+            "updated_at": existing_filter.updated_at.isoformat() if existing_filter.updated_at else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 

@@ -100,7 +100,13 @@ export function useFilteredCalendarAPI() {
         subscribed_event_ids: filter.subscribed_event_ids || [],
         subscribed_group_ids: filter.subscribed_group_ids || [],
         link_uuid: filter.link_uuid,
-        export_url: filter.export_url || `/ical/${filter.link_uuid}.ics`
+        export_url: filter.export_url || `/ical/${filter.link_uuid}.ics`,
+        filter_config: filter.filter_config || {
+          recurring_events: filter.subscribed_event_ids || [],
+          groups: filter.subscribed_group_ids || []
+        },
+        created_at: filter.created_at,
+        updated_at: filter.updated_at
       }))
     } else if (!result.success) {
       console.error('Error loading filtered calendars:', result.error)
@@ -120,7 +126,7 @@ export function useFilteredCalendarAPI() {
 
     creating.value = true
     
-    // Map to backend filter format
+    // Map to backend filter format - convert recurring event names to subscribed_event_ids
     const payload = {
       name: name.trim(),
       subscribed_group_ids: selectedGroups || [],
@@ -152,7 +158,13 @@ export function useFilteredCalendarAPI() {
         subscribed_event_ids: result.data.subscribed_event_ids || [],
         subscribed_group_ids: result.data.subscribed_group_ids || [],
         link_uuid: result.data.link_uuid,
-        export_url: result.data.export_url || `/ical/${result.data.link_uuid}.ics`
+        export_url: result.data.export_url || `/ical/${result.data.link_uuid}.ics`,
+        filter_config: result.data.filter_config || {
+          recurring_events: result.data.subscribed_event_ids || [],
+          groups: result.data.subscribed_group_ids || []
+        },
+        created_at: result.data.created_at,
+        updated_at: result.data.updated_at
       }
       filteredCalendars.value.push(newFilter)
       return true
@@ -163,11 +175,69 @@ export function useFilteredCalendarAPI() {
   }
 
   const updateFilteredCalendar = async (filterId, updates) => {
-    // TODO: Backend doesn't currently support updating individual filters
-    // For now, this functionality is not available
-    console.warn('Filter update functionality not yet implemented in backend')
-    setError('Filter updates not yet supported')
-    return false
+    if (!filterId) {
+      setError('Filter ID is required')
+      return false
+    }
+
+    updating.value = true
+
+    try {
+      // Find the filter to determine the correct endpoint
+      const filterToUpdate = filteredCalendars.value.find(filter => filter.id === filterId)
+      if (!filterToUpdate) {
+        setError('Filter not found')
+        return false
+      }
+
+      let endpoint
+      let payload = { ...updates }
+      
+      // If filter_config is provided, map it to backend format
+      if (updates.filter_config) {
+        payload.subscribed_event_ids = updates.filter_config.recurring_events || []
+        payload.subscribed_group_ids = updates.filter_config.groups || []
+        // Remove filter_config from payload as backend doesn't expect it
+        delete payload.filter_config
+      }
+
+      if (filterToUpdate.domain_key) {
+        // Domain calendar filter
+        endpoint = `/domains/${filterToUpdate.domain_key}/filters/${filterId}`
+      } else if (filterToUpdate.calendar_id) {
+        // User calendar filter
+        endpoint = `/calendars/${filterToUpdate.calendar_id}/filters/${filterId}`
+      } else {
+        setError('Invalid filter: missing calendar_id or domain_key')
+        return false
+      }
+
+      const result = await put(endpoint, payload)
+      
+      if (result.success && result.data) {
+        // Update the filter in local list
+        const updatedFilter = {
+          ...filterToUpdate,
+          ...result.data,
+          filter_config: result.data.filter_config || {
+            recurring_events: result.data.subscribed_event_ids || [],
+            groups: result.data.subscribed_group_ids || []
+          }
+        }
+        filteredCalendars.value = updateFilteredCalendarInList(filteredCalendars.value, updatedFilter)
+        return true
+      } else {
+        console.error('Error updating filtered calendar:', result.error)
+        setError(result.error || 'Failed to update filter')
+        return false
+      }
+    } catch (error) {
+      console.error('Error updating filtered calendar:', error)
+      setError('Failed to update filter')
+      return false
+    } finally {
+      updating.value = false
+    }
   }
 
   const deleteFilteredCalendar = async (filterId) => {
