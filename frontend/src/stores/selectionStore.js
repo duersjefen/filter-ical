@@ -37,7 +37,7 @@ export const useSelectionStore = defineStore('selection', () => {
     const selected = [...selectedRecurringEvents.value]
     
     // Add recurring events from subscribed groups
-    // Note: groups data comes from app store
+    // Note: This will be enhanced when groups integration is needed
     return selected
   })
   

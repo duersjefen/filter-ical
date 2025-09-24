@@ -279,6 +279,38 @@ export const useAppStore = defineStore('app', () => {
   const groups = ref({})
   const hasGroups = ref(false)
 
+  // ===============================================
+  // EVENTS EXTRACTION FROM GROUPS - REACTIVE
+  // ===============================================
+  
+  /**
+   * Extract all events from groups data for preview consumption
+   * This computed property ensures reactivity when groups data changes
+   */
+  const allEventsFromGroups = computed(() => {
+    const extractedEvents = []
+    
+    // Extract from current events array (for user calendars)
+    if (events.value && events.value.length > 0) {
+      extractedEvents.push(...events.value)
+    }
+    
+    // Extract from groups structure (for domain calendars)
+    if (groups.value && Object.keys(groups.value).length > 0) {
+      Object.values(groups.value).forEach(group => {
+        if (group.recurring_events && Array.isArray(group.recurring_events)) {
+          group.recurring_events.forEach(recurringEvent => {
+            if (recurringEvent.events && Array.isArray(recurringEvent.events)) {
+              extractedEvents.push(...recurringEvent.events)
+            }
+          })
+        }
+      })
+    }
+    
+    return extractedEvents
+  })
+
 
   const loadCalendarEvents = async (calendarId) => {
     const result = await get(`/calendars/${calendarId}/events`)
@@ -577,6 +609,7 @@ export const useAppStore = defineStore('app', () => {
     // EVENTS & FILTERING
     // ===============================================
     events,
+    allEventsFromGroups,
     recurringEvents,
     keywordFilter,
     dateRange,

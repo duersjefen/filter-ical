@@ -20,10 +20,11 @@ export function usePreview() {
   
   /**
    * Get all events that match the current selection
-   * Uses selectionStore as single source of truth
+   * Uses selectionStore as single source of truth and reactive events from app store
    */
   const previewEvents = computed(() => {
-    const allEvents = appStore.events || []
+    // Use the new reactive events extraction from app store
+    const allEvents = appStore.allEventsFromGroups || []
     const selection = selectionStore.selectedRecurringEvents
     
     const selectedEvents = filterEventsBySelection(allEvents, selection)
