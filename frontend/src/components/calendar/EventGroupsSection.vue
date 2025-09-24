@@ -49,7 +49,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useUnifiedSelection } from '../../composables/useUnifiedSelection'
+import { useSelection } from '../../composables/useSelection'
 import GroupsHeader from './GroupsHeader.vue'
 import GroupsControlBar from './GroupsControlBar.vue'
 import GroupCard from './GroupCard.vue'
@@ -86,7 +86,7 @@ const {
   handleSelectAllRecurringEvents,
   allEventsSelected,
   getGroupBreakdownSummary
-} = useUnifiedSelection()
+} = useSelection()
 
 // All groups are now real groups (including auto-created ones from backend)
 // No virtual group logic needed - backend handles auto-grouping

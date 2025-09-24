@@ -135,7 +135,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useHTTP } from '../composables/useHTTP'
 import { useCalendar } from '../composables/useCalendar'
-import { useUnifiedSelection } from '../composables/useUnifiedSelection'
+import { useSelection } from '../composables/useSelection'
 import { API_ENDPOINTS } from '../constants/api'
 import axios from 'axios'
 import {
@@ -210,7 +210,8 @@ const {
   toggleRecurringEvent: unifiedToggleRecurringEvent,
   selectRecurringEvents,
   clearSelection,
-} = useUnifiedSelection()
+  subscribeAndSelectAllGroups
+} = useSelection()
 
 // View mode localStorage persistence functions
 const VIEW_MODE_STORAGE_KEY = 'ical-viewer-view-mode'
