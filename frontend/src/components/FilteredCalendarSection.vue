@@ -943,24 +943,19 @@ const getGroupDisplayClass = (groupId) => {
 }
 
 const getCountDisplayClass = (groupId) => {
-  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
   const selectedCount = getGroupSelectedCount(groupId)
   const totalCount = getGroupTotalCount(props.groups[groupId])
   
-  // Priority 1: ALL SELECTED always gets green (regardless of subscription)
+  // Match the same color coding: 0 -> Grey; 1/7 -> Blue; 7/7 -> Green
+  // Based on subscription ratios, regardless of subscription status
   if (selectedCount === totalCount && totalCount > 0) {
+    // 7/7 (or any complete selection) -> Green
     return 'bg-green-600 dark:bg-green-500 text-white'
-  }
-  // Priority 2: SUBSCRIBED but not all selected gets blue 
-  else if (isSubscribed && selectedCount < totalCount) {
+  } else if (selectedCount > 0 && selectedCount < totalCount) {
+    // 1/7 (or any partial selection) -> Blue
     return 'bg-blue-600 dark:bg-blue-500 text-white'
-  }
-  // Priority 3: PARTIALLY selected (not subscribed) gets light blue
-  else if (selectedCount > 0) {
-    return 'bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-100'
-  }
-  // Priority 4: NOT SELECTED gets gray
-  else {
+  } else {
+    // 0/7 (no selection) -> Grey
     return 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
   }
 }
