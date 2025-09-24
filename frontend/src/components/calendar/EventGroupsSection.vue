@@ -19,7 +19,7 @@
         :total-groups="Object.keys(props.groups || {}).length"
         :subscribed-count="subscribedGroups.size"
         :group-stats-text="getGroupBreakdownSummary()"
-        @unsubscribe-all="unsubscribeFromAllGroups"
+        @unsubscribe-all="unsubscribeAndDeselectAllGroups"
         @subscribe-and-select-all="subscribeAndSelectAllGroups"
         @expand-all="expandAllGroups"
         @collapse-all="collapseAllGroups"
@@ -83,6 +83,7 @@ const {
   collapseAllGroups,
   subscribeAndSelectAllGroups,
   unsubscribeFromAllGroups,
+  unsubscribeAndDeselectAllGroups,
   handleSelectAllRecurringEvents,
   allEventsSelected,
   getGroupBreakdownSummary

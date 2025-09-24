@@ -178,6 +178,7 @@ export function useSelection() {
     // Bulk operations
     selectAllGroups,
     unsubscribeFromAllGroups: selectionStore.unsubscribeFromAllGroups,
+    unsubscribeAndDeselectAllGroups: () => selectionStore.unsubscribeAndDeselectAllGroups(appStore.groups || {}),
     subscribeAndSelectAllGroups,
     clearSelection: selectionStore.clearSelection,
     

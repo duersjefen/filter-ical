@@ -191,6 +191,13 @@ export const useSelectionStore = defineStore('selection', () => {
   const unsubscribeFromAllGroups = () => {
     subscribedGroups.value.clear()
   }
+
+  const unsubscribeAndDeselectAllGroups = (groups) => {
+    // Unsubscribe from all groups AND deselect all their event types
+    Object.entries(groups || {}).forEach(([groupId, group]) => {
+      unsubscribeAndDeselectGroup(groupId, group)
+    })
+  }
   
   const subscribeAndSelectAllGroups = (groups) => {
     // Subscribe to all groups AND select all their event types
@@ -424,6 +431,7 @@ export const useSelectionStore = defineStore('selection', () => {
     // Bulk operations
     selectAllGroups,
     unsubscribeFromAllGroups,
+    unsubscribeAndDeselectAllGroups,
     subscribeAndSelectAllGroups,
     clearSelection,
     
