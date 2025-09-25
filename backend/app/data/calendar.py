@@ -240,8 +240,8 @@ def apply_filter_to_events(events: List[Dict[str, Any]], filter_data: Dict[str, 
     
     filtered = []
     for event in events:
-        event_id = event.get("id")
-        if event_id in subscribed_event_ids:
+        event_title = event.get("title")
+        if event_title in subscribed_event_ids:
             filtered.append(event)
     
     return filtered

@@ -469,7 +469,7 @@ class TestEventExport:
             {"id": 3, "title": "Event 3"}
         ]
         
-        filter_data = {"subscribed_event_ids": [1, 3]}
+        filter_data = {"subscribed_event_ids": ["Event 1", "Event 3"]}
         
         result = apply_filter_to_events(events, filter_data)
         
