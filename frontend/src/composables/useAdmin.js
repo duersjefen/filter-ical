@@ -19,22 +19,26 @@ export function useAdmin(domain) {
   // Computed properties
   const groupsMap = computed(() => {
     const map = {}
-    groups.value.forEach(group => {
+    // Defensive programming: ensure groups.value is always an array
+    const groupsArray = Array.isArray(groups.value) ? groups.value : []
+    groupsArray.forEach(group => {
       map[group.id] = group
     })
     return map
   })
 
   const availableEvents = computed(() => {
-    return recurringEvents.value.filter(event => event.event_count > 0)
+    // Defensive programming: ensure recurringEvents.value is always an array
+    const eventsArray = Array.isArray(recurringEvents.value) ? recurringEvents.value : []
+    return eventsArray.filter(event => event.event_count > 0)
   })
 
   // API Functions - Groups Management
   const loadGroups = async () => {
     try {
       const result = await get(`/domains/${domain}/groups`)
-      groups.value = result || []
-      return { success: true, data: result }
+      groups.value = result.success ? (result.data || []) : []
+      return { success: true, data: result.data }
     } catch (err) {
       console.error('Failed to load groups:', err)
       return { success: false, error: err.message }
@@ -78,8 +82,8 @@ export function useAdmin(domain) {
   const loadRecurringEvents = async () => {
     try {
       const result = await get(`/domains/${domain}/recurring-events`)
-      recurringEvents.value = result || []
-      return { success: true, data: result }
+      recurringEvents.value = result.success ? (result.data || []) : []
+      return { success: true, data: result.data }
     } catch (err) {
       console.error('Failed to load recurring events:', err)
       return { success: false, error: err.message }
@@ -104,8 +108,8 @@ export function useAdmin(domain) {
   const loadAssignmentRules = async () => {
     try {
       const result = await get(`/domains/${domain}/assignment-rules`)
-      assignmentRules.value = result || []
-      return { success: true, data: result }
+      assignmentRules.value = result.success ? (result.data || []) : []
+      return { success: true, data: result.data }
     } catch (err) {
       console.error('Failed to load assignment rules:', err)
       return { success: false, error: err.message }

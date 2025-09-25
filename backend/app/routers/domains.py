@@ -5,9 +5,11 @@ Implements domain-specific endpoints from OpenAPI specification.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import yaml
 
 from ..core.database import get_db
 from ..core.config import settings
@@ -630,6 +632,7 @@ async def delete_domain_assignment_rule(
 @router.get("/{domain}/export-config")
 async def export_domain_config(
     domain: str,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Export current domain configuration as YAML (admin)."""
@@ -647,7 +650,15 @@ async def export_domain_config(
         if not success:
             raise HTTPException(status_code=500, detail=f"Export error: {error}")
         
-        return export_config
+        # Check if client wants YAML format
+        accept_header = request.headers.get('accept', '').lower()
+        if 'application/x-yaml' in accept_header or 'text/yaml' in accept_header:
+            # Return raw YAML content
+            yaml_content = yaml.dump(export_config, default_flow_style=False, indent=2)
+            return Response(content=yaml_content, media_type="application/x-yaml")
+        else:
+            # Return JSON (default)
+            return export_config
         
     except HTTPException:
         raise
@@ -658,7 +669,7 @@ async def export_domain_config(
 @router.post("/{domain}/import-config")
 async def import_domain_config(
     domain: str,
-    config_data: dict,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Import domain configuration from YAML (admin)."""
@@ -671,15 +682,28 @@ async def import_domain_config(
         if domain not in config.get('domains', {}):
             raise HTTPException(status_code=404, detail="Domain not found")
         
+        # Get raw content from request
+        content_type = request.headers.get('content-type', '').lower()
+        
+        if 'application/x-yaml' in content_type or 'text/yaml' in content_type:
+            # Parse YAML content
+            yaml_content = await request.body()
+            try:
+                config_data = yaml.safe_load(yaml_content.decode('utf-8'))
+            except yaml.YAMLError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid YAML format: {str(e)}")
+        else:
+            # Assume JSON (for backward compatibility)
+            config_data = await request.json()
+        
         # Validate required fields in import
-        if "domain" not in config_data:
-            raise HTTPException(status_code=400, detail="Missing 'domain' section in configuration")
-        if "groups" not in config_data:
-            raise HTTPException(status_code=400, detail="Missing 'groups' section in configuration")
-        if "assignments" not in config_data:
-            raise HTTPException(status_code=400, detail="Missing 'assignments' section in configuration")
-        if "rules" not in config_data:
-            raise HTTPException(status_code=400, detail="Missing 'rules' section in configuration")
+        if not isinstance(config_data, dict):
+            raise HTTPException(status_code=400, detail="Configuration must be an object/dictionary")
+        
+        required_sections = ["domain", "groups", "assignments", "rules"]
+        for section in required_sections:
+            if section not in config_data:
+                raise HTTPException(status_code=400, detail=f"Missing required section: '{section}'")
         
         # Import configuration
         success, error = import_domain_configuration(db, domain, config_data)

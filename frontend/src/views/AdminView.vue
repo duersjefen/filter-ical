@@ -34,22 +34,15 @@
   <div v-else class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-8">
     
     <!-- Admin Header -->
-    <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-xl shadow-lg">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold mb-2">🔧 Admin Panel</h1>
-          <p class="text-purple-100">Manage {{ domain }} events and groups</p>
-        </div>
-        <div class="flex gap-3">
-          <router-link 
-            :to="`/${domain}`" 
-            class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            ← Back to Calendar
-          </router-link>
-        </div>
-      </div>
-    </div>
+    <AppHeader 
+      :title="`🔧 ${domain.toUpperCase()} Admin Panel`"
+      :subtitle="`Manage ${domain} events and groups`"
+      :show-user-info="false"
+      :show-back-button="true"
+      :back-button-text="`← Back to ${domain} Calendar`"
+      page-context="admin"
+      @navigate-back="$router.push(`/${domain}`)"
+    />
 
     <!-- Admin Sections Navigation -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
@@ -389,15 +382,65 @@
     </div>
   </div>
 
+  <!-- Notification Toast -->
+  <div v-if="notification" class="fixed top-4 right-4 z-50 max-w-md">
+    <div :class="[
+      'rounded-xl shadow-lg border-2 px-6 py-4 transition-all duration-300',
+      notification.type === 'success' 
+        ? 'bg-gradient-to-r from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/30 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700'
+        : 'bg-gradient-to-r from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-800/30 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700'
+    ]">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="text-2xl">{{ notification.type === 'success' ? '✅' : '❌' }}</div>
+          <span class="font-semibold">{{ notification.message }}</span>
+        </div>
+        <button 
+          @click="notification = null" 
+          class="text-xl hover:scale-110 transition-transform duration-200"
+        >
+          &times;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div v-if="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md w-full mx-4">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Confirm Action</h3>
+      <p class="text-gray-700 dark:text-gray-300 mb-6">{{ confirmDialog.message }}</p>
+      <div class="flex gap-3 justify-end">
+        <button
+          @click="closeConfirm"
+          class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200"
+        >
+          Cancel
+        </button>
+        <button
+          @click="confirmDialog.onConfirm(); closeConfirm()"
+          class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { useAdmin } from '../composables/useAdmin'
 import { useHTTP } from '../composables/useHTTP'
+import { API_BASE_URL } from '../constants/api'
+import AppHeader from '../components/shared/AppHeader.vue'
 
 export default {
   name: 'AdminView',
+  components: {
+    AppHeader
+  },
   props: {
     domain: {
       type: String,
@@ -455,11 +498,31 @@ export default {
       target_group_id: ''
     })
 
+    // Notification State
+    const notification = ref(null)
+    const confirmDialog = ref(null)
+
+    // Notification Helpers
+    const showNotification = (message, type = 'success') => {
+      notification.value = { message, type }
+      setTimeout(() => {
+        notification.value = null
+      }, 5000)
+    }
+
+    const showConfirm = (message, onConfirm) => {
+      confirmDialog.value = { message, onConfirm }
+    }
+
+    const closeConfirm = () => {
+      confirmDialog.value = null
+    }
+
     // Group Management
     const createGroup = async () => {
       const validation = validateGroupName(newGroupName.value)
       if (!validation.valid) {
-        alert(validation.error)
+        showNotification(validation.error, 'error')
         return
       }
 
@@ -467,8 +530,9 @@ export default {
       if (result.success) {
         newGroupName.value = ''
         showCreateGroupModal.value = false
+        showNotification('Group created successfully!', 'success')
       } else {
-        alert(`Failed to create group: ${result.error}`)
+        showNotification(`Failed to create group: ${result.error}`, 'error')
       }
     }
 
@@ -482,26 +546,31 @@ export default {
     const updateGroup = async (groupId, name) => {
       const validation = validateGroupName(name)
       if (!validation.valid) {
-        alert(validation.error)
+        showNotification(validation.error, 'error')
         return
       }
 
       const result = await updateGroupAPI(groupId, name)
-      if (!result.success) {
-        alert(`Failed to update group: ${result.error}`)
+      if (result.success) {
+        showNotification('Group updated successfully!', 'success')
+      } else {
+        showNotification(`Failed to update group: ${result.error}`, 'error')
       }
     }
 
     const deleteGroupConfirm = (group) => {
-      if (confirm(`Are you sure you want to delete "${group.name}"? This will also delete all assignments and rules for this group.`)) {
-        deleteGroup(group.id)
-      }
+      showConfirm(
+        `Are you sure you want to delete "${group.name}"? This will also delete all assignments and rules for this group.`,
+        () => deleteGroup(group.id)
+      )
     }
 
     const deleteGroup = async (groupId) => {
       const result = await deleteGroupAPI(groupId)
-      if (!result.success) {
-        alert(`Failed to delete group: ${result.error}`)
+      if (result.success) {
+        showNotification('Group deleted successfully!', 'success')
+      } else {
+        showNotification(`Failed to delete group: ${result.error}`, 'error')
       }
     }
 
@@ -510,8 +579,10 @@ export default {
       if (!selectedGroupId.value) return
 
       const result = await assignEventsToGroup(selectedGroupId.value, eventTitle)
-      if (!result.success) {
-        alert(`Failed to assign event to group: ${result.error}`)
+      if (result.success) {
+        showNotification('Event assigned to group successfully!', 'success')
+      } else {
+        showNotification(`Failed to assign event to group: ${result.error}`, 'error')
       }
     }
 
@@ -524,7 +595,7 @@ export default {
       )
       
       if (!validation.valid) {
-        alert(validation.error)
+        showNotification(validation.error, 'error')
         return
       }
 
@@ -537,35 +608,41 @@ export default {
       if (result.success) {
         newRule.value = { rule_type: '', rule_value: '', target_group_id: '' }
         showCreateRuleModal.value = false
+        showNotification('Assignment rule created successfully!', 'success')
       } else {
-        alert(`Failed to create assignment rule: ${result.error}`)
+        showNotification(`Failed to create assignment rule: ${result.error}`, 'error')
       }
     }
 
     const deleteRuleConfirm = (rule) => {
-      if (confirm(`Are you sure you want to delete this rule?`)) {
-        deleteRule(rule.id)
-      }
+      showConfirm(
+        'Are you sure you want to delete this rule?',
+        () => deleteRule(rule.id)
+      )
     }
 
     const deleteRule = async (ruleId) => {
       const result = await deleteAssignmentRuleAPI(ruleId)
-      if (!result.success) {
-        alert(`Failed to delete assignment rule: ${result.error}`)
+      if (result.success) {
+        showNotification('Assignment rule deleted successfully!', 'success')
+      } else {
+        showNotification(`Failed to delete assignment rule: ${result.error}`, 'error')
       }
     }
 
     // Configuration Management
     const exportConfiguration = async () => {
       try {
-        const result = await get(`/domains/${props.domain}/export-config`)
+        // Use raw axios request to get YAML content as text
+        const { rawRequest } = useHTTP()
+        const response = await rawRequest({
+          method: 'GET',
+          url: `${API_BASE_URL}/domains/${props.domain}/export-config`,
+          headers: { 'Accept': 'application/x-yaml' },
+          responseType: 'text'
+        })
         
-        // Create and download YAML file
-        const yamlContent = `# ${props.domain.toUpperCase()} Domain Configuration
-# Exported on ${new Date().toISOString()}
-
-${JSON.stringify(result, null, 2)}`
-        
+        const yamlContent = response.data
         const blob = new Blob([yamlContent], { type: 'application/x-yaml' })
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
@@ -576,10 +653,10 @@ ${JSON.stringify(result, null, 2)}`
         document.body.removeChild(link)
         URL.revokeObjectURL(url)
         
-        alert('✅ Configuration exported successfully!')
+        showNotification('Configuration exported successfully!', 'success')
       } catch (err) {
         console.error('Failed to export configuration:', err)
-        alert(`❌ Failed to export configuration: ${err.message}`)
+        showNotification(`Failed to export configuration: ${err.message}`, 'error')
       }
     }
 
@@ -588,30 +665,22 @@ ${JSON.stringify(result, null, 2)}`
       if (!file) return
 
       try {
-        const text = await file.text()
-        let config
-        
-        try {
-          // Try parsing as JSON first (since our export currently uses JSON format)
-          config = JSON.parse(text)
-        } catch (jsonError) {
-          // If JSON parsing fails, try YAML parsing (for future YAML support)
-          alert('❌ Currently only JSON format is supported. YAML parsing will be added in future versions.')
-          return
-        }
-
-        const result = await post(`/domains/${props.domain}/import-config`, config)
+        // Send raw YAML content to backend for parsing
+        const yamlContent = await file.text()
+        const result = await post(`/domains/${props.domain}/import-config`, yamlContent, {
+          headers: { 'Content-Type': 'application/x-yaml' }
+        })
         
         if (result.success) {
-          alert(`✅ Configuration imported successfully: ${result.message}`)
+          showNotification(`Configuration imported successfully: ${result.message}`, 'success')
           // Reload admin data to reflect changes
           await loadAllAdminData()
         } else {
-          alert(`❌ Failed to import configuration: ${result.message}`)
+          showNotification(`Failed to import configuration: ${result.message}`, 'error')
         }
       } catch (err) {
         console.error('Failed to import configuration:', err)
-        alert(`❌ Failed to import configuration: ${err.message}`)
+        showNotification(`Failed to import configuration: ${err.message}`, 'error')
       }
       
       // Clear file input
@@ -619,25 +688,26 @@ ${JSON.stringify(result, null, 2)}`
     }
 
     const resetConfigurationConfirm = () => {
-      if (confirm(`Are you sure you want to reset "${props.domain}" to its baseline configuration? This will replace all current groups, assignments, and rules with the default setup.`)) {
-        resetConfiguration()
-      }
+      showConfirm(
+        `Are you sure you want to reset "${props.domain}" to its baseline configuration? This will replace all current groups, assignments, and rules with the default setup.`,
+        () => resetConfiguration()
+      )
     }
 
     const resetConfiguration = async () => {
       try {
         const result = await post(`/domains/${props.domain}/reset-config`, {})
         
-        if (result.success) {
-          alert(`✅ ${result.message}`)
+        if (result.success && result.data) {
+          showNotification(result.data.message, 'success')
           // Reload admin data to reflect changes
           await loadAllAdminData()
         } else {
-          alert(`❌ Failed to reset configuration: ${result.message}`)
+          showNotification(`Failed to reset configuration: ${result.error || 'Unknown error'}`, 'error')
         }
       } catch (err) {
         console.error('Failed to reset configuration:', err)
-        alert(`❌ Failed to reset configuration: ${err.message}`)
+        showNotification(`Failed to reset configuration: ${err.message}`, 'error')
       }
     }
 
@@ -664,6 +734,11 @@ ${JSON.stringify(result, null, 2)}`
       newGroupName,
       selectedGroupId,
       newRule,
+
+      // Notification States
+      notification,
+      confirmDialog,
+      closeConfirm,
 
       // Methods
       createGroup,
