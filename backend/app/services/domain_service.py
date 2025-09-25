@@ -579,3 +579,81 @@ def delete_assignment_rule(db: Session, rule_id: int, domain_key: str) -> Tuple[
     except Exception as e:
         db.rollback()
         return False, f"Database error: {str(e)}"
+
+
+def get_available_recurring_events_with_assignments(db: Session, domain_key: str) -> List[Dict[str, Any]]:
+    """
+    Get all available recurring events with their current group assignments (admin function).
+    
+    Args:
+        db: Database session
+        domain_key: Domain identifier
+        
+    Returns:
+        List of recurring event data with assignment information
+        
+    I/O Operation - Database query with joins for assignment status.
+    """
+    events = get_domain_events(db, domain_key)
+    
+    # Get current assignments
+    assignments = db.query(RecurringEventGroup).filter(
+        RecurringEventGroup.domain_key == domain_key
+    ).all()
+    
+    # Create mapping of event title -> group_id
+    assignment_map = {}
+    for assignment in assignments:
+        assignment_map[assignment.recurring_event_title] = assignment.group_id
+    
+    # Group events by title using pure function
+    events_by_title = group_events_by_title(events)
+    
+    # Transform to admin response format with assignment information
+    recurring_events = []
+    for title, events_data in events_by_title.items():
+        if events_data.get('events'):  # Only include if there are actual events
+            event_info = {
+                "title": title,
+                "event_count": events_data.get('event_count', 0),
+                "sample_start_time": events_data.get('events', [{}])[0].get('start_time'),
+                "sample_location": events_data.get('events', [{}])[0].get('location'),
+                "assigned_group_id": assignment_map.get(title)  # Include current assignment
+            }
+            recurring_events.append(event_info)
+    
+    # Sort by assignment status (unassigned first) then by event count
+    return sorted(recurring_events, key=lambda x: (x['assigned_group_id'] is not None, -x['event_count'], x['title']))
+
+
+def bulk_unassign_recurring_events(db: Session, domain_key: str, event_titles: List[str]) -> Tuple[bool, int, str]:
+    """
+    Bulk unassign recurring events from their current groups (admin function).
+    
+    Args:
+        db: Database session
+        domain_key: Domain identifier
+        event_titles: List of event titles to unassign
+        
+    Returns:
+        Tuple of (success, unassigned_count, error_message)
+        
+    I/O Operation - Database deletion with bulk operations.
+    """
+    try:
+        if not event_titles:
+            return True, 0, "No events to unassign"
+        
+        # Delete existing assignments for these event titles
+        deleted_count = db.query(RecurringEventGroup).filter(
+            RecurringEventGroup.domain_key == domain_key,
+            RecurringEventGroup.recurring_event_title.in_(event_titles)
+        ).delete(synchronize_session=False)
+        
+        db.commit()
+        
+        return True, deleted_count, ""
+        
+    except Exception as e:
+        db.rollback()
+        return False, 0, f"Database error: {str(e)}"

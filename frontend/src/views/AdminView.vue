@@ -68,92 +68,30 @@
       <!-- Section Content -->
       <div class="p-6">
         
-        <!-- Groups Management Section -->
-        <div v-if="activeSection === 'groups'" class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Manage Groups</h2>
-            <button
-              @click="showCreateGroupModal = true"
-              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-            >
-              + Create Group
-            </button>
-          </div>
-
-          <!-- Groups List -->
-          <div class="space-y-3">
-            <div 
-              v-for="group in groups" 
-              :key="group.id"
-              class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-            >
-              <div class="flex-1">
-                <h3 class="font-medium text-gray-900 dark:text-white">{{ group.name }}</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">ID: {{ group.id }}</p>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  @click="editGroup(group)"
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="deleteGroupConfirm(group)"
-                  class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
+        <!-- Event Management Section (New Default) -->
+        <div v-if="activeSection === 'events'">
+          <EventManager
+            :events="recurringEvents"
+            :groups="groups"
+            :loading="loading"
+            :error="error"
+            @assign-event="handleAssignEvent"
+            @unassign-event="handleUnassignEvent"
+            @bulk-assign="handleBulkAssign"
+            @bulk-unassign="handleBulkUnassign"
+            @refresh-events="loadAllAdminData"
+          />
         </div>
 
-        <!-- Event Assignment Section -->
-        <div v-if="activeSection === 'events'" class="space-y-6">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Assign Events to Groups</h2>
-          
-          <!-- Group Selection -->
-          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Select Group for Assignment
-            </label>
-            <select 
-              v-model="selectedGroupId" 
-              class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-            >
-              <option value="">Choose a group...</option>
-              <option v-for="group in groups" :key="group.id" :value="group.id">
-                {{ group.name }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Available Events -->
-          <div v-if="selectedGroupId">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Available Recurring Events</h3>
-            <div class="space-y-3 max-h-96 overflow-y-auto">
-              <div 
-                v-for="event in recurringEvents" 
-                :key="event.title"
-                class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-              >
-                <div class="flex-1">
-                  <h4 class="font-medium text-gray-900 dark:text-white">{{ event.title }}</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ event.event_count }} occurrences
-                    <span v-if="event.sample_location"> • {{ event.sample_location }}</span>
-                  </p>
-                </div>
-                <button
-                  @click="assignEventToGroup(event.title)"
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                >
-                  Assign to Group
-                </button>
-              </div>
-            </div>
-          </div>
+        <!-- Groups Management Section -->
+        <div v-if="activeSection === 'groups'">
+          <GroupsManager
+            :groups="groups"
+            :loading="loading"
+            @create-group="handleCreateGroup"
+            @update-group="handleUpdateGroup"
+            @delete-group="handleDeleteGroup"
+          />
         </div>
 
         <!-- Assignment Rules Section -->
@@ -291,34 +229,6 @@
 
   </div>
 
-  <!-- Create Group Modal -->
-  <div v-if="showCreateGroupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create New Group</h3>
-      <input 
-        v-model="newGroupName"
-        type="text" 
-        placeholder="Enter group name"
-        class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4"
-        @keyup.enter="createGroup"
-      >
-      <div class="flex gap-3 justify-end">
-        <button
-          @click="showCreateGroupModal = false"
-          class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-        >
-          Cancel
-        </button>
-        <button
-          @click="createGroup"
-          :disabled="!newGroupName.trim()"
-          class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-        >
-          Create
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- Create Rule Modal -->
   <div v-if="showCreateRuleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -435,11 +345,15 @@ import { useAdmin } from '../composables/useAdmin'
 import { useHTTP } from '../composables/useHTTP'
 import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
+import EventManager from '../components/admin/EventManager.vue'
+import GroupsManager from '../components/admin/GroupsManager.vue'
 
 export default {
   name: 'AdminView',
   components: {
-    AppHeader
+    AppHeader,
+    EventManager,
+    GroupsManager
   },
   props: {
     domain: {
@@ -462,7 +376,11 @@ export default {
       updateGroup: updateGroupAPI,
       deleteGroup: deleteGroupAPI,
       loadRecurringEvents,
+      loadRecurringEventsWithAssignments,
       assignEventsToGroup,
+      bulkAssignEventsToGroup,
+      bulkUnassignEvents,
+      unassignEventFromGroup,
       loadAssignmentRules,
       createAssignmentRule: createAssignmentRuleAPI,
       deleteAssignmentRule: deleteAssignmentRuleAPI,
@@ -479,10 +397,10 @@ export default {
     const { get, post } = useHTTP()
 
     // UI State
-    const activeSection = ref('groups')
+    const activeSection = ref('events')  // Event Management is now the default!
     const sections = ref([
+      { id: 'events', name: 'Event Management', icon: '📅' },
       { id: 'groups', name: 'Groups', icon: '📁' },
-      { id: 'events', name: 'Event Assignment', icon: '📅' },
       { id: 'rules', name: 'Auto Rules', icon: '⚙️' },
       { id: 'config', name: 'Configuration', icon: '💾' }
     ])
@@ -711,6 +629,83 @@ export default {
       }
     }
 
+    // Event Assignment Table Handlers
+    const handleAssignEvent = async (eventTitle, groupId) => {
+      const result = await assignEventsToGroup(groupId, [eventTitle])
+      if (result.success) {
+        showNotification('Event assigned successfully!', 'success')
+      } else {
+        showNotification(`Failed to assign event: ${result.error}`, 'error')
+      }
+    }
+
+    const handleUnassignEvent = async (eventTitle) => {
+      const result = await unassignEventFromGroup(eventTitle)
+      if (result.success) {
+        showNotification('Event unassigned successfully!', 'success')
+      } else {
+        showNotification(`Failed to unassign event: ${result.error}`, 'error')
+      }
+    }
+
+    const handleBulkAssign = async (eventTitles, groupId) => {
+      const result = await bulkAssignEventsToGroup(groupId, eventTitles)
+      if (result.success) {
+        showNotification(`${eventTitles.length} events assigned successfully!`, 'success')
+      } else {
+        showNotification(`Failed to bulk assign events: ${result.error}`, 'error')
+      }
+    }
+
+    const handleBulkUnassign = async (eventTitles) => {
+      const result = await bulkUnassignEvents(eventTitles)
+      if (result.success) {
+        showNotification(`${eventTitles.length} events unassigned successfully!`, 'success')
+      } else {
+        showNotification(`Failed to bulk unassign events: ${result.error}`, 'error')
+      }
+    }
+
+    // Groups Manager Handlers
+    const handleCreateGroup = async (name) => {
+      const validation = validateGroupName(name)
+      if (!validation.valid) {
+        showNotification(validation.error, 'error')
+        return
+      }
+
+      const result = await createGroupAPI(name)
+      if (result.success) {
+        showNotification('Group created successfully!', 'success')
+      } else {
+        showNotification(`Failed to create group: ${result.error}`, 'error')
+      }
+    }
+
+    const handleUpdateGroup = async (groupId, name) => {
+      const validation = validateGroupName(name)
+      if (!validation.valid) {
+        showNotification(validation.error, 'error')
+        return
+      }
+
+      const result = await updateGroupAPI(groupId, name)
+      if (result.success) {
+        showNotification('Group updated successfully!', 'success')
+      } else {
+        showNotification(`Failed to update group: ${result.error}`, 'error')
+      }
+    }
+
+    const handleDeleteGroup = async (groupId) => {
+      const result = await deleteGroupAPI(groupId)
+      if (result.success) {
+        showNotification('Group deleted successfully!', 'success')
+      } else {
+        showNotification(`Failed to delete group: ${result.error}`, 'error')
+      }
+    }
+
     // Load data on mount
     onMounted(() => {
       loadAllAdminData()
@@ -749,6 +744,15 @@ export default {
       deleteRuleConfirm,
       getRuleTypeLabel,
       getGroupName,
+      
+      // New Component Event Handlers
+      handleAssignEvent,
+      handleUnassignEvent,
+      handleBulkAssign,
+      handleBulkUnassign,
+      handleCreateGroup,
+      handleUpdateGroup,
+      handleDeleteGroup,
       
       // Configuration Methods
       exportConfiguration,

@@ -18,7 +18,8 @@ from ..services.domain_service import (
     build_domain_events_response_data, get_domain_groups, create_group,
     assign_recurring_events_to_group, create_assignment_rule,
     get_assignment_rules, auto_assign_events_with_rules,
-    get_available_recurring_events, update_group, delete_group, delete_assignment_rule
+    get_available_recurring_events, get_available_recurring_events_with_assignments,
+    bulk_unassign_recurring_events, update_group, delete_group, delete_assignment_rule
 )
 from ..services.domain_config_service import (
     export_domain_configuration, import_domain_configuration
@@ -620,6 +621,158 @@ async def delete_domain_assignment_rule(
         
         # Return 204 No Content on successful deletion
         return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# Bulk Assignment endpoints for enhanced admin workflow
+
+@router.get("/{domain}/recurring-events-with-assignments")
+async def get_domain_recurring_events_with_assignments(
+    domain: str,
+    db: Session = Depends(get_db)
+):
+    """Get available recurring events with their current assignments (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Get recurring events with assignment information
+        events_with_assignments = get_available_recurring_events_with_assignments(db, domain)
+        
+        return {
+            "success": True,
+            "data": events_with_assignments
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/{domain}/bulk-assign-events")
+async def bulk_assign_events_to_group(
+    domain: str,
+    assignment_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Bulk assign multiple events to a group (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Validate request data
+        if "group_id" not in assignment_data or "recurring_event_titles" not in assignment_data:
+            raise HTTPException(status_code=400, detail="group_id and recurring_event_titles are required")
+        
+        group_id = assignment_data["group_id"]
+        event_titles = assignment_data["recurring_event_titles"]
+        
+        if not isinstance(event_titles, list):
+            raise HTTPException(status_code=400, detail="recurring_event_titles must be an array")
+        
+        # Bulk assign events to group
+        success, count, error = assign_recurring_events_to_group(db, domain, group_id, event_titles)
+        if not success:
+            raise HTTPException(status_code=400, detail=error)
+        
+        return {
+            "message": f"{count} recurring events assigned to group",
+            "assigned_count": count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/{domain}/bulk-unassign-events")
+async def bulk_unassign_events(
+    domain: str,
+    assignment_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Bulk unassign multiple events from their current groups (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Validate request data
+        if "recurring_event_titles" not in assignment_data:
+            raise HTTPException(status_code=400, detail="recurring_event_titles is required")
+        
+        event_titles = assignment_data["recurring_event_titles"]
+        
+        if not isinstance(event_titles, list):
+            raise HTTPException(status_code=400, detail="recurring_event_titles must be an array")
+        
+        # Bulk unassign events
+        success, count, error = bulk_unassign_recurring_events(db, domain, event_titles)
+        if not success:
+            raise HTTPException(status_code=400, detail=error)
+        
+        return {
+            "message": f"{count} recurring events unassigned",
+            "unassigned_count": count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/{domain}/unassign-event")
+async def unassign_single_event(
+    domain: str,
+    assignment_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Unassign a single event from its current group (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Validate request data
+        if "recurring_event_title" not in assignment_data:
+            raise HTTPException(status_code=400, detail="recurring_event_title is required")
+        
+        event_title = assignment_data["recurring_event_title"]
+        
+        # Unassign single event
+        success, count, error = bulk_unassign_recurring_events(db, domain, [event_title])
+        if not success:
+            raise HTTPException(status_code=400, detail=error)
+        
+        return {
+            "message": f"Event '{event_title}' unassigned",
+            "unassigned_count": count
+        }
         
     except HTTPException:
         raise

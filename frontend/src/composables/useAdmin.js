@@ -90,16 +90,70 @@ export function useAdmin(domain) {
     }
   }
 
+  const loadRecurringEventsWithAssignments = async () => {
+    try {
+      const result = await get(`/domains/${domain}/recurring-events-with-assignments`)
+      recurringEvents.value = result.success ? (result.data || []) : []
+      return { success: true, data: result.data }
+    } catch (err) {
+      console.error('Failed to load recurring events with assignments:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
   const assignEventsToGroup = async (groupId, eventTitles) => {
     try {
       const result = await put(`/domains/${domain}/groups/${groupId}/assign-recurring-events`, {
         recurring_event_titles: Array.isArray(eventTitles) ? eventTitles : [eventTitles]
       })
       // Refresh both groups and events after assignment
-      await Promise.all([loadGroups(), loadRecurringEvents()])
+      await Promise.all([loadGroups(), loadRecurringEventsWithAssignments()])
       return { success: true, data: result }
     } catch (err) {
       console.error('Failed to assign events to group:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
+  const bulkAssignEventsToGroup = async (groupId, eventTitles) => {
+    try {
+      const result = await put(`/domains/${domain}/bulk-assign-events`, {
+        group_id: groupId,
+        recurring_event_titles: eventTitles
+      })
+      // Refresh events after bulk assignment
+      await loadRecurringEventsWithAssignments()
+      return { success: true, data: result }
+    } catch (err) {
+      console.error('Failed to bulk assign events:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
+  const bulkUnassignEvents = async (eventTitles) => {
+    try {
+      const result = await put(`/domains/${domain}/bulk-unassign-events`, {
+        recurring_event_titles: eventTitles
+      })
+      // Refresh events after bulk unassignment
+      await loadRecurringEventsWithAssignments()
+      return { success: true, data: result }
+    } catch (err) {
+      console.error('Failed to bulk unassign events:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
+  const unassignEventFromGroup = async (eventTitle) => {
+    try {
+      const result = await put(`/domains/${domain}/unassign-event`, {
+        recurring_event_title: eventTitle
+      })
+      // Refresh events after unassignment
+      await loadRecurringEventsWithAssignments()
+      return { success: true, data: result }
+    } catch (err) {
+      console.error('Failed to unassign event:', err)
       return { success: false, error: err.message }
     }
   }
@@ -161,13 +215,27 @@ export function useAdmin(domain) {
   const loadAllAdminData = async () => {
     const results = await Promise.all([
       loadGroups(),
-      loadRecurringEvents(),
+      loadRecurringEventsWithAssignments(),
       loadAssignmentRules()
     ])
     
     return {
       success: results.every(r => r.success),
       results
+    }
+  }
+
+  // Statistics and computed values
+  const getEventStatistics = () => {
+    const events = recurringEvents.value || []
+    const total = events.length
+    const assigned = events.filter(event => event.assigned_group_id).length
+    const unassigned = total - assigned
+    
+    return {
+      total,
+      assigned,
+      unassigned
     }
   }
 
@@ -222,7 +290,11 @@ export function useAdmin(domain) {
 
     // Events API
     loadRecurringEvents,
+    loadRecurringEventsWithAssignments,
     assignEventsToGroup,
+    bulkAssignEventsToGroup,
+    bulkUnassignEvents,
+    unassignEventFromGroup,
 
     // Rules API
     loadAssignmentRules,
@@ -233,6 +305,7 @@ export function useAdmin(domain) {
     getGroupName,
     getRuleTypeLabel,
     loadAllAdminData,
+    getEventStatistics,
     validateGroupName,
     validateAssignmentRule
   }
