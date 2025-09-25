@@ -20,7 +20,7 @@
       <span class="truncate">{{ event.location }}</span>
     </div>
     
-    <!-- Event Category/Group (if different from title) -->
+    <!-- Event Title (if different from main title) -->
     <div 
       v-if="showCategory && getRecurringEventKey(event) !== event.title" 
       class="text-xs text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1"

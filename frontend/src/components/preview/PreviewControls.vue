@@ -17,7 +17,7 @@
           class="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-all text-center min-w-0"
           :class="viewMode === 'category' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200'"
         >
-          <span class="hidden sm:inline">📂 {{ $t('preview.byRecurringEvent') }}</span>
+          <span class="hidden sm:inline">📂 Title</span>
           <span class="sm:hidden">📂</span>
         </button>
         

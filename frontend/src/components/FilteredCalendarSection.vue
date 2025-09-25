@@ -383,7 +383,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatDateTime as formatDateTimeUtil, formatDateRange as formatDateRangeUtil } from '@/utils/dates'
+import { formatDateTime as formatDateTimeUtil, formatDateRange as formatDateRangeUtil } from '@/utils/dateFormatting'
 import { useFilteredCalendarAPI } from '@/composables/useFilteredCalendarAPI'
 import { useUsername } from '@/composables/useUsername'
 import { API_ENDPOINTS } from '@/constants/api'

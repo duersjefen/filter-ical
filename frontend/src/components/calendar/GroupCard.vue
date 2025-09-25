@@ -204,7 +204,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { formatDateRange } from '@/utils/dates'
+import { formatDateRange } from '@/utils/dateFormatting'
 
 const props = defineProps({
   group: { type: Object, required: true },

@@ -44,7 +44,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { formatDateRange } from '@/utils/dates'
+import { formatDateRange } from '@/utils/dateFormatting'
 import { usePreview } from '@/composables/usePreview'
 import PreviewHeader from '@/components/preview/PreviewHeader.vue'
 import PreviewControls from '@/components/preview/PreviewControls.vue'
