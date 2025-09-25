@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "calendar_name_required": "Calendar name is required",
+    "source_url_required": "Source URL is required",
+    "calendar_not_found": "Calendar not found",
+    "sync_failed": "Sync failed: {error}",
+    "filter_name_required": "Filter name is required",
+    "filter_not_found": "Filter not found",
+    "access_denied": "Access denied",
+    "domain_not_found": "Domain not found",
+    "configuration_error": "Configuration error: {error}",
+    "cache_error": "Cache error: {error}",
+    "group_name_required": "Group name is required",
+    "export_error": "Export error: {error}",
+    "invalid_yaml_format": "Invalid YAML format: {error}",
+    "configuration_must_be_object": "Configuration must be an object/dictionary",
+    "missing_required_section": "Missing required section: '{section}'",
+    "import_error": "Import error: {error}",
+    "no_baseline_configuration": "No baseline configuration found: {error}",
+    "reset_error": "Reset error: {error}",
+    "invalid_filter_configuration": "Invalid filter configuration",
+    "internal_server_error": "Internal server error: {error}"
+  }
+}

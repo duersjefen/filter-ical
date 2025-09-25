@@ -8,7 +8,7 @@
         ? 'border-blue-300 bg-blue-50/30 dark:bg-blue-900/10 dark:border-blue-400 shadow-sm shadow-blue-500/10'
         : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600'"
     @click="expandGroup"
-    :title="`Click anywhere to expand/collapse ${group.name} details`"
+    :title="$t('ui.clickAnywhereToToggle', { name: group.name })"
   >
     <!-- Group Header -->
     <div class="p-5">
@@ -59,7 +59,7 @@
           :class="isBothSubscribedAndSelected 
             ? 'bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-500' 
             : 'bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-600'"
-          :title="isBothSubscribedAndSelected ? 'Unsubscribe and deselect this group' : 'Subscribe to group and select all event types'"
+          :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
           <span v-if="isBothSubscribedAndSelected">✅ Subscribed & Selected</span>
           <span v-else>🎯 Subscribe & Select</span>
@@ -145,7 +145,7 @@
                 <button
                   @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
                   class="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors flex-shrink-0"
-                  title="Click to view individual events"
+                  :title="$t('ui.clickToViewEvents')"
                 >
                   <svg 
                     class="w-5 h-5 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-transform duration-300" 

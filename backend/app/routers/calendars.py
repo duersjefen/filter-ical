@@ -5,11 +5,12 @@ Implements user calendar endpoints from OpenAPI specification.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from ..core.database import get_db
+from ..i18n.utils import get_locale_from_request, format_error_message
 from ..services.calendar_service import (
     create_calendar, get_calendars, get_calendar_by_id, delete_calendar,
     get_calendar_events, sync_calendar_events, create_filter, get_filters,
@@ -22,16 +23,19 @@ router = APIRouter()
 @router.post("")
 async def add_calendar(
     calendar_data: dict,
+    request: Request,
     username: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     """Add a user calendar."""
     try:
         # Validate request data
+        locale = get_locale_from_request(request)
+        
         if "name" not in calendar_data:
-            raise HTTPException(status_code=400, detail="Calendar name is required")
+            raise HTTPException(status_code=400, detail=format_error_message("calendar_name_required", locale))
         if "source_url" not in calendar_data:
-            raise HTTPException(status_code=400, detail="Source URL is required")
+            raise HTTPException(status_code=400, detail=format_error_message("source_url_required", locale))
         
         # Create calendar
         success, calendar, error = create_calendar(

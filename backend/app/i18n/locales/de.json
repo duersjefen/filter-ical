@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "calendar_name_required": "Kalendername ist erforderlich",
+    "source_url_required": "Quell-URL ist erforderlich",
+    "calendar_not_found": "Kalender nicht gefunden",
+    "sync_failed": "Synchronisation fehlgeschlagen: {error}",
+    "filter_name_required": "Filtername ist erforderlich",
+    "filter_not_found": "Filter nicht gefunden",
+    "access_denied": "Zugriff verweigert",
+    "domain_not_found": "Domain nicht gefunden",
+    "configuration_error": "Konfigurationsfehler: {error}",
+    "cache_error": "Cache-Fehler: {error}",
+    "group_name_required": "Gruppenname ist erforderlich",
+    "export_error": "Export-Fehler: {error}",
+    "invalid_yaml_format": "Ungültiges YAML-Format: {error}",
+    "configuration_must_be_object": "Konfiguration muss ein Objekt/Wörterbuch sein",
+    "missing_required_section": "Fehlender erforderlicher Abschnitt: '{section}'",
+    "import_error": "Import-Fehler: {error}",
+    "no_baseline_configuration": "Keine Basis-Konfiguration gefunden: {error}",
+    "reset_error": "Reset-Fehler: {error}",
+    "invalid_filter_configuration": "Ungültige Filterkonfiguration",
+    "internal_server_error": "Interner Serverfehler: {error}"
+  }
+}

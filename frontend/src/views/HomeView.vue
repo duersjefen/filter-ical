@@ -1,8 +1,8 @@
 <template>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
     <AppHeader 
-      title="🗓️ iCal Filter & Subscribe"
-      subtitle="Filter your calendars and create custom feeds"
+      :title="$t('titles.icalFilterSubscribe')"
+      :subtitle="$t('subtitles.filterCalendarsCreateFeeds')"
       page-context="home"
     />
 
@@ -78,7 +78,7 @@
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
             <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
           </svg>
-          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Read-only mode</span>
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $t('ui.readOnlyMode') }}</span>
         </div>
       </div>
       

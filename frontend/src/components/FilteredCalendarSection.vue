@@ -6,7 +6,7 @@
     <div 
       class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 transition-all duration-200"
       @click="toggleExpanded"
-      :title="isExpanded ? 'Minimize section' : 'Expand section'"
+      :title="isExpanded ? $t('filteredCalendar.minimizeSection') : $t('filteredCalendar.expandSection')"
     >
       <div class="flex items-center gap-3">
         <!-- Chevron icon (moved to left, matching groups card) -->
@@ -254,7 +254,7 @@
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
                   >
                     <span>🔄</span>
-                    <span>Update Filter</span>
+                    <span>{{ $t('filteredCalendar.updateFilter') }}</span>
                   </button>
                   
                   <button
@@ -312,7 +312,7 @@
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
           </svg>
-          <span class="text-sm font-medium">Calendar name updated successfully!</span>
+          <span class="text-sm font-medium">{{ $t('filteredCalendar.calendarNameUpdated') }}</span>
         </div>
       </div>
       
@@ -371,7 +371,7 @@
   <!-- Confirm Dialog -->
   <ConfirmDialog
     ref="confirmDialog"
-    title="Delete Calendar"
+    :title="$t('home.deleteCalendar')"
     :message="$t('filteredCalendar.confirmDelete')"
     :confirm-text="$t('common.delete')"
     :cancel-text="$t('common.cancel')"

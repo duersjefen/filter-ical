@@ -34,7 +34,7 @@
               @blur="saveUsername"
               type="text"
               class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-lg text-sm w-32 sm:w-40 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 shadow-sm"
-              placeholder="Enter your name"
+              :placeholder="$t('ui.enterYourName')"
               maxlength="20"
               autocomplete="off"
             />
@@ -219,7 +219,7 @@
               @blur="saveUsername"
               type="text"
               class="flex-1 bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-4 py-3 rounded-xl text-base focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 touch-manipulation shadow-sm"
-              placeholder="Enter your name"
+              :placeholder="$t('ui.enterYourName')"
               maxlength="20"
               autocomplete="off"
             />

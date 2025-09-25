@@ -199,7 +199,38 @@
     "allEvents": "ALLE EREIGNISSE",
     "recurringEvents": "Event-Typen",
     "mode": "Modus",
-    "loadingCalendars": "Lade gefilterte Kalender..."
+    "loadingCalendars": "Lade gefilterte Kalender...",
+    "minimizeSection": "Bereich minimieren",
+    "expandSection": "Bereich erweitern",
+    "updateFilter": "Filter aktualisieren",
+    "calendarNameUpdated": "Kalendername erfolgreich aktualisiert!"
+  },
+  "ui": {
+    "enterYourName": "Geben Sie Ihren Namen ein",
+    "readOnlyMode": "Nur-Lese-Modus",
+    "switchToEventsView": "Zur Events-Ansicht wechseln",
+    "switchToGroupsView": "Zur Gruppen-Ansicht wechseln",
+    "clickToViewEvents": "Klicken Sie, um einzelne Events anzuzeigen",
+    "clickAnywhereToToggle": "Klicken Sie irgendwo, um {name}-Details ein-/auszublenden",
+    "subscribeAndSelect": "Gruppe abonnieren und alle Event-Typen auswählen",
+    "unsubscribeAndDeselect": "Gruppe abbestellen und abwählen"
+  },
+  "admin": {
+    "loadingPanel": "Admin-Panel wird geladen...",
+    "pleaseWait": "Bitte warten",
+    "manageGroups": "Gruppen verwalten",
+    "assignEventsToGroups": "Events zu Gruppen zuweisen",
+    "chooseGroup": "Gruppe auswählen...",
+    "availableRecurringEvents": "Verfügbare wiederkehrende Events",
+    "enterGroupName": "Gruppennamen eingeben",
+    "searchEvents": "Events nach Titel oder Ort suchen..."
+  },
+  "titles": {
+    "icalFilterSubscribe": "🗓️ iCal Filter & Abonnieren"
+  },
+  "subtitles": {
+    "filterCalendarsCreateFeeds": "Filtern Sie Ihre Kalender und erstellen Sie benutzerdefinierte Feeds",
+    "domainCalendar": "Domain-Kalender"
   },
   "community": {
     "title": "BCC Community Kalender",

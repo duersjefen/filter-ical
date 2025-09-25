@@ -18,7 +18,7 @@
             v-if="hasGroups"
             @click="$emit('switch-to-groups')"
             class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
-            title="Switch to Groups view"
+            :title="$t('ui.switchToGroupsView')"
           >
             <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">🏷️ Groups</span>
             <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">

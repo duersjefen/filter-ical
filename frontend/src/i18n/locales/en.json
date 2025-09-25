@@ -197,6 +197,37 @@
     "allEvents": "ALL EVENTS",
     "recurringEvents": "events",
     "mode": "Mode",
-    "loadingCalendars": "Loading filtered calendars..."
+    "loadingCalendars": "Loading filtered calendars...",
+    "minimizeSection": "Minimize section",
+    "expandSection": "Expand section",
+    "updateFilter": "Update Filter",
+    "calendarNameUpdated": "Calendar name updated successfully!"
+  },
+  "ui": {
+    "enterYourName": "Enter your name",
+    "readOnlyMode": "Read-only mode",
+    "switchToEventsView": "Switch to Events view",
+    "switchToGroupsView": "Switch to Groups view",
+    "clickToViewEvents": "Click to view individual events",
+    "clickAnywhereToToggle": "Click anywhere to expand/collapse {name} details",
+    "subscribeAndSelect": "Subscribe to group and select all event types",
+    "unsubscribeAndDeselect": "Unsubscribe and deselect this group"
+  },
+  "admin": {
+    "loadingPanel": "Loading Admin Panel...",
+    "pleaseWait": "Please wait",
+    "manageGroups": "Manage Groups",
+    "assignEventsToGroups": "Assign Events to Groups",
+    "chooseGroup": "Choose a group...",
+    "availableRecurringEvents": "Available Recurring Events",
+    "enterGroupName": "Enter group name",
+    "searchEvents": "Search events by title or location..."
+  },
+  "titles": {
+    "icalFilterSubscribe": "🗓️ iCal Filter & Subscribe"
+  },
+  "subtitles": {
+    "filterCalendarsCreateFeeds": "Filter your calendars and create custom feeds",
+    "domainCalendar": "Domain Calendar"
   }
 }
