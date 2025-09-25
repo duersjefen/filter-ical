@@ -38,10 +38,9 @@
       <!-- Copyright/Info Section -->
       <div class="mt-3 text-center">
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          {{ $t('footer.copyright', '© 2025 PAISS') }} • 
+          {{ $t('footer.copyright') }} • 
           <span class="text-gray-500 dark:text-gray-500">
-            {{ $t('footer.madeWith', 'Made with') }} ❤️ 
-            {{ $t('footer.forCommunity', 'for the community') }}
+            {{ $t('footer.madeWith') }}
           </span>
         </p>
       </div>

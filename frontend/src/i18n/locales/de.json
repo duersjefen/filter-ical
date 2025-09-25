@@ -223,14 +223,106 @@
     "chooseGroup": "Gruppe auswählen...",
     "availableRecurringEvents": "Verfügbare wiederkehrende Events",
     "enterGroupName": "Gruppennamen eingeben",
-    "searchEvents": "Events nach Titel oder Ort suchen..."
+    "searchEvents": "Events nach Titel oder Ort suchen...",
+    "backToCalendar": "← Zurück zum {domain} Kalender",
+    "manageEventsGroups": "{domain} Events und Gruppen verwalten",
+    "eventManagement": "Event-Verwaltung",
+    "groups": "Gruppen",
+    "autoRules": "Auto-Regeln",
+    "configuration": "Konfiguration",
+    "assignmentRules": "Zuweisungsregeln",
+    "createRule": "+ Regel erstellen",
+    "domainConfiguration": "Domain-Konfiguration",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "reset": "Zurücksetzen",
+    "exportDescription": "Aktuelle Domain-Konfiguration als YAML-Datei für Backup oder Freigabe herunterladen.",
+    "exportConfiguration": "📤 Konfiguration exportieren",
+    "importDescription": "YAML-Konfigurationsdatei hochladen, um aktuelle Domain-Einrichtung zu ersetzen.",
+    "importConfiguration": "📥 Konfiguration importieren",
+    "resetDescription": "Domain auf Basis-Konfiguration aus System-YAML-Datei zurücksetzen.",
+    "resetToBaseline": "🔄 Auf Basis zurücksetzen",
+    "currentStatus": "Aktueller Status",
+    "groupsCount": "Gruppen:",
+    "eventsCount": "Events:",
+    "rulesCount": "Regeln:",
+    "domainName": "Domain:",
+    "createAssignmentRule": "Zuweisungsregel erstellen",
+    "ruleType": "Regeltyp",
+    "selectRuleType": "Regeltyp auswählen...",
+    "titleContains": "Titel enthält",
+    "descriptionContains": "Beschreibung enthält",
+    "categoryContains": "Kategorie enthält",
+    "ruleValue": "Regelwert",
+    "ruleValuePlaceholder": "z.B. 'Event' oder 'Meeting'",
+    "targetGroup": "Zielgruppe",
+    "selectTargetGroup": "Zielgruppe auswählen...",
+    "createRuleButton": "Regel erstellen",
+    "assignsTo": "Weist zu:",
+    "deleteRule": "Löschen",
+    "confirmAction": "Aktion bestätigen",
+    "confirm": "Bestätigen"
   },
   "titles": {
-    "icalFilterSubscribe": "🗓️ iCal Filter & Abonnieren"
+    "icalFilterSubscribe": "🗓️ PAISS"
   },
   "subtitles": {
     "filterCalendarsCreateFeeds": "Filtern Sie Ihre Kalender und erstellen Sie benutzerdefinierte Feeds",
     "domainCalendar": "Domain-Kalender"
+  },
+  "eventManagement": {
+    "eventManagementTips": "Event-Management-Tipps",
+    "unassignedEvents": "Nicht zugewiesene Events",
+    "unassignedEventsDescription": "erscheinen mit orangener Hervorhebung - weisen Sie sie Gruppen für bessere Organisation zu",
+    "selectMultiple": "Mehrere Events auswählen",
+    "selectMultipleDescription": "mit Checkboxen für Massenzuweisungsoperationen",
+    "quickAssign": "Schnellzuweisung",
+    "quickAssignDescription": "einzelner Events über das Dropdown in jeder Zeile",
+    "searchAndFilter": "Suchen und filtern",
+    "searchAndFilterDescription": "um schnell bestimmte Events oder Gruppen zu finden",
+    "autoAssignmentRules": "Auto-Zuweisungsregeln",
+    "autoAssignmentRulesDescription": "können im \"Auto-Regeln\"-Tab konfiguriert werden",
+    "loadingEvents": "Events werden geladen...",
+    "totalEvents": "Gesamt Events",
+    "unassigned": "Nicht zugewiesen",
+    "assigned": "Zugewiesen",
+    "allEvents": "Alle Events",
+    "assignedOnly": "Nur zugewiesene",
+    "unassignedOnly": "Nur nicht zugewiesene",
+    "filterByGroup": "Nach Gruppe filtern",
+    "eventsSelected": "Events ausgewählt",
+    "chooseGroup": "Gruppe wählen",
+    "unassignedOption": "Nicht zugewiesen"
+  },
+  "groupsManager": {
+    "noGroupsYet": "Noch keine Gruppen",
+    "createFirstGroup": "Erstellen Sie Ihre erste Gruppe, um Events zu organisieren",
+    "createGroup": "Gruppe erstellen"
+  },
+  "groupCard": {
+    "subscribedSelected": "✅ Abonniert & Ausgewählt",
+    "subscribeSelect": "🎯 Abonnieren & Auswählen",
+    "subscribed": "✅ Abonniert",
+    "subscribe": "📥 Abonnieren",
+    "deselectAll": "✓ Alle abwählen",
+    "selectAll": "☐ Alle auswählen",
+    "loadingEvents": "Events werden geladen...",
+    "errorPrefix": "Fehler:"
+  },
+  "viewControls": {
+    "showAll": "👁️ Alle anzeigen",
+    "showSelectedOnly": "🎯 Nur ausgewählte anzeigen",
+    "showAllShort": "👁️ Alle",
+    "showSelectedShort": "🎯 Auswahl",
+    "deselectAllSingles": "✗ Alle abwählen",
+    "selectAllSingles": "✓ Alle auswählen",
+    "subscribeToAllGroups": "Alle Gruppen abonnieren",
+    "unsubscribeFromAllGroups": "Alle Gruppen abbestellen",
+    "groupsView": "Gruppenansicht"
+  },
+  "labels": {
+    "types": "📂 Typen",
+    "groups": "🏷️ Gruppen"
   },
   "community": {
     "title": "BCC Community Kalender",
@@ -243,5 +335,12 @@
     "needHelp": "Benötigen Sie Hilfe? Kontaktieren Sie Ihren Community-Administrator",
     "welcomeBack": "Willkommen zurück! Weiterleitung...",
     "welcomeTo": "Willkommen zu {name}! Weiterleitung..."
+  },
+  "footer": {
+    "donateButton": "Server- und Entwicklungskosten unterstützen",
+    "paypalNotice": "Hilft Hosting- & Entwicklungskosten zu decken.",
+    "voluntaryNotice": "Alle Spenden sind freiwillig und geschätzt.",
+    "copyright": "© 2025 PAISS",
+    "madeWith": "Mit ❤️ für die Community gemacht"
   }
 }
