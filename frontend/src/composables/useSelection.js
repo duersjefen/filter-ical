@@ -81,7 +81,28 @@ export function useSelection() {
   }
   
   const getGroupBreakdownSummary = () => {
-    return selectionStore.getGroupBreakdownSummary(appStore.groups || {})
+    // For personal calendars, we need to pass recurring events data too
+    const groups = appStore.groups || {}
+    const recurringEvents = appStore.recurringEvents || {}
+    
+    // Check if this is a personal calendar (no groups)
+    const isPersonalCalendar = Object.keys(groups).length === 0
+    
+    if (isPersonalCalendar) {
+      // For personal calendars, handle the recurring events directly
+      const totalEvents = Object.keys(recurringEvents).length
+      const selectedEvents = selectedRecurringEvents.value.length
+      
+      if (totalEvents === 0) {
+        return 'Calendar is empty'
+      } else if (selectedEvents === 0) {
+        return `0/${totalEvents} Events`
+      } else {
+        return `${selectedEvents}/${totalEvents} Events`
+      }
+    }
+    
+    return selectionStore.getGroupBreakdownSummary(groups)
   }
   
   // ===============================================

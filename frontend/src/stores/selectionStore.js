@@ -377,6 +377,11 @@ export const useSelectionStore = defineStore('selection', () => {
     const totalAvailableEvents = allUniqueRecurringEvents.size
     const effectiveSelectedEvents = effectivelySelectedRecurringEvents.size
     
+    // Special case: Personal calendar with no events at all
+    if (totalGroups === 0 && totalAvailableEvents === 0) {
+      return 'Calendar is empty'
+    }
+    
     if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
       return 'No events or groups selected'
     }
