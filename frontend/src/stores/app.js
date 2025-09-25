@@ -426,7 +426,7 @@ export const useAppStore = defineStore('app', () => {
       groups.value = {}
 
       // Process events from the new API response format
-      if (result.data.events) {
+      if (result.data.events && result.data.events.length > 0) {
         // Events is an array of individual events, we need to group them by title
         const recurringEventMap = {}
         result.data.events.forEach(event => {
@@ -445,24 +445,11 @@ export const useAppStore = defineStore('app', () => {
         // Store the processed data in reactive variables for CalendarView
         recurringEvents.value = recurringEventMap
         events.value = result.data.events || []
-        
-        console.log('✅ Personal calendar data loaded:', {
-          hasGroups: hasGroups.value,
-          eventsCount: events.value.length,
-          recurringEventsCount: Object.keys(recurringEvents.value).length,
-          recurringEventNames: Object.keys(recurringEvents.value)
-        })
       } else {
         // No events data - clear reactive variables
         recurringEvents.value = {}
         events.value = []
-        console.log('⚠️ No events data in personal calendar response')
       }
-      
-      console.log('📊 Calendar data loaded:', {
-        hasGroups: hasGroups.value,
-        groupsCount: Object.keys(groups.value).length
-      })
     }
 
     return result

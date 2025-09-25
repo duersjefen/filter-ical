@@ -378,9 +378,15 @@ const loadCalendarData = async (calendarId) => {
           recurringEventNames: Object.keys(extractedRecurringEvents)
         })
       } else {
-        console.warn('⚠️ No groups data available')
-        recurringEvents.value = {}
-        events.value = []
+        // No groups - this is a personal calendar, extract from appStore directly
+        if (appStore.events && appStore.events.length > 0 && appStore.recurringEvents) {
+          // Personal calendar - use data directly from appStore
+          events.value = appStore.events
+          recurringEvents.value = appStore.recurringEvents
+        } else {
+          recurringEvents.value = {}
+          events.value = []
+        }
       }
     } catch (extractError) {
       console.error('❌ Error extracting data from groups:', extractError)
