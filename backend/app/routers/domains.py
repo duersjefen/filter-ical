@@ -18,6 +18,9 @@ from ..services.domain_service import (
     get_assignment_rules, auto_assign_events_with_rules,
     get_available_recurring_events, update_group, delete_group, delete_assignment_rule
 )
+from ..services.domain_config_service import (
+    export_domain_configuration, import_domain_configuration
+)
 from ..services.calendar_service import get_filters, create_filter, delete_filter, get_filter_by_id
 from ..services.cache_service import get_or_build_domain_events
 
@@ -615,6 +618,116 @@ async def delete_domain_assignment_rule(
         
         # Return 204 No Content on successful deletion
         return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# Configuration Export/Import endpoints for Living Domain System
+
+@router.get("/{domain}/export-config")
+async def export_domain_config(
+    domain: str,
+    db: Session = Depends(get_db)
+):
+    """Export current domain configuration as YAML (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Export current domain state
+        success, export_config, error = export_domain_configuration(db, domain)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Export error: {error}")
+        
+        return export_config
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/{domain}/import-config")
+async def import_domain_config(
+    domain: str,
+    config_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Import domain configuration from YAML (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Validate required fields in import
+        if "domain" not in config_data:
+            raise HTTPException(status_code=400, detail="Missing 'domain' section in configuration")
+        if "groups" not in config_data:
+            raise HTTPException(status_code=400, detail="Missing 'groups' section in configuration")
+        if "assignments" not in config_data:
+            raise HTTPException(status_code=400, detail="Missing 'assignments' section in configuration")
+        if "rules" not in config_data:
+            raise HTTPException(status_code=400, detail="Missing 'rules' section in configuration")
+        
+        # Import configuration
+        success, error = import_domain_configuration(db, domain, config_data)
+        if not success:
+            raise HTTPException(status_code=400, detail=f"Import error: {error}")
+        
+        return {
+            "success": True,
+            "message": error  # Contains success message from import function
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/{domain}/reset-config")
+async def reset_domain_config(
+    domain: str,
+    db: Session = Depends(get_db)
+):
+    """Reset domain to baseline configuration from YAML file (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Load baseline configuration from YAML file
+        from ..services.domain_config_service import load_domain_configuration
+        domains_dir = settings.domains_config_path.parent
+        success, baseline_config, error = load_domain_configuration(domain, domains_dir)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"No baseline configuration found: {error}")
+        
+        # Import baseline configuration
+        success, error = import_domain_configuration(db, domain, baseline_config)
+        if not success:
+            raise HTTPException(status_code=400, detail=f"Reset error: {error}")
+        
+        return {
+            "success": True,
+            "message": f"Domain '{domain}' reset to baseline configuration"
+        }
         
     except HTTPException:
         raise

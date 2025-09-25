@@ -45,12 +45,18 @@ async def add_calendar(
         
         # Sync calendar events
         sync_success, event_count, sync_error = await sync_calendar_events(db, calendar)
+        warnings = []
         if not sync_success:
             # Calendar created but sync failed - still return calendar with warning
-            pass
+            warning_msg = f"Calendar created but failed to sync events: {sync_error}"
+            warnings.append(warning_msg)
+            print(f"⚠️ Calendar sync warning for {calendar.name}: {sync_error}")
+        elif event_count == 0:
+            warnings.append("Calendar synced successfully but contains no events")
+            print(f"ℹ️ Calendar {calendar.name} synced but has 0 events")
         
         # Return calendar data matching OpenAPI schema
-        return {
+        response = {
             "id": calendar.id,
             "name": calendar.name,
             "source_url": calendar.source_url,
@@ -59,6 +65,13 @@ async def add_calendar(
             "username": calendar.username,
             "last_fetched": calendar.last_fetched.isoformat() if calendar.last_fetched else None
         }
+        
+        # Add warnings if any
+        if warnings:
+            response["warnings"] = warnings
+            response["event_count"] = event_count if sync_success else 0
+            
+        return response
         
     except HTTPException:
         raise
@@ -91,6 +104,36 @@ async def list_calendars(
         
         return calendars_response
         
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/{calendar_id}/sync")
+async def sync_calendar_endpoint(
+    calendar_id: int,
+    username: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Manually sync calendar events from source."""
+    try:
+        # Verify calendar exists and user has access
+        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        if not calendar:
+            raise HTTPException(status_code=404, detail="Calendar not found")
+            
+        # Sync calendar events
+        sync_success, event_count, sync_error = await sync_calendar_events(db, calendar)
+        
+        if not sync_success:
+            raise HTTPException(status_code=400, detail=f"Sync failed: {sync_error}")
+            
+        return {
+            "message": f"Calendar synced successfully. {event_count} events processed.",
+            "event_count": event_count
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 

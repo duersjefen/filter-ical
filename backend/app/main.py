@@ -65,26 +65,30 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️ Domain calendar setup warning: {e}")
     
-    # Seed demo data in development environment
+    # Seed domain configurations from YAML files
     if settings.should_seed_demo_data:
-        print("🌱 Development environment - checking demo data...")
+        print("🌱 Development environment - loading domain configurations from YAML...")
         try:
-            # Import demo data functions
-            import sys
-            from pathlib import Path
-            sys.path.append(str(Path(__file__).parent.parent))
-            from demo_data import should_seed_demo_data, seed_demo_data
+            from .services.domain_config_service import seed_domain_from_yaml, list_available_domain_configs
             
-            if should_seed_demo_data():
-                print("🌱 Seeding demo data for development...")
-                if seed_demo_data():
-                    print("✅ Demo data seeded successfully")
-                else:
-                    print("⚠️ Demo data seeding had issues (check logs)")
+            # Get available domain configurations
+            domains_dir = settings.domains_config_path.parent
+            available_configs = list_available_domain_configs(domains_dir)
+            
+            if available_configs:
+                session = get_session_sync()
+                for domain_key in available_configs:
+                    success, error = seed_domain_from_yaml(session, domain_key)
+                    if success:
+                        print(f"✅ Domain '{domain_key}' configuration loaded from YAML")
+                    else:
+                        print(f"⚠️ Domain '{domain_key}' seeding issue: {error}")
+                session.close()
             else:
-                print("📋 Demo data already exists")
+                print("📋 No domain configuration files found")
+                
         except Exception as e:
-            print(f"⚠️ Demo data seeding warning: {e}")
+            print(f"⚠️ Domain YAML seeding warning: {e}")
     
     # Start background scheduler for domain calendar sync (configurable)
     if settings.should_enable_background_tasks:

@@ -253,6 +253,47 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  const syncCalendar = async (calendarId) => {
+    // Convert calendarId to number for consistent comparison
+    const numericCalendarId = typeof calendarId === 'string' ? parseInt(calendarId, 10) : calendarId
+    
+    const currentUserId = getUserId()
+    const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
+    
+    if (hasCustomUsername) {
+      // LOGGED IN: Call server sync endpoint
+      console.log('🔄 Syncing calendar from server')
+      
+      try {
+        const result = await post(`/calendars/${numericCalendarId}/sync?username=${currentUserId}`)
+        
+        if (result.success) {
+          console.log('✅ Calendar sync succeeded:', result.data)
+          return { 
+            success: true, 
+            data: result.data 
+          }
+        } else {
+          return { 
+            success: false, 
+            error: result.error || 'Failed to sync calendar'
+          }
+        }
+      } catch (error) {
+        console.error('❌ Server sync request failed:', error)
+        return { 
+          success: false, 
+          error: 'Failed to connect to server. Please try again.'
+        }
+      }
+      
+    } else {
+      // LOGGED OUT: Read-only mode
+      console.log('👤 User anonymous - cannot sync calendars')
+      return { success: false, error: 'Login required to sync calendars' }
+    }
+  }
+
   const selectCalendar = (calendar) => {
     selectedCalendar.value = calendar
   }
@@ -621,6 +662,7 @@ export const useAppStore = defineStore('app', () => {
     fetchCalendars,
     addCalendar,
     deleteCalendar,
+    syncCalendar,
     selectCalendar,
     clearSelection,
 

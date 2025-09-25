@@ -109,7 +109,15 @@
                   {{ $t('home.viewEvents') }}
                 </button>
                 <button 
-                  v-if="calendar.user_id !== 'default' && !String(calendar.id).startsWith('cal_domain_') && hasCustomUsername()"
+                  v-if="calendar.type === 'user'" 
+                  @click="syncCalendar(calendar.id)"
+                  :disabled="appStore.loading"
+                  class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                >
+                  🔄 Sync Events
+                </button>
+                <button 
+                  v-if="calendar.type === 'user' && hasCustomUsername()"
                   @click="deleteCalendar(calendar.id)" 
                   class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg"
                   :disabled="appStore.loading"
@@ -145,6 +153,14 @@
                   <div class="flex gap-3">
                     <button @click="viewCalendar(calendar.id)" class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white border-none px-6 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg whitespace-nowrap">
                       {{ $t('home.viewEvents') }}
+                    </button>
+                    <button 
+                      v-if="calendar.type === 'user'"
+                      @click="syncCalendar(calendar.id)"
+                      :disabled="appStore.loading"
+                      class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg whitespace-nowrap"
+                    >
+                      🔄 Sync
                     </button>
                     <button 
                       v-if="calendar.user_id !== 'default' && !String(calendar.id).startsWith('cal_domain_') && hasCustomUsername()"
@@ -234,6 +250,23 @@ const handleAddCalendar = async () => {
 const viewCalendar = async (calendarId) => {
   console.log('viewCalendar called with ID:', calendarId)
   router.push(`/calendar/${calendarId}`)
+}
+
+const syncCalendar = async (calendarId) => {
+  console.log('Sync calendar called with ID:', calendarId)
+  
+  const result = await appStore.syncCalendar(calendarId)
+  
+  if (result.success) {
+    console.log('✅ Calendar synced successfully:', result.data)
+    // Show success message
+    appStore.setError(`✅ Calendar synced! ${result.data.event_count} events processed.`)
+    // Clear the "error" after a few seconds since it's actually success
+    setTimeout(() => appStore.clearError(), 3000)
+  } else {
+    console.error('❌ Calendar sync failed:', result.error)
+    appStore.setError(`❌ Sync failed: ${result.error}`)
+  }
 }
 
 const deleteCalendar = async (calendarId) => {

@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     
     # Paths
     base_dir: Path = Path(__file__).parent.parent.parent
-    domains_config_path: Path = base_dir / "domains.yaml"
+    domains_config_path: Path = base_dir / "domains" / "domains.yaml"
     openapi_spec_path: Path = base_dir / "openapi.yaml"
     
     class Config:

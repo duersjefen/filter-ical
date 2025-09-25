@@ -200,6 +200,99 @@
           </div>
         </div>
 
+        <!-- Configuration Management Section -->
+        <div v-if="activeSection === 'config'" class="space-y-6">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Domain Configuration</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- Export Configuration -->
+            <div class="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
+              <div class="flex items-center mb-4">
+                <div class="text-2xl mr-3">📤</div>
+                <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100">Export</h3>
+              </div>
+              <p class="text-blue-700 dark:text-blue-200 text-sm mb-4">
+                Download current domain configuration as YAML file for backup or sharing.
+              </p>
+              <button
+                @click="exportConfiguration"
+                :disabled="loading"
+                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                📤 Export Configuration
+              </button>
+            </div>
+
+            <!-- Import Configuration -->
+            <div class="bg-green-50 dark:bg-green-900/30 p-6 rounded-xl border border-green-200 dark:border-green-700">
+              <div class="flex items-center mb-4">
+                <div class="text-2xl mr-3">📥</div>
+                <h3 class="text-lg font-semibold text-green-900 dark:text-green-100">Import</h3>
+              </div>
+              <p class="text-green-700 dark:text-green-200 text-sm mb-4">
+                Upload a YAML configuration file to replace current domain setup.
+              </p>
+              <input
+                type="file"
+                ref="fileInput"
+                accept=".yaml,.yml"
+                @change="handleFileUpload"
+                class="hidden"
+              >
+              <button
+                @click="$refs.fileInput.click()"
+                :disabled="loading"
+                class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                📥 Import Configuration
+              </button>
+            </div>
+
+            <!-- Reset to Baseline -->
+            <div class="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-xl border border-orange-200 dark:border-orange-700">
+              <div class="flex items-center mb-4">
+                <div class="text-2xl mr-3">🔄</div>
+                <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-100">Reset</h3>
+              </div>
+              <p class="text-orange-700 dark:text-orange-200 text-sm mb-4">
+                Reset domain to baseline configuration from system YAML file.
+              </p>
+              <button
+                @click="resetConfigurationConfirm"
+                :disabled="loading"
+                class="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                🔄 Reset to Baseline
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Configuration Status -->
+          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <h3 class="font-medium text-gray-900 dark:text-white mb-2">Current Status</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Groups:</span>
+                <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ groups.length }}</span>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Events:</span>
+                <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ recurringEvents.length }}</span>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Rules:</span>
+                <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ assignmentRules.length }}</span>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Domain:</span>
+                <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ domain }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -301,6 +394,7 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useAdmin } from '../composables/useAdmin'
+import { useHTTP } from '../composables/useHTTP'
 
 export default {
   name: 'AdminView',
@@ -338,12 +432,16 @@ export default {
       validateAssignmentRule
     } = useAdmin(props.domain)
 
+    // HTTP functions for configuration management
+    const { get, post } = useHTTP()
+
     // UI State
     const activeSection = ref('groups')
     const sections = ref([
       { id: 'groups', name: 'Groups', icon: '📁' },
       { id: 'events', name: 'Event Assignment', icon: '📅' },
-      { id: 'rules', name: 'Auto Rules', icon: '⚙️' }
+      { id: 'rules', name: 'Auto Rules', icon: '⚙️' },
+      { id: 'config', name: 'Configuration', icon: '💾' }
     ])
 
     // Form States
@@ -457,6 +555,92 @@ export default {
       }
     }
 
+    // Configuration Management
+    const exportConfiguration = async () => {
+      try {
+        const result = await get(`/domains/${props.domain}/export-config`)
+        
+        // Create and download YAML file
+        const yamlContent = `# ${props.domain.toUpperCase()} Domain Configuration
+# Exported on ${new Date().toISOString()}
+
+${JSON.stringify(result, null, 2)}`
+        
+        const blob = new Blob([yamlContent], { type: 'application/x-yaml' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${props.domain}-config.yaml`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        
+        alert('✅ Configuration exported successfully!')
+      } catch (err) {
+        console.error('Failed to export configuration:', err)
+        alert(`❌ Failed to export configuration: ${err.message}`)
+      }
+    }
+
+    const handleFileUpload = async (event) => {
+      const file = event.target.files[0]
+      if (!file) return
+
+      try {
+        const text = await file.text()
+        let config
+        
+        try {
+          // Try parsing as JSON first (since our export currently uses JSON format)
+          config = JSON.parse(text)
+        } catch (jsonError) {
+          // If JSON parsing fails, try YAML parsing (for future YAML support)
+          alert('❌ Currently only JSON format is supported. YAML parsing will be added in future versions.')
+          return
+        }
+
+        const result = await post(`/domains/${props.domain}/import-config`, config)
+        
+        if (result.success) {
+          alert(`✅ Configuration imported successfully: ${result.message}`)
+          // Reload admin data to reflect changes
+          await loadAllAdminData()
+        } else {
+          alert(`❌ Failed to import configuration: ${result.message}`)
+        }
+      } catch (err) {
+        console.error('Failed to import configuration:', err)
+        alert(`❌ Failed to import configuration: ${err.message}`)
+      }
+      
+      // Clear file input
+      event.target.value = ''
+    }
+
+    const resetConfigurationConfirm = () => {
+      if (confirm(`Are you sure you want to reset "${props.domain}" to its baseline configuration? This will replace all current groups, assignments, and rules with the default setup.`)) {
+        resetConfiguration()
+      }
+    }
+
+    const resetConfiguration = async () => {
+      try {
+        const result = await post(`/domains/${props.domain}/reset-config`, {})
+        
+        if (result.success) {
+          alert(`✅ ${result.message}`)
+          // Reload admin data to reflect changes
+          await loadAllAdminData()
+        } else {
+          alert(`❌ Failed to reset configuration: ${result.message}`)
+        }
+      } catch (err) {
+        console.error('Failed to reset configuration:', err)
+        alert(`❌ Failed to reset configuration: ${err.message}`)
+      }
+    }
+
     // Load data on mount
     onMounted(() => {
       loadAllAdminData()
@@ -489,7 +673,12 @@ export default {
       createRule,
       deleteRuleConfirm,
       getRuleTypeLabel,
-      getGroupName
+      getGroupName,
+      
+      // Configuration Methods
+      exportConfiguration,
+      handleFileUpload,
+      resetConfigurationConfirm
     }
   }
 }

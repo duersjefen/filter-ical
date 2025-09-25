@@ -1,0 +1,267 @@
+# Exter Domain Configuration
+# Live configuration for Norwegian BCC Exter Community Calendar
+# Converted from demo_data.py with all 134 event-to-group assignments
+
+domain:
+  name: "Exter Kalendar"
+  calendar_url: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+  description: "Norwegian BCC Exter Community Calendar"
+  timezone: "Europe/Oslo"
+  language: "no"
+
+groups:
+  - id: "fussball"
+    name: "⚽ Fußball"
+    description: "Football training and matches for all ages"
+    
+  - id: "kampfsport" 
+    name: "🥋 Kampfsport"
+    description: "Karate classes and martial arts training"
+    
+  - id: "hallensport"
+    name: "🏐 Hallensport" 
+    description: "Indoor sports including volleyball and ice hockey"
+    
+  - id: "wassersport"
+    name: "🏊 Wassersport"
+    description: "Swimming courses and water activities"
+    
+  - id: "jugendarbeit"
+    name: "👦 Jugendarbeit"
+    description: "Youth activities and programs"
+    
+  - id: "kinderaktivitaeten"
+    name: "👶 Kinderaktivitäten"
+    description: "Children's activities and programs"
+    
+  - id: "seniorenarbeit"
+    name: "👴 Seniorenarbeit"
+    description: "Senior activities and programs"
+    
+  - id: "musik"
+    name: "🎵 Musik"
+    description: "Music bands and musical activities"
+    
+  - id: "bildung_kurse"
+    name: "📚 Bildung & Kurse"
+    description: "Educational courses and learning programs"
+    
+  - id: "gottesdienste"
+    name: "⛪ Gottesdienste & Versammlungen"
+    description: "Religious services and community gatherings"
+    
+  - id: "bcc_event"
+    name: "🎉 BCC Event"
+    description: "BCC events from external calendar integration"
+    
+  - id: "dcg_events"
+    name: "🇩🇪 DCG Events"
+    description: "German DCG events from external calendar integration"
+
+# Event assignments organized by group (134 total assignments)
+assignments:
+  fussball:
+    - "Fußball U16 Jungen"
+    - "Mädchen/Jungen U16 Fußball Training"
+    - "Mädchen U13 Fußball Training"
+    - "Fußball U13"
+    - "Jungen U16 Fußball Training"
+    - "Jungen U16/U23 Fußball Training"
+    - "Fußball Mädchen"
+    - "Fußball U16/U23 Mädchen"
+    - "Jungen U13 Fußball Training"
+    - "Fußball U16/U23 Mädchen Training"
+    - "Jungen U23 Fußball Training"
+    - "Fußball U23 Mädchen"
+    - "Mädchen U16 Fußball Training"
+    - "Mädchen U16/U23 Fußball Training"
+    - "Fußball U16 Mädchen / Jungen"
+    - "Jungen U8/U10 Fußball Training"
+    - "Fußball U8/U10 Jungen"
+    - "Fußball U23 Jungen"
+    - "Fußball U8/U10 Mädchen"
+    - "Fußball Jungen"
+    - "Mädchen/Jungen U13 Fußball Training"
+    - "Fußball U8/U10"
+    - "Mädchen U23 Fußball Training"
+    - "Mädchen U8/U10 Fußball Training"
+    
+  kampfsport:
+    - "Karate Jungen"
+    - "Karate - Anfänger"
+    - "Karate Kids Jungen"
+    - "Karate Kids Mädchen"
+    - "Karate - Gruppe 1"
+    - "Karate (alle)"
+    - "Karate"
+    - "Karate - Gruppe 2"
+    - "Karate | Weiße Tiger"
+    - "Karate Mädchen"
+    - "Karate Anfänger"
+    
+  hallensport:
+    - "Volleyball / Jugend open hall"
+    - "Volleyball"
+    - "Eishockey (Jugend)"
+    - "Volleyballtraining"
+    - "Eiszeit (Jugend)"
+    - "Volleyball Training"
+    - "Jugend open hall"
+    - "Eishockey (Kinder)"
+    - "Ü25 bis U70 - open hall"
+    - "Eiszeit (Kinder)"
+    - "open hall Kinder"
+    
+  wassersport:
+    - "Schwimmkurs"
+    - "Schimmkurs"
+    
+  jugendarbeit:
+    - "Jugendgottesdienst"
+    - "Tweens Jungs"
+    - "BUK Abend"
+    - "Mentorenabend"
+    - "Jugendstunde mit Br. K. J. Smith"
+    - "Jugend-Wochenende Nord"
+    - "Jugendstunde / Musikfest"
+    - "Jugendstunde (mit Hamburg)"
+    - "Jugendabend (mit Einar Å.)"
+    - "Jugend Herbststart (mit DFL U23 Dürrmenz)"
+    - "Jugendabend"
+    - "Jugendstunde Kick-Off 2025"
+    - "Jugendweihnachtsfeier"
+    - "Tweens"
+    - "Jugendausflug"
+    - "Jugendwochenende Nord und Süd"
+    - "Jugendtour"
+    - "A-Team Jugendstunde"
+    - "Jugend WE Hessenhöfe"
+    - "Jugendstunde"
+    - "Jugendkonferenz mit Sportturnieren"
+    - "Tweens Jungs + Mädchen"
+    - "Jugendwochenende"
+    - "Ateam Jugendstunde"
+    - "Weihnachtliche Jugendstunde"
+    # Cross-assignments - events also in other groups
+    - "Musik - Jugendband"
+    - "Jugendband"
+    - "Volleyball / Jugend open hall"
+    - "Jugend open hall"
+    - "Eiszeit (Jugend)"
+    - "Eishockey (Jugend)"
+    - "Karate Jungen"
+    - "Karate Mädchen"
+    
+  kinderaktivitaeten:
+    - "Kinder Sport Aktivitäten"
+    - "Jungschar"
+    - "Jungschar-Tour/Abschluss"
+    - "Kinderfreizeit"
+    - "Kinder-Sport Aktivitäten"
+    - "Jungscharweihnachtsfeier"
+    # Cross-assignments - events also in other groups
+    - "Tweens"
+    - "Tweens Jungs"
+    - "Tweens Jungs + Mädchen"
+    - "Musik - Kiddyband"
+    - "Kiddyband"
+    - "Eishockey (Kinder)"
+    - "Eiszeit (Kinder)"
+    - "open hall Kinder"
+    - "Karate Kids Jungen"
+    - "Karate Kids Mädchen"
+    - "Karate | Weiße Tiger"
+    
+  seniorenarbeit:
+    - "Ü60 Abend"
+    - "60+ WE HH"
+    - "60+ Wochennede"
+    - "60+ Wochenende"
+    - "Ü60-Abend"
+    - "Ü60"
+    
+  musik:
+    - "Musik Band"
+    - "Youngsterband"
+    - "Jugendband"
+    - "Musik - Kiddyband"
+    - "Musik - Jugendband"
+    - "Kiddyband"
+    
+  bildung_kurse:
+    - " Norwegisch Kurs A-Team 27/28"
+    - "Norwegisch U16"
+    - "Norwegisch Kurs U16"
+    - "Norwegisch Kurs A-Team 26/27"
+    - "Norwegisch Kurs U18"
+    - "Norwegischkurs Ateam 25/26"
+    - "Norwegischkurs U16"
+    - "Norwegisch 12-13 Jährige"
+    - "Norwegisch Kurs A-Team 27/28"
+    - "Norwegischkurs Ateam 26/27"
+    - "Norwegischkurs Ateam 27/28"
+    - "Lernwerkstatt"
+    - "Lernwerkstatt Kick-off 2025"
+    # Cross-assignments - events also in other groups
+    - "Fußball Mentoren"
+    - "Eltern- und Mentorenabend"
+    - "Verpflichtender Mentoren- und Elternabend"
+    - "Mentorenfrühstück"
+    - "Nachschulung Eltern- und Mentorenabend"
+    - "Ersthelfer Schulung für Trainer (MySports)"
+    - "Schwimmkurs"
+    - "Karate - Anfänger"
+    - "Karate Anfänger"
+    
+  gottesdienste:
+    - "BUK-Abend"
+    - "Versammlung mit Abendmahl"
+    - "Versammlung"
+    - "Gemeinschaftstag Exter mit B. Hustad und T. Gangso"
+    - "Gemeinschaftstag Exter"
+    - "Gemeinschaftstag Exter mit Taufe"
+    - "Gemeinschaftstag Exter mit Sommerfest"
+    - "Gemeinschaftstag Exter mit Kindersegnung"
+    - "Gemeinschaftstag Exter mit Br. K. J. Smith"
+    - "Gemeinde Kick-off 2. HJ 2025"
+    - "Gemeinde Sommerabschluss"
+    - "Gemeindeweihnachtsfeier"
+    # Cross-assignments - events also in other groups
+    - "BUK Abend"
+    - "Ü60 Abend"
+    - "Ü60-Abend"
+    - "Ü60"
+    - "Schulstartfrühstück"
+    - "Einweihung Rehwinkel mit Br. K. J. Smith"
+    - "Kick-Off Exter 2025"
+    - "Sport-Wochenende"
+    - "Sport Aktivitäten NDJ"
+    - "Ateam Sport"
+    - "KickOff Bibelprojekt \"Paulus | Wer bist du, Herr?\""
+    - "Elternabend zur Medienkompetenz"
+
+# Assignment rules for automatic event categorization
+rules:
+  - rule_type: "category_contains"
+    rule_value: "Event"
+    target_group_id: "bcc_event"
+    description: "Auto-assign BCC events based on CATEGORY field"
+    
+  - rule_type: "category_contains"
+    rule_value: "Deutschland"  
+    target_group_id: "dcg_events"
+    description: "Auto-assign German events to DCG group"
+
+# Configuration metadata
+metadata:
+  exported_at: "2024-12-19T18:42:00Z"
+  exported_by: "system_migration"
+  version: "1.0"
+  source: "Converted from demo_data.py"
+  total_groups: 12
+  total_assignments: 134
+  total_rules: 2
+  notes: |
+    This configuration contains all event assignments from the original demo_data.py.
+    Includes 36 cross-assignments where events belong to multiple groups.
+    Cross-assignments are listed under each relevant group for complete coverage.
