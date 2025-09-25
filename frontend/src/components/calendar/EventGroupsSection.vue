@@ -96,7 +96,7 @@ const allGroups = computed(() => {
   return { ...(props.groups || {}) }
 })
 
-// Sort groups by total number of events (descending)
+// Sort groups with auto-groups last, then by event count (descending)
 const sortedGroups = computed(() => {
   const groupsArray = Object.values(allGroups.value)
   
@@ -109,7 +109,15 @@ const sortedGroups = computed(() => {
     const totalEventsB = b.recurring_events ?
       b.recurring_events.reduce((sum, recurringEvent) => sum + (recurringEvent.event_count || 0), 0) : 0
     
-    // Sort descending (highest count first)
+    // Check if groups are auto-groups (high numeric IDs)
+    const aIsAuto = a.id >= 9998
+    const bIsAuto = b.id >= 9998
+    
+    // Auto-groups always come last
+    if (aIsAuto && !bIsAuto) return 1   // a is auto, b is regular -> a comes after b
+    if (!aIsAuto && bIsAuto) return -1  // a is regular, b is auto -> a comes before b
+    
+    // Within same type (both auto or both regular), sort by event count descending
     return totalEventsB - totalEventsA
   })
 })

@@ -193,8 +193,8 @@ def _extract_categories_from_raw_ical(raw_ical: str) -> List[str]:
     
     for line in raw_ical.split('\n'):
         line = line.strip()
-        # Case-insensitive matching for CATEGORY lines
-        if line.upper().startswith('CATEGORY:'):
+        # Case-insensitive matching for CATEGORY/CATEGORIES lines
+        if line.upper().startswith('CATEGORY:') or line.upper().startswith('CATEGORIES:'):
             # Find the colon and extract everything after it
             colon_index = line.find(':')
             if colon_index != -1:
@@ -285,9 +285,9 @@ def assign_ungrouped_to_auto_groups(ungrouped_events: List[Dict[str, Any]],
     recurring_group = create_auto_group_data(domain_key, 'recurring')
     unique_group = create_auto_group_data(domain_key, 'unique')
     
-    # Assign unique IDs for auto-groups (negative to avoid conflicts with real groups)
-    recurring_group['id'] = f"{domain_key}_auto_recurring"
-    unique_group['id'] = f"{domain_key}_auto_unique"
+    # Assign high numeric IDs for auto-groups to ensure they appear last
+    recurring_group['id'] = 9998  # Auto-recurring (second-to-last)
+    unique_group['id'] = 9999     # Auto-unique (last)
     
     # Categorize events
     recurring_events = []
