@@ -22,6 +22,7 @@ make test-all             # Complete test suite - 40 tests
 make deploy               # Deploy with real-time monitoring
 
 # NEVER use manual server commands - always use Makefile
+# NOTE: Servers have hot-reloading - no restart needed for code changes
 ```
 
 ---
@@ -100,7 +101,7 @@ return { get user() { return appStore.user } }
 ### Systematic Debugging
 **2-Failure Rule:** After 2 failed attempts, IMMEDIATELY find root cause
 - Stop micro-debugging → Address system-level issues
-- Frontend: Always check browser console FIRST
+- Frontend: Use Vue DevTools (available in Vite dev server) for reactive debugging
 - AI-accessible debugging → Unit tests, E2E tests, HTML debug panels (NOT console.log)
 
 ### Professional Guidance

@@ -96,9 +96,10 @@ export function formatDateTime(dateString) {
 export function formatDateRange(event) {
   if (!event) return 'No event'
   
-  // Handle both API field names (start/end) and iCal field names (dtstart/dtend)
-  const startField = event.start || event.dtstart
-  const endField = event.end || event.dtend
+  // Handle multiple possible API field names
+  const startField = event.start || event.dtstart || event.start_time || event.startTime || event.datetime_start
+  const endField = event.end || event.dtend || event.end_time || event.endTime || event.datetime_end
+  
   
   const startDate = parseIcalDate(startField)
   const endDate = parseIcalDate(endField)

@@ -13,8 +13,9 @@
               📂 {{ $t('calendar.recurringEvents') }}
             </h3>
           </div>
-          <!-- Mobile Switch Button -->
+          <!-- Mobile Switch Button - Only show if groups are available -->
           <button
+            v-if="hasGroups"
             @click="$emit('switch-to-groups')"
             class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
             title="Switch to Groups view"
@@ -59,8 +60,9 @@
           </div>
         </div>
         
-        <!-- Desktop Switch Button -->
+        <!-- Desktop Switch Button - Only show if groups are available -->
         <button
+          v-if="hasGroups"
           @click="$emit('switch-to-groups')"
           class="px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-2 group ml-4"
           title="Switch to Groups view"

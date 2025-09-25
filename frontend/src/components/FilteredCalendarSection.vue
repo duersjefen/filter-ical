@@ -127,7 +127,7 @@
               </div>
               <!-- Fallback for non-group calendars -->
               <div v-else class="text-sm text-gray-600 dark:text-gray-400">
-                {{ reactiveGroupBreakdown || $t('filteredCalendar.noSelection') }}
+                {{ reactiveGroupBreakdown || 'No events selected' }}
               </div>
             </div>
           </div>
@@ -469,7 +469,8 @@ const formatDateRange = computed(() => formatDateRangeUtil)
 // Reactive computed property for group breakdown display
 const reactiveGroupBreakdown = computed(() => {
   if (!props.hasGroups || !props.groups) {
-    return ''
+    // For personal calendars, show basic event count display
+    return getBasicRecurringEventDisplay(props.selectedRecurringEvents)
   }
   
   const groupBreakdowns = []
