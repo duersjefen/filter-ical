@@ -442,26 +442,21 @@
     
     <!-- Events Table -->
     <div class="space-y-4">
-      <!-- Search and Event Counter -->
-      <div class="space-y-3">
-        <!-- Event Counter (moved to top for better visibility) -->
-        <div class="flex items-center justify-between">
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            <span class="hidden sm:inline">Events</span>
-            <span class="sm:hidden">📋</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-full">
-              <span class="text-sm font-medium text-blue-800 dark:text-blue-200">
-                {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }}
-              </span>
-            </div>
-            <span class="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">shown</span>
+      <!-- Mobile Event Counter (only shown on mobile) -->
+      <div class="sm:hidden">
+        <div class="flex items-center justify-center">
+          <div class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-full">
+            <span class="text-sm font-medium text-blue-800 dark:text-blue-200">
+              {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }} shown
+            </span>
           </div>
         </div>
-        
+      </div>
+
+      <!-- Desktop: Horizontal Layout | Mobile: Vertical Stacked Layout -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <!-- Search Bar -->
-        <div class="relative">
+        <div class="flex-1 relative">
           <input
             v-model="eventSearch"
             type="text"
@@ -479,41 +474,44 @@
             <span class="text-base sm:text-sm font-bold">×</span>
           </button>
         </div>
-      </div>
-      
-      <!-- Selection Controls -->
-      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
-        <!-- Main Selection Button -->
-        <button
-          @click="toggleSelectAllEvents"
-          class="flex items-center justify-center gap-3 px-6 py-3 sm:px-4 sm:py-2 text-base sm:text-sm font-medium rounded-lg transition-all duration-200 border min-h-[44px] sm:min-h-0"
-          :class="[
-            isAllEventsSelected 
-              ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700 dark:hover:bg-green-800/30'
-              : isSomeEventsSelected
-              ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700 dark:hover:bg-blue-800/30'
-              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
-          ]"
-          :title="isAllEventsSelected ? `Deselect all ${filteredEvents.length} visible events` : `Select all ${filteredEvents.length} visible events`"
-        >
-          <div 
-            class="w-5 h-5 sm:w-4 sm:h-4 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
-            :class="isAllEventsSelected
-              ? 'bg-green-500 border-green-500 text-white' 
-              : isSomeEventsSelected
-              ? 'bg-blue-500 border-blue-500 text-white'
-              : 'border-gray-400 bg-white dark:bg-gray-700 dark:border-gray-500'"
-          >
-            <span v-if="isAllEventsSelected">✓</span>
-            <span v-else-if="isSomeEventsSelected">−</span>
-          </div>
-          <span v-if="isAllEventsSelected">All Visible Selected</span>
-          <span v-else-if="isSomeEventsSelected">{{ selectedEvents.length }} Selected</span>
-          <span v-else>Select All Visible</span>
-        </button>
         
-        <!-- Action Buttons -->
+        <!-- Selection and Action Controls -->
         <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <!-- Main Selection Button with Event Counter -->
+          <button
+            @click="toggleSelectAllEvents"
+            class="flex items-center justify-center gap-2 px-4 py-3 sm:px-4 sm:py-2 text-base sm:text-sm font-medium rounded-lg transition-all duration-200 border min-h-[44px] sm:min-h-0"
+            :class="[
+              isAllEventsSelected 
+                ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700 dark:hover:bg-green-800/30'
+                : isSomeEventsSelected
+                ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700 dark:hover:bg-blue-800/30'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+            ]"
+            :title="isAllEventsSelected ? `Deselect all ${filteredEvents.length} visible events` : `Select all ${filteredEvents.length} visible events`"
+          >
+            <div 
+              class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
+              :class="isAllEventsSelected
+                ? 'bg-green-500 border-green-500 text-white' 
+                : isSomeEventsSelected
+                ? 'bg-blue-500 border-blue-500 text-white'
+                : 'border-gray-400 bg-white dark:bg-gray-700 dark:border-gray-500'"
+            >
+              <span v-if="isAllEventsSelected">✓</span>
+              <span v-else-if="isSomeEventsSelected">−</span>
+            </div>
+            <!-- Desktop: Include count in button | Mobile: Show status only -->
+            <span v-if="isAllEventsSelected" class="hidden sm:inline">All {{ filteredEvents.length }} Selected</span>
+            <span v-else-if="isSomeEventsSelected" class="hidden sm:inline">{{ selectedEvents.length }}/{{ filteredEvents.length }} Selected</span>
+            <span v-else class="hidden sm:inline">Select {{ filteredEvents.length }} Visible</span>
+            <!-- Mobile text -->
+            <span v-if="isAllEventsSelected" class="sm:hidden">All Selected</span>
+            <span v-else-if="isSomeEventsSelected" class="sm:hidden">{{ selectedEvents.length }} Selected</span>
+            <span v-else class="sm:hidden">Select All</span>
+          </button>
+          
+          <!-- Action Buttons -->
           <button
             @click="clearEventSelection"
             :disabled="selectedEvents.length === 0"
