@@ -259,7 +259,9 @@
     "assignsTo": "Assigns to:",
     "deleteRule": "Delete",
     "confirmAction": "Confirm Action",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "mobileNotOptimized": "Admin panel is optimized for desktop devices",
+    "mobileUseDesktop": "For the best experience managing events and groups, please use a desktop or tablet device."
   },
   "titles": {
     "icalFilterSubscribe": "🗓️ PAISS"

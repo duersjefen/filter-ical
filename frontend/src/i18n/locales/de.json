@@ -261,7 +261,9 @@
     "assignsTo": "Weist zu:",
     "deleteRule": "Löschen",
     "confirmAction": "Aktion bestätigen",
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "mobileNotOptimized": "Das Admin-Panel ist für Desktop-Geräte optimiert",
+    "mobileUseDesktop": "Für die beste Erfahrung beim Verwalten von Events und Gruppen verwenden Sie bitte ein Desktop- oder Tablet-Gerät."
   },
   "titles": {
     "icalFilterSubscribe": "🗓️ PAISS"

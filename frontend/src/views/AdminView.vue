@@ -7,6 +7,21 @@
       @navigate-back="$router.push(`/${domain}`)"
     />
 
+    <!-- Mobile Optimization Notice -->
+    <div v-if="isMobile" class="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mx-1">
+      <div class="flex items-start gap-3">
+        <div class="text-2xl flex-shrink-0">💻</div>
+        <div class="min-w-0 flex-1">
+          <h3 class="font-semibold text-amber-800 dark:text-amber-200 text-sm mb-1">
+            {{ $t('admin.mobileNotOptimized') }}
+          </h3>
+          <p class="text-amber-700 dark:text-amber-300 text-sm">
+            {{ $t('admin.mobileUseDesktop') }}
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Expandable Cards Layout -->
     <div class="space-y-4">
       
@@ -101,6 +116,7 @@
 import { ref, onMounted } from 'vue'
 import { useAdmin } from '../composables/useAdmin'
 import { useHTTP } from '../composables/useHTTP'
+import { useMobileDetection } from '../composables/useMobileDetection'
 import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
 import AutoRulesCard from '../components/admin/AutoRulesCard.vue'
@@ -122,6 +138,8 @@ export default {
     }
   },
   setup(props) {
+    // Mobile detection
+    const { isMobile } = useMobileDetection()
 
     // Use the admin composable for all data and functionality
     const {
@@ -397,6 +415,9 @@ export default {
     })
 
     return {
+      // Mobile detection
+      isMobile,
+      
       // UI State
       expandedCards,
       loading,
