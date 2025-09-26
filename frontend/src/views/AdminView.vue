@@ -71,56 +71,99 @@
         </button>
         
         <div v-if="expandedCards.events" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
-          <!-- Events List Interface -->
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-4">
-              <div class="relative">
-                <input
-                  v-model="eventSearch"
-                  type="text"
-                  placeholder="Search events..."
-                  class="w-64 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
+          
+          <!-- Group Filter Bar -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Group</h3>
+              <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <span>💡 Hold Ctrl to select multiple</span>
               </div>
-              <select 
-                v-model="eventFilter"
-                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="all">All Events</option>
-                <option value="assigned">Assigned Only</option>
-                <option value="unassigned">Unassigned Only</option>
-              </select>
             </div>
-            
-            <div v-if="selectedEvents.length > 0" class="flex items-center gap-3">
-              <span class="text-sm text-gray-600 dark:text-gray-400">{{ selectedEvents.length }} selected</span>
-              <select 
-                v-model="bulkAssignGroupId"
-                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-              >
-                <option value="">Choose group...</option>
-                <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
-              </select>
+            <div class="flex flex-wrap gap-2">
+              <!-- All Events Button -->
               <button
-                @click="handleBulkAssign"
-                :disabled="!bulkAssignGroupId"
-                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                @click="toggleGroupFilter('all', $event)"
+                :class="[
+                  'inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
+                  activeGroupFilters.length === 0
+                    ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
+                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                ]"
               >
-                Assign Selected
+                <span>📅</span>
+                <span>All Events</span>
+                <span class="text-xs opacity-75">({{ recurringEvents.length }})</span>
               </button>
+              
+              <!-- Unassigned Button -->
               <button
-                @click="handleBulkUnassign"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                @click="toggleGroupFilter('unassigned', $event)"
+                :class="[
+                  'inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
+                  activeGroupFilters.includes('unassigned')
+                    ? 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-700'
+                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                ]"
               >
-                Unassign Selected
+                <span>⚠️</span>
+                <span>Unassigned</span>
+                <span class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
               </button>
+              
+              <!-- Group Buttons -->
+              <button
+                v-for="group in groups"
+                :key="group.id"
+                @click="toggleGroupFilter(group.id, $event)"
+                :class="[
+                  'inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
+                  activeGroupFilters.includes(group.id)
+                    ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700'
+                    : selectedEvents.length > 0
+                    ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-800/30 cursor-pointer transform hover:scale-105'
+                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                ]"
+                :title="selectedEvents.length > 0 ? `Click to assign ${selectedEvents.length} selected events to ${group.name}` : `Filter events by ${group.name}`"
+              >
+                <span>📁</span>
+                <span>{{ group.name }}</span>
+                <span class="text-xs opacity-75">({{ getGroupEventCount(group.id) }})</span>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Assignment Instructions -->
+          <div v-if="selectedEvents.length > 0" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+              <span class="text-blue-600 dark:text-blue-400 text-lg">👆</span>
+              <div>
+                <p class="text-blue-800 dark:text-blue-200 font-medium">
+                  {{ selectedEvents.length }} events selected - Click a group above to assign them!
+                </p>
+                <p class="text-blue-600 dark:text-blue-300 text-sm mt-1">
+                  💡 Hold Ctrl + click groups to assign to multiple groups at once
+                </p>
+              </div>
               <button
                 @click="clearEventSelection"
-                class="text-gray-500 hover:text-gray-700 px-2 py-2"
+                class="ml-auto text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 px-2 py-1 text-sm font-medium"
               >
-                Clear
+                Clear Selection
               </button>
+            </div>
+          </div>
+          
+          <!-- Search Bar -->
+          <div class="flex items-center gap-4">
+            <div class="relative flex-1">
+              <input
+                v-model="eventSearch"
+                type="text"
+                placeholder="Search events..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
             </div>
           </div>
           
@@ -141,17 +184,23 @@
                   <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Event Title</th>
                   <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Count</th>
                   <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Assigned Group</th>
-                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                 <tr 
                   v-for="event in filteredEvents" 
                   :key="event.title"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
-                  :class="{ 'bg-orange-50 dark:bg-orange-900/20': !event.assigned_group_id }"
+                  @click="toggleEventSelection(event.title, $event)"
+                  :class="[
+                    'transition-colors duration-150 cursor-pointer',
+                    selectedEvents.includes(event.title)
+                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700'
+                      : !event.assigned_group_id
+                      ? 'bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ]"
                 >
-                  <td class="px-4 py-3">
+                  <td class="px-4 py-3" @click.stop>
                     <input
                       type="checkbox"
                       :value="event.title"
@@ -181,16 +230,6 @@
                     >
                       ⚠️ Unassigned
                     </span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <select 
-                      :value="event.assigned_group_id || ''"
-                      @change="quickAssignEvent(event.title, $event.target.value)"
-                      class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Unassigned</option>
-                      <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
-                    </select>
                   </td>
                 </tr>
               </tbody>
@@ -622,9 +661,8 @@ export default {
 
     // Events UI State
     const eventSearch = ref('')
-    const eventFilter = ref('all')
     const selectedEvents = ref([])
-    const bulkAssignGroupId = ref('')
+    const activeGroupFilters = ref([]) // Array for multi-group filtering
 
     // Groups UI State  
     const newGroupName = ref('')
@@ -648,6 +686,11 @@ export default {
       return recurringEvents.value.filter(event => event.assigned_group_id).length
     })
 
+    const unassignedEventsCount = computed(() => {
+      if (!Array.isArray(recurringEvents.value)) return 0
+      return recurringEvents.value.filter(event => !event.assigned_group_id).length
+    })
+
     const filteredEvents = computed(() => {
       let filtered = Array.isArray(recurringEvents.value) ? recurringEvents.value : []
       
@@ -660,11 +703,22 @@ export default {
         )
       }
 
-      // Assignment filter
-      if (eventFilter.value === 'assigned') {
-        filtered = filtered.filter(event => event.assigned_group_id)
-      } else if (eventFilter.value === 'unassigned') {
-        filtered = filtered.filter(event => !event.assigned_group_id)
+      // Group filter - support multiple group selection
+      if (activeGroupFilters.value.length > 0) {
+        filtered = filtered.filter(event => {
+          // Handle 'unassigned' filter
+          if (activeGroupFilters.value.includes('unassigned')) {
+            if (!event.assigned_group_id) return true
+          }
+          
+          // Handle specific group filters
+          const groupFilters = activeGroupFilters.value.filter(f => f !== 'unassigned')
+          if (groupFilters.length > 0) {
+            return groupFilters.includes(event.assigned_group_id)
+          }
+          
+          return activeGroupFilters.value.includes('unassigned') && !event.assigned_group_id
+        })
       }
 
       return filtered
@@ -703,6 +757,62 @@ export default {
       confirmDialog.value = null
     }
 
+    // Group Filter Management
+    const toggleGroupFilter = (filterValue, event) => {
+      const isCtrlClick = event.ctrlKey || event.metaKey
+      
+      if (filterValue === 'all') {
+        // Clear all filters
+        activeGroupFilters.value = []
+        return
+      }
+      
+      // If selected events exist, this is an assignment action
+      if (selectedEvents.value.length > 0 && filterValue !== 'unassigned') {
+        handleGroupAssignment(filterValue, isCtrlClick)
+        return
+      }
+      
+      // Otherwise, this is a filter action
+      if (isCtrlClick) {
+        // Multi-select with Ctrl
+        const index = activeGroupFilters.value.indexOf(filterValue)
+        if (index > -1) {
+          activeGroupFilters.value.splice(index, 1)
+        } else {
+          activeGroupFilters.value.push(filterValue)
+        }
+      } else {
+        // Single select
+        if (activeGroupFilters.value.length === 1 && activeGroupFilters.value[0] === filterValue) {
+          // Clicking the same filter again clears it
+          activeGroupFilters.value = []
+        } else {
+          activeGroupFilters.value = [filterValue]
+        }
+      }
+    }
+
+    const handleGroupAssignment = async (groupId, isMultiSelect) => {
+      if (selectedEvents.value.length === 0) return
+      
+      try {
+        const groupIds = isMultiSelect ? [groupId] : [groupId] // For future multi-group assignment
+        
+        // For now, assign to single group
+        const result = await bulkAssignEventsToGroup(parseInt(groupId), selectedEvents.value)
+        
+        if (result.success) {
+          showNotification(`${selectedEvents.value.length} events assigned to ${getGroupName(groupId)}!`, 'success')
+          clearEventSelection()
+        } else {
+          showNotification(`Failed to assign events: ${result.error}`, 'error')
+        }
+      } catch (error) {
+        showNotification(`Failed to assign events: ${error.message}`, 'error')
+      }
+    }
+
     // Events Management
     const toggleSelectAllEvents = () => {
       if (isAllEventsSelected.value) {
@@ -712,17 +822,20 @@ export default {
       }
     }
 
-    const clearEventSelection = () => {
-      selectedEvents.value = []
-      bulkAssignGroupId.value = ''
+    const toggleEventSelection = (eventTitle, event) => {
+      // Prevent checkbox from being triggered twice
+      if (event.target.type === 'checkbox') return
+      
+      const index = selectedEvents.value.indexOf(eventTitle)
+      if (index > -1) {
+        selectedEvents.value.splice(index, 1)
+      } else {
+        selectedEvents.value.push(eventTitle)
+      }
     }
 
-    const quickAssignEvent = (eventTitle, groupId) => {
-      if (groupId) {
-        handleAssignEvent(eventTitle, parseInt(groupId))
-      } else {
-        handleUnassignEvent(eventTitle)
-      }
+    const clearEventSelection = () => {
+      selectedEvents.value = []
     }
 
     const getGroupEventCount = (groupId) => {
@@ -790,37 +903,7 @@ export default {
       }
     }
 
-    // Event Assignment Handlers
-    const handleAssignEvent = async (eventTitle, groupId) => {
-      const result = await assignEventsToGroup(groupId, [eventTitle])
-      if (result.success) {
-        showNotification('Event assigned successfully!', 'success')
-      } else {
-        showNotification(`Failed to assign event: ${result.error}`, 'error')
-      }
-    }
-
-    const handleUnassignEvent = async (eventTitle) => {
-      const result = await unassignEventFromGroup(eventTitle)
-      if (result.success) {
-        showNotification('Event unassigned successfully!', 'success')
-      } else {
-        showNotification(`Failed to unassign event: ${result.error}`, 'error')
-      }
-    }
-
-    const handleBulkAssign = async () => {
-      if (bulkAssignGroupId.value && selectedEvents.value.length > 0) {
-        const result = await bulkAssignEventsToGroup(parseInt(bulkAssignGroupId.value), selectedEvents.value)
-        if (result.success) {
-          showNotification(`${selectedEvents.value.length} events assigned successfully!`, 'success')
-          clearEventSelection()
-        } else {
-          showNotification(`Failed to bulk assign events: ${result.error}`, 'error')
-        }
-      }
-    }
-
+    // Bulk Unassign Handler (for unassigned group filter)
     const handleBulkUnassign = async () => {
       if (selectedEvents.value.length > 0) {
         const result = await bulkUnassignEvents(selectedEvents.value)
@@ -974,9 +1057,8 @@ export default {
 
       // Events UI State
       eventSearch,
-      eventFilter,
       selectedEvents,
-      bulkAssignGroupId,
+      activeGroupFilters,
 
       // Groups UI State
       newGroupName,
@@ -998,15 +1080,18 @@ export default {
 
       // Computed
       assignedEventsCount,
+      unassignedEventsCount,
       filteredEvents,
       isAllEventsSelected,
       isSomeEventsSelected,
 
       // Methods
       toggleCard,
+      toggleGroupFilter,
+      handleGroupAssignment,
       toggleSelectAllEvents,
+      toggleEventSelection,
       clearEventSelection,
-      quickAssignEvent,
       getGroupEventCount,
       createGroup,
       startEditingGroup,
@@ -1018,10 +1103,7 @@ export default {
       getRuleTypeLabel,
       getGroupName,
       
-      // Event Assignment Handlers
-      handleAssignEvent,
-      handleUnassignEvent,
-      handleBulkAssign,
+      // Remaining Assignment Handlers
       handleBulkUnassign,
       
       // Configuration Methods
