@@ -216,19 +216,43 @@
       </div>
     </div>
     
-    <!-- Bulk Assignment Panel (shown when events are selected, stays visible during drag to prevent layout shift) -->
-    <div v-if="selectedEvents.length > 0" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm" :class="{ 'pointer-events-none opacity-75': dragSelection.active }">
+    <!-- Bulk Assignment Panel (Always visible with consistent sizing) -->
+    <div class="bg-white dark:bg-gray-800 border-2 rounded-lg p-4 shadow-sm transition-all duration-200" 
+         :class="[
+           selectedEvents.length > 0 
+             ? 'border-blue-300 dark:border-blue-600' 
+             : 'border-gray-200 dark:border-gray-700 opacity-60',
+           dragSelection.dragging ? 'pointer-events-none opacity-75' : ''
+         ]">
       <div class="flex items-center justify-center mb-3">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-            <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">{{ selectedEvents.length }}</span>
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" :class="[
+                 selectedEvents.length > 0 
+                   ? 'bg-blue-100 dark:bg-blue-900/30' 
+                   : 'bg-gray-100 dark:bg-gray-700'
+               ]">
+            <span class="text-sm font-bold" :class="[
+                    selectedEvents.length > 0 
+                      ? 'text-blue-600 dark:text-blue-400' 
+                      : 'text-gray-400 dark:text-gray-500'
+                  ]">{{ selectedEvents.length || '0' }}</span>
           </div>
           <div>
-            <h4 class="font-medium text-gray-900 dark:text-white">
-              {{ selectedEvents.length === 1 ? 'Event Actions' : 'Bulk Actions' }}
+            <h4 class="font-medium" :class="[
+                 selectedEvents.length > 0 
+                   ? 'text-gray-900 dark:text-white' 
+                   : 'text-gray-500 dark:text-gray-400'
+               ]">
+              Bulk Actions
             </h4>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              {{ selectedEvents.length === 1 ? '1 event selected' : `${selectedEvents.length} events selected` }}
+            <p class="text-sm" :class="[
+                 selectedEvents.length > 0 
+                   ? 'text-gray-600 dark:text-gray-400' 
+                   : 'text-gray-400 dark:text-gray-500'
+               ]">
+              {{ selectedEvents.length === 0 ? 'No events selected' : 
+                 selectedEvents.length === 1 ? '1 event selected' : 
+                 `${selectedEvents.length} events selected` }}
             </p>
           </div>
         </div>
@@ -256,7 +280,7 @@
             <button
               v-if="getSmartGroupAction(group.id).type === 'single'"
               @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
-              :disabled="isGroupUpdating(group.id)"
+              :disabled="isGroupUpdating(group.id) || selectedEvents.length === 0"
               :class="[
                 'group relative inline-flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
                 getSmartGroupAction(group.id).primaryStyle === 'add' 
@@ -308,7 +332,7 @@
                 <!-- Primary Action -->
                 <button
                   @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
-                  :disabled="isGroupUpdating(group.id)"
+                  :disabled="isGroupUpdating(group.id) || selectedEvents.length === 0"
                   :class="[
                     'flex-1 px-3 py-1 text-xs font-medium transition-all duration-300 border-r border-gray-200 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed',
                     getSmartGroupAction(group.id).primaryStyle === 'add'
@@ -334,7 +358,7 @@
                 <!-- Secondary Action -->
                 <button
                   @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).secondaryAction)"
-                  :disabled="isGroupUpdating(group.id)"
+                  :disabled="isGroupUpdating(group.id) || selectedEvents.length === 0"
                   :class="[
                     'flex-1 px-3 py-1 text-xs font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
                     getSmartGroupAction(group.id).secondaryStyle === 'add'
@@ -363,7 +387,7 @@
           <!-- Unassign All Button (same size as groups) -->
           <button
             @click="handleUnassignAll"
-            :disabled="isUpdatingGroups"
+            :disabled="isUpdatingGroups || selectedEvents.length === 0"
             class="group relative inline-flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
             :title="`Remove ${selectedEvents.length} events from all groups`"
           >
@@ -464,17 +488,19 @@
           </button>
           
           <!-- Selection Action Buttons -->
-          <div v-if="selectedEvents.length > 0" class="flex items-center gap-2">
+          <div class="flex items-center gap-2">
             <button
               @click="clearEventSelection"
-              class="px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-              :title="`Clear selection of ${selectedEvents.length} events`"
+              :disabled="selectedEvents.length === 0"
+              class="px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600 dark:disabled:hover:bg-transparent dark:disabled:hover:text-gray-400"
+              :title="selectedEvents.length === 0 ? 'No events selected' : `Clear selection of ${selectedEvents.length} events`"
             >
               Clear Selection
             </button>
             <button
               v-if="hasHiddenSelectedEvents || showSelectedOnly"
               @click="showAllSelectedEvents"
+              :disabled="selectedEvents.length === 0"
               :class="[
                 'px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 border',
                 hasHiddenSelectedEvents
@@ -504,7 +530,7 @@
       >
         <!-- Drag Selection Overlay -->
         <div
-          v-if="dragSelection.active && dragSelection.hasDragged"
+          v-if="dragSelection.dragging"
           class="absolute pointer-events-none bg-gradient-to-br from-blue-300 to-blue-400 dark:from-blue-500 dark:to-blue-600 opacity-30 border-2 border-blue-500 dark:border-blue-400 rounded-lg shadow-lg backdrop-blur-sm"
           :style="{
             left: Math.min(dragSelection.startX, dragSelection.currentX) + 'px',
@@ -693,17 +719,17 @@ export default {
     const contextMenu = ref({ visible: false, x: 0, y: 0, group: null })
     const eventContextMenu = ref({ visible: false, x: 0, y: 0, event: null })
     
-    // Drag selection state
+    // Drag selection state (simplified - no complex visibility management needed)
     const dragSelection = ref({
-      active: false,
+      dragging: false,
       startX: 0,
       startY: 0,
       currentX: 0,
       currentY: 0,
       initialSelection: [],
-      dragThreshold: 10,
-      hasDragged: false,
-      isPotentialDrag: false
+      containerRect: null,
+      scrollTop: undefined,
+      scrollLeft: undefined
     })
     const deleteConfirmDialog = ref(null)
     const deleteConfirmMessage = ref('')
@@ -725,6 +751,35 @@ export default {
         emit('clear-event-selection')
         showSelectedOnly.value = false
       }
+    })
+    
+    // Global escape handler for drag selection cleanup
+    onMounted(() => {
+      const handleEscape = (event) => {
+        if (event.key === 'Escape' && dragSelection.value.dragging) {
+          endDragSelection()
+        }
+      }
+      
+      // Global cleanup to ensure scroll is always restored
+      const handleBeforeUnload = () => {
+        if (dragSelection.value.dragging) {
+          enableScroll()
+        }
+      }
+      
+      document.addEventListener('keydown', handleEscape)
+      window.addEventListener('beforeunload', handleBeforeUnload)
+      
+      // Cleanup listeners on unmount
+      onUnmounted(() => {
+        document.removeEventListener('keydown', handleEscape)
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+        // Ensure scroll is restored if component unmounts during drag
+        if (dragSelection.value.dragging) {
+          enableScroll()
+        }
+      })
     })
     
     // Computed properties
@@ -1240,6 +1295,38 @@ export default {
       }
     }
     
+    // Scroll lock utilities for preventing page scroll during drag
+    const disableScroll = () => {
+      // Save current scroll position
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
+      
+      // Add CSS to prevent scrolling
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollTop}px`
+      document.body.style.left = `-${scrollLeft}px`
+      document.body.style.width = '100%'
+      
+      // Store scroll position for restoration
+      dragSelection.value.scrollTop = scrollTop
+      dragSelection.value.scrollLeft = scrollLeft
+    }
+    
+    const enableScroll = () => {
+      // Restore scroll capability
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.left = ''
+      document.body.style.width = ''
+      
+      // Restore scroll position
+      if (dragSelection.value.scrollTop !== undefined) {
+        window.scrollTo(dragSelection.value.scrollLeft || 0, dragSelection.value.scrollTop || 0)
+      }
+    }
+
     // Drag selection methods
     const startDragSelection = (event) => {
       // Only start drag selection on left mouse button
@@ -1257,31 +1344,30 @@ export default {
         initialSelection: [...selectedEvents.value],
         dragThreshold: 10, // Increased threshold for better click detection
         hasDragged: false,
-        isPotentialDrag: true // Track that we might start dragging
+        isPotentialDrag: true, // Track that we might start dragging
+        containerRect: containerRect, // Store initial container position
+        scrollTop: undefined,
+        scrollLeft: undefined
       }
       
-      // Prevent text selection during drag
+      // IMMEDIATELY disable scroll on any potential drag to prevent weird scrolling
+      disableScroll()
+      
+      // Prevent default behaviors during drag
       event.preventDefault()
+      event.stopPropagation()
     }
     
     const updateDragSelection = (event) => {
-      if (!dragSelection.value.isPotentialDrag) return
+      if (!dragSelection.value.dragging) return
       
-      const containerRect = event.currentTarget.getBoundingClientRect()
+      // Use stored container rect for stable coordinates
+      const containerRect = dragSelection.value.containerRect
       dragSelection.value.currentX = event.clientX - containerRect.left
       dragSelection.value.currentY = event.clientY - containerRect.top
       
-      // Check if we've moved enough to start dragging
-      const deltaX = Math.abs(dragSelection.value.currentX - dragSelection.value.startX)
-      const deltaY = Math.abs(dragSelection.value.currentY - dragSelection.value.startY)
-      
-      if (!dragSelection.value.hasDragged && (deltaX > dragSelection.value.dragThreshold || deltaY > dragSelection.value.dragThreshold)) {
-        dragSelection.value.hasDragged = true
-        dragSelection.value.active = true // Only set active when we actually start dragging
-      }
-      
-      // Only show selection rectangle and update selection after drag threshold
-      if (!dragSelection.value.hasDragged) return
+      event.preventDefault()
+      event.stopPropagation()
       
       // Calculate which cards intersect with selection rectangle
       const selectionRect = {
@@ -1324,31 +1410,35 @@ export default {
     }
     
     const endDragSelection = () => {
-      const wasDragging = dragSelection.value.active && dragSelection.value.hasDragged
+      if (!dragSelection.value.dragging) return
       
-      if (wasDragging) {
-        // Only emit selection changes if we actually dragged
-        if (selectedEvents.value.length !== dragSelection.value.initialSelection.length || 
-            !selectedEvents.value.every(title => dragSelection.value.initialSelection.includes(title))) {
-          emit('clear-event-selection') // Clear first
-          selectedEvents.value.forEach(title => emit('toggle-event-selection', title))
-        }
-        
-        // Reset drag state after a short delay to allow click handler to check
-        setTimeout(() => {
-          dragSelection.value.hasDragged = false
-        }, 10)
+      // Check if this was just a click (minimal movement)
+      const deltaX = Math.abs(dragSelection.value.currentX - dragSelection.value.startX)
+      const deltaY = Math.abs(dragSelection.value.currentY - dragSelection.value.startY) 
+      const wasClick = deltaX < 5 && deltaY < 5
+      
+      if (wasClick) {
+        // Restore original selection for clicks
+        selectedEvents.value = [...dragSelection.value.initialSelection]
+        emit('clear-event-selection')
+        dragSelection.value.initialSelection.forEach(eventTitle => {
+          emit('toggle-event-selection', eventTitle)
+        })
+      } else {
+        // For drags, emit the current selection
+        emit('clear-event-selection')
+        selectedEvents.value.forEach(title => emit('toggle-event-selection', title))
       }
       
-      // Always reset the potential drag state
-      dragSelection.value.active = false
-      dragSelection.value.isPotentialDrag = false
+      // Always restore scroll and reset drag state
+      enableScroll()
+      dragSelection.value.dragging = false
     }
     
     const handleEventCardClick = (eventTitle, event) => {
-      // If we just finished dragging, don't toggle selection
-      if (dragSelection.value.hasDragged) {
-        dragSelection.value.hasDragged = false
+      // If we're currently dragging, don't handle clicks
+      if (dragSelection.value.dragging) {
+        // No need to set hasDragged anymore
         return
       }
       toggleEventSelection(eventTitle)
