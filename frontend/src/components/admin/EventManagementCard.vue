@@ -1034,7 +1034,7 @@ export default {
         // We need to implement a "remove from specific group" API call
         // For now, we'll emit this and let the parent handle it
         emit('remove-from-group', groupId, eventsInGroup)
-        selectedEvents.value = []
+        // Keep selection for multi-group operations
       } catch (error) {
         console.error('Failed to remove events from group:', error)
       }
@@ -1079,9 +1079,8 @@ export default {
           }
         }
         
-        // Clear selection after successful action
+        // Keep selection for multi-group assignments, just clear loading state
         setTimeout(() => {
-          selectedEvents.value = []
           isUpdatingGroups.value = false
           updatingGroupIds.value.delete(groupId)
         }, 300) // Small delay for smooth UX
@@ -1161,9 +1160,8 @@ export default {
         // Emit for actual API call
         emit('handle-group-assignment', 'unassigned', [...selectedEvents.value])
         
-        // Clear selection and loading state
+        // Keep selection for potential reassignment, just clear loading state
         setTimeout(() => {
-          selectedEvents.value = []
           isUpdatingGroups.value = false
         }, 300)
         

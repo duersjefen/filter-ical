@@ -158,7 +158,7 @@ export function useAdmin(domain) {
       
       // Get current events assigned to this group
       const currentEvents = recurringEvents.value.filter(event => 
-        event.assigned_group_id === groupId
+        event.assigned_group_ids && event.assigned_group_ids.includes(parseInt(groupId))
       ).map(event => event.title)
       
       // Merge new events with existing ones (avoiding duplicates)
