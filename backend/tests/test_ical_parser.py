@@ -12,6 +12,7 @@ from typing import Dict, Any, List
 from app.data.ical_parser import (
     parse_ical_content,
     group_events_by_title,
+    normalize_event_title,
     validate_ical_url,
     validate_calendar_data,
     create_fallback_datetime,
@@ -335,3 +336,160 @@ class TestHelperFunctions:
         result = _parse_datetime(None)
         
         assert result is None
+
+
+@pytest.mark.unit
+class TestTitleNormalization:
+    """Test title normalization function for consistent event grouping."""
+    
+    def test_normalize_basic_title(self):
+        """Test normalizing a basic title without issues."""
+        result = normalize_event_title("Norwegisch Kurs A-Team 27/28")
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_leading_trailing_whitespace(self):
+        """Test normalizing title with leading/trailing whitespace."""
+        result = normalize_event_title("  Norwegisch Kurs A-Team 27/28  ")
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_multiple_spaces(self):
+        """Test normalizing title with multiple internal spaces."""
+        result = normalize_event_title("Norwegisch  Kurs   A-Team  27/28")
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_non_breaking_spaces(self):
+        """Test normalizing title with non-breaking spaces (U+00A0)."""
+        title_with_nbsp = "Norwegisch\u00A0Kurs\u00A0A-Team\u00A027/28"
+        result = normalize_event_title(title_with_nbsp)
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_tab_characters(self):
+        """Test normalizing title with tab characters."""
+        result = normalize_event_title("Norwegisch\tKurs\tA-Team\t27/28")
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_unicode_spaces(self):
+        """Test normalizing title with various Unicode space characters."""
+        # U+2000: EN QUAD, U+2003: EM SPACE, U+2009: THIN SPACE
+        title_with_unicode = "Norwegisch\u2000Kurs\u2003A-Team\u200927/28"
+        result = normalize_event_title(title_with_unicode)
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_zero_width_spaces(self):
+        """Test normalizing title with zero-width spaces (U+200B)."""
+        title_with_zwsp = "Norwegisch\u200BKurs\u200BA-Team\u200B27/28"
+        result = normalize_event_title(title_with_zwsp)
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_unicode_nfc(self):
+        """Test normalizing title with Unicode normalization (NFC)."""
+        # "é" as combining characters vs precomposed
+        title_combining = "Caf\u0065\u0301"  # e + combining acute accent
+        title_precomposed = "Caf\u00e9"      # precomposed é
+        
+        result1 = normalize_event_title(title_combining)
+        result2 = normalize_event_title(title_precomposed)
+        
+        # Both should normalize to the same result
+        assert result1 == result2
+        assert result1 == "Café"
+    
+    def test_normalize_mixed_whitespace_issues(self):
+        """Test normalizing title with multiple whitespace issues combined."""
+        complex_title = " \tNorwegisch\u00A0\u2000Kurs  \u200B A-Team\u2003\t27/28\u00A0 "
+        result = normalize_event_title(complex_title)
+        assert result == "Norwegisch Kurs A-Team 27/28"
+    
+    def test_normalize_empty_string(self):
+        """Test normalizing empty string."""
+        result = normalize_event_title("")
+        assert result == "Untitled"
+    
+    def test_normalize_whitespace_only(self):
+        """Test normalizing string with only whitespace."""
+        result = normalize_event_title("   \t\u00A0  ")
+        assert result == "Untitled"
+    
+    def test_normalize_none_input(self):
+        """Test normalizing None input."""
+        result = normalize_event_title(None)
+        assert result == "Untitled"
+    
+    def test_normalize_non_string_input(self):
+        """Test normalizing non-string input."""
+        result = normalize_event_title(123)
+        assert result == "Untitled"
+    
+    def test_normalize_preserves_content(self):
+        """Test that normalization preserves actual content."""
+        original = "Spëcîál Châractërs & Symbøls ñ ü"
+        result = normalize_event_title(original)
+        assert result == original  # Should be unchanged if no whitespace issues
+    
+    def test_normalize_consistent_results(self):
+        """Test that normalization produces consistent results for similar inputs."""
+        # These should all normalize to the same result
+        variations = [
+            "Meeting Room A",
+            " Meeting Room A ",
+            "Meeting\u00A0Room\u00A0A",
+            "Meeting\tRoom\tA",
+            "Meeting  Room  A",
+            "Meeting\u2000Room\u2000A",
+        ]
+        
+        results = [normalize_event_title(title) for title in variations]
+        
+        # All should be the same
+        assert all(result == "Meeting Room A" for result in results)
+        assert len(set(results)) == 1  # Only one unique result
+    
+    def test_norwegisch_kurs_variants(self):
+        """Test specific variants that might cause the reported issue."""
+        # These are potential variants that could exist in real data
+        variants = [
+            "Norwegisch Kurs A-Team 27/28",
+            " Norwegisch Kurs A-Team 27/28 ",
+            "Norwegisch\u00A0Kurs\u00A0A-Team\u00A027/28",
+            "Norwegisch  Kurs  A-Team  27/28",
+            "Norwegisch\tKurs\tA-Team\t27/28",
+            "Norwegisch\u2000Kurs\u2000A-Team\u200027/28",
+        ]
+        
+        results = [normalize_event_title(title) for title in variants]
+        
+        # All should normalize to the same result
+        expected = "Norwegisch Kurs A-Team 27/28"
+        assert all(result == expected for result in results)
+        assert len(set(results)) == 1
+    
+    def test_group_events_with_title_normalization(self):
+        """Test that group_events_by_title properly groups events with title formatting differences."""
+        # Create events with the same logical title but different formatting
+        events = [
+            {"title": "Norwegisch Kurs A-Team 27/28", "id": "1"},
+            {"title": " Norwegisch Kurs A-Team 27/28 ", "id": "2"},
+            {"title": "Norwegisch\u00A0Kurs\u00A0A-Team\u00A027/28", "id": "3"},
+            {"title": "Norwegisch  Kurs  A-Team  27/28", "id": "4"},
+            {"title": "Different Event", "id": "5"}
+        ]
+        
+        grouped = group_events_by_title(events)
+        
+        # Should have only 2 groups: normalized "Norwegisch Kurs A-Team 27/28" and "Different Event"
+        assert len(grouped) == 2
+        
+        # Find the normalized Norwegisch group
+        norwegisch_key = "Norwegisch Kurs A-Team 27/28"
+        assert norwegisch_key in grouped
+        
+        # Should have 4 events in the Norwegisch group
+        norwegisch_group = grouped[norwegisch_key]
+        assert norwegisch_group["event_count"] == 4
+        assert len(norwegisch_group["events"]) == 4
+        
+        # Should have 1 event in the Different Event group  
+        assert "Different Event" in grouped
+        different_group = grouped["Different Event"]
+        assert different_group["event_count"] == 1
+        assert len(different_group["events"]) == 1

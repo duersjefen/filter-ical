@@ -7,6 +7,8 @@ All iCal processing logic without I/O operations.
 
 import re
 import hashlib
+import unicodedata
+import logging
 from datetime import datetime, timezone, date
 from typing import Dict, List, Any, Optional, Tuple
 from icalendar import Calendar as ICalCalendar, Event as ICalEvent
@@ -189,32 +191,81 @@ def _extract_raw_event(raw_ical: str, uid: str) -> str:
         return ""
 
 
+def normalize_event_title(title: str) -> str:
+    """
+    Normalize event title for consistent grouping.
+    
+    Handles common title formatting issues that prevent proper grouping:
+    - Invisible/non-breaking whitespace characters
+    - Multiple consecutive spaces
+    - Leading/trailing whitespace
+    - Unicode normalization (converts to NFC form)
+    - Tab characters and other whitespace variations
+    
+    Args:
+        title: Raw event title string
+        
+    Returns:
+        Normalized title string suitable for grouping
+        
+    Pure function - deterministic normalization for consistent grouping.
+    """
+    if not title or not isinstance(title, str):
+        return 'Untitled'
+    
+    # Unicode normalization - convert to canonical form (NFC)
+    # This ensures characters that look the same are represented identically
+    normalized = unicodedata.normalize('NFC', title)
+    
+    # Replace various whitespace characters with regular spaces
+    # \u00A0 = non-breaking space, \u2000-\u200B = various Unicode spaces
+    whitespace_pattern = r'[\s\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+'
+    normalized = re.sub(whitespace_pattern, ' ', normalized)
+    
+    # Strip leading/trailing whitespace
+    normalized = normalized.strip()
+    
+    # Handle empty result after normalization
+    if not normalized:
+        return 'Untitled'
+    
+    return normalized
+
+
 def group_events_by_title(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
     Group events by title for recurring event detection.
+    
+    Uses title normalization to handle formatting differences that prevent proper grouping.
     
     Args:
         events: List of event dictionaries
         
     Returns:
-        Dictionary mapping title -> {count, events: [...]}
+        Dictionary mapping normalized_title -> {title, count, events: [...]}
         
-    Pure function - deterministic grouping.
+    Pure function - deterministic grouping with title normalization.
     """
     grouped = {}
+    logger = logging.getLogger(__name__)
     
     for event in events:
-        title = event.get('title', 'Untitled')
+        raw_title = event.get('title', 'Untitled')
+        normalized_title = normalize_event_title(raw_title)
         
-        if title not in grouped:
-            grouped[title] = {
-                'title': title,
+        # Debug logging to identify title normalization differences
+        if raw_title != normalized_title:
+            logger.debug(f"Title normalized: '{raw_title}' -> '{normalized_title}' (Raw bytes: {raw_title.encode('unicode_escape')})")
+        
+        if normalized_title not in grouped:
+            grouped[normalized_title] = {
+                'title': normalized_title,  # Use normalized title for display
                 'event_count': 0,
                 'events': []
             }
         
-        grouped[title]['event_count'] += 1
-        grouped[title]['events'].append(event)
+        grouped[normalized_title]['event_count'] += 1
+        grouped[normalized_title]['events'].append(event)
     
     return grouped
 
