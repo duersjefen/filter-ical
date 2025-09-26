@@ -45,32 +45,38 @@
     />
 
     <!-- Expandable Cards Layout -->
-    <div class="space-y-6">
+    <div class="space-y-4">
       
       <!-- 📅 Events Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-        <button 
-          @click="toggleCard('events')"
-          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+        <!-- Header with gradient background matching calendar cards -->
+        <div 
+          class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700"
+          :class="expandedCards.events ? 'rounded-t-xl' : 'rounded-xl'"
         >
-          <div class="flex items-center gap-3">
-            <span class="text-2xl">📅</span>
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.eventManagement') }}</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Assign events to groups and manage assignments</p>
+          <div class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200" @click="toggleCard('events')">
+            <!-- Standardized dropdown arrow -->
+            <svg 
+              class="w-4 h-4 text-gray-400 transition-transform duration-300"
+              :class="{ 'rotate-90': expandedCards.events }"
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                📅 {{ $t('admin.eventManagement') }}
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ recurringEvents.length }} events • {{ assignedEventsCount }} assigned • Assign events to groups
+              </p>
             </div>
           </div>
-          <div class="flex items-center gap-4">
-            <div class="text-sm text-gray-500 dark:text-gray-400">
-              {{ recurringEvents.length }} events • {{ assignedEventsCount }} assigned
-            </div>
-            <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.events }">
-              ▶
-            </span>
-          </div>
-        </button>
+        </div>
         
-        <div v-if="expandedCards.events" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
+        <div v-if="expandedCards.events" class="p-3 sm:p-4 space-y-4">
           
           <!-- Group Filter Bar -->
           <div class="space-y-3">
@@ -244,27 +250,35 @@
       </div>
 
       <!-- 📁 Groups Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-        <button 
-          @click="toggleCard('groups')"
-          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+        <!-- Header with gradient background matching calendar cards -->
+        <div 
+          class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700"
+          :class="expandedCards.groups ? 'rounded-t-xl' : 'rounded-xl'"
         >
-          <div class="flex items-center gap-3">
-            <span class="text-2xl">📁</span>
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.groups') }}</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Create and manage event groups</p>
+          <div class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200" @click="toggleCard('groups')">
+            <!-- Standardized dropdown arrow -->
+            <svg 
+              class="w-4 h-4 text-gray-400 transition-transform duration-300"
+              :class="{ 'rotate-90': expandedCards.groups }"
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                📁 {{ $t('admin.groups') }}
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ groups.length }} groups • Create and manage event groups
+              </p>
             </div>
           </div>
-          <div class="flex items-center gap-4">
-            <div class="text-sm text-gray-500 dark:text-gray-400">{{ groups.length }} groups</div>
-            <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.groups }">
-              ▶
-            </span>
-          </div>
-        </button>
+        </div>
         
-        <div v-if="expandedCards.groups" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
+        <div v-if="expandedCards.groups" class="p-3 sm:p-4 space-y-4">
           <!-- Create New Group -->
           <div class="flex items-center gap-3 mb-4">
             <input
@@ -351,27 +365,35 @@
       </div>
 
       <!-- ⚙️ Auto Rules Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-        <button 
-          @click="toggleCard('rules')"
-          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+        <!-- Header with gradient background matching calendar cards -->
+        <div 
+          class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700"
+          :class="expandedCards.rules ? 'rounded-t-xl' : 'rounded-xl'"
         >
-          <div class="flex items-center gap-3">
-            <span class="text-2xl">⚙️</span>
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.autoRules') }}</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Automatic event assignment rules</p>
+          <div class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200" @click="toggleCard('rules')">
+            <!-- Standardized dropdown arrow -->
+            <svg 
+              class="w-4 h-4 text-gray-400 transition-transform duration-300"
+              :class="{ 'rotate-90': expandedCards.rules }"
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                ⚙️ {{ $t('admin.autoRules') }}
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ assignmentRules.length }} rules • Automatic event assignment rules
+              </p>
             </div>
           </div>
-          <div class="flex items-center gap-4">
-            <div class="text-sm text-gray-500 dark:text-gray-400">{{ assignmentRules.length }} rules</div>
-            <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.rules }">
-              ▶
-            </span>
-          </div>
-        </button>
+        </div>
         
-        <div v-if="expandedCards.rules" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
+        <div v-if="expandedCards.rules" class="p-3 sm:p-4 space-y-4">
           <!-- Create New Rule -->
           <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
             <h3 class="font-medium text-gray-900 dark:text-white">Create New Rule</h3>
@@ -440,24 +462,35 @@
       </div>
 
       <!-- 💾 Configuration Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-        <button 
-          @click="toggleCard('config')"
-          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+        <!-- Header with gradient background matching calendar cards -->
+        <div 
+          class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700"
+          :class="expandedCards.config ? 'rounded-t-xl' : 'rounded-xl'"
         >
-          <div class="flex items-center gap-3">
-            <span class="text-2xl">💾</span>
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.configuration') }}</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Export, import, and reset domain configuration</p>
+          <div class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200" @click="toggleCard('config')">
+            <!-- Standardized dropdown arrow -->
+            <svg 
+              class="w-4 h-4 text-gray-400 transition-transform duration-300"
+              :class="{ 'rotate-90': expandedCards.config }"
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                💾 {{ $t('admin.configuration') }}
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Export, import, and reset domain configuration
+              </p>
             </div>
           </div>
-          <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.config }">
-            ▶
-          </span>
-        </button>
+        </div>
         
-        <div v-if="expandedCards.config" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-6">
+        <div v-if="expandedCards.config" class="p-3 sm:p-4 space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Export Configuration -->
             <div class="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
