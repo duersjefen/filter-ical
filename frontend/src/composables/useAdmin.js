@@ -347,6 +347,124 @@ export function useAdmin(domain) {
     return { valid: true }
   }
 
+  // Preview and Apply Functions (Pure client-side logic)
+  const eventMatchesRule = (event, ruleType, ruleValue) => {
+    const searchValue = ruleValue.toLowerCase().trim()
+    
+    switch (ruleType) {
+      case 'title_contains':
+        return event.title?.toLowerCase().includes(searchValue) || false
+      
+      case 'description_contains':
+        return event.description?.toLowerCase().includes(searchValue) || false
+      
+      case 'category_contains':
+        // For now, we'll check if categories exist in event data
+        // This could be enhanced if we have category data available
+        const categories = event.categories || []
+        return Array.isArray(categories) && 
+               categories.some(cat => cat.toLowerCase().includes(searchValue))
+      
+      default:
+        return false
+    }
+  }
+
+  const previewAssignmentRule = (ruleType, ruleValue, targetGroupId) => {
+    // Validate inputs first
+    const validation = validateAssignmentRule(ruleType, ruleValue, targetGroupId)
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+        affectedEvents: [],
+        summary: { total: 0, willChange: 0, noChange: 0 }
+      }
+    }
+
+    const events = Array.isArray(recurringEvents.value) ? recurringEvents.value : []
+    const targetGroup = groupsMap.value[parseInt(targetGroupId)]
+    
+    if (!targetGroup) {
+      return {
+        success: false,
+        error: 'Target group not found',
+        affectedEvents: [],
+        summary: { total: 0, willChange: 0, noChange: 0 }
+      }
+    }
+
+    // Find events that match the rule
+    const affectedEvents = events.filter(event => 
+      eventMatchesRule(event, ruleType, ruleValue)
+    ).map(event => ({
+      ...event,
+      currentGroupName: event.assigned_group_id ? 
+        getGroupName(event.assigned_group_id) : 'Unassigned',
+      willChange: event.assigned_group_id !== parseInt(targetGroupId)
+    }))
+
+    const summary = {
+      total: affectedEvents.length,
+      willChange: affectedEvents.filter(e => e.willChange).length,
+      noChange: affectedEvents.filter(e => !e.willChange).length
+    }
+
+    return {
+      success: true,
+      affectedEvents,
+      summary,
+      targetGroupName: targetGroup.name
+    }
+  }
+
+  const previewExistingRule = (rule) => {
+    return previewAssignmentRule(rule.rule_type, rule.rule_value, rule.target_group_id)
+  }
+
+  const applyAssignmentRule = async (ruleType, ruleValue, targetGroupId) => {
+    // First get the preview to see what events would be affected
+    const preview = previewAssignmentRule(ruleType, ruleValue, targetGroupId)
+    
+    if (!preview.success) {
+      return { success: false, error: preview.error }
+    }
+
+    // Filter to only events that will actually change
+    const eventsToAssign = preview.affectedEvents
+      .filter(event => event.willChange)
+      .map(event => event.title)
+
+    if (eventsToAssign.length === 0) {
+      return { 
+        success: true, 
+        message: 'No events need to be reassigned - all matching events are already in the target group',
+        assignedCount: 0
+      }
+    }
+
+    // Use existing bulk assignment API
+    try {
+      const result = await bulkAssignEventsToGroup(parseInt(targetGroupId), eventsToAssign)
+      
+      if (result.success) {
+        return {
+          success: true,
+          message: `${eventsToAssign.length} events assigned to ${preview.targetGroupName}`,
+          assignedCount: eventsToAssign.length
+        }
+      } else {
+        return { success: false, error: result.error || 'Failed to assign events' }
+      }
+    } catch (error) {
+      return { success: false, error: `Failed to apply rule: ${error.message}` }
+    }
+  }
+
+  const applyExistingRule = async (rule) => {
+    return await applyAssignmentRule(rule.rule_type, rule.rule_value, rule.target_group_id)
+  }
+
   return {
     // State
     groups,
@@ -384,6 +502,12 @@ export function useAdmin(domain) {
     loadAllAdminData,
     getEventStatistics,
     validateGroupName,
-    validateAssignmentRule
+    validateAssignmentRule,
+
+    // Preview and Apply Functions
+    previewAssignmentRule,
+    previewExistingRule,
+    applyAssignmentRule,
+    applyExistingRule
   }
 }

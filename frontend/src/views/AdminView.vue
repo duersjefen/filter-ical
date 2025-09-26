@@ -397,36 +397,49 @@
           <!-- Create New Rule -->
           <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
             <h3 class="font-medium text-gray-900 dark:text-white">Create New Rule</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <select 
-                v-model="newRule.rule_type"
-                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select rule type...</option>
-                <option value="title_contains">Title Contains</option>
-                <option value="description_contains">Description Contains</option>
-                <option value="category_contains">Category Contains</option>
-              </select>
-              <input
-                v-model="newRule.rule_value"
-                type="text"
-                placeholder="Value to match..."
-                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              />
-              <select 
-                v-model="newRule.target_group_id"
-                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select target group...</option>
-                <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
-              </select>
-              <button
-                @click="createRule"
-                :disabled="!newRule.rule_type || !newRule.rule_value.trim() || !newRule.target_group_id"
-                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-              >
-                Create Rule
-              </button>
+            <div class="space-y-3">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <select 
+                  v-model="newRule.rule_type"
+                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select rule type...</option>
+                  <option value="title_contains">Title Contains</option>
+                  <option value="description_contains">Description Contains</option>
+                  <option value="category_contains">Category Contains</option>
+                </select>
+                <input
+                  v-model="newRule.rule_value"
+                  type="text"
+                  placeholder="Value to match..."
+                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                />
+                <select 
+                  v-model="newRule.target_group_id"
+                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select target group...</option>
+                  <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
+                </select>
+              </div>
+              <div class="flex gap-2 justify-end">
+                <button
+                  @click="previewNewRule"
+                  :disabled="!newRule.rule_type || !newRule.rule_value.trim() || !newRule.target_group_id || previewLoading"
+                  class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                >
+                  <span v-if="previewLoading">⏳</span>
+                  <span v-else>👁️</span>
+                  Preview
+                </button>
+                <button
+                  @click="createRule"
+                  :disabled="!newRule.rule_type || !newRule.rule_value.trim() || !newRule.target_group_id"
+                  class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                >
+                  Create Rule
+                </button>
+              </div>
             </div>
           </div>
           
@@ -445,12 +458,32 @@
                   → Assigns to {{ getGroupName(rule.target_group_id) }}
                 </p>
               </div>
-              <button
-                @click="deleteRuleConfirm(rule)"
-                class="text-red-600 hover:text-red-800 px-2 py-1 text-sm font-medium transition-colors duration-200"
-              >
-                🗑️ Delete
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="previewRule(rule)"
+                  :disabled="previewLoading"
+                  class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200 flex items-center gap-1"
+                >
+                  <span v-if="previewLoading">⏳</span>
+                  <span v-else>👁️</span>
+                  Preview
+                </button>
+                <button
+                  @click="applyRule(rule)"
+                  :disabled="applyLoading"
+                  class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200 flex items-center gap-1"
+                >
+                  <span v-if="applyLoading">⏳</span>
+                  <span v-else>▶️</span>
+                  Apply
+                </button>
+                <button
+                  @click="deleteRuleConfirm(rule)"
+                  class="text-red-600 hover:text-red-800 px-2 py-1 text-sm font-medium transition-colors duration-200"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
             </div>
           </div>
           
@@ -626,6 +659,138 @@
     </div>
   </div>
 
+  <!-- Preview Modal -->
+  <div v-if="showPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+          👁️ Rule Preview
+        </h2>
+        <button
+          @click="closePreviewModal"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl transition-colors duration-200"
+        >
+          &times;
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6 overflow-y-auto max-h-[70vh]" v-if="previewResults">
+        <!-- Error State -->
+        <div v-if="!previewResults.success" class="text-center py-8">
+          <div class="text-red-500 text-5xl mb-4">⚠️</div>
+          <h3 class="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">Preview Failed</h3>
+          <p class="text-red-600 dark:text-red-400">{{ previewResults.error }}</p>
+        </div>
+
+        <!-- Success State -->
+        <div v-else class="space-y-6">
+          <!-- Rule Summary -->
+          <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+            <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">Rule Details</h3>
+            <p class="text-blue-800 dark:text-blue-200 text-sm">
+              <span class="font-medium">{{ getRuleTypeLabel(newRule.rule_type || previewResults.ruleType) }}:</span>
+              "{{ newRule.rule_value || previewResults.ruleValue }}" 
+              → <span class="font-medium">{{ previewResults.targetGroupName }}</span>
+            </p>
+          </div>
+
+          <!-- Impact Summary -->
+          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-3">📊 Impact Summary</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ previewResults.summary.total }}</div>
+                <div class="text-gray-600 dark:text-gray-400">Events Match</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ previewResults.summary.willChange }}</div>
+                <div class="text-gray-600 dark:text-gray-400">Will Change</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ previewResults.summary.noChange }}</div>
+                <div class="text-gray-600 dark:text-gray-400">No Change</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Events Message -->
+          <div v-if="previewResults.summary.total === 0" class="text-center py-8">
+            <div class="text-gray-400 text-5xl mb-4">📭</div>
+            <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">No Matching Events</h3>
+            <p class="text-gray-600 dark:text-gray-400">This rule doesn't match any current events.</p>
+          </div>
+
+          <!-- Affected Events List -->
+          <div v-else class="space-y-4">
+            <h3 class="font-semibold text-gray-900 dark:text-white">
+              📋 Affected Events ({{ previewResults.summary.total }})
+            </h3>
+            
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+              <div 
+                v-for="event in previewResults.affectedEvents" 
+                :key="event.title"
+                :class="[
+                  'flex items-center justify-between p-3 rounded-lg border',
+                  event.willChange 
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                    : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                ]"
+              >
+                <div class="flex-1">
+                  <h4 class="font-medium text-gray-900 dark:text-white">
+                    {{ event.title }}
+                  </h4>
+                  <div class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-4 mt-1">
+                    <span>📅 {{ event.event_count }} occurrences</span>
+                    <span>
+                      Current: 
+                      <span :class="event.willChange ? 'line-through opacity-60' : ''">
+                        {{ event.currentGroupName }}
+                      </span>
+                      <span v-if="event.willChange" class="ml-2 text-green-600 dark:text-green-400 font-medium">
+                        → {{ previewResults.targetGroupName }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="text-lg">
+                  <span v-if="event.willChange" class="text-green-600 dark:text-green-400" title="Will change">🔄</span>
+                  <span v-else class="text-gray-400" title="Already assigned">✓</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+        <button
+          @click="closePreviewModal"
+          class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200"
+        >
+          Close
+        </button>
+        
+        <!-- Apply Button (only show if there are events that will change and this is from the new rule form) -->
+        <button
+          v-if="previewResults?.success && previewResults.summary.willChange > 0 && (newRule.rule_type || newRule.rule_value)"
+          @click="applyPreviewedRule"
+          :disabled="applyLoading"
+          class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+        >
+          <span v-if="applyLoading">⏳</span>
+          <span v-else>▶️</span>
+          Apply Rule ({{ previewResults.summary.willChange }} events)
+        </button>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <script>
@@ -678,7 +843,13 @@ export default {
       getRuleTypeLabel,
       loadAllAdminData,
       validateGroupName,
-      validateAssignmentRule
+      validateAssignmentRule,
+
+      // Preview and Apply Functions
+      previewAssignmentRule,
+      previewExistingRule,
+      applyAssignmentRule,
+      applyExistingRule
     } = useAdmin(props.domain)
 
     // HTTP functions for configuration management
@@ -708,6 +879,12 @@ export default {
       rule_value: '',
       target_group_id: ''
     })
+
+    // Preview Modal State
+    const showPreviewModal = ref(false)
+    const previewResults = ref(null)
+    const previewLoading = ref(false)
+    const applyLoading = ref(false)
 
     // Notification State
     const notification = ref(null)
@@ -992,6 +1169,87 @@ export default {
       }
     }
 
+    // Preview and Apply Rules Functions
+    const previewNewRule = () => {
+      previewLoading.value = true
+      
+      // Small delay to show loading state
+      setTimeout(() => {
+        const results = previewAssignmentRule(
+          newRule.value.rule_type,
+          newRule.value.rule_value,
+          newRule.value.target_group_id
+        )
+        
+        previewResults.value = results
+        previewLoading.value = false
+        showPreviewModal.value = true
+      }, 100)
+    }
+
+    const previewRule = (rule) => {
+      previewLoading.value = true
+      
+      // Small delay to show loading state
+      setTimeout(() => {
+        const results = previewExistingRule(rule)
+        previewResults.value = results
+        previewLoading.value = false
+        showPreviewModal.value = true
+      }, 100)
+    }
+
+    const applyRule = async (rule) => {
+      applyLoading.value = true
+      
+      try {
+        const result = await applyExistingRule(rule)
+        
+        if (result.success) {
+          showNotification(result.message, 'success')
+          // Data will be automatically updated by the bulk assignment API
+        } else {
+          showNotification(`Failed to apply rule: ${result.error}`, 'error')
+        }
+      } catch (error) {
+        showNotification(`Failed to apply rule: ${error.message}`, 'error')
+      } finally {
+        applyLoading.value = false
+      }
+    }
+
+    const closePreviewModal = () => {
+      showPreviewModal.value = false
+      previewResults.value = null
+    }
+
+    const applyPreviewedRule = async () => {
+      if (!previewResults.value?.success) return
+      
+      applyLoading.value = true
+      
+      try {
+        const result = await applyAssignmentRule(
+          newRule.value.rule_type,
+          newRule.value.rule_value,
+          newRule.value.target_group_id
+        )
+        
+        if (result.success) {
+          showNotification(result.message, 'success')
+          closePreviewModal()
+          // Reset the form after successful application
+          newRule.value = { rule_type: '', rule_value: '', target_group_id: '' }
+        } else {
+          showNotification(`Failed to apply rule: ${result.error}`, 'error')
+        }
+      } catch (error) {
+        showNotification(`Failed to apply rule: ${error.message}`, 'error')
+      } finally {
+        applyLoading.value = false
+      }
+    }
+
     // Configuration Management
     const exportConfiguration = async () => {
       try {
@@ -1101,6 +1359,12 @@ export default {
       // Rules UI State
       newRule,
 
+      // Preview Modal State
+      showPreviewModal,
+      previewResults,
+      previewLoading,
+      applyLoading,
+
       // Notification States
       notification,
       confirmDialog,
@@ -1135,6 +1399,13 @@ export default {
       deleteRuleConfirm,
       getRuleTypeLabel,
       getGroupName,
+
+      // Preview and Apply Methods
+      previewNewRule,
+      previewRule,
+      applyRule,
+      closePreviewModal,
+      applyPreviewedRule,
       
       // Remaining Assignment Handlers
       handleBulkUnassign,
