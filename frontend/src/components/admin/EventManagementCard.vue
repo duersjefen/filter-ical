@@ -349,7 +349,33 @@
         @click="showAllSelectedEvents"
         class="px-3 py-1 bg-amber-100 hover:bg-amber-200 dark:bg-amber-800 dark:hover:bg-amber-700 text-amber-800 dark:text-amber-200 rounded-md text-xs font-medium transition-colors"
       >
-        Show All Selected
+        Show Only Selected
+      </button>
+    </div>
+    
+    <!-- Selected-Only Mode Indicator -->
+    <div 
+      v-if="showSelectedOnly" 
+      class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 flex items-center justify-between"
+    >
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+          <span class="text-blue-600 dark:text-blue-400 text-xs font-bold">👁</span>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
+            Showing only {{ selectedEvents.length }} selected event{{ selectedEvents.length > 1 ? 's' : '' }}
+          </p>
+          <p class="text-xs text-blue-600 dark:text-blue-400">
+            Use filters above to return to normal view
+          </p>
+        </div>
+      </div>
+      <button
+        @click="showSelectedOnly = false"
+        class="px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-800 dark:text-blue-200 rounded-md text-xs font-medium transition-colors"
+      >
+        Show All Events
       </button>
     </div>
     
@@ -582,6 +608,7 @@ export default {
     const eventSearch = ref('')
     const selectedEvents = ref([])
     const activeGroupFilters = ref([])
+    const showSelectedOnly = ref(false)
     const newGroupName = ref('')
     const showAddGroupForm = ref(false)
     const editingGroupId = ref(null)
@@ -621,6 +648,12 @@ export default {
     const filteredEvents = computed(() => {
       let filtered = props.recurringEvents
       
+      // If showing selected only, filter to just selected events
+      if (showSelectedOnly.value) {
+        filtered = filtered.filter(event => selectedEvents.value.includes(event.title))
+        // Skip other filters when showing selected only - go directly to grouping
+      } else {
+      
       // Apply group filters (support multi-group assignments)
       if (activeGroupFilters.value.length > 0) {
         filtered = filtered.filter(event => {
@@ -643,6 +676,7 @@ export default {
           (event.description || '').toLowerCase().includes(search)
         )
       }
+      } // End of else block for normal filtering
       
       // Group by title and preserve API event_count, also compute group information
       const eventsByTitle = {}
@@ -786,6 +820,9 @@ export default {
       const isCtrlClick = event.ctrlKey || event.metaKey
       emit('toggle-group-filter', groupId, isCtrlClick, activeGroupFilters.value)
       
+      // Exit selected-only mode when using normal filters
+      showSelectedOnly.value = false
+      
       if (!isCtrlClick) {
         activeGroupFilters.value = groupId === 'all' ? [] : [groupId]
       } else {
@@ -826,6 +863,7 @@ export default {
     const clearEventSelection = () => {
       emit('clear-event-selection')
       selectedEvents.value = []
+      showSelectedOnly.value = false // Exit selected-only mode when clearing selection
     }
     
     const clearGroupFilters = () => {
@@ -1050,7 +1088,8 @@ export default {
     }
     
     const showAllSelectedEvents = () => {
-      // Clear all filters to show all selected events
+      // Enable selected-only mode to show ONLY the selected events
+      showSelectedOnly.value = true
       activeGroupFilters.value = []
       eventSearch.value = ''
     }
@@ -1132,6 +1171,7 @@ export default {
       eventSearch,
       selectedEvents,
       activeGroupFilters,
+      showSelectedOnly,
       newGroupName,
       showAddGroupForm,
       editingGroupId,
