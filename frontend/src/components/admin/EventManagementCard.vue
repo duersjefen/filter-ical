@@ -112,7 +112,7 @@
       </div>
     </div>
     
-    <!-- Context Menu -->
+    <!-- Group Context Menu -->
     <div
       v-if="contextMenu.visible"
       :style="{
@@ -138,6 +138,56 @@
         <span>🗑️</span>
         <span>Delete Group</span>
       </button>
+    </div>
+    
+    <!-- Event Context Menu -->
+    <div
+      v-if="eventContextMenu.visible"
+      :style="{
+        position: 'fixed',
+        top: eventContextMenu.y + 'px',
+        left: eventContextMenu.x + 'px',
+        zIndex: 1000
+      }"
+      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-48 max-w-64"
+      @click.stop
+    >
+      <!-- Add to Groups Section -->
+      <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length > 0">
+        <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700">
+          Add to Group
+        </div>
+        <button
+          v-for="group in getAvailableGroupsForEvent(eventContextMenu.event)"
+          :key="`add-${group.id}`"
+          @click="quickAddToGroup(eventContextMenu.event, group.id)"
+          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2"
+        >
+          <span class="text-green-600">+</span>
+          <span>{{ group.name }}</span>
+        </button>
+      </div>
+      
+      <!-- Remove from Groups Section -->
+      <div v-if="getAssignedGroupsForEvent(eventContextMenu.event).length > 0">
+        <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700" :class="{ 'border-t': getAvailableGroupsForEvent(eventContextMenu.event).length > 0 }">
+          Remove from Group
+        </div>
+        <button
+          v-for="group in getAssignedGroupsForEvent(eventContextMenu.event)"
+          :key="`remove-${group.id}`"
+          @click="quickRemoveFromGroup(eventContextMenu.event, group.id)"
+          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+        >
+          <span class="text-red-600">−</span>
+          <span>{{ group.name }}</span>
+        </button>
+      </div>
+      
+      <!-- No actions available -->
+      <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length === 0 && getAssignedGroupsForEvent(eventContextMenu.event).length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 italic">
+        No group actions available
+      </div>
     </div>
     
     <!-- Bulk Assignment Panel (shown when events are selected) -->
@@ -417,7 +467,26 @@
       </div>
       
       <!-- Events Card Grid -->
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+      <div 
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 relative"
+        @mousedown="startDragSelection"
+        @mousemove="updateDragSelection"
+        @mouseup="endDragSelection"
+        @mouseleave="endDragSelection"
+      >
+        <!-- Drag Selection Overlay -->
+        <div
+          v-if="dragSelection.active"
+          class="absolute pointer-events-none bg-blue-200 dark:bg-blue-600 opacity-25 border border-blue-400 dark:border-blue-500 rounded"
+          :style="{
+            left: Math.min(dragSelection.startX, dragSelection.currentX) + 'px',
+            top: Math.min(dragSelection.startY, dragSelection.currentY) + 'px',
+            width: Math.abs(dragSelection.currentX - dragSelection.startX) + 'px',
+            height: Math.abs(dragSelection.currentY - dragSelection.startY) + 'px',
+            zIndex: 10
+          }"
+        ></div>
+        
         <div class="grid gap-2" :class="{
           'grid-cols-1': filteredEvents.length === 1,
           'grid-cols-1 sm:grid-cols-2': filteredEvents.length === 2,
@@ -428,7 +497,10 @@
             <div
               v-for="event in filteredEvents"
               :key="event.title"
-              @click="toggleEventSelection(event.title)"
+              :ref="el => { if (el) cardRefs[event.title] = el }"
+              data-event-card
+              @click="handleEventCardClick(event.title, $event)"
+              @contextmenu.prevent="showEventContextMenu(event, $event)"
               :class="[
                 'relative border rounded-lg p-3 cursor-pointer transition-all duration-200 hover:shadow-md',
                 selectedEvents.includes(event.title) 
@@ -549,7 +621,7 @@
 </template>
 
 <script>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import AdminCardWrapper from './AdminCardWrapper.vue'
 import ConfirmDialog from '../shared/ConfirmDialog.vue'
 
@@ -594,6 +666,17 @@ export default {
     const editingGroupName = ref('')
     const newGroupInput = ref(null)
     const contextMenu = ref({ visible: false, x: 0, y: 0, group: null })
+    const eventContextMenu = ref({ visible: false, x: 0, y: 0, event: null })
+    
+    // Drag selection state
+    const dragSelection = ref({
+      active: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      initialSelection: []
+    })
     const deleteConfirmDialog = ref(null)
     const deleteConfirmMessage = ref('')
     const groupToDelete = ref(null)
@@ -603,6 +686,9 @@ export default {
     const isUpdatingGroups = ref(false)
     const updatingGroupIds = ref(new Set())
     const optimisticUpdates = ref(new Map()) // Track pending updates
+    
+    // Card refs for drag selection
+    const cardRefs = ref({})
     
     // Clear selection when search text changes (simplifies UX)
     watch(eventSearch, (newSearch, oldSearch) => {
@@ -1005,6 +1091,160 @@ export default {
       groupPopover.value = { visible: false, eventTitle: null }
     }
     
+    // Event context menu methods
+    const showEventContextMenu = (event, mouseEvent) => {
+      eventContextMenu.value = {
+        visible: true,
+        x: mouseEvent.clientX,
+        y: mouseEvent.clientY,
+        event: event
+      }
+      
+      // Close context menu when clicking elsewhere
+      const closeMenu = () => {
+        eventContextMenu.value.visible = false
+        document.removeEventListener('click', closeMenu)
+      }
+      
+      setTimeout(() => {
+        document.addEventListener('click', closeMenu)
+      }, 0)
+    }
+    
+    const getAvailableGroupsForEvent = (event) => {
+      if (!event) return []
+      const assignedGroupIds = event.assigned_group_ids || []
+      return props.groups.filter(group => !assignedGroupIds.includes(group.id))
+    }
+    
+    const getAssignedGroupsForEvent = (event) => {
+      if (!event) return []
+      const assignedGroupIds = event.assigned_group_ids || []
+      return props.groups.filter(group => assignedGroupIds.includes(group.id))
+    }
+    
+    const quickAddToGroup = async (event, groupId) => {
+      eventContextMenu.value.visible = false
+      
+      try {
+        // Use existing group assignment logic
+        emit('handle-group-assignment', groupId, [event.title])
+        
+        // Optimistic update
+        const eventToUpdate = props.recurringEvents.find(e => e.title === event.title)
+        if (eventToUpdate && !eventToUpdate.assigned_group_ids?.includes(parseInt(groupId))) {
+          eventToUpdate.assigned_group_ids = [...(eventToUpdate.assigned_group_ids || []), parseInt(groupId)]
+        }
+      } catch (error) {
+        console.error('Failed to add event to group:', error)
+      }
+    }
+    
+    const quickRemoveFromGroup = async (event, groupId) => {
+      eventContextMenu.value.visible = false
+      
+      try {
+        // Use existing remove from group logic
+        emit('remove-from-group', groupId, [event.title])
+        
+        // Optimistic update
+        const eventToUpdate = props.recurringEvents.find(e => e.title === event.title)
+        if (eventToUpdate && eventToUpdate.assigned_group_ids?.includes(parseInt(groupId))) {
+          eventToUpdate.assigned_group_ids = eventToUpdate.assigned_group_ids.filter(id => id !== parseInt(groupId))
+        }
+      } catch (error) {
+        console.error('Failed to remove event from group:', error)
+      }
+    }
+    
+    // Drag selection methods
+    const startDragSelection = (event) => {
+      // Only start drag selection on left mouse button and not on a card
+      if (event.button !== 0 || event.target.closest('[data-event-card]')) {
+        return
+      }
+      
+      const containerRect = event.currentTarget.getBoundingClientRect()
+      dragSelection.value = {
+        active: true,
+        startX: event.clientX - containerRect.left,
+        startY: event.clientY - containerRect.top,
+        currentX: event.clientX - containerRect.left,
+        currentY: event.clientY - containerRect.top,
+        initialSelection: [...selectedEvents.value]
+      }
+      
+      // Prevent text selection during drag
+      event.preventDefault()
+    }
+    
+    const updateDragSelection = (event) => {
+      if (!dragSelection.value.active) return
+      
+      const containerRect = event.currentTarget.getBoundingClientRect()
+      dragSelection.value.currentX = event.clientX - containerRect.left
+      dragSelection.value.currentY = event.clientY - containerRect.top
+      
+      // Calculate which cards intersect with selection rectangle
+      const selectionRect = {
+        left: Math.min(dragSelection.value.startX, dragSelection.value.currentX),
+        top: Math.min(dragSelection.value.startY, dragSelection.value.currentY),
+        right: Math.max(dragSelection.value.startX, dragSelection.value.currentX),
+        bottom: Math.max(dragSelection.value.startY, dragSelection.value.currentY)
+      }
+      
+      const newSelection = [...dragSelection.value.initialSelection]
+      
+      filteredEvents.value.forEach(event => {
+        const cardElement = cardRefs.value[event.title]
+        if (cardElement) {
+          const cardRect = cardElement.getBoundingClientRect()
+          const containerRect = cardElement.closest('.grid').getBoundingClientRect()
+          
+          const cardRelativeRect = {
+            left: cardRect.left - containerRect.left,
+            top: cardRect.top - containerRect.top,
+            right: cardRect.right - containerRect.left,
+            bottom: cardRect.bottom - containerRect.top
+          }
+          
+          // Check if card intersects with selection rectangle
+          const intersects = !(cardRelativeRect.right < selectionRect.left || 
+                             cardRelativeRect.left > selectionRect.right || 
+                             cardRelativeRect.bottom < selectionRect.top || 
+                             cardRelativeRect.top > selectionRect.bottom)
+          
+          if (intersects) {
+            if (!newSelection.includes(event.title)) {
+              newSelection.push(event.title)
+            }
+          }
+        }
+      })
+      
+      selectedEvents.value = newSelection
+    }
+    
+    const endDragSelection = () => {
+      if (dragSelection.value.active) {
+        dragSelection.value.active = false
+        // Emit the final selection
+        if (selectedEvents.value.length !== dragSelection.value.initialSelection.length || 
+            !selectedEvents.value.every(title => dragSelection.value.initialSelection.includes(title))) {
+          emit('clear-event-selection') // Clear first
+          selectedEvents.value.forEach(title => emit('toggle-event-selection', title))
+        }
+      }
+    }
+    
+    const handleEventCardClick = (eventTitle, event) => {
+      // If we're in the middle of a drag selection, don't toggle
+      if (dragSelection.value.active) {
+        return
+      }
+      toggleEventSelection(eventTitle)
+    }
+    
     // Assignment mode methods
     const handleRemoveFromGroup = async (groupId, eventTitles) => {
       // Get events that are currently in this specific group
@@ -1171,12 +1411,15 @@ export default {
       editingGroupName,
       newGroupInput,
       contextMenu,
+      eventContextMenu,
       deleteConfirmDialog,
       deleteConfirmMessage,
       groupToDelete,
       groupPopover,
       isUpdatingGroups,
       updatingGroupIds,
+      dragSelection,
+      cardRefs,
       
       // Computed
       totalEventCount,
@@ -1216,6 +1459,15 @@ export default {
       deleteGroupFromMenu,
       toggleGroupPopover,
       closeGroupPopover,
+      showEventContextMenu,
+      getAvailableGroupsForEvent,
+      getAssignedGroupsForEvent,
+      quickAddToGroup,
+      quickRemoveFromGroup,
+      startDragSelection,
+      updateDragSelection,
+      endDragSelection,
+      handleEventCardClick,
       handleRemoveFromGroup,
       isGroupUpdating,
       handleUnassignAll,
