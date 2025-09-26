@@ -3,6 +3,7 @@
     <AppHeader 
       :title="$t('admin.manageEventsGroups', { domain })"
       :back-button-text="$t('admin.backToCalendar', { domain })"
+      :show-back-button="true"
       page-context="admin"
       @navigate-back="$router.push(`/${domain}`)"
     />
