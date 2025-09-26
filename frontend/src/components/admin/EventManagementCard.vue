@@ -217,13 +217,21 @@
     </div>
     
     <!-- Bulk Assignment Panel (Always visible with consistent sizing) -->
-    <div class="bg-white dark:bg-gray-800 border-2 rounded-lg p-4 shadow-sm transition-all duration-200" 
+    <div class="relative bg-white dark:bg-gray-800 border-2 rounded-lg p-4 shadow-sm transition-all duration-200" 
          :class="[
            selectedEvents.length > 0 
              ? 'border-blue-300 dark:border-blue-600' 
              : 'border-gray-200 dark:border-gray-700 opacity-60',
            dragSelection.dragging ? 'pointer-events-none opacity-75' : ''
          ]">
+      
+      <!-- Status Indicator (fixed position top-right) -->
+      <div v-if="isUpdatingGroups" class="absolute top-3 right-3 z-10">
+        <div class="flex items-center gap-2 bg-white dark:bg-gray-800 px-2 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+          <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Updating...</span>
+        </div>
+      </div>
       <div class="flex items-center justify-center mb-3">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-full flex items-center justify-center" :class="[
@@ -260,14 +268,6 @@
       
       <!-- Smart Group Actions -->
       <div class="space-y-3">
-        <!-- Status Indicator -->
-        <div class="flex items-center justify-end" v-if="isUpdatingGroups">
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span class="text-xs text-gray-500 dark:text-gray-400">Updating...</span>
-          </div>
-        </div>
-        
         <!-- Smart Combined Action Buttons Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           
@@ -282,7 +282,7 @@
               @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
               :disabled="isGroupUpdating(group.id) || selectedEvents.length === 0"
               :class="[
-                'group relative inline-flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
+                'group relative inline-flex items-center justify-between w-full h-16 px-3 rounded-lg text-xs font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
                 getSmartGroupAction(group.id).primaryStyle === 'add' 
                   ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-800 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-600 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
                   : 'bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 text-red-800 hover:from-red-100 hover:to-rose-100 hover:border-red-300 dark:from-red-900/20 dark:to-rose-900/20 dark:border-red-600 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
@@ -388,7 +388,7 @@
           <button
             @click="handleUnassignAll"
             :disabled="isUpdatingGroups || selectedEvents.length === 0"
-            class="group relative inline-flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
+            class="group relative inline-flex items-center justify-between w-full h-16 px-3 rounded-lg text-xs font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
             :title="`Remove ${selectedEvents.length} events from all groups`"
           >
             <div class="flex items-center gap-3">
@@ -727,9 +727,7 @@ export default {
       currentX: 0,
       currentY: 0,
       initialSelection: [],
-      containerRect: null,
-      scrollTop: undefined,
-      scrollLeft: undefined
+      containerRect: null
     })
     const deleteConfirmDialog = ref(null)
     const deleteConfirmMessage = ref('')
@@ -761,11 +759,9 @@ export default {
         }
       }
       
-      // Global cleanup to ensure scroll is always restored
+      // Global cleanup for drag state
       const handleBeforeUnload = () => {
-        if (dragSelection.value.dragging) {
-          enableScroll()
-        }
+        dragSelection.value.dragging = false
       }
       
       document.addEventListener('keydown', handleEscape)
@@ -775,10 +771,8 @@ export default {
       onUnmounted(() => {
         document.removeEventListener('keydown', handleEscape)
         window.removeEventListener('beforeunload', handleBeforeUnload)
-        // Ensure scroll is restored if component unmounts during drag
-        if (dragSelection.value.dragging) {
-          enableScroll()
-        }
+        // Reset drag state if component unmounts during drag
+        dragSelection.value.dragging = false
       })
     })
     
@@ -1295,65 +1289,28 @@ export default {
       }
     }
     
-    // Scroll lock utilities for preventing page scroll during drag
-    const disableScroll = () => {
-      // Save current scroll position
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-      
-      // Add CSS to prevent scrolling
-      document.body.style.overflow = 'hidden'
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollTop}px`
-      document.body.style.left = `-${scrollLeft}px`
-      document.body.style.width = '100%'
-      
-      // Store scroll position for restoration
-      dragSelection.value.scrollTop = scrollTop
-      dragSelection.value.scrollLeft = scrollLeft
-    }
-    
-    const enableScroll = () => {
-      // Restore scroll capability
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.left = ''
-      document.body.style.width = ''
-      
-      // Restore scroll position
-      if (dragSelection.value.scrollTop !== undefined) {
-        window.scrollTo(dragSelection.value.scrollLeft || 0, dragSelection.value.scrollTop || 0)
-      }
-    }
+    // Drag selection utilities (no scroll locking needed anymore)
 
     // Drag selection methods
     const startDragSelection = (event) => {
       // Only start drag selection on left mouse button
-      if (event.button !== 0) {
-        return
-      }
+      if (event.button !== 0) return
       
       const containerRect = event.currentTarget.getBoundingClientRect()
       dragSelection.value = {
-        active: false, // Don't set active until we actually start dragging
+        dragging: true,
         startX: event.clientX - containerRect.left,
         startY: event.clientY - containerRect.top,
         currentX: event.clientX - containerRect.left,
         currentY: event.clientY - containerRect.top,
         initialSelection: [...selectedEvents.value],
-        dragThreshold: 10, // Increased threshold for better click detection
-        hasDragged: false,
-        isPotentialDrag: true, // Track that we might start dragging
-        containerRect: containerRect, // Store initial container position
+        containerRect: containerRect,
         scrollTop: undefined,
         scrollLeft: undefined
       }
       
-      // IMMEDIATELY disable scroll on any potential drag to prevent weird scrolling
-      disableScroll()
+      // No need for scroll locking with always-visible panel
       
-      // Prevent default behaviors during drag
       event.preventDefault()
       event.stopPropagation()
     }
@@ -1430,8 +1387,7 @@ export default {
         selectedEvents.value.forEach(title => emit('toggle-event-selection', title))
       }
       
-      // Always restore scroll and reset drag state
-      enableScroll()
+      // Reset drag state
       dragSelection.value.dragging = false
     }
     
