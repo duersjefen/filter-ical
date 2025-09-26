@@ -155,7 +155,7 @@
     
     <!-- Bulk Assignment Panel (shown when events are selected) -->
     <div v-if="selectedEvents.length > 0" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm">
-      <div v-if="selectedEvents.length > 1" class="flex items-center justify-between mb-3">
+      <div v-if="selectedEvents.length > 1" class="flex items-center justify-center mb-3">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
             <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">{{ selectedEvents.length }}</span>
@@ -167,22 +167,6 @@
             </p>
           </div>
         </div>
-        <button 
-          @click="clearEventSelection"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded"
-          title="Clear selection"
-        >
-          <span class="text-xl">×</span>
-        </button>
-      </div>
-      <div v-else class="flex items-center justify-end mb-3">
-        <button 
-          @click="clearEventSelection"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded"
-          title="Clear selection"
-        >
-          <span class="text-xl">×</span>
-        </button>
       </div>
       
       <!-- Smart Group Actions -->
@@ -244,24 +228,24 @@
             <!-- Split Action Buttons (when mixed state) -->
             <div 
               v-else-if="getSmartGroupAction(group.id).type === 'split'"
-              class="w-full bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+              class="w-full h-16 bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
             >
               <!-- Group Header -->
-              <div class="px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-500">
+              <div class="px-3 py-1 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-500 flex-shrink-0">
                 <div class="flex items-center justify-between">
-                  <span class="font-semibold text-gray-800 dark:text-gray-200">{{ group.name }}</span>
+                  <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">{{ group.name }}</span>
                   <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse" title="Mixed state - some events in/out"></div>
                 </div>
               </div>
               
               <!-- Split Actions -->
-              <div class="flex">
+              <div class="flex flex-1">
                 <!-- Primary Action -->
                 <button
                   @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
                   :disabled="isGroupUpdating(group.id)"
                   :class="[
-                    'flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 border-r border-gray-200 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed',
+                    'flex-1 px-3 py-1 text-xs font-medium transition-all duration-300 border-r border-gray-200 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed',
                     getSmartGroupAction(group.id).primaryStyle === 'add'
                       ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
                       : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-800 hover:from-red-100 hover:to-rose-100 dark:from-red-900/20 dark:to-rose-900/20 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
@@ -287,7 +271,7 @@
                   @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).secondaryAction)"
                   :disabled="isGroupUpdating(group.id)"
                   :class="[
-                    'flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
+                    'flex-1 px-3 py-1 text-xs font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
                     getSmartGroupAction(group.id).secondaryStyle === 'add'
                       ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
                       : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-800 hover:from-red-100 hover:to-rose-100 dark:from-red-900/20 dark:to-rose-900/20 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
@@ -311,26 +295,27 @@
             </div>
           </div>
           
-          <!-- Unassign All Button (inline with groups) -->
-          <div class="inline-flex">
-            <button
-              @click="handleUnassignAll"
-              :disabled="isUpdatingGroups"
-              class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
-              :title="`Remove ${selectedEvents.length} events from all groups`"
-            >
-              <div class="w-6 h-6 bg-yellow-200 dark:bg-yellow-700 rounded-full flex items-center justify-center">
-                <span v-if="!isUpdatingGroups" class="text-yellow-800 dark:text-yellow-200 font-bold text-xs">🚫</span>
+          <!-- Unassign All Button (same size as groups) -->
+          <button
+            @click="handleUnassignAll"
+            :disabled="isUpdatingGroups"
+            class="group relative inline-flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
+            :title="`Remove ${selectedEvents.length} events from all groups`"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-6 h-6 bg-yellow-200 dark:bg-yellow-700 rounded-full flex items-center justify-center text-xs font-bold">
+                <span v-if="!isUpdatingGroups" class="text-yellow-800 dark:text-yellow-200">🚫</span>
                 <div v-else class="w-3 h-3 border-2 border-yellow-800 dark:border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
               </div>
               <div class="flex flex-col text-left">
-                <span class="font-semibold">Unassign All</span>
+                <span class="font-semibold text-sm">Unassign All</span>
+                <span class="text-xs opacity-75">Remove from all</span>
               </div>
-              <div class="text-xs font-bold px-1.5 py-0.5 rounded-full bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200">
-                {{ selectedEvents.length }}
-              </div>
-            </button>
-          </div>
+            </div>
+            <div class="text-xs font-bold px-1.5 py-0.5 rounded-full bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200">
+              {{ selectedEvents.length }}
+            </div>
+          </button>
         </div>
       </div>
     </div>
@@ -438,6 +423,17 @@
             <span v-else-if="isSomeEventsSelected">{{ selectedEvents.length }} Selected</span>
             <span v-else>Select All Visible</span>
           </button>
+          
+          <!-- Clear Selection Button (shown when events are selected) -->
+          <button
+            v-if="selectedEvents.length > 0"
+            @click="clearEventSelection"
+            class="px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            :title="`Clear selection of ${selectedEvents.length} events`"
+          >
+            Clear Selection
+          </button>
+          
           <span class="text-sm text-gray-500 dark:text-gray-400">
             {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }} shown
           </span>
