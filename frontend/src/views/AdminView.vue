@@ -34,6 +34,7 @@
         @update-group="updateGroup"
         @delete-group="deleteGroup"
         @handle-group-assignment="handleGroupAssignment"
+        @remove-from-group="handleRemoveFromGroup"
       />
       
       <!-- 💾 Configuration Card (Third Position) -->
@@ -141,7 +142,8 @@ export default {
       createAssignmentRule: createAssignmentRuleAPI,
       deleteAssignmentRule: deleteAssignmentRuleAPI,
       applyExistingRule,
-      deleteGroup: deleteGroupAPI
+      deleteGroup: deleteGroupAPI,
+      removeEventsFromGroup: removeEventsFromGroupAPI
     } = useAdmin(props.domain)
 
     // HTTP functions for configuration management
@@ -370,6 +372,21 @@ export default {
       }
     }
 
+    const handleRemoveFromGroup = async (groupId, eventTitles) => {
+      if (!removeEventsFromGroupAPI) {
+        showNotification('Remove from group functionality not yet implemented in backend', 'error')
+        return
+      }
+      
+      const result = await removeEventsFromGroupAPI(groupId, eventTitles)
+      if (result.success) {
+        const groupName = groups.value.find(g => g.id === parseInt(groupId))?.name || 'Unknown Group'
+        showNotification(`Successfully removed ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} from ${groupName}!`, 'success')
+      } else {
+        showNotification(`Failed to remove events from group: ${result.error}`, 'error')
+      }
+    }
+
     // Load data on mount
     let hasInitiallyLoaded = false
     onMounted(async () => {
@@ -411,7 +428,8 @@ export default {
       resetConfigurationConfirm,
       
       // Group management
-      deleteGroup
+      deleteGroup,
+      handleRemoveFromGroup
     }
   }
 }

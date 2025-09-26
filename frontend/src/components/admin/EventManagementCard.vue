@@ -41,11 +41,18 @@
               ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-800/30 cursor-pointer transform hover:scale-105'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
-          :title="selectedEvents.length > 0 ? `Click to assign ${selectedEvents.length} selected events to Unassigned` : 'Filter unassigned events'"
+          :title="'Filter unassigned events • Hold Ctrl to select multiple filters'"
         >
           <span>❔</span>
           <span>Unassigned</span>
           <span class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
+          <!-- Selection indicator -->
+          <span 
+            v-if="selectedEvents.length > 0 && getSelectedEventsInGroup('unassigned') > 0"
+            class="ml-1 px-1 py-0.5 bg-blue-500 text-white rounded text-xs font-bold"
+          >
+            {{ getSelectedEventsInGroup('unassigned') }}
+          </span>
         </button>
         
         <!-- Group Buttons with Right-Click Context Menu -->
@@ -62,7 +69,7 @@
               ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-800/30 cursor-pointer transform hover:scale-105'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
-          :title="selectedEvents.length > 0 ? `Click to assign ${selectedEvents.length} selected events to ${group.name}` : `Filter events by ${group.name} • Right-click for options`"
+          :title="`Filter events by ${group.name} • Hold Ctrl to select multiple filters • Right-click for options`"
         >
           <span v-if="editingGroupId !== group.id">{{ group.name }}</span>
           <input
@@ -75,6 +82,13 @@
             :style="{ width: Math.max(50, editingGroupName.length * 8) + 'px' }"
           />
           <span class="text-xs opacity-75">({{ getGroupEventCount(group.id) }})</span>
+          <!-- Selection indicator -->
+          <span 
+            v-if="selectedEvents.length > 0 && getSelectedEventsInGroup(group.id) > 0"
+            class="ml-1 px-1 py-0.5 bg-blue-500 text-white rounded text-xs font-bold"
+          >
+            {{ getSelectedEventsInGroup(group.id) }}
+          </span>
         </button>
         
         <!-- Add Group Button -->
@@ -143,18 +157,82 @@
       </button>
     </div>
     
-    <!-- Assignment Instructions -->
-    <div v-if="selectedEvents.length > 0" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-      <div class="flex items-center gap-3">
-        <span class="text-blue-600 dark:text-blue-400 text-lg">👆</span>
-        <div>
-          <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-1">Assignment Mode Active</h4>
-          <p class="text-sm text-blue-700 dark:text-blue-300">
-            {{ selectedEvents.length }} event{{ selectedEvents.length > 1 ? 's' : '' }} selected. 
-            Click a group above to assign {{ selectedEvents.length > 1 ? 'them' : 'it' }}, or click 
-            <button @click="clearEventSelection" class="underline hover:no-underline">here to clear selection</button>.
-          </p>
+    <!-- Bulk Assignment Panel (shown when events are selected) -->
+    <div v-if="selectedEvents.length > 0" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+            <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">{{ selectedEvents.length }}</span>
+          </div>
+          <div>
+            <h4 class="font-medium text-gray-900 dark:text-white">Bulk Actions</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              {{ selectedEvents.length }} event{{ selectedEvents.length > 1 ? 's' : '' }} selected
+            </p>
+          </div>
         </div>
+        <button 
+          @click="clearEventSelection"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded"
+          title="Clear selection"
+        >
+          <span class="text-xl">×</span>
+        </button>
+      </div>
+      
+      <!-- Assignment Actions -->
+      <div class="flex flex-wrap gap-2">
+        <!-- Add to Group Buttons -->
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 px-2 py-1">Add to:</span>
+          <button
+            v-for="group in groups"
+            :key="`add-${group.id}`"
+            @click="handleGroupAssignment(group.id, [...selectedEvents])"
+            class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+            :title="`Add ${selectedEvents.length} events to ${group.name}`"
+          >
+            <span>+</span>
+            <span>{{ group.name }}</span>
+            <span 
+              v-if="getSelectedEventsInGroup(group.id) > 0"
+              class="ml-1 px-1 py-0.5 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 rounded text-xs"
+            >
+              {{ getSelectedEventsInGroup(group.id) }}
+            </span>
+          </button>
+        </div>
+        
+        <!-- Remove from Group Buttons (only show groups that have selected events) -->
+        <div 
+          v-if="Object.keys(selectedEventsGroupDistribution).some(id => id !== 'unassigned' && selectedEventsGroupDistribution[id] > 0)"
+          class="flex flex-wrap gap-1 ml-4"
+        >
+          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 px-2 py-1">Remove from:</span>
+          <button
+            v-for="groupId in Object.keys(selectedEventsGroupDistribution).filter(id => id !== 'unassigned' && selectedEventsGroupDistribution[id] > 0)"
+            :key="`remove-${groupId}`"
+            @click="handleRemoveFromGroup(groupId, [...selectedEvents])"
+            class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+            :title="`Remove ${getSelectedEventsInGroup(groupId)} events from ${groups.find(g => g.id == groupId)?.name}`"
+          >
+            <span>−</span>
+            <span>{{ groups.find(g => g.id == groupId)?.name }}</span>
+            <span class="ml-1 px-1 py-0.5 bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 rounded text-xs">
+              {{ selectedEventsGroupDistribution[groupId] }}
+            </span>
+          </button>
+        </div>
+        
+        <!-- Unassign All Button -->
+        <button
+          @click="handleGroupAssignment('unassigned', [...selectedEvents])"
+          class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 ml-4"
+          :title="`Remove ${selectedEvents.length} events from all groups`"
+        >
+          <span>🚫</span>
+          <span>Unassign All</span>
+        </button>
       </div>
     </div>
     
@@ -259,9 +337,64 @@
                 </div>
               </td>
               <td class="px-4 py-3">
-                <span v-if="event.group_name" class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
-                  {{ event.group_name }}
-                </span>
+                <!-- Multi-Group Display -->
+                <div v-if="event.assigned_groups && event.assigned_groups.length > 0" class="flex flex-wrap gap-1">
+                  <!-- Primary Group Badge -->
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
+                    {{ event.assigned_groups[0].name }}
+                  </span>
+                  <!-- Additional Groups (max 2 more shown) -->
+                  <span 
+                    v-for="group in event.assigned_groups.slice(1, 3)" 
+                    :key="group.id"
+                    class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                  >
+                    {{ group.name }}
+                  </span>
+                  <!-- Overflow Indicator with Popover -->
+                  <div 
+                    v-if="event.assigned_groups.length > 3"
+                    class="relative inline-block"
+                  >
+                    <span 
+                      @click="toggleGroupPopover(event.title)"
+                      class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      :title="'Click to see all groups'"
+                    >
+                      +{{ event.assigned_groups.length - 3 }} more
+                    </span>
+                    <!-- Groups Popover -->
+                    <div 
+                      v-if="groupPopover.visible && groupPopover.eventTitle === event.title"
+                      class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-48 z-50"
+                      @click.stop
+                    >
+                      <div class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">All Groups:</div>
+                      <div class="space-y-1">
+                        <div 
+                          v-for="group in event.assigned_groups"
+                          :key="group.id"
+                          class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mr-1 mb-1"
+                          :class="[
+                            group === event.assigned_groups[0] 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                          ]"
+                        >
+                          {{ group.name }}
+                          <span v-if="group === event.assigned_groups[0]" class="text-xs opacity-75">(primary)</span>
+                        </div>
+                      </div>
+                      <button 
+                        @click="closeGroupPopover" 
+                        class="mt-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Unassigned State -->
                 <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
                   ❔ Unassigned
                 </span>
@@ -325,7 +458,7 @@ export default {
   emits: [
     'toggle', 'create-group', 'update-group', 'delete-group', 'handle-group-assignment',
     'toggle-group-filter', 'toggle-select-all-events', 'toggle-event-selection',
-    'clear-event-selection'
+    'clear-event-selection', 'remove-from-group'
   ],
   setup(props, { emit }) {
     // Local state
@@ -341,6 +474,7 @@ export default {
     const deleteConfirmDialog = ref(null)
     const deleteConfirmMessage = ref('')
     const groupToDelete = ref(null)
+    const groupPopover = ref({ visible: false, eventTitle: null })
     
     // Computed properties
     const totalEventCount = computed(() => {
@@ -349,21 +483,33 @@ export default {
     })
     
     const assignedEventsCount = computed(() => {
-      return props.recurringEvents.filter(event => event.assigned_group_id).length
+      return props.recurringEvents.filter(event => {
+        const eventGroupIds = event.assigned_group_ids || []
+        return eventGroupIds.length > 0
+      }).length
     })
     
     const unassignedEventsCount = computed(() => {
-      return props.recurringEvents.filter(event => !event.assigned_group_id).length
+      return props.recurringEvents.filter(event => {
+        const eventGroupIds = event.assigned_group_ids || []
+        return eventGroupIds.length === 0
+      }).length
     })
     
     const filteredEvents = computed(() => {
       let filtered = props.recurringEvents
       
-      // Apply group filters
+      // Apply group filters (support multi-group assignments)
       if (activeGroupFilters.value.length > 0) {
         filtered = filtered.filter(event => {
-          if (activeGroupFilters.value.includes('unassigned') && !event.assigned_group_id) return true
-          return activeGroupFilters.value.includes(event.assigned_group_id)
+          // Handle unassigned filter
+          if (activeGroupFilters.value.includes('unassigned') && (!event.assigned_group_ids || event.assigned_group_ids.length === 0)) {
+            return true
+          }
+          
+          // Handle group filters - check if event belongs to any of the active filter groups
+          const eventGroupIds = event.assigned_group_ids || []
+          return eventGroupIds.some(groupId => activeGroupFilters.value.includes(groupId))
         })
       }
       
@@ -376,17 +522,24 @@ export default {
         )
       }
       
-      // Group by title and preserve API event_count, also compute group_name
+      // Group by title and preserve API event_count, also compute group information
       const eventsByTitle = {}
       filtered.forEach(event => {
         if (!eventsByTitle[event.title]) {
-          // Find the group name from the groups prop
-          const group = props.groups.find(g => g.id === event.assigned_group_id)
+          // Handle multi-group assignments from API
+          const assignedGroupIds = event.assigned_group_ids || []
+          const assignedGroups = assignedGroupIds.map(groupId => 
+            props.groups.find(g => g.id === groupId)
+          ).filter(Boolean) // Remove null/undefined results
+          
           eventsByTitle[event.title] = {
             ...event,
             // Keep the original event_count from API instead of resetting to 0
-            group_id: event.assigned_group_id, // Map for backward compatibility
-            group_name: group ? group.name : null
+            group_id: event.assigned_group_id, // Map for backward compatibility  
+            group_name: assignedGroups[0]?.name || null, // Primary group for backward compatibility
+            // Multi-group support
+            assigned_group_ids: assignedGroupIds,
+            assigned_groups: assignedGroups
           }
         }
         // Don't increment event_count since API already provides the correct value
@@ -404,14 +557,36 @@ export default {
       return selectedEvents.value.length > 0 && selectedEvents.value.length < filteredEvents.value.length
     })
     
-    // Methods
-    const toggleGroupFilter = (groupId, event) => {
-      if (selectedEvents.value.length > 0) {
-        emit('handle-group-assignment', groupId, [...selectedEvents.value])
-        selectedEvents.value = []
-        return
-      }
+    // Selection group distribution for smart filter buttons
+    const selectedEventsGroupDistribution = computed(() => {
+      const distribution = {}
       
+      selectedEvents.value.forEach(eventTitle => {
+        const event = props.recurringEvents.find(e => e.title === eventTitle)
+        if (event) {
+          const eventGroupIds = event.assigned_group_ids || []
+          
+          if (eventGroupIds.length === 0) {
+            // Unassigned event
+            distribution['unassigned'] = (distribution['unassigned'] || 0) + 1
+          } else {
+            // Event with group assignments
+            eventGroupIds.forEach(groupId => {
+              distribution[groupId] = (distribution[groupId] || 0) + 1
+            })
+          }
+        }
+      })
+      
+      return distribution
+    })
+    
+    const getSelectedEventsInGroup = (groupId) => {
+      return selectedEventsGroupDistribution.value[groupId] || 0
+    }
+    
+    // Methods - Filter mode (clear separation from assignment)
+    const toggleGroupFilter = (groupId, event) => {
       const isCtrlClick = event.ctrlKey || event.metaKey
       emit('toggle-group-filter', groupId, isCtrlClick, activeGroupFilters.value)
       
@@ -462,7 +637,10 @@ export default {
     }
     
     const getGroupEventCount = (groupId) => {
-      return props.recurringEvents.filter(event => event.assigned_group_id === groupId).length
+      return props.recurringEvents.filter(event => {
+        const eventGroupIds = event.assigned_group_ids || []
+        return eventGroupIds.includes(groupId)
+      }).length
     }
     
     const createGroup = async () => {
@@ -573,6 +751,53 @@ export default {
       contextMenu.value.visible = false
     }
     
+    const toggleGroupPopover = (eventTitle) => {
+      if (groupPopover.value.visible && groupPopover.value.eventTitle === eventTitle) {
+        closeGroupPopover()
+      } else {
+        groupPopover.value = {
+          visible: true,
+          eventTitle: eventTitle
+        }
+        
+        // Close popover when clicking elsewhere
+        const closePopover = () => {
+          closeGroupPopover()
+          document.removeEventListener('click', closePopover)
+        }
+        
+        setTimeout(() => {
+          document.addEventListener('click', closePopover)
+        }, 0)
+      }
+    }
+    
+    const closeGroupPopover = () => {
+      groupPopover.value = { visible: false, eventTitle: null }
+    }
+    
+    // Assignment mode methods
+    const handleRemoveFromGroup = async (groupId, eventTitles) => {
+      // Get events that are currently in this specific group
+      const eventsInGroup = eventTitles.filter(title => {
+        const event = props.recurringEvents.find(e => e.title === title)
+        return event && event.assigned_group_ids && event.assigned_group_ids.includes(parseInt(groupId))
+      })
+      
+      if (eventsInGroup.length === 0) {
+        return // No events to remove from this group
+      }
+      
+      try {
+        // We need to implement a "remove from specific group" API call
+        // For now, we'll emit this and let the parent handle it
+        emit('remove-from-group', groupId, eventsInGroup)
+        selectedEvents.value = []
+      } catch (error) {
+        console.error('Failed to remove events from group:', error)
+      }
+    }
+    
     return {
       // State
       eventSearch,
@@ -587,6 +812,7 @@ export default {
       deleteConfirmDialog,
       deleteConfirmMessage,
       groupToDelete,
+      groupPopover,
       
       // Computed
       totalEventCount,
@@ -595,6 +821,7 @@ export default {
       filteredEvents,
       isAllEventsSelected,
       isSomeEventsSelected,
+      selectedEventsGroupDistribution,
       
       // Methods
       toggleGroupFilter,
@@ -603,6 +830,7 @@ export default {
       clearEventSelection,
       clearGroupFilters,
       getGroupEventCount,
+      getSelectedEventsInGroup,
       createGroup,
       cancelAddGroup,
       handleAddGroupBlur,
@@ -615,7 +843,10 @@ export default {
       cancelDeleteGroup,
       showContextMenu,
       editGroupFromMenu,
-      deleteGroupFromMenu
+      deleteGroupFromMenu,
+      toggleGroupPopover,
+      closeGroupPopover,
+      handleRemoveFromGroup
     }
   }
 }
