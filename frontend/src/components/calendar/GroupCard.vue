@@ -61,8 +61,8 @@
             : 'bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-600'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
-          <span v-if="isBothSubscribedAndSelected">✅ Subscribed & Selected</span>
-          <span v-else>🎯 Subscribe & Select</span>
+          <span v-if="isBothSubscribedAndSelected">{{ $t('groupCard.subscribedSelected') }}</span>
+          <span v-else>{{ $t('groupCard.subscribeSelect') }}</span>
         </button>
       </div>
       
@@ -77,8 +77,8 @@
             : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
           :title="isGroupSubscribed ? 'Unsubscribe from this group' : 'Subscribe to future events from this group'"
         >
-          <span v-if="isGroupSubscribed">✅ Subscribed</span>
-          <span v-else>📥 Subscribe</span>
+          <span v-if="isGroupSubscribed">{{ $t('groupCard.subscribed') }}</span>
+          <span v-else>{{ $t('groupCard.subscribe') }}</span>
         </button>
         
         <!-- Select All Only Button -->
@@ -90,8 +90,8 @@
             : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'"
           :title="areAllRecurringEventsSelected ? 'Deselect all recurring events' : 'Select all recurring events for current view'"
         >
-          <span v-if="areAllRecurringEventsSelected">✓ Deselect All</span>
-          <span v-else>☐ Select All</span>
+          <span v-if="areAllRecurringEventsSelected">{{ $t('groupCard.deselectAll') }}</span>
+          <span v-else>{{ $t('groupCard.selectAll') }}</span>
         </button>
       </div>
     </div>
@@ -163,12 +163,12 @@
             <div v-if="isRecurringEventExpanded(recurringEvent.title)" class="border-t border-gray-100 dark:border-gray-700 bg-gray-25 dark:bg-gray-900/20">
               <!-- Loading State -->
               <div v-if="recurringEventEvents[recurringEvent.title]?.loading" class="p-3 text-center">
-                <div class="text-xs text-gray-500 dark:text-gray-400">Loading events...</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $t('groupCard.loadingEvents') }}</div>
               </div>
               
               <!-- Error State -->
               <div v-else-if="recurringEventEvents[recurringEvent.title]?.error" class="p-3 text-center">
-                <div class="text-xs text-red-500">Error: {{ recurringEventEvents[recurringEvent.title].error }}</div>
+                <div class="text-xs text-red-500">{{ $t('groupCard.errorPrefix') }} {{ recurringEventEvents[recurringEvent.title].error }}</div>
               </div>
               
               <!-- Events List (Concise Display) -->

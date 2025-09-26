@@ -20,7 +20,7 @@
             class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
             :title="$t('ui.switchToGroupsView')"
           >
-            <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">🏷️ Groups</span>
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">{{ $t('labels.groups') }}</span>
             <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
@@ -129,8 +129,8 @@
             ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50' 
             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
         >
-          <span class="hidden sm:inline">{{ showSelectedOnly ? '👁️ Show All' : '🎯 Show Selected Only' }}</span>
-          <span class="sm:hidden">{{ showSelectedOnly ? '👁️ All' : '🎯 Select' }}</span>
+          <span class="hidden sm:inline">{{ showSelectedOnly ? $t('viewControls.showAll') : $t('viewControls.showSelectedOnly') }}</span>
+          <span class="sm:hidden">{{ showSelectedOnly ? $t('viewControls.showAllShort') : $t('viewControls.showSelectedShort') }}</span>
         </button>
         
       </div>
@@ -302,8 +302,8 @@
                 ? 'bg-gray-500 hover:bg-gray-600 text-white'
                 : 'bg-blue-500 hover:bg-blue-600 text-white'"
             >
-              <span v-if="areAllSinglesSelected">✗ Deselect All</span>
-              <span v-else>✓ Select All</span>
+              <span v-if="areAllSinglesSelected">{{ $t('viewControls.deselectAllSingles') }}</span>
+              <span v-else>{{ $t('viewControls.selectAllSingles') }}</span>
             </button>
           </div>
         </div>
@@ -376,7 +376,7 @@
               class="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <span>📥</span>
-              <span>Subscribe to All Groups</span>
+              <span>{{ $t('viewControls.subscribeToAllGroups') }}</span>
             </button>
             
             <!-- Unsubscribe & Deselect All Groups -->
@@ -385,14 +385,14 @@
               class="px-6 py-2.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <span>📤</span>
-              <span>Unsubscribe from All Groups</span>
+              <span>{{ $t('viewControls.unsubscribeFromAllGroups') }}</span>
             </button>
           </div>
           
           <!-- Helper Text -->
           <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
             💡 For fine-grained control and customization, switch to 
-            <span class="font-medium text-blue-600 dark:text-blue-400">Groups view</span>
+            <span class="font-medium text-blue-600 dark:text-blue-400">{{ $t('viewControls.groupsView') }}</span>
           </p>
         </div>
       </div>

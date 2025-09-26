@@ -9,12 +9,16 @@ import { ref, computed } from 'vue'
 import { useHTTP } from './useHTTP'
 
 export function useAdmin(domain) {
-  const { get, post, put, del, loading, error } = useHTTP()
+  const { get, post, put, del } = useHTTP()
 
-  // Reactive state
+  // Reactive state  
   const groups = ref([])
   const recurringEvents = ref([])
   const assignmentRules = ref([])
+  
+  // Admin-specific loading and error states
+  const loading = ref(false)
+  const error = ref(null)
 
   // Computed properties
   const groupsMap = computed(() => {
@@ -33,15 +37,32 @@ export function useAdmin(domain) {
     return eventsArray.filter(event => event.event_count > 0)
   })
 
+  // Request tracking to prevent simultaneous calls
+  let loadingStates = {
+    groups: false,
+    events: false,
+    rules: false
+  }
+
   // API Functions - Groups Management
   const loadGroups = async () => {
+    if (loadingStates.groups) {
+      return { success: true, data: groups.value }
+    }
+    
+    loadingStates.groups = true
     try {
       const result = await get(`/domains/${domain}/groups`)
-      groups.value = result.success ? (result.data || []) : []
-      return { success: true, data: result.data }
+      // Extract the array data from the HTTP response
+      const groupsData = result.success ? (result.data || []) : []
+      groups.value = Array.isArray(groupsData) ? groupsData : []
+      return { success: true, data: groupsData }
     } catch (err) {
       console.error('Failed to load groups:', err)
+      groups.value = []
       return { success: false, error: err.message }
+    } finally {
+      loadingStates.groups = false
     }
   }
 
@@ -82,22 +103,35 @@ export function useAdmin(domain) {
   const loadRecurringEvents = async () => {
     try {
       const result = await get(`/domains/${domain}/recurring-events`)
-      recurringEvents.value = result.success ? (result.data || []) : []
-      return { success: true, data: result.data }
+      // Extract the array data from the HTTP response
+      const eventsData = result.success ? (result.data || []) : []
+      recurringEvents.value = Array.isArray(eventsData) ? eventsData : []
+      return { success: true, data: eventsData }
     } catch (err) {
       console.error('Failed to load recurring events:', err)
+      recurringEvents.value = []
       return { success: false, error: err.message }
     }
   }
 
   const loadRecurringEventsWithAssignments = async () => {
+    if (loadingStates.events) {
+      return { success: true, data: recurringEvents.value }
+    }
+    
+    loadingStates.events = true
     try {
       const result = await get(`/domains/${domain}/recurring-events-with-assignments`)
-      recurringEvents.value = result.success ? (result.data || []) : []
-      return { success: true, data: result.data }
+      // Extract the array data from the HTTP response
+      const eventsData = result.success ? (result.data?.data || []) : []
+      recurringEvents.value = Array.isArray(eventsData) ? eventsData : []
+      return { success: true, data: eventsData }
     } catch (err) {
       console.error('Failed to load recurring events with assignments:', err)
+      recurringEvents.value = []
       return { success: false, error: err.message }
+    } finally {
+      loadingStates.events = false
     }
   }
 
@@ -160,13 +194,23 @@ export function useAdmin(domain) {
 
   // API Functions - Assignment Rules
   const loadAssignmentRules = async () => {
+    if (loadingStates.rules) {
+      return { success: true, data: assignmentRules.value }
+    }
+    
+    loadingStates.rules = true
     try {
       const result = await get(`/domains/${domain}/assignment-rules`)
-      assignmentRules.value = result.success ? (result.data || []) : []
-      return { success: true, data: result.data }
+      // Extract the array data from the HTTP response
+      const rulesData = result.success ? (result.data || []) : []
+      assignmentRules.value = Array.isArray(rulesData) ? rulesData : []
+      return { success: true, data: rulesData }
     } catch (err) {
       console.error('Failed to load assignment rules:', err)
+      assignmentRules.value = []
       return { success: false, error: err.message }
+    } finally {
+      loadingStates.rules = false
     }
   }
 
@@ -211,18 +255,51 @@ export function useAdmin(domain) {
     return labels[ruleType] || ruleType
   }
 
+  // Request deduplication to prevent infinite loops
+  let loadAllDataPromise = null
+  
   // Bulk Operations
   const loadAllAdminData = async () => {
-    const results = await Promise.all([
-      loadGroups(),
-      loadRecurringEventsWithAssignments(),
-      loadAssignmentRules()
-    ])
-    
-    return {
-      success: results.every(r => r.success),
-      results
+    // If a request is already in progress, return the same promise
+    if (loadAllDataPromise) {
+      return loadAllDataPromise
     }
+    
+    loadAllDataPromise = (async () => {
+      try {
+        loading.value = true
+        error.value = null
+        
+        const results = await Promise.all([
+          loadGroups(),
+          loadRecurringEventsWithAssignments(),
+          loadAssignmentRules()
+        ])
+        
+        const allSuccess = results.every(r => r.success)
+        if (!allSuccess) {
+          const failedResults = results.filter(r => !r.success)
+          error.value = `Failed to load: ${failedResults.map(r => r.error).join(', ')}`
+        }
+        
+        return {
+          success: allSuccess,
+          results
+        }
+      } catch (err) {
+        error.value = err.message || 'Failed to load admin data'
+        return {
+          success: false,
+          error: error.value
+        }
+      } finally {
+        loading.value = false
+        // Clear the promise after completion
+        loadAllDataPromise = null
+      }
+    })()
+    
+    return loadAllDataPromise
   }
 
   // Statistics and computed values

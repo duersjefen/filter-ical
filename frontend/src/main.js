@@ -24,14 +24,15 @@ const routes = [
     component: CalendarView, 
     props: true
   },
-  { 
-    path: '/:domain', 
-    component: DomainView, 
-    props: (route) => ({ domain: route.params.domain })
-  },
+  // More specific routes MUST come before general ones
   { 
     path: '/:domain/admin', 
     component: AdminView, 
+    props: (route) => ({ domain: route.params.domain })
+  },
+  { 
+    path: '/:domain', 
+    component: DomainView, 
     props: (route) => ({ domain: route.params.domain })
   }
 ]

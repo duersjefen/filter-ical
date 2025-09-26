@@ -456,11 +456,14 @@ def get_available_recurring_events(db: Session, domain_key: str) -> List[Dict[st
     recurring_events = []
     for title, events_data in events_by_title.items():
         if events_data.get('events'):  # Only include if there are actual events
+            # Get sample event for display info
+            sample_event = events_data.get('events', [{}])[0]
+            
             recurring_events.append({
                 "title": title,
                 "event_count": events_data.get('event_count', 0),
-                "sample_start_time": events_data.get('events', [{}])[0].get('start_time'),
-                "sample_location": events_data.get('events', [{}])[0].get('location')
+                "sample_start_time": sample_event.get('start'),  # Use 'start' from existing format
+                "sample_location": sample_event.get('location')
             })
     
     # Sort by event count (most recurring first) then by title
@@ -581,6 +584,7 @@ def delete_assignment_rule(db: Session, rule_id: int, domain_key: str) -> Tuple[
         return False, f"Database error: {str(e)}"
 
 
+
 def get_available_recurring_events_with_assignments(db: Session, domain_key: str) -> List[Dict[str, Any]]:
     """
     Get all available recurring events with their current group assignments (admin function).
@@ -601,10 +605,13 @@ def get_available_recurring_events_with_assignments(db: Session, domain_key: str
         RecurringEventGroup.domain_key == domain_key
     ).all()
     
-    # Create mapping of event title -> group_id
+    # Create mapping of event title -> list of group_ids (support multiple groups)
     assignment_map = {}
     for assignment in assignments:
-        assignment_map[assignment.recurring_event_title] = assignment.group_id
+        title = assignment.recurring_event_title
+        if title not in assignment_map:
+            assignment_map[title] = []
+        assignment_map[title].append(assignment.group_id)
     
     # Group events by title using pure function
     events_by_title = group_events_by_title(events)
@@ -613,12 +620,18 @@ def get_available_recurring_events_with_assignments(db: Session, domain_key: str
     recurring_events = []
     for title, events_data in events_by_title.items():
         if events_data.get('events'):  # Only include if there are actual events
+            # Get sample event for display info
+            sample_event = events_data.get('events', [{}])[0]
+            
+            assigned_groups = assignment_map.get(title, [])
             event_info = {
                 "title": title,
                 "event_count": events_data.get('event_count', 0),
-                "sample_start_time": events_data.get('events', [{}])[0].get('start_time'),
-                "sample_location": events_data.get('events', [{}])[0].get('location'),
-                "assigned_group_id": assignment_map.get(title)  # Include current assignment
+                "sample_start_time": sample_event.get('start'),  # Use 'start' from existing format
+                "sample_location": sample_event.get('location'),
+                "assigned_group_ids": assigned_groups,  # Multiple groups support
+                # Keep backward compatibility with single assignment
+                "assigned_group_id": assigned_groups[0] if assigned_groups else None
             }
             recurring_events.append(event_info)
     
