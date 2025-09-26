@@ -32,6 +32,7 @@
         @toggle="toggleCard('events')"
         @create-group="createGroup"
         @update-group="updateGroup"
+        @delete-group="deleteGroup"
         @handle-group-assignment="handleGroupAssignment"
       />
       
@@ -132,13 +133,14 @@ export default {
       
       // API Functions
       loadAllAdminData,
-      createGroupAPI,
-      updateGroupAPI,
-      assignEventsToGroupAPI,
-      unassignEventsAPI,
-      createAssignmentRuleAPI,
-      deleteAssignmentRuleAPI,
-      applyExistingRule
+      createGroup: createGroupAPI,
+      updateGroup: updateGroupAPI,
+      assignEventsToGroup: assignEventsToGroupAPI,
+      unassignEvents: unassignEventsAPI,
+      createAssignmentRule: createAssignmentRuleAPI,
+      deleteAssignmentRule: deleteAssignmentRuleAPI,
+      applyExistingRule,
+      deleteGroup: deleteGroupAPI
     } = useAdmin(props.domain)
 
     // HTTP functions for configuration management
@@ -180,12 +182,12 @@ export default {
     }
 
     // Group Management Functions
-    const validateGroupName = (name) => {
+    const validateGroupName = (name, excludeGroupId = null) => {
       if (!name || !name.trim()) {
         return { valid: false, error: 'Group name cannot be empty' }
       }
       
-      if (groups.value.some(g => g.name.toLowerCase() === name.trim().toLowerCase())) {
+      if (groups.value.some(g => g.id !== excludeGroupId && g.name.toLowerCase() === name.trim().toLowerCase())) {
         return { valid: false, error: 'Group name already exists' }
       }
       
@@ -208,7 +210,7 @@ export default {
     }
 
     const updateGroup = async (groupId, newName) => {
-      const validation = validateGroupName(newName)
+      const validation = validateGroupName(newName, groupId)
       if (!validation.valid) {
         showNotification(validation.error, 'error')
         return
@@ -357,6 +359,16 @@ export default {
       }
     }
 
+    // Delete Group Function
+    const deleteGroup = async (groupId) => {
+      const result = await deleteGroupAPI(groupId)
+      if (result.success) {
+        showNotification('Group deleted successfully!', 'success')
+      } else {
+        showNotification(`Failed to delete group: ${result.error}`, 'error')
+      }
+    }
+
     // Load data on mount
     let hasInitiallyLoaded = false
     onMounted(async () => {
@@ -395,7 +407,10 @@ export default {
       // Configuration Methods
       exportConfiguration,
       handleFileUpload,
-      resetConfigurationConfirm
+      resetConfigurationConfirm,
+      
+      // Group management
+      deleteGroup
     }
   }
 }

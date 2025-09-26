@@ -48,12 +48,12 @@
           <span class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
         </button>
         
-        <!-- Group Buttons with Right-Click Edit -->
+        <!-- Group Buttons with Right-Click Context Menu -->
         <button
           v-for="group in groups"
           :key="group.id"
           @click="toggleGroupFilter(group.id, $event)"
-          @contextmenu.prevent="startEditingGroup(group, $event)"
+          @contextmenu.prevent="showContextMenu(group, $event)"
           :class="[
             'inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
             activeGroupFilters.includes(group.id)
@@ -62,7 +62,7 @@
               ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-800/30 cursor-pointer transform hover:scale-105'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
-          :title="selectedEvents.length > 0 ? `Click to assign ${selectedEvents.length} selected events to ${group.name}` : `Filter events by ${group.name}`"
+          :title="selectedEvents.length > 0 ? `Click to assign ${selectedEvents.length} selected events to ${group.name}` : `Filter events by ${group.name} • Right-click for options`"
         >
           <span v-if="editingGroupId !== group.id">{{ group.name }}</span>
           <input
@@ -80,7 +80,7 @@
         <!-- Add Group Button -->
         <button
           v-if="!showAddGroupForm"
-          @click="showAddGroupForm = true"
+          @click="startAddGroup"
           class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-green-400 hover:text-green-600 dark:hover:text-green-400"
         >
           <span>➕</span>
@@ -113,6 +113,34 @@
           </button>
         </div>
       </div>
+    </div>
+    
+    <!-- Context Menu -->
+    <div
+      v-if="contextMenu.visible"
+      :style="{
+        position: 'fixed',
+        top: contextMenu.y + 'px',
+        left: contextMenu.x + 'px',
+        zIndex: 1000
+      }"
+      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-32"
+      @click.stop
+    >
+      <button
+        @click="editGroupFromMenu"
+        class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+      >
+        <span>✏️</span>
+        <span>Edit Name</span>
+      </button>
+      <button
+        @click="deleteGroupFromMenu"
+        class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
+      >
+        <span>🗑️</span>
+        <span>Delete Group</span>
+      </button>
     </div>
     
     <!-- Assignment Instructions -->
@@ -221,16 +249,29 @@
       </div>
     </div>
   </AdminCardWrapper>
+  
+  <!-- Delete Group Confirmation Dialog -->
+  <ConfirmDialog
+    ref="deleteConfirmDialog"
+    title="Delete Group"
+    :message="deleteConfirmMessage"
+    confirm-text="Delete Group"
+    cancel-text="Cancel"
+    @confirm="confirmDeleteGroup"
+    @cancel="cancelDeleteGroup"
+  />
 </template>
 
 <script>
 import { ref, computed, nextTick } from 'vue'
 import AdminCardWrapper from './AdminCardWrapper.vue'
+import ConfirmDialog from '../shared/ConfirmDialog.vue'
 
 export default {
   name: 'EventManagementCard',
   components: {
-    AdminCardWrapper
+    AdminCardWrapper,
+    ConfirmDialog
   },
   props: {
     expanded: {
@@ -251,7 +292,7 @@ export default {
     }
   },
   emits: [
-    'toggle', 'create-group', 'update-group', 'handle-group-assignment',
+    'toggle', 'create-group', 'update-group', 'delete-group', 'handle-group-assignment',
     'toggle-group-filter', 'toggle-select-all-events', 'toggle-event-selection',
     'clear-event-selection'
   ],
@@ -265,6 +306,10 @@ export default {
     const editingGroupId = ref(null)
     const editingGroupName = ref('')
     const newGroupInput = ref(null)
+    const contextMenu = ref({ visible: false, x: 0, y: 0, group: null })
+    const deleteConfirmDialog = ref(null)
+    const deleteConfirmMessage = ref('')
+    const groupToDelete = ref(null)
     
     // Computed properties
     const totalEventCount = computed(() => {
@@ -408,13 +453,14 @@ export default {
     }
     
     const startEditingGroup = async (group, event) => {
-      event.preventDefault()
+      if (event) event.preventDefault()
       editingGroupId.value = group.id
       editingGroupName.value = group.name
       
       await nextTick()
       // Focus the input after it's rendered
-      const input = document.querySelector(`input[value="${group.name}"]`)
+      const input = document.querySelector(`input[value="${group.name}"]`) || 
+                    document.querySelector('input[class*="bg-transparent"]')
       if (input) {
         input.focus()
         input.select()
@@ -437,6 +483,61 @@ export default {
       editingGroupName.value = ''
     }
     
+    const startAddGroup = async () => {
+      showAddGroupForm.value = true
+      await nextTick()
+      // Focus the input after it's rendered
+      if (newGroupInput.value) {
+        newGroupInput.value.focus()
+      }
+    }
+    
+    const deleteGroupConfirm = (group) => {
+      groupToDelete.value = group
+      deleteConfirmMessage.value = `Are you sure you want to delete the group "${group.name}"? This will unassign all events from this group.`
+      deleteConfirmDialog.value.open()
+    }
+    
+    const confirmDeleteGroup = () => {
+      if (groupToDelete.value) {
+        emit('delete-group', groupToDelete.value.id)
+        groupToDelete.value = null
+      }
+    }
+    
+    const cancelDeleteGroup = () => {
+      groupToDelete.value = null
+    }
+    
+    const showContextMenu = (group, event) => {
+      contextMenu.value = {
+        visible: true,
+        x: event.clientX,
+        y: event.clientY,
+        group: group
+      }
+      
+      // Close context menu when clicking elsewhere
+      const closeMenu = () => {
+        contextMenu.value.visible = false
+        document.removeEventListener('click', closeMenu)
+      }
+      
+      setTimeout(() => {
+        document.addEventListener('click', closeMenu)
+      }, 0)
+    }
+    
+    const editGroupFromMenu = () => {
+      startEditingGroup(contextMenu.value.group)
+      contextMenu.value.visible = false
+    }
+    
+    const deleteGroupFromMenu = () => {
+      deleteGroupConfirm(contextMenu.value.group)
+      contextMenu.value.visible = false
+    }
+    
     return {
       // State
       eventSearch,
@@ -447,6 +548,10 @@ export default {
       editingGroupId,
       editingGroupName,
       newGroupInput,
+      contextMenu,
+      deleteConfirmDialog,
+      deleteConfirmMessage,
+      groupToDelete,
       
       // Computed
       totalEventCount,
@@ -465,9 +570,16 @@ export default {
       createGroup,
       cancelAddGroup,
       handleAddGroupBlur,
+      startAddGroup,
       startEditingGroup,
       saveGroupEdit,
-      cancelGroupEdit
+      cancelGroupEdit,
+      deleteGroupConfirm,
+      confirmDeleteGroup,
+      cancelDeleteGroup,
+      showContextMenu,
+      editGroupFromMenu,
+      deleteGroupFromMenu
     }
   }
 }
