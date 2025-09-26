@@ -549,7 +549,7 @@
 </template>
 
 <script>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import AdminCardWrapper from './AdminCardWrapper.vue'
 import ConfirmDialog from '../shared/ConfirmDialog.vue'
 
@@ -603,6 +603,15 @@ export default {
     const isUpdatingGroups = ref(false)
     const updatingGroupIds = ref(new Set())
     const optimisticUpdates = ref(new Map()) // Track pending updates
+    
+    // Clear selection when search text changes (simplifies UX)
+    watch(eventSearch, (newSearch, oldSearch) => {
+      if (newSearch !== oldSearch && selectedEvents.value.length > 0) {
+        selectedEvents.value = []
+        emit('clear-event-selection')
+        showSelectedOnly.value = false
+      }
+    })
     
     // Computed properties
     const totalEventCount = computed(() => {
@@ -801,6 +810,10 @@ export default {
       
       // Clear search text when switching to group filters
       eventSearch.value = ''
+      
+      // Clear selection when changing filters (simplifies UX and button logic)
+      selectedEvents.value = []
+      emit('clear-event-selection')
       
       // Exit selected-only mode when using normal filters
       showSelectedOnly.value = false
