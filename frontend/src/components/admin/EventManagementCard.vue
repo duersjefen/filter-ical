@@ -11,7 +11,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Group</h3>
         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <span>💡 Hold Ctrl to select multiple groups • Right-click groups to edit • Right-click events to assign</span>
+          <span>💡 Hold Ctrl to select multiple groups • Right-click groups to edit • Right-click events to assign • Drag to select multiple events</span>
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -149,7 +149,10 @@
         left: eventContextMenu.x + 'px',
         zIndex: 1000
       }"
-      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl py-2 min-w-52 max-w-64 backdrop-blur-sm"
+      :class="[
+        'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl py-2 backdrop-blur-sm',
+        getContextMenuWidthClass()
+      ]"
       @click.stop
     >
       <!-- Context Menu Header -->
@@ -165,17 +168,19 @@
           <span class="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">+</span>
           <span>Add to Group</span>
         </div>
-        <button
-          v-for="group in getAvailableGroupsForEvent(eventContextMenu.event)"
-          :key="`add-${group.id}`"
-          @click="quickAddToGroup(eventContextMenu.event, group.id)"
-          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-3 transition-colors duration-150"
-        >
-          <div class="w-5 h-5 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-            <span class="text-green-600 dark:text-green-400 text-xs font-bold">+</span>
-          </div>
-          <span class="font-medium">{{ group.name }}</span>
-        </button>
+        <div :class="getGroupGridClass(getAvailableGroupsForEvent(eventContextMenu.event).length)">
+          <button
+            v-for="group in getAvailableGroupsForEvent(eventContextMenu.event)"
+            :key="`add-${group.id}`"
+            @click="quickAddToGroup(eventContextMenu.event, group.id)"
+            class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 transition-colors duration-150 rounded-md"
+          >
+            <div class="w-4 h-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+              <span class="text-green-600 dark:text-green-400 text-xs font-bold">+</span>
+            </div>
+            <span class="font-medium truncate text-xs">{{ group.name }}</span>
+          </button>
+        </div>
       </div>
       
       <!-- Remove from Groups Section -->
@@ -184,17 +189,19 @@
           <span class="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">−</span>
           <span>Remove from Group</span>
         </div>
-        <button
-          v-for="group in getAssignedGroupsForEvent(eventContextMenu.event)"
-          :key="`remove-${group.id}`"
-          @click="quickRemoveFromGroup(eventContextMenu.event, group.id)"
-          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors duration-150"
-        >
-          <div class="w-5 h-5 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-            <span class="text-red-600 dark:text-red-400 text-xs font-bold">−</span>
-          </div>
-          <span class="font-medium">{{ group.name }}</span>
-        </button>
+        <div :class="getGroupGridClass(getAssignedGroupsForEvent(eventContextMenu.event).length)">
+          <button
+            v-for="group in getAssignedGroupsForEvent(eventContextMenu.event)"
+            :key="`remove-${group.id}`"
+            @click="quickRemoveFromGroup(eventContextMenu.event, group.id)"
+            class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors duration-150 rounded-md"
+          >
+            <div class="w-4 h-4 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+              <span class="text-red-600 dark:text-red-400 text-xs font-bold">−</span>
+            </div>
+            <span class="font-medium truncate text-xs">{{ group.name }}</span>
+          </button>
+        </div>
       </div>
       
       <!-- No actions available -->
@@ -558,14 +565,14 @@
                 <!-- Multi-Group Display -->
                 <div v-if="event.assigned_groups && event.assigned_groups.length > 0" class="flex flex-wrap gap-1">
                   <!-- Primary Group Badge -->
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
+                  <span :class="`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getGroupColorClasses(event.assigned_groups[0].id)}`">
                     {{ event.assigned_groups[0].name }}
                   </span>
                   <!-- Additional Groups (max 2 more shown) -->
                   <span 
                     v-for="group in event.assigned_groups.slice(1, 2)" 
                     :key="group.id"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                    :class="`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getGroupColorClasses(group.id)}`"
                   >
                     {{ group.name }}
                   </span>
@@ -593,12 +600,7 @@
                         <div 
                           v-for="group in event.assigned_groups"
                           :key="group.id"
-                          class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mr-1 mb-1"
-                          :class="[
-                            group === event.assigned_groups[0] 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
-                          ]"
+                          :class="`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mr-1 mb-1 ${getGroupColorClasses(group.id)}`"
                         >
                           {{ group.name }}
                           <span v-if="group === event.assigned_groups[0]" class="text-xs opacity-75">(primary)</span>
@@ -1143,6 +1145,61 @@ export default {
       const assignedGroupIds = event.assigned_group_ids || []
       return props.groups.filter(group => assignedGroupIds.includes(group.id))
     }
+
+    // Helper function to determine context menu width based on total number of groups
+    const getContextMenuWidthClass = () => {
+      if (!eventContextMenu.value.event) return 'w-72'
+      
+      const availableGroups = getAvailableGroupsForEvent(eventContextMenu.value.event)
+      const assignedGroups = getAssignedGroupsForEvent(eventContextMenu.value.event)
+      const totalGroups = availableGroups.length + assignedGroups.length
+      
+      // Dynamic width based on total groups to accommodate columns
+      if (totalGroups <= 6) return 'w-72'        // 1 column, standard width
+      if (totalGroups <= 12) return 'w-96'       // 2 columns, wider
+      if (totalGroups <= 18) return 'w-[32rem]'  // 3 columns, much wider  
+      return 'w-[40rem]'                          // 4+ columns, extra wide
+    }
+
+    // Helper function to determine grid layout for groups based on count
+    const getGroupGridClass = (groupCount) => {
+      if (groupCount <= 6) return 'grid grid-cols-1 gap-1 px-2'
+      if (groupCount <= 12) return 'grid grid-cols-2 gap-1 px-2' 
+      if (groupCount <= 18) return 'grid grid-cols-3 gap-1 px-2'
+      return 'grid grid-cols-4 gap-1 px-2'
+    }
+
+    // Color palette for consistent group coloring
+    const groupColorPalette = [
+      // Primary colors with good contrast
+      { bg: 'bg-green-100', text: 'text-green-800', darkBg: 'dark:bg-green-900/30', darkText: 'dark:text-green-200' },
+      { bg: 'bg-blue-100', text: 'text-blue-800', darkBg: 'dark:bg-blue-900/30', darkText: 'dark:text-blue-200' },
+      { bg: 'bg-purple-100', text: 'text-purple-800', darkBg: 'dark:bg-purple-900/30', darkText: 'dark:text-purple-200' },
+      { bg: 'bg-amber-100', text: 'text-amber-800', darkBg: 'dark:bg-amber-900/30', darkText: 'dark:text-amber-200' },
+      { bg: 'bg-rose-100', text: 'text-rose-800', darkBg: 'dark:bg-rose-900/30', darkText: 'dark:text-rose-200' },
+      { bg: 'bg-teal-100', text: 'text-teal-800', darkBg: 'dark:bg-teal-900/30', darkText: 'dark:text-teal-200' },
+      { bg: 'bg-orange-100', text: 'text-orange-800', darkBg: 'dark:bg-orange-900/30', darkText: 'dark:text-orange-200' },
+      { bg: 'bg-indigo-100', text: 'text-indigo-800', darkBg: 'dark:bg-indigo-900/30', darkText: 'dark:text-indigo-200' },
+      { bg: 'bg-emerald-100', text: 'text-emerald-800', darkBg: 'dark:bg-emerald-900/30', darkText: 'dark:text-emerald-200' },
+      { bg: 'bg-cyan-100', text: 'text-cyan-800', darkBg: 'dark:bg-cyan-900/30', darkText: 'dark:text-cyan-200' },
+      { bg: 'bg-pink-100', text: 'text-pink-800', darkBg: 'dark:bg-pink-900/30', darkText: 'dark:text-pink-200' },
+      { bg: 'bg-lime-100', text: 'text-lime-800', darkBg: 'dark:bg-lime-900/30', darkText: 'dark:text-lime-200' }
+    ]
+
+    // Helper function to get consistent colors for a group
+    const getGroupColors = (groupId) => {
+      // Find the group's position in the sorted groups list for consistency
+      const sortedGroups = [...props.groups].sort((a, b) => a.id - b.id)
+      const groupIndex = sortedGroups.findIndex(g => g.id === groupId)
+      const colorIndex = groupIndex >= 0 ? groupIndex % groupColorPalette.length : 0
+      return groupColorPalette[colorIndex]
+    }
+
+    // Helper function to get group color classes as a single string
+    const getGroupColorClasses = (groupId) => {
+      const colors = getGroupColors(groupId)
+      return `${colors.bg} ${colors.text} ${colors.darkBg} ${colors.darkText}`
+    }
     
     const quickAddToGroup = async (event, groupId) => {
       eventContextMenu.value.visible = false
@@ -1504,6 +1561,10 @@ export default {
       showEventContextMenu,
       getAvailableGroupsForEvent,
       getAssignedGroupsForEvent,
+      getContextMenuWidthClass,
+      getGroupGridClass,
+      getGroupColors,
+      getGroupColorClasses,
       quickAddToGroup,
       quickRemoveFromGroup,
       startDragSelection,
