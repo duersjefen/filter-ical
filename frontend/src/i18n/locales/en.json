@@ -223,7 +223,7 @@
     "enterGroupName": "Enter group name",
     "searchEvents": "Search events by title or location...",
     "backToCalendar": "← Back to {domain} Calendar",
-    "manageEventsGroups": "Manage {domain} events and groups",
+    "manageEventsGroups": "Admin Panel: {domain}",
     "eventManagement": "Event Management",
     "groups": "Groups",
     "autoRules": "Auto Rules",
