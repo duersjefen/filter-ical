@@ -180,60 +180,114 @@
         </button>
       </div>
       
-      <!-- Assignment Actions -->
+      <!-- Smart Group Actions -->
       <div class="flex flex-wrap gap-2">
-        <!-- Add to Group Buttons -->
-        <div class="flex flex-wrap gap-1">
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 px-2 py-1">Add to:</span>
-          <button
-            v-for="group in groups"
-            :key="`add-${group.id}`"
-            @click="handleGroupAssignment(group.id, [...selectedEvents])"
-            class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
-            :title="`Add ${selectedEvents.length} events to ${group.name}`"
+        <!-- Smart Combined Action Buttons for Each Group -->
+        <div class="flex flex-wrap gap-2">
+          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 px-2 py-1 flex items-center">Group Actions:</span>
+          
+          <div 
+            v-for="group in groups" 
+            :key="`smart-${group.id}`"
+            class="inline-flex"
           >
-            <span>+</span>
-            <span>{{ group.name }}</span>
-            <span 
-              v-if="getSelectedEventsInGroup(group.id) > 0"
-              class="ml-1 px-1 py-0.5 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 rounded text-xs"
+            <!-- Single Action Button (when clear state) -->
+            <button
+              v-if="getSmartGroupAction(group.id).type === 'single'"
+              @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
+              :class="[
+                'inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border',
+                getSmartGroupAction(group.id).primaryStyle === 'add' 
+                  ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20'
+                  : 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20'
+              ]"
+              :title="`${getSmartGroupAction(group.id).primaryLabel} ${group.name}`"
             >
-              {{ getSelectedEventsInGroup(group.id) }}
-            </span>
-          </button>
-        </div>
-        
-        <!-- Remove from Group Buttons (only show groups that have selected events) -->
-        <div 
-          v-if="Object.keys(selectedEventsGroupDistribution).some(id => id !== 'unassigned' && selectedEventsGroupDistribution[id] > 0)"
-          class="flex flex-wrap gap-1 ml-4"
-        >
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 px-2 py-1">Remove from:</span>
-          <button
-            v-for="groupId in Object.keys(selectedEventsGroupDistribution).filter(id => id !== 'unassigned' && selectedEventsGroupDistribution[id] > 0)"
-            :key="`remove-${groupId}`"
-            @click="handleRemoveFromGroup(groupId, [...selectedEvents])"
-            class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-            :title="`Remove ${getSelectedEventsInGroup(groupId)} events from ${groups.find(g => g.id == groupId)?.name}`"
-          >
-            <span>−</span>
-            <span>{{ groups.find(g => g.id == groupId)?.name }}</span>
-            <span class="ml-1 px-1 py-0.5 bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 rounded text-xs">
-              {{ selectedEventsGroupDistribution[groupId] }}
-            </span>
-          </button>
+              <span>{{ getSmartGroupAction(group.id).primaryLabel.charAt(0) }}</span>
+              <span>{{ getSmartGroupAction(group.id).primaryLabel.split(' to')[0].split(' from')[0].substring(2) }}</span>
+              <span class="font-medium">{{ group.name }}</span>
+            </button>
+            
+            <!-- Split Action Buttons (when mixed state) -->
+            <div 
+              v-else-if="getSmartGroupAction(group.id).type === 'split'"
+              class="inline-flex rounded-md overflow-hidden border border-gray-300 dark:border-gray-600"
+            >
+              <!-- Primary Action -->
+              <button
+                @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
+                :class="[
+                  'px-3 py-1 text-xs font-medium transition-all duration-200 border-r border-gray-300 dark:border-gray-600',
+                  getSmartGroupAction(group.id).primaryStyle === 'add'
+                    ? 'bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-800/30'
+                    : 'bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-800/30'
+                ]"
+                :title="`${getSmartGroupAction(group.id).primaryLabel} ${group.name}`"
+              >
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ getSmartGroupAction(group.id).primaryLabel.charAt(0) }}</span>
+                  <span>{{ getSmartGroupAction(group.id).primaryCount }}</span>
+                </span>
+              </button>
+              
+              <!-- Group Name -->
+              <div class="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium flex items-center">
+                {{ group.name }}
+              </div>
+              
+              <!-- Secondary Action -->
+              <button
+                @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).secondaryAction)"
+                :class="[
+                  'px-3 py-1 text-xs font-medium transition-all duration-200 border-l border-gray-300 dark:border-gray-600',
+                  getSmartGroupAction(group.id).secondaryStyle === 'add'
+                    ? 'bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-800/30'
+                    : 'bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-800/30'
+                ]"
+                :title="`${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'Add' : 'Remove'} ${getSmartGroupAction(group.id).secondaryCount} events ${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'to' : 'from'} ${group.name}`"
+              >
+                <span>{{ getSmartGroupAction(group.id).secondaryLabel }}</span>
+              </button>
+            </div>
+          </div>
         </div>
         
         <!-- Unassign All Button -->
         <button
           @click="handleGroupAssignment('unassigned', [...selectedEvents])"
-          class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 ml-4"
+          class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 ml-2"
           :title="`Remove ${selectedEvents.length} events from all groups`"
         >
           <span>🚫</span>
           <span>Unassign All</span>
         </button>
       </div>
+    </div>
+    
+    <!-- Hidden Selected Events Warning -->
+    <div 
+      v-if="hasHiddenSelectedEvents" 
+      class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 flex items-center justify-between"
+    >
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+          <span class="text-amber-600 dark:text-amber-400 text-xs font-bold">⚠️</span>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+            {{ hiddenSelectedEvents.length }} selected event{{ hiddenSelectedEvents.length > 1 ? 's are' : ' is' }} hidden by current filters
+          </p>
+          <p class="text-xs text-amber-700 dark:text-amber-300">
+            Showing {{ visibleSelectedEvents.length }} of {{ selectedEvents.length }} selected events
+          </p>
+        </div>
+      </div>
+      <button
+        @click="showAllSelectedEvents"
+        class="px-3 py-1 bg-amber-100 hover:bg-amber-200 dark:bg-amber-800 dark:hover:bg-amber-700 text-amber-800 dark:text-amber-200 rounded-md text-xs font-medium transition-colors"
+      >
+        Show All Selected
+      </button>
     </div>
     
     <!-- Events Table -->
@@ -581,8 +635,82 @@ export default {
       return distribution
     })
     
+    // Detection of hidden selected events
+    const hiddenSelectedEvents = computed(() => {
+      return selectedEvents.value.filter(eventTitle => {
+        return !filteredEvents.value.some(event => event.title === eventTitle)
+      })
+    })
+    
+    const hasHiddenSelectedEvents = computed(() => {
+      return hiddenSelectedEvents.value.length > 0
+    })
+    
+    const visibleSelectedEvents = computed(() => {
+      return selectedEvents.value.filter(eventTitle => {
+        return filteredEvents.value.some(event => event.title === eventTitle)
+      })
+    })
+    
     const getSelectedEventsInGroup = (groupId) => {
       return selectedEventsGroupDistribution.value[groupId] || 0
+    }
+    
+    // Smart group action button logic
+    const getGroupActionState = (groupId) => {
+      const eventsInGroup = getSelectedEventsInGroup(groupId)
+      const eventsNotInGroup = selectedEvents.value.length - eventsInGroup
+      const totalSelected = selectedEvents.value.length
+      
+      return {
+        eventsInGroup,
+        eventsNotInGroup,
+        totalSelected,
+        hasEventsInGroup: eventsInGroup > 0,
+        hasEventsNotInGroup: eventsNotInGroup > 0,
+        allInGroup: eventsInGroup === totalSelected && totalSelected > 0,
+        noneInGroup: eventsInGroup === 0,
+        mixedState: eventsInGroup > 0 && eventsNotInGroup > 0
+      }
+    }
+    
+    const getSmartGroupAction = (groupId) => {
+      const state = getGroupActionState(groupId)
+      
+      if (state.noneInGroup) {
+        // All events are NOT in this group - primary action is ADD
+        return {
+          type: 'single',
+          primaryAction: 'add',
+          primaryLabel: `+ Add ${state.totalSelected} to`,
+          primaryCount: state.eventsNotInGroup,
+          primaryStyle: 'add'
+        }
+      } else if (state.allInGroup) {
+        // All events are IN this group - primary action is REMOVE
+        return {
+          type: 'single',
+          primaryAction: 'remove',
+          primaryLabel: `− Remove ${state.totalSelected} from`,
+          primaryCount: state.eventsInGroup,
+          primaryStyle: 'remove'
+        }
+      } else {
+        // Mixed state - show both actions, prioritize the larger action
+        const addIsPrimary = state.eventsNotInGroup >= state.eventsInGroup
+        
+        return {
+          type: 'split',
+          primaryAction: addIsPrimary ? 'add' : 'remove',
+          primaryLabel: addIsPrimary ? `+ Add ${state.eventsNotInGroup} to` : `− Remove ${state.eventsInGroup} from`,
+          primaryCount: addIsPrimary ? state.eventsNotInGroup : state.eventsInGroup,
+          primaryStyle: addIsPrimary ? 'add' : 'remove',
+          secondaryAction: addIsPrimary ? 'remove' : 'add',
+          secondaryLabel: addIsPrimary ? `− ${state.eventsInGroup}` : `+ ${state.eventsNotInGroup}`,
+          secondaryCount: addIsPrimary ? state.eventsInGroup : state.eventsNotInGroup,
+          secondaryStyle: addIsPrimary ? 'remove' : 'add'
+        }
+      }
     }
     
     // Methods - Filter mode (clear separation from assignment)
@@ -798,6 +926,36 @@ export default {
       }
     }
     
+    // Smart group action handlers
+    const handleSmartGroupAction = (groupId, action) => {
+      const state = getGroupActionState(groupId)
+      
+      if (action === 'add') {
+        // Add events that are NOT in this group
+        const eventsToAdd = selectedEvents.value.filter(title => {
+          const event = props.recurringEvents.find(e => e.title === title)
+          return !event?.assigned_group_ids?.includes(parseInt(groupId))
+        })
+        
+        if (eventsToAdd.length > 0) {
+          emit('handle-group-assignment', groupId, eventsToAdd)
+        }
+      } else if (action === 'remove') {
+        // Remove events that ARE in this group
+        handleRemoveFromGroup(groupId, selectedEvents.value)
+        return // handleRemoveFromGroup clears selection
+      }
+      
+      // Clear selection after successful action
+      selectedEvents.value = []
+    }
+    
+    const showAllSelectedEvents = () => {
+      // Clear all filters to show all selected events
+      activeGroupFilters.value = []
+      eventSearch.value = ''
+    }
+    
     return {
       // State
       eventSearch,
@@ -822,15 +980,21 @@ export default {
       isAllEventsSelected,
       isSomeEventsSelected,
       selectedEventsGroupDistribution,
+      hiddenSelectedEvents,
+      hasHiddenSelectedEvents,
+      visibleSelectedEvents,
       
       // Methods
       toggleGroupFilter,
       toggleSelectAllEvents,
       toggleEventSelection,
       clearEventSelection,
-      clearGroupFilters,
+      showAllSelectedEvents,
       getGroupEventCount,
       getSelectedEventsInGroup,
+      getGroupActionState,
+      getSmartGroupAction,
+      handleSmartGroupAction,
       createGroup,
       cancelAddGroup,
       handleAddGroupBlur,
