@@ -442,17 +442,6 @@
     
     <!-- Events Table -->
     <div class="space-y-4">
-      <!-- Mobile Event Counter (only shown on mobile) -->
-      <div class="sm:hidden">
-        <div class="flex items-center justify-center">
-          <div class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-full">
-            <span class="text-sm font-medium text-blue-800 dark:text-blue-200">
-              {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }} shown
-            </span>
-          </div>
-        </div>
-      </div>
-
       <!-- Desktop: Horizontal Layout | Mobile: Vertical Stacked Layout -->
       <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <!-- Search Bar -->
@@ -501,14 +490,14 @@
               <span v-if="isAllEventsSelected">✓</span>
               <span v-else-if="isSomeEventsSelected">−</span>
             </div>
-            <!-- Desktop: Include count in button | Mobile: Show status only -->
+            <!-- Desktop: Include count in button -->
             <span v-if="isAllEventsSelected" class="hidden sm:inline">All {{ filteredEvents.length }} Selected</span>
             <span v-else-if="isSomeEventsSelected" class="hidden sm:inline">{{ selectedEvents.length }}/{{ filteredEvents.length }} Selected</span>
             <span v-else class="hidden sm:inline">Select {{ filteredEvents.length }} Visible</span>
-            <!-- Mobile text -->
-            <span v-if="isAllEventsSelected" class="sm:hidden">All Selected</span>
-            <span v-else-if="isSomeEventsSelected" class="sm:hidden">{{ selectedEvents.length }} Selected</span>
-            <span v-else class="sm:hidden">Select All</span>
+            <!-- Mobile: Also include count -->
+            <span v-if="isAllEventsSelected" class="sm:hidden">All {{ filteredEvents.length }} Selected</span>
+            <span v-else-if="isSomeEventsSelected" class="sm:hidden">{{ selectedEvents.length }}/{{ filteredEvents.length }} Selected</span>
+            <span v-else class="sm:hidden">Select {{ filteredEvents.length }} Visible</span>
           </button>
           
           <!-- Action Buttons -->
