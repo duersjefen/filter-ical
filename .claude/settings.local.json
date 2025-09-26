@@ -51,7 +51,11 @@
       "WebFetch(domain:filter-ical.de)",
       "Read(//home/martijn/.claude-notifications/**)",
       "Read(//home/martijn/**)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:localhost)",
+      "WebFetch(domain:vitejs.dev)",
+      "WebFetch(domain:vite.dev)",
+      "WebFetch(domain:devtools.vuejs.org)"
     ],
     "deny": [],
     "ask": []

@@ -84,6 +84,7 @@ backend/test_*.db
 
 # Claude Code local settings
 .claude/
+.claude/settings.local.json
 
 # Production deployment artifacts
 infrastructure/secrets/
