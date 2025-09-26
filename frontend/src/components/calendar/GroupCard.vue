@@ -99,12 +99,9 @@
     <!-- Expandable Recurring Events List -->
     <div v-if="isExpanded && hasRecurringEvents" class="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
       <div class="p-3 space-y-2">
-        <div class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">
-          Events ({{ recurringEventsCount }})
-        </div>
         
         <!-- Recurring Event Items (sorted by count, descending) -->
-        <div class="space-y-2">
+        <div class="space-y-1">
           <div
             v-for="recurringEvent in sortedRecurringEvents"
             :key="recurringEvent.title"
@@ -116,10 +113,10 @@
             :title="`Click to ${isRecurringEventSelected(recurringEvent.title) ? 'deselect' : 'select'} ${recurringEvent.title}`"
           >
             <!-- Recurring Event Header - Entire row clickable -->
-            <div class="flex items-center gap-3 p-3 transition-colors">
+            <div class="flex items-center gap-2 p-2 transition-colors">
               <!-- Recurring Event Checkbox -->
               <div 
-                class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
+                class="w-3.5 h-3.5 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
                 :class="isRecurringEventSelected(recurringEvent.title)
                   ? 'bg-blue-500 border-blue-500 text-white' 
                   : 'border-gray-300 dark:border-gray-400 bg-white dark:bg-gray-700 group-hover/item:border-blue-400'"
@@ -129,7 +126,7 @@
               
               <!-- Recurring Event Info - Enhanced Layout -->
               <div class="flex-1 min-w-0">
-                <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                <div class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
                   {{ recurringEvent.title }}
                 </div>
               </div>
@@ -137,18 +134,18 @@
               <!-- Count badge and expansion arrow -->
               <div class="flex items-center gap-2">
                 <!-- Event count badge beside dropdown arrow -->
-                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors">
+                <div class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors">
                   {{ recurringEvent.event_count }}
                 </div>
                 
-                <!-- Expansion Arrow (larger and standardized) -->
+                <!-- Expansion Arrow (compact) -->
                 <button
                   @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
-                  class="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors flex-shrink-0"
+                  class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors flex-shrink-0"
                   :title="$t('ui.clickToViewEvents')"
                 >
                   <svg 
-                    class="w-5 h-5 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-transform duration-300" 
+                    class="w-4 h-4 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-transform duration-300" 
                     :class="{ 'rotate-90': isRecurringEventExpanded(recurringEvent.title) }"
                     fill="currentColor" 
                     viewBox="0 0 20 20"
@@ -176,7 +173,7 @@
                 <div 
                   v-for="event in recurringEventEvents[recurringEvent.title].events" 
                   :key="event.id"
-                  class="px-2 py-1.5 bg-gray-50 dark:bg-gray-800/30 rounded text-xs"
+                  class="px-2 py-1 bg-gray-50 dark:bg-gray-800/30 rounded text-xs"
                 >
                   <!-- Compact Event Details -->
                   <div class="text-gray-700 dark:text-gray-300">

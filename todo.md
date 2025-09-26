@@ -1,6 +1,5 @@
 - Admin on mobile -> Tell the user the page is optimized for Desktop (find the right wording)
 - Auto rules not working, UX must be improved.
-- Decrease font size for title of recurring events in group view on the domain page.
 - Finalize internationalization
 - Default admin view: Auto rules collapse, Event management expanded, COnfiguration collapsed.
 
