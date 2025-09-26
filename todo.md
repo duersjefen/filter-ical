@@ -4,4 +4,7 @@
 - Auto rules not working, UX must be improved.
 - Decrease font size for title of recurring events in group view on the domain page.
 - Finalize internationalization
+
+- In event preview combine List and By month, maybe improve UI of "Title" and the toggle between the 2 modes (now List and Title, before also By Month)
+
 - Deploy

@@ -37,8 +37,6 @@
             'inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
             activeGroupFilters.includes('unassigned')
               ? 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700'
-              : selectedEvents.length > 0
-              ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-800/30 cursor-pointer transform hover:scale-105'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
           :title="'Filter unassigned events • Hold Ctrl to select multiple filters'"
@@ -65,8 +63,6 @@
             'inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
             activeGroupFilters.includes(group.id)
               ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700'
-              : selectedEvents.length > 0
-              ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-800/30 cursor-pointer transform hover:scale-105'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
           :title="`Filter events by ${group.name} • Hold Ctrl to select multiple filters • Right-click for options`"
@@ -181,10 +177,21 @@
       </div>
       
       <!-- Smart Group Actions -->
-      <div class="flex flex-wrap gap-2">
-        <!-- Smart Combined Action Buttons for Each Group -->
-        <div class="flex flex-wrap gap-2">
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 px-2 py-1 flex items-center">Group Actions:</span>
+      <div class="space-y-3">
+        <!-- Group Actions Header -->
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <span class="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></span>
+            Smart Group Actions
+          </span>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" v-if="isUpdatingGroups"></div>
+            <span class="text-xs text-gray-500 dark:text-gray-400" v-if="isUpdatingGroups">Updating...</span>
+          </div>
+        </div>
+        
+        <!-- Smart Combined Action Buttons Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           
           <div 
             v-for="group in groups" 
@@ -195,72 +202,132 @@
             <button
               v-if="getSmartGroupAction(group.id).type === 'single'"
               @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
+              :disabled="isGroupUpdating(group.id)"
               :class="[
-                'inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border',
+                'group relative inline-flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
                 getSmartGroupAction(group.id).primaryStyle === 'add' 
-                  ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20'
-                  : 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-800 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-600 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
+                  : 'bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 text-red-800 hover:from-red-100 hover:to-rose-100 hover:border-red-300 dark:from-red-900/20 dark:to-rose-900/20 dark:border-red-600 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
               ]"
               :title="`${getSmartGroupAction(group.id).primaryLabel} ${group.name}`"
             >
-              <span>{{ getSmartGroupAction(group.id).primaryLabel.charAt(0) }}</span>
-              <span>{{ getSmartGroupAction(group.id).primaryLabel.split(' to')[0].split(' from')[0].substring(2) }}</span>
-              <span class="font-medium">{{ group.name }}</span>
+              <div class="flex items-center gap-3">
+                <div :class="[
+                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
+                  getSmartGroupAction(group.id).primaryStyle === 'add'
+                    ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200'
+                    : 'bg-red-200 text-red-800 dark:bg-red-700 dark:text-red-200'
+                ]">
+                  <span v-if="!isGroupUpdating(group.id)">{{ getSmartGroupAction(group.id).primaryLabel.charAt(0) }}</span>
+                  <div v-else class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div class="flex flex-col text-left">
+                  <span class="font-semibold">{{ group.name }}</span>
+                  <span class="text-xs opacity-75">{{ getSmartGroupAction(group.id).primaryLabel.split(' to')[0].split(' from')[0].substring(2) }}</span>
+                </div>
+              </div>
+              <div :class="[
+                'text-xs font-bold px-2 py-1 rounded-full',
+                getSmartGroupAction(group.id).primaryStyle === 'add'
+                  ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200'
+                  : 'bg-red-200 text-red-800 dark:bg-red-700 dark:text-red-200'
+              ]">
+                {{ getSmartGroupAction(group.id).primaryCount }}
+              </div>
             </button>
             
             <!-- Split Action Buttons (when mixed state) -->
             <div 
               v-else-if="getSmartGroupAction(group.id).type === 'split'"
-              class="inline-flex rounded-md overflow-hidden border border-gray-300 dark:border-gray-600"
+              class="w-full bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
             >
-              <!-- Primary Action -->
-              <button
-                @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
-                :class="[
-                  'px-3 py-1 text-xs font-medium transition-all duration-200 border-r border-gray-300 dark:border-gray-600',
-                  getSmartGroupAction(group.id).primaryStyle === 'add'
-                    ? 'bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-800/30'
-                    : 'bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-800/30'
-                ]"
-                :title="`${getSmartGroupAction(group.id).primaryLabel} ${group.name}`"
-              >
-                <span class="inline-flex items-center gap-1">
-                  <span>{{ getSmartGroupAction(group.id).primaryLabel.charAt(0) }}</span>
-                  <span>{{ getSmartGroupAction(group.id).primaryCount }}</span>
-                </span>
-              </button>
-              
-              <!-- Group Name -->
-              <div class="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium flex items-center">
-                {{ group.name }}
+              <!-- Group Header -->
+              <div class="px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-500">
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">{{ group.name }}</span>
+                  <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse" title="Mixed state - some events in/out"></div>
+                </div>
               </div>
               
-              <!-- Secondary Action -->
-              <button
-                @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).secondaryAction)"
-                :class="[
-                  'px-3 py-1 text-xs font-medium transition-all duration-200 border-l border-gray-300 dark:border-gray-600',
-                  getSmartGroupAction(group.id).secondaryStyle === 'add'
-                    ? 'bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-800/30'
-                    : 'bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-800/30'
-                ]"
-                :title="`${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'Add' : 'Remove'} ${getSmartGroupAction(group.id).secondaryCount} events ${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'to' : 'from'} ${group.name}`"
-              >
-                <span>{{ getSmartGroupAction(group.id).secondaryLabel }}</span>
-              </button>
+              <!-- Split Actions -->
+              <div class="flex">
+                <!-- Primary Action -->
+                <button
+                  @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).primaryAction)"
+                  :disabled="isGroupUpdating(group.id)"
+                  :class="[
+                    'flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 border-r border-gray-200 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed',
+                    getSmartGroupAction(group.id).primaryStyle === 'add'
+                      ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
+                      : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-800 hover:from-red-100 hover:to-rose-100 dark:from-red-900/20 dark:to-rose-900/20 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
+                  ]"
+                  :title="`${getSmartGroupAction(group.id).primaryLabel} ${group.name}`"
+                >
+                  <div class="flex items-center justify-center gap-2">
+                    <div v-if="!isGroupUpdating(group.id)" :class="[
+                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                      getSmartGroupAction(group.id).primaryStyle === 'add'
+                        ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200'
+                        : 'bg-red-200 text-red-800 dark:bg-red-700 dark:text-red-200'
+                    ]">
+                      {{ getSmartGroupAction(group.id).primaryLabel.charAt(0) }}
+                    </div>
+                    <div v-else class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <span class="font-semibold">{{ getSmartGroupAction(group.id).primaryCount }}</span>
+                  </div>
+                </button>
+                
+                <!-- Secondary Action -->
+                <button
+                  @click="handleSmartGroupAction(group.id, getSmartGroupAction(group.id).secondaryAction)"
+                  :disabled="isGroupUpdating(group.id)"
+                  :class="[
+                    'flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
+                    getSmartGroupAction(group.id).secondaryStyle === 'add'
+                      ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
+                      : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-800 hover:from-red-100 hover:to-rose-100 dark:from-red-900/20 dark:to-rose-900/20 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
+                  ]"
+                  :title="`${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'Add' : 'Remove'} ${getSmartGroupAction(group.id).secondaryCount} events ${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'to' : 'from'} ${group.name}`"
+                >
+                  <div class="flex items-center justify-center gap-2">
+                    <div v-if="!isGroupUpdating(group.id)" :class="[
+                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                      getSmartGroupAction(group.id).secondaryStyle === 'add'
+                        ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200'
+                        : 'bg-red-200 text-red-800 dark:bg-red-700 dark:text-red-200'
+                    ]">
+                      {{ getSmartGroupAction(group.id).secondaryAction === 'add' ? '+' : '−' }}
+                    </div>
+                    <div v-else class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <span class="font-semibold">{{ getSmartGroupAction(group.id).secondaryCount }}</span>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
         
         <!-- Unassign All Button -->
-        <button
-          @click="handleGroupAssignment('unassigned', [...selectedEvents])"
-          class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 ml-2"
-          :title="`Remove ${selectedEvents.length} events from all groups`"
-        >
-          <span>🚫</span>
-          <span>Unassign All</span>
-        </button>
+        <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
+          <button
+            @click="handleUnassignAll"
+            :disabled="isUpdatingGroups"
+            class="w-full inline-flex items-center justify-center gap-3 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
+            :title="`Remove ${selectedEvents.length} events from all groups`"
+          >
+            <div class="w-8 h-8 bg-yellow-200 dark:bg-yellow-700 rounded-full flex items-center justify-center">
+              <span v-if="!isUpdatingGroups" class="text-yellow-800 dark:text-yellow-200 font-bold">🚫</span>
+              <div v-else class="w-4 h-4 border-2 border-yellow-800 dark:border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <div class="flex flex-col text-left">
+              <span class="font-semibold">Unassign All Events</span>
+              <span class="text-xs opacity-75">Remove from all groups</span>
+            </div>
+            <div class="text-xs font-bold px-2 py-1 rounded-full bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200">
+              {{ selectedEvents.length }}
+            </div>
+          </button>
+        </div>
       </div>
     </div>
     
@@ -529,6 +596,11 @@ export default {
     const deleteConfirmMessage = ref('')
     const groupToDelete = ref(null)
     const groupPopover = ref({ visible: false, eventTitle: null })
+    
+    // Loading and visual feedback state
+    const isUpdatingGroups = ref(false)
+    const updatingGroupIds = ref(new Set())
+    const optimisticUpdates = ref(new Map()) // Track pending updates
     
     // Computed properties
     const totalEventCount = computed(() => {
@@ -927,33 +999,136 @@ export default {
     }
     
     // Smart group action handlers
-    const handleSmartGroupAction = (groupId, action) => {
+    const handleSmartGroupAction = async (groupId, action) => {
       const state = getGroupActionState(groupId)
       
-      if (action === 'add') {
-        // Add events that are NOT in this group
-        const eventsToAdd = selectedEvents.value.filter(title => {
-          const event = props.recurringEvents.find(e => e.title === title)
-          return !event?.assigned_group_ids?.includes(parseInt(groupId))
-        })
-        
-        if (eventsToAdd.length > 0) {
-          emit('handle-group-assignment', groupId, eventsToAdd)
-        }
-      } else if (action === 'remove') {
-        // Remove events that ARE in this group
-        handleRemoveFromGroup(groupId, selectedEvents.value)
-        return // handleRemoveFromGroup clears selection
-      }
+      // Set loading state
+      isUpdatingGroups.value = true
+      updatingGroupIds.value.add(groupId)
       
-      // Clear selection after successful action
-      selectedEvents.value = []
+      try {
+        if (action === 'add') {
+          // Add events that are NOT in this group
+          const eventsToAdd = selectedEvents.value.filter(title => {
+            const event = props.recurringEvents.find(e => e.title === title)
+            return !event?.assigned_group_ids?.includes(parseInt(groupId))
+          })
+          
+          if (eventsToAdd.length > 0) {
+            // Optimistic update: immediately update local state
+            updateEventsOptimistically(eventsToAdd, groupId, 'add')
+            
+            // Emit for actual API call
+            emit('handle-group-assignment', groupId, eventsToAdd)
+          }
+        } else if (action === 'remove') {
+          // Remove events that ARE in this group
+          const eventsToRemove = selectedEvents.value.filter(title => {
+            const event = props.recurringEvents.find(e => e.title === title)
+            return event?.assigned_group_ids?.includes(parseInt(groupId))
+          })
+          
+          if (eventsToRemove.length > 0) {
+            // Optimistic update: immediately update local state
+            updateEventsOptimistically(eventsToRemove, groupId, 'remove')
+            
+            // Emit for actual API call
+            handleRemoveFromGroup(groupId, eventsToRemove)
+          }
+        }
+        
+        // Clear selection after successful action
+        setTimeout(() => {
+          selectedEvents.value = []
+          isUpdatingGroups.value = false
+          updatingGroupIds.value.delete(groupId)
+        }, 300) // Small delay for smooth UX
+        
+      } catch (error) {
+        console.error('Group assignment error:', error)
+        // Revert optimistic updates on error
+        revertOptimisticUpdates()
+        isUpdatingGroups.value = false
+        updatingGroupIds.value.delete(groupId)
+      }
     }
     
     const showAllSelectedEvents = () => {
       // Clear all filters to show all selected events
       activeGroupFilters.value = []
       eventSearch.value = ''
+    }
+    
+    // Helper functions for optimistic updates
+    const updateEventsOptimistically = (eventTitles, groupId, action) => {
+      const groupIdInt = parseInt(groupId)
+      
+      eventTitles.forEach(title => {
+        const event = props.recurringEvents.find(e => e.title === title)
+        if (event) {
+          // Store original state for potential revert
+          if (!optimisticUpdates.value.has(title)) {
+            optimisticUpdates.value.set(title, [...(event.assigned_group_ids || [])])
+          }
+          
+          // Apply optimistic update
+          if (action === 'add' && !event.assigned_group_ids?.includes(groupIdInt)) {
+            event.assigned_group_ids = [...(event.assigned_group_ids || []), groupIdInt]
+          } else if (action === 'remove' && event.assigned_group_ids?.includes(groupIdInt)) {
+            event.assigned_group_ids = event.assigned_group_ids.filter(id => id !== groupIdInt)
+          }
+        }
+      })
+    }
+    
+    const revertOptimisticUpdates = () => {
+      optimisticUpdates.value.forEach((originalGroupIds, eventTitle) => {
+        const event = props.recurringEvents.find(e => e.title === eventTitle)
+        if (event) {
+          event.assigned_group_ids = originalGroupIds
+        }
+      })
+      optimisticUpdates.value.clear()
+    }
+    
+    const confirmOptimisticUpdates = () => {
+      // Called when API confirms the updates were successful
+      optimisticUpdates.value.clear()
+    }
+    
+    const isGroupUpdating = (groupId) => {
+      return updatingGroupIds.value.has(groupId)
+    }
+    
+    const handleUnassignAll = async () => {
+      isUpdatingGroups.value = true
+      
+      try {
+        // Optimistic update: remove all selected events from all groups
+        selectedEvents.value.forEach(title => {
+          const event = props.recurringEvents.find(e => e.title === title)
+          if (event) {
+            if (!optimisticUpdates.value.has(title)) {
+              optimisticUpdates.value.set(title, [...(event.assigned_group_ids || [])])
+            }
+            event.assigned_group_ids = []
+          }
+        })
+        
+        // Emit for actual API call
+        emit('handle-group-assignment', 'unassigned', [...selectedEvents.value])
+        
+        // Clear selection and loading state
+        setTimeout(() => {
+          selectedEvents.value = []
+          isUpdatingGroups.value = false
+        }, 300)
+        
+      } catch (error) {
+        console.error('Unassign all error:', error)
+        revertOptimisticUpdates()
+        isUpdatingGroups.value = false
+      }
     }
     
     return {
@@ -971,6 +1146,8 @@ export default {
       deleteConfirmMessage,
       groupToDelete,
       groupPopover,
+      isUpdatingGroups,
+      updatingGroupIds,
       
       // Computed
       totalEventCount,
@@ -1010,7 +1187,11 @@ export default {
       deleteGroupFromMenu,
       toggleGroupPopover,
       closeGroupPopover,
-      handleRemoveFromGroup
+      handleRemoveFromGroup,
+      isGroupUpdating,
+      handleUnassignAll,
+      confirmOptimisticUpdates,
+      revertOptimisticUpdates
     }
   }
 }
