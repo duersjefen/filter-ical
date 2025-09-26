@@ -209,8 +209,8 @@
       </div>
     </div>
     
-    <!-- Bulk Assignment Panel (shown when events are selected) -->
-    <div v-if="selectedEvents.length > 0" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm">
+    <!-- Bulk Assignment Panel (shown when events are selected but not during drag) -->
+    <div v-if="selectedEvents.length > 0 && !dragSelection.active" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm">
       <div v-if="selectedEvents.length > 1" class="flex items-center justify-center mb-3">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
