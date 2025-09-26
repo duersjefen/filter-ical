@@ -3,8 +3,8 @@
   <div v-if="loading" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
     <div class="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-6"></div>
-      <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">Loading Admin Panel...</div>
-      <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">Please wait</div>
+      <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">{{ $t('admin.loadingPanel') }}</div>
+      <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">{{ $t('admin.pleaseWait') }}</div>
     </div>
   </div>
 
@@ -25,7 +25,7 @@
         :to="`/${domain}`" 
         class="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
       >
-        ← Back to {{ domain }} Calendar
+        {{ $t('admin.backToCalendar', { domain }) }}
       </router-link>
     </div>
   </div>
@@ -36,122 +36,405 @@
     <!-- Admin Header -->
     <AppHeader 
       :title="`🔧 ${domain.toUpperCase()} Admin Panel`"
-      :subtitle="`Manage ${domain} events and groups`"
+      :subtitle="$t('admin.manageEventsGroups', { domain })"
       :show-user-info="false"
       :show-back-button="true"
-      :back-button-text="`← Back to ${domain} Calendar`"
+      :back-button-text="$t('admin.backToCalendar', { domain })"
       page-context="admin"
       @navigate-back="$router.push(`/${domain}`)"
     />
 
-    <!-- Admin Sections Navigation -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-      <div class="border-b border-gray-200 dark:border-gray-700">
-        <nav class="flex">
-          <button
-            v-for="section in sections"
-            :key="section.id"
-            @click="activeSection = section.id"
-            :class="[
-              'flex-1 px-6 py-4 font-medium transition-colors duration-200',
-              activeSection === section.id
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-            ]"
-          >
-            <span class="mr-2">{{ section.icon }}</span>
-            {{ section.name }}
-          </button>
-        </nav>
+    <!-- Expandable Cards Layout -->
+    <div class="space-y-6">
+      
+      <!-- 📅 Events Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+        <button 
+          @click="toggleCard('events')"
+          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">📅</span>
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.eventManagement') }}</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Assign events to groups and manage assignments</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              {{ recurringEvents.length }} events • {{ assignedEventsCount }} assigned
+            </div>
+            <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.events }">
+              ▶
+            </span>
+          </div>
+        </button>
+        
+        <div v-if="expandedCards.events" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
+          <!-- Events List Interface -->
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-4">
+              <div class="relative">
+                <input
+                  v-model="eventSearch"
+                  type="text"
+                  placeholder="Search events..."
+                  class="w-64 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
+              </div>
+              <select 
+                v-model="eventFilter"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Events</option>
+                <option value="assigned">Assigned Only</option>
+                <option value="unassigned">Unassigned Only</option>
+              </select>
+            </div>
+            
+            <div v-if="selectedEvents.length > 0" class="flex items-center gap-3">
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{ selectedEvents.length }} selected</span>
+              <select 
+                v-model="bulkAssignGroupId"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              >
+                <option value="">Choose group...</option>
+                <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
+              </select>
+              <button
+                @click="handleBulkAssign"
+                :disabled="!bulkAssignGroupId"
+                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                Assign Selected
+              </button>
+              <button
+                @click="handleBulkUnassign"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                Unassign Selected
+              </button>
+              <button
+                @click="clearEventSelection"
+                class="text-gray-500 hover:text-gray-700 px-2 py-2"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          
+          <!-- Events Table -->
+          <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg">
+            <table class="w-full">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th class="w-12 px-4 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      :checked="isAllEventsSelected"
+                      :indeterminate="isSomeEventsSelected"
+                      @change="toggleSelectAllEvents"
+                      class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </th>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Event Title</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Count</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Assigned Group</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                <tr 
+                  v-for="event in filteredEvents" 
+                  :key="event.title"
+                  class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
+                  :class="{ 'bg-orange-50 dark:bg-orange-900/20': !event.assigned_group_id }"
+                >
+                  <td class="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      :value="event.title"
+                      v-model="selectedEvents"
+                      class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="font-medium text-gray-900 dark:text-white">{{ event.title }}</div>
+                    <div v-if="event.sample_location" class="text-sm text-gray-500 dark:text-gray-400">📍 {{ event.sample_location }}</div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      {{ event.event_count }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span 
+                      v-if="event.assigned_group_id" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    >
+                      {{ getGroupName(event.assigned_group_id) }}
+                    </span>
+                    <span 
+                      v-else 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                    >
+                      ⚠️ Unassigned
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <select 
+                      :value="event.assigned_group_id || ''"
+                      @change="quickAssignEvent(event.title, $event.target.value)"
+                      class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Unassigned</option>
+                      <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div v-if="filteredEvents.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div class="text-4xl mb-2">📅</div>
+            <p>No events found matching your criteria</p>
+          </div>
+        </div>
       </div>
 
-      <!-- Section Content -->
-      <div class="p-6">
+      <!-- 📁 Groups Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+        <button 
+          @click="toggleCard('groups')"
+          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">📁</span>
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.groups') }}</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Create and manage event groups</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-sm text-gray-500 dark:text-gray-400">{{ groups.length }} groups</div>
+            <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.groups }">
+              ▶
+            </span>
+          </div>
+        </button>
         
-        <!-- Event Management Section (New Default) -->
-        <div v-if="activeSection === 'events'">
-          <EventManager
-            :events="recurringEvents"
-            :groups="groups"
-            :loading="loading"
-            :error="error"
-            @assign-event="handleAssignEvent"
-            @unassign-event="handleUnassignEvent"
-            @bulk-assign="handleBulkAssign"
-            @bulk-unassign="handleBulkUnassign"
-            @refresh-events="loadAllAdminData"
-          />
-        </div>
-
-        <!-- Groups Management Section -->
-        <div v-if="activeSection === 'groups'">
-          <GroupsManager
-            :groups="groups"
-            :loading="loading"
-            @create-group="handleCreateGroup"
-            @update-group="handleUpdateGroup"
-            @delete-group="handleDeleteGroup"
-          />
-        </div>
-
-        <!-- Assignment Rules Section -->
-        <div v-if="activeSection === 'rules'" class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Assignment Rules</h2>
+        <div v-if="expandedCards.groups" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
+          <!-- Create New Group -->
+          <div class="flex items-center gap-3 mb-4">
+            <input
+              v-model="newGroupName"
+              type="text"
+              placeholder="Enter group name..."
+              @keyup.enter="createGroup"
+              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
             <button
-              @click="showCreateRuleModal = true"
-              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              @click="createGroup"
+              :disabled="!newGroupName.trim() || loading"
+              class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
-              + Create Rule
+              <span>+</span>
+              Create Group
             </button>
           </div>
+          
+          <!-- Groups List -->
+          <div class="space-y-3">
+            <div 
+              v-for="group in groups" 
+              :key="group.id"
+              class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+            >
+              <div class="flex-1">
+                <div v-if="editingGroupId !== group.id" class="flex items-center gap-3">
+                  <h3 class="font-medium text-gray-900 dark:text-white">{{ group.name }}</h3>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">({{ getGroupEventCount(group.id) }} events)</span>
+                </div>
+                <div v-else class="flex items-center gap-3">
+                  <input
+                    v-model="editingGroupName"
+                    type="text"
+                    @keyup.enter="saveGroupEdit(group.id)"
+                    @keyup.escape="cancelGroupEdit"
+                    class="flex-1 px-3 py-1 border border-blue-300 dark:border-blue-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <template v-if="editingGroupId !== group.id">
+                  <button
+                    @click="startEditingGroup(group)"
+                    :disabled="loading"
+                    class="text-blue-600 hover:text-blue-800 px-2 py-1 text-sm font-medium transition-colors duration-200"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    @click="confirmDeleteGroup(group)"
+                    :disabled="loading"
+                    class="text-red-600 hover:text-red-800 px-2 py-1 text-sm font-medium transition-colors duration-200"
+                  >
+                    🗑️ Delete
+                  </button>
+                </template>
+                <template v-else>
+                  <button
+                    @click="saveGroupEdit(group.id)"
+                    :disabled="!editingGroupName.trim() || loading"
+                    class="text-green-600 hover:text-green-800 px-2 py-1 text-sm font-medium transition-colors duration-200"
+                  >
+                    ✓ Save
+                  </button>
+                  <button
+                    @click="cancelGroupEdit"
+                    class="text-gray-600 hover:text-gray-800 px-2 py-1 text-sm font-medium transition-colors duration-200"
+                  >
+                    ✗ Cancel
+                  </button>
+                </template>
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="groups.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div class="text-4xl mb-2">📁</div>
+            <p>No groups created yet. Create your first group above!</p>
+          </div>
+        </div>
+      </div>
 
+      <!-- ⚙️ Auto Rules Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+        <button 
+          @click="toggleCard('rules')"
+          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">⚙️</span>
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.autoRules') }}</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Automatic event assignment rules</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-sm text-gray-500 dark:text-gray-400">{{ assignmentRules.length }} rules</div>
+            <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.rules }">
+              ▶
+            </span>
+          </div>
+        </button>
+        
+        <div v-if="expandedCards.rules" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
+          <!-- Create New Rule -->
+          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
+            <h3 class="font-medium text-gray-900 dark:text-white">Create New Rule</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <select 
+                v-model="newRule.rule_type"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select rule type...</option>
+                <option value="title_contains">Title Contains</option>
+                <option value="description_contains">Description Contains</option>
+                <option value="category_contains">Category Contains</option>
+              </select>
+              <input
+                v-model="newRule.rule_value"
+                type="text"
+                placeholder="Value to match..."
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              />
+              <select 
+                v-model="newRule.target_group_id"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select target group...</option>
+                <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
+              </select>
+              <button
+                @click="createRule"
+                :disabled="!newRule.rule_type || !newRule.rule_value.trim() || !newRule.target_group_id"
+                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                Create Rule
+              </button>
+            </div>
+          </div>
+          
           <!-- Rules List -->
           <div class="space-y-3">
             <div 
               v-for="rule in assignmentRules" 
               :key="rule.id"
-              class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+              class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
             >
               <div class="flex-1">
                 <h3 class="font-medium text-gray-900 dark:text-white">
                   {{ getRuleTypeLabel(rule.rule_type) }}: "{{ rule.rule_value }}"
                 </h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                  Assigns to: {{ getGroupName(rule.target_group_id) }}
+                  → Assigns to {{ getGroupName(rule.target_group_id) }}
                 </p>
               </div>
               <button
                 @click="deleteRuleConfirm(rule)"
-                class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200"
+                class="text-red-600 hover:text-red-800 px-2 py-1 text-sm font-medium transition-colors duration-200"
               >
-                Delete
+                🗑️ Delete
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- Configuration Management Section -->
-        <div v-if="activeSection === 'config'" class="space-y-6">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Domain Configuration</h2>
           
+          <div v-if="assignmentRules.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div class="text-4xl mb-2">⚙️</div>
+            <p>No assignment rules created yet. Create your first rule above!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 💾 Configuration Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+        <button 
+          @click="toggleCard('config')"
+          class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">💾</span>
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ $t('admin.configuration') }}</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Export, import, and reset domain configuration</p>
+            </div>
+          </div>
+          <span class="text-gray-400 text-lg transform transition-transform duration-200" :class="{ 'rotate-90': expandedCards.config }">
+            ▶
+          </span>
+        </button>
+        
+        <div v-if="expandedCards.config" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
             <!-- Export Configuration -->
             <div class="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
               <div class="flex items-center mb-4">
                 <div class="text-2xl mr-3">📤</div>
-                <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100">Export</h3>
+                <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100">{{ $t('admin.export') }}</h3>
               </div>
               <p class="text-blue-700 dark:text-blue-200 text-sm mb-4">
-                Download current domain configuration as YAML file for backup or sharing.
+                {{ $t('admin.exportDescription') }}
               </p>
               <button
                 @click="exportConfiguration"
                 :disabled="loading"
                 class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
               >
-                📤 Export Configuration
+                {{ $t('admin.exportConfiguration') }}
               </button>
             </div>
 
@@ -159,10 +442,10 @@
             <div class="bg-green-50 dark:bg-green-900/30 p-6 rounded-xl border border-green-200 dark:border-green-700">
               <div class="flex items-center mb-4">
                 <div class="text-2xl mr-3">📥</div>
-                <h3 class="text-lg font-semibold text-green-900 dark:text-green-100">Import</h3>
+                <h3 class="text-lg font-semibold text-green-900 dark:text-green-100">{{ $t('admin.import') }}</h3>
               </div>
               <p class="text-green-700 dark:text-green-200 text-sm mb-4">
-                Upload a YAML configuration file to replace current domain setup.
+                {{ $t('admin.importDescription') }}
               </p>
               <input
                 type="file"
@@ -176,7 +459,7 @@
                 :disabled="loading"
                 class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
               >
-                📥 Import Configuration
+                {{ $t('admin.importConfiguration') }}
               </button>
             </div>
 
@@ -184,110 +467,44 @@
             <div class="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-xl border border-orange-200 dark:border-orange-700">
               <div class="flex items-center mb-4">
                 <div class="text-2xl mr-3">🔄</div>
-                <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-100">Reset</h3>
+                <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-100">{{ $t('admin.reset') }}</h3>
               </div>
               <p class="text-orange-700 dark:text-orange-200 text-sm mb-4">
-                Reset domain to baseline configuration from system YAML file.
+                {{ $t('admin.resetDescription') }}
               </p>
               <button
                 @click="resetConfigurationConfirm"
                 :disabled="loading"
                 class="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
               >
-                🔄 Reset to Baseline
+                {{ $t('admin.resetToBaseline') }}
               </button>
             </div>
-
           </div>
 
           <!-- Configuration Status -->
           <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <h3 class="font-medium text-gray-900 dark:text-white mb-2">Current Status</h3>
+            <h3 class="font-medium text-gray-900 dark:text-white mb-2">{{ $t('admin.currentStatus') }}</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <span class="text-gray-600 dark:text-gray-400">Groups:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ $t('admin.groupsCount') }}</span>
                 <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ groups.length }}</span>
               </div>
               <div>
-                <span class="text-gray-600 dark:text-gray-400">Events:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ $t('admin.eventsCount') }}</span>
                 <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ recurringEvents.length }}</span>
               </div>
               <div>
-                <span class="text-gray-600 dark:text-gray-400">Rules:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ $t('admin.rulesCount') }}</span>
                 <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ assignmentRules.length }}</span>
               </div>
               <div>
-                <span class="text-gray-600 dark:text-gray-400">Domain:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ $t('admin.domainName') }}</span>
                 <span class="ml-2 font-semibold text-gray-900 dark:text-white">{{ domain }}</span>
               </div>
             </div>
           </div>
         </div>
-
-      </div>
-    </div>
-
-  </div>
-
-
-  <!-- Create Rule Modal -->
-  <div v-if="showCreateRuleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create Assignment Rule</h3>
-      
-      <!-- Rule Type Selection -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rule Type</label>
-        <select 
-          v-model="newRule.rule_type"
-          class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        >
-          <option value="">Select rule type...</option>
-          <option value="title_contains">Title contains</option>
-          <option value="description_contains">Description contains</option>
-          <option value="category_contains">Category contains</option>
-        </select>
-      </div>
-
-      <!-- Rule Value -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rule Value</label>
-        <input 
-          v-model="newRule.rule_value"
-          type="text" 
-          placeholder="e.g., 'Event' or 'Meeting'"
-          class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        >
-      </div>
-
-      <!-- Target Group -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Group</label>
-        <select 
-          v-model="newRule.target_group_id"
-          class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        >
-          <option value="">Select target group...</option>
-          <option v-for="group in groups" :key="group.id" :value="group.id">
-            {{ group.name }}
-          </option>
-        </select>
-      </div>
-
-      <div class="flex gap-3 justify-end">
-        <button
-          @click="showCreateRuleModal = false"
-          class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-        >
-          Cancel
-        </button>
-        <button
-          @click="createRule"
-          :disabled="!newRule.rule_type || !newRule.rule_value.trim() || !newRule.target_group_id"
-          class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-        >
-          Create Rule
-        </button>
       </div>
     </div>
   </div>
@@ -318,7 +535,7 @@
   <!-- Confirmation Dialog -->
   <div v-if="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Confirm Action</h3>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('admin.confirmAction') }}</h3>
       <p class="text-gray-700 dark:text-gray-300 mb-6">{{ confirmDialog.message }}</p>
       <div class="flex gap-3 justify-end">
         <button
@@ -331,7 +548,7 @@
           @click="confirmDialog.onConfirm(); closeConfirm()"
           class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
         >
-          Confirm
+          {{ $t('admin.confirm') }}
         </button>
       </div>
     </div>
@@ -340,20 +557,17 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAdmin } from '../composables/useAdmin'
 import { useHTTP } from '../composables/useHTTP'
 import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
-import EventManager from '../components/admin/EventManager.vue'
-import GroupsManager from '../components/admin/GroupsManager.vue'
 
 export default {
   name: 'AdminView',
   components: {
-    AppHeader,
-    EventManager,
-    GroupsManager
+    AppHeader
   },
   props: {
     domain: {
@@ -362,6 +576,8 @@ export default {
     }
   },
   setup(props) {
+    const { t } = useI18n()
+    
     const {
       // State
       groups,
@@ -396,20 +612,26 @@ export default {
     // HTTP functions for configuration management
     const { get, post } = useHTTP()
 
-    // UI State
-    const activeSection = ref('events')  // Event Management is now the default!
-    const sections = ref([
-      { id: 'events', name: 'Event Management', icon: '📅' },
-      { id: 'groups', name: 'Groups', icon: '📁' },
-      { id: 'rules', name: 'Auto Rules', icon: '⚙️' },
-      { id: 'config', name: 'Configuration', icon: '💾' }
-    ])
+    // UI State - Expandable Cards
+    const expandedCards = ref({
+      events: true, // Events card starts expanded
+      groups: false,
+      rules: false,
+      config: false
+    })
 
-    // Form States
-    const showCreateGroupModal = ref(false)
-    const showCreateRuleModal = ref(false)
+    // Events UI State
+    const eventSearch = ref('')
+    const eventFilter = ref('all')
+    const selectedEvents = ref([])
+    const bulkAssignGroupId = ref('')
+
+    // Groups UI State  
     const newGroupName = ref('')
-    const selectedGroupId = ref('')
+    const editingGroupId = ref(null)
+    const editingGroupName = ref('')
+
+    // Rules UI State
     const newRule = ref({
       rule_type: '',
       rule_value: '',
@@ -419,6 +641,51 @@ export default {
     // Notification State
     const notification = ref(null)
     const confirmDialog = ref(null)
+
+    // Computed Properties
+    const assignedEventsCount = computed(() => {
+      if (!Array.isArray(recurringEvents.value)) return 0
+      return recurringEvents.value.filter(event => event.assigned_group_id).length
+    })
+
+    const filteredEvents = computed(() => {
+      let filtered = Array.isArray(recurringEvents.value) ? recurringEvents.value : []
+      
+      // Search filter
+      if (eventSearch.value) {
+        const query = eventSearch.value.toLowerCase()
+        filtered = filtered.filter(event => 
+          event.title.toLowerCase().includes(query) ||
+          (event.sample_location && event.sample_location.toLowerCase().includes(query))
+        )
+      }
+
+      // Assignment filter
+      if (eventFilter.value === 'assigned') {
+        filtered = filtered.filter(event => event.assigned_group_id)
+      } else if (eventFilter.value === 'unassigned') {
+        filtered = filtered.filter(event => !event.assigned_group_id)
+      }
+
+      return filtered
+    })
+
+    const isAllEventsSelected = computed(() => {
+      const filtered = filteredEvents.value
+      if (!Array.isArray(filtered) || filtered.length === 0) return false
+      return selectedEvents.value.length === filtered.length
+    })
+
+    const isSomeEventsSelected = computed(() => {
+      const filtered = filteredEvents.value
+      if (!Array.isArray(filtered)) return false
+      return selectedEvents.value.length > 0 && selectedEvents.value.length < filtered.length
+    })
+
+    // Card Management
+    const toggleCard = (cardName) => {
+      expandedCards.value[cardName] = !expandedCards.value[cardName]
+    }
 
     // Notification Helpers
     const showNotification = (message, type = 'success') => {
@@ -436,6 +703,33 @@ export default {
       confirmDialog.value = null
     }
 
+    // Events Management
+    const toggleSelectAllEvents = () => {
+      if (isAllEventsSelected.value) {
+        selectedEvents.value = []
+      } else {
+        selectedEvents.value = filteredEvents.value.map(event => event.title)
+      }
+    }
+
+    const clearEventSelection = () => {
+      selectedEvents.value = []
+      bulkAssignGroupId.value = ''
+    }
+
+    const quickAssignEvent = (eventTitle, groupId) => {
+      if (groupId) {
+        handleAssignEvent(eventTitle, parseInt(groupId))
+      } else {
+        handleUnassignEvent(eventTitle)
+      }
+    }
+
+    const getGroupEventCount = (groupId) => {
+      if (!Array.isArray(recurringEvents.value)) return 0
+      return recurringEvents.value.filter(event => event.assigned_group_id === groupId).length
+    }
+
     // Group Management
     const createGroup = async () => {
       const validation = validateGroupName(newGroupName.value)
@@ -447,36 +741,40 @@ export default {
       const result = await createGroupAPI(newGroupName.value)
       if (result.success) {
         newGroupName.value = ''
-        showCreateGroupModal.value = false
         showNotification('Group created successfully!', 'success')
       } else {
         showNotification(`Failed to create group: ${result.error}`, 'error')
       }
     }
 
-    const editGroup = (group) => {
-      const newName = prompt('Enter new group name:', group.name)
-      if (newName && newName.trim() && newName.trim() !== group.name) {
-        updateGroup(group.id, newName.trim())
-      }
+    const startEditingGroup = (group) => {
+      editingGroupId.value = group.id
+      editingGroupName.value = group.name
     }
 
-    const updateGroup = async (groupId, name) => {
-      const validation = validateGroupName(name)
+    const saveGroupEdit = async (groupId) => {
+      const validation = validateGroupName(editingGroupName.value)
       if (!validation.valid) {
         showNotification(validation.error, 'error')
         return
       }
 
-      const result = await updateGroupAPI(groupId, name)
+      const result = await updateGroupAPI(groupId, editingGroupName.value)
       if (result.success) {
+        editingGroupId.value = null
+        editingGroupName.value = ''
         showNotification('Group updated successfully!', 'success')
       } else {
         showNotification(`Failed to update group: ${result.error}`, 'error')
       }
     }
 
-    const deleteGroupConfirm = (group) => {
+    const cancelGroupEdit = () => {
+      editingGroupId.value = null
+      editingGroupName.value = ''
+    }
+
+    const confirmDeleteGroup = (group) => {
       showConfirm(
         `Are you sure you want to delete "${group.name}"? This will also delete all assignments and rules for this group.`,
         () => deleteGroup(group.id)
@@ -492,15 +790,46 @@ export default {
       }
     }
 
-    // Event Assignment
-    const assignEventToGroup = async (eventTitle) => {
-      if (!selectedGroupId.value) return
-
-      const result = await assignEventsToGroup(selectedGroupId.value, eventTitle)
+    // Event Assignment Handlers
+    const handleAssignEvent = async (eventTitle, groupId) => {
+      const result = await assignEventsToGroup(groupId, [eventTitle])
       if (result.success) {
-        showNotification('Event assigned to group successfully!', 'success')
+        showNotification('Event assigned successfully!', 'success')
       } else {
-        showNotification(`Failed to assign event to group: ${result.error}`, 'error')
+        showNotification(`Failed to assign event: ${result.error}`, 'error')
+      }
+    }
+
+    const handleUnassignEvent = async (eventTitle) => {
+      const result = await unassignEventFromGroup(eventTitle)
+      if (result.success) {
+        showNotification('Event unassigned successfully!', 'success')
+      } else {
+        showNotification(`Failed to unassign event: ${result.error}`, 'error')
+      }
+    }
+
+    const handleBulkAssign = async () => {
+      if (bulkAssignGroupId.value && selectedEvents.value.length > 0) {
+        const result = await bulkAssignEventsToGroup(parseInt(bulkAssignGroupId.value), selectedEvents.value)
+        if (result.success) {
+          showNotification(`${selectedEvents.value.length} events assigned successfully!`, 'success')
+          clearEventSelection()
+        } else {
+          showNotification(`Failed to bulk assign events: ${result.error}`, 'error')
+        }
+      }
+    }
+
+    const handleBulkUnassign = async () => {
+      if (selectedEvents.value.length > 0) {
+        const result = await bulkUnassignEvents(selectedEvents.value)
+        if (result.success) {
+          showNotification(`${selectedEvents.value.length} events unassigned successfully!`, 'success')
+          clearEventSelection()
+        } else {
+          showNotification(`Failed to bulk unassign events: ${result.error}`, 'error')
+        }
       }
     }
 
@@ -525,7 +854,6 @@ export default {
       
       if (result.success) {
         newRule.value = { rule_type: '', rule_value: '', target_group_id: '' }
-        showCreateRuleModal.value = false
         showNotification('Assignment rule created successfully!', 'success')
       } else {
         showNotification(`Failed to create assignment rule: ${result.error}`, 'error')
@@ -629,105 +957,33 @@ export default {
       }
     }
 
-    // Event Assignment Table Handlers
-    const handleAssignEvent = async (eventTitle, groupId) => {
-      const result = await assignEventsToGroup(groupId, [eventTitle])
-      if (result.success) {
-        showNotification('Event assigned successfully!', 'success')
-      } else {
-        showNotification(`Failed to assign event: ${result.error}`, 'error')
-      }
-    }
-
-    const handleUnassignEvent = async (eventTitle) => {
-      const result = await unassignEventFromGroup(eventTitle)
-      if (result.success) {
-        showNotification('Event unassigned successfully!', 'success')
-      } else {
-        showNotification(`Failed to unassign event: ${result.error}`, 'error')
-      }
-    }
-
-    const handleBulkAssign = async (eventTitles, groupId) => {
-      const result = await bulkAssignEventsToGroup(groupId, eventTitles)
-      if (result.success) {
-        showNotification(`${eventTitles.length} events assigned successfully!`, 'success')
-      } else {
-        showNotification(`Failed to bulk assign events: ${result.error}`, 'error')
-      }
-    }
-
-    const handleBulkUnassign = async (eventTitles) => {
-      const result = await bulkUnassignEvents(eventTitles)
-      if (result.success) {
-        showNotification(`${eventTitles.length} events unassigned successfully!`, 'success')
-      } else {
-        showNotification(`Failed to bulk unassign events: ${result.error}`, 'error')
-      }
-    }
-
-    // Groups Manager Handlers
-    const handleCreateGroup = async (name) => {
-      const validation = validateGroupName(name)
-      if (!validation.valid) {
-        showNotification(validation.error, 'error')
-        return
-      }
-
-      const result = await createGroupAPI(name)
-      if (result.success) {
-        showNotification('Group created successfully!', 'success')
-      } else {
-        showNotification(`Failed to create group: ${result.error}`, 'error')
-      }
-    }
-
-    const handleUpdateGroup = async (groupId, name) => {
-      const validation = validateGroupName(name)
-      if (!validation.valid) {
-        showNotification(validation.error, 'error')
-        return
-      }
-
-      const result = await updateGroupAPI(groupId, name)
-      if (result.success) {
-        showNotification('Group updated successfully!', 'success')
-      } else {
-        showNotification(`Failed to update group: ${result.error}`, 'error')
-      }
-    }
-
-    const handleDeleteGroup = async (groupId) => {
-      const result = await deleteGroupAPI(groupId)
-      if (result.success) {
-        showNotification('Group deleted successfully!', 'success')
-      } else {
-        showNotification(`Failed to delete group: ${result.error}`, 'error')
-      }
-    }
-
-    // Load data on mount
+    // Load data on mount - with guard to prevent multiple loads
+    let hasInitiallyLoaded = false
     onMounted(() => {
-      loadAllAdminData()
+      if (!hasInitiallyLoaded) {
+        hasInitiallyLoaded = true
+        loadAllAdminData()
+      }
     })
 
     return {
       // UI State
-      activeSection,
-      sections,
+      expandedCards,
       loading,
       error,
 
-      // Data
-      groups,
-      recurringEvents,
-      assignmentRules,
+      // Events UI State
+      eventSearch,
+      eventFilter,
+      selectedEvents,
+      bulkAssignGroupId,
 
-      // Form States
-      showCreateGroupModal,
-      showCreateRuleModal,
+      // Groups UI State
       newGroupName,
-      selectedGroupId,
+      editingGroupId,
+      editingGroupName,
+
+      // Rules UI State
       newRule,
 
       // Notification States
@@ -735,30 +991,73 @@ export default {
       confirmDialog,
       closeConfirm,
 
+      // Data
+      groups,
+      recurringEvents,
+      assignmentRules,
+
+      // Computed
+      assignedEventsCount,
+      filteredEvents,
+      isAllEventsSelected,
+      isSomeEventsSelected,
+
       // Methods
+      toggleCard,
+      toggleSelectAllEvents,
+      clearEventSelection,
+      quickAssignEvent,
+      getGroupEventCount,
       createGroup,
-      editGroup,
-      deleteGroupConfirm,
-      assignEventToGroup,
+      startEditingGroup,
+      saveGroupEdit,
+      cancelGroupEdit,
+      confirmDeleteGroup,
       createRule,
       deleteRuleConfirm,
       getRuleTypeLabel,
       getGroupName,
       
-      // New Component Event Handlers
+      // Event Assignment Handlers
       handleAssignEvent,
       handleUnassignEvent,
       handleBulkAssign,
       handleBulkUnassign,
-      handleCreateGroup,
-      handleUpdateGroup,
-      handleDeleteGroup,
       
       // Configuration Methods
       exportConfiguration,
       handleFileUpload,
-      resetConfigurationConfirm
+      resetConfigurationConfirm,
+      
+      // Admin Data Loading
+      loadAllAdminData
     }
   }
 }
 </script>
+
+<style scoped>
+/* Smooth transitions for accordion */
+.transform {
+  transition: transform 0.2s ease-in-out;
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+/* Indeterminate checkbox styling */
+input[type="checkbox"]:indeterminate {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+input[type="checkbox"]:indeterminate:after {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 2px;
+  background-color: white;
+  margin: 2px auto;
+}
+</style>
