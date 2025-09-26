@@ -155,7 +155,7 @@
     
     <!-- Bulk Assignment Panel (shown when events are selected) -->
     <div v-if="selectedEvents.length > 0" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm">
-      <div class="flex items-center justify-between mb-3">
+      <div v-if="selectedEvents.length > 1" class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
             <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">{{ selectedEvents.length }}</span>
@@ -163,10 +163,19 @@
           <div>
             <h4 class="font-medium text-gray-900 dark:text-white">Bulk Actions</h4>
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              {{ selectedEvents.length }} event{{ selectedEvents.length > 1 ? 's' : '' }} selected
+              {{ selectedEvents.length }} events selected
             </p>
           </div>
         </div>
+        <button 
+          @click="clearEventSelection"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded"
+          title="Clear selection"
+        >
+          <span class="text-xl">×</span>
+        </button>
+      </div>
+      <div v-else class="flex items-center justify-end mb-3">
         <button 
           @click="clearEventSelection"
           class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded"
@@ -301,28 +310,27 @@
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- Unassign All Button -->
-        <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
-          <button
-            @click="handleUnassignAll"
-            :disabled="isUpdatingGroups"
-            class="w-full inline-flex items-center justify-center gap-3 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
-            :title="`Remove ${selectedEvents.length} events from all groups`"
-          >
-            <div class="w-8 h-8 bg-yellow-200 dark:bg-yellow-700 rounded-full flex items-center justify-center">
-              <span v-if="!isUpdatingGroups" class="text-yellow-800 dark:text-yellow-200 font-bold">🚫</span>
-              <div v-else class="w-4 h-4 border-2 border-yellow-800 dark:border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-            <div class="flex flex-col text-left">
-              <span class="font-semibold">Unassign All Events</span>
-              <span class="text-xs opacity-75">Remove from all groups</span>
-            </div>
-            <div class="text-xs font-bold px-2 py-1 rounded-full bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200">
-              {{ selectedEvents.length }}
-            </div>
-          </button>
+          
+          <!-- Unassign All Button (inline with groups) -->
+          <div class="inline-flex">
+            <button
+              @click="handleUnassignAll"
+              :disabled="isUpdatingGroups"
+              class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-300 hover:shadow-md transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-600 dark:text-yellow-200 dark:hover:from-yellow-800/30 dark:hover:to-amber-800/30"
+              :title="`Remove ${selectedEvents.length} events from all groups`"
+            >
+              <div class="w-6 h-6 bg-yellow-200 dark:bg-yellow-700 rounded-full flex items-center justify-center">
+                <span v-if="!isUpdatingGroups" class="text-yellow-800 dark:text-yellow-200 font-bold text-xs">🚫</span>
+                <div v-else class="w-3 h-3 border-2 border-yellow-800 dark:border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <div class="flex flex-col text-left">
+                <span class="font-semibold">Unassign All</span>
+              </div>
+              <div class="text-xs font-bold px-1.5 py-0.5 rounded-full bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200">
+                {{ selectedEvents.length }}
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -426,9 +434,9 @@
               <span v-if="isAllEventsSelected">✓</span>
               <span v-else-if="isSomeEventsSelected">−</span>
             </div>
-            <span v-if="isAllEventsSelected">All Selected</span>
+            <span v-if="isAllEventsSelected">All Visible Selected</span>
             <span v-else-if="isSomeEventsSelected">{{ selectedEvents.length }} Selected</span>
-            <span v-else>Select All</span>
+            <span v-else>Select All Visible</span>
           </button>
           <span class="text-sm text-gray-500 dark:text-gray-400">
             {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }} shown
