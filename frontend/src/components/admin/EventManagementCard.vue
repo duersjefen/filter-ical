@@ -162,25 +162,55 @@
     <div class="space-y-4">
       <!-- Search and Controls -->
       <div class="flex items-center justify-between gap-4">
-        <div class="flex-1">
+        <div class="flex-1 relative">
           <input
             v-model="eventSearch"
             type="text"
-            placeholder="Search events..."
+            :placeholder="activeGroupFilters.length > 0 ? 'Search in filtered groups...' : 'Search events...'"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            :class="{ 'pr-32': activeGroupFilters.length > 0 }"
           />
+          <!-- Clear Filter Button - shows when filtering by specific groups -->
+          <button
+            v-if="activeGroupFilters.length > 0"
+            @click="clearGroupFilters"
+            class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors flex items-center gap-1"
+            title="Clear group filters to search in all groups"
+          >
+            <span>🔍</span>
+            <span>All Groups</span>
+          </button>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
           <button
             @click="toggleSelectAllEvents"
-            class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 border flex items-center gap-2"
+            :class="[
+              isAllEventsSelected 
+                ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700 dark:hover:bg-green-800/30'
+                : isSomeEventsSelected
+                ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700 dark:hover:bg-blue-800/30'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+            ]"
+            :title="isAllEventsSelected ? `Deselect all ${filteredEvents.length} visible events` : `Select all ${filteredEvents.length} visible events`"
           >
-            <span v-if="isAllEventsSelected">Deselect All</span>
-            <span v-else-if="isSomeEventsSelected">Select All</span>
+            <div 
+              class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs transition-all"
+              :class="isAllEventsSelected
+                ? 'bg-green-500 border-green-500 text-white' 
+                : isSomeEventsSelected
+                ? 'bg-blue-500 border-blue-500 text-white'
+                : 'border-gray-400 bg-white dark:bg-gray-700 dark:border-gray-500'"
+            >
+              <span v-if="isAllEventsSelected">✓</span>
+              <span v-else-if="isSomeEventsSelected">−</span>
+            </div>
+            <span v-if="isAllEventsSelected">All Selected</span>
+            <span v-else-if="isSomeEventsSelected">{{ selectedEvents.length }} Selected</span>
             <span v-else>Select All</span>
           </button>
           <span class="text-sm text-gray-500 dark:text-gray-400">
-            {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }}
+            {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }} shown
           </span>
         </div>
       </div>
@@ -197,6 +227,7 @@
                   :indeterminate="isSomeEventsSelected && !isAllEventsSelected"
                   @change="toggleSelectAllEvents"
                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  :title="`Select all ${filteredEvents.length} visible events`"
                 />
               </th>
               <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Event</th>
@@ -426,6 +457,10 @@ export default {
       selectedEvents.value = []
     }
     
+    const clearGroupFilters = () => {
+      activeGroupFilters.value = []
+    }
+    
     const getGroupEventCount = (groupId) => {
       return props.recurringEvents.filter(event => event.assigned_group_id === groupId).length
     }
@@ -566,6 +601,7 @@ export default {
       toggleSelectAllEvents,
       toggleEventSelection,
       clearEventSelection,
+      clearGroupFilters,
       getGroupEventCount,
       createGroup,
       cancelAddGroup,
