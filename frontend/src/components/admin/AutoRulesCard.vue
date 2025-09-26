@@ -10,10 +10,10 @@
     <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
       <h3 class="font-medium text-gray-900 dark:text-white">Create New Rule</h3>
       <div class="space-y-3">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <select 
             v-model="newRule.rule_type"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            class="px-4 py-3 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
           >
             <option value="">Select rule type...</option>
             <option value="title_contains">Title Contains</option>
@@ -24,21 +24,21 @@
             v-model="newRule.rule_value"
             type="text"
             placeholder="Value to match..."
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            class="px-4 py-3 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
           />
           <select 
             v-model="newRule.target_group_id"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            class="px-4 py-3 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 text-base sm:text-sm sm:col-span-2 lg:col-span-1"
           >
             <option value="">Select target group...</option>
             <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
           </select>
         </div>
-        <div class="flex gap-2 justify-end">
+        <div class="flex gap-2 justify-stretch sm:justify-end">
           <button
             @click="createRule"
             :disabled="!newRule.rule_type || !newRule.rule_value.trim() || !newRule.target_group_id"
-            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 sm:px-4 sm:py-2 rounded-lg font-medium transition-colors duration-200 text-base sm:text-sm flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
           >
             Create Rule
           </button>

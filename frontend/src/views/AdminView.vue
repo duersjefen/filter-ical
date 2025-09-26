@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
     <AppHeader 
       :title="$t('admin.manageEventsGroups', { domain })"
       :back-button-text="$t('admin.backToCalendar', { domain })"
@@ -8,14 +8,14 @@
     />
 
     <!-- Mobile Optimization Notice -->
-    <div v-if="isMobile" class="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mx-1">
+    <div v-if="isMobile" class="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
       <div class="flex items-start gap-3">
         <div class="text-2xl flex-shrink-0">💻</div>
         <div class="min-w-0 flex-1">
-          <h3 class="font-semibold text-amber-800 dark:text-amber-200 text-sm mb-1">
+          <h3 class="font-semibold text-amber-800 dark:text-amber-200 text-base mb-2">
             {{ $t('admin.mobileNotOptimized') }}
           </h3>
-          <p class="text-amber-700 dark:text-amber-300 text-sm">
+          <p class="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">
             {{ $t('admin.mobileUseDesktop') }}
           </p>
         </div>
@@ -23,7 +23,7 @@
     </div>
 
     <!-- Expandable Cards Layout -->
-    <div class="space-y-4">
+    <div class="space-y-4 sm:space-y-6">
       
       <!-- ⚙️ Auto Rules Card (First Position) -->
       <AutoRulesCard
