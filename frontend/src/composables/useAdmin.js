@@ -149,6 +149,31 @@ export function useAdmin(domain) {
     }
   }
 
+  const addEventsToGroup = async (groupId, eventTitles) => {
+    try {
+      const newEventTitles = Array.isArray(eventTitles) ? eventTitles : [eventTitles]
+      
+      // Make sure we have the latest events data
+      await loadRecurringEventsWithAssignments()
+      
+      // Get current events assigned to this group
+      const currentEvents = recurringEvents.value.filter(event => 
+        event.assigned_group_id === groupId
+      ).map(event => event.title)
+      
+      // Merge new events with existing ones (avoiding duplicates)
+      const allEvents = [...new Set([...currentEvents, ...newEventTitles])]
+      
+      // Use existing assignEventsToGroup with complete list
+      const result = await assignEventsToGroup(groupId, allEvents)
+      
+      return result
+    } catch (err) {
+      console.error('Failed to add events to group:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
   const bulkAssignEventsToGroup = async (groupId, eventTitles) => {
     try {
       const result = await put(`/domains/${domain}/bulk-assign-events`, {
@@ -443,18 +468,18 @@ export function useAdmin(domain) {
       }
     }
 
-    // Use existing bulk assignment API
+    // Use smart frontend approach via addEventsToGroup
     try {
-      const result = await bulkAssignEventsToGroup(parseInt(targetGroupId), eventsToAssign)
+      const result = await addEventsToGroup(parseInt(targetGroupId), eventsToAssign)
       
       if (result.success) {
         return {
           success: true,
-          message: `${eventsToAssign.length} events assigned to ${preview.targetGroupName}`,
+          message: `${eventsToAssign.length} events added to ${preview.targetGroupName}`,
           assignedCount: eventsToAssign.length
         }
       } else {
-        return { success: false, error: result.error || 'Failed to assign events' }
+        return { success: false, error: result.error || 'Failed to add events' }
       }
     } catch (error) {
       return { success: false, error: `Failed to apply rule: ${error.message}` }
@@ -487,6 +512,7 @@ export function useAdmin(domain) {
     loadRecurringEvents,
     loadRecurringEventsWithAssignments,
     assignEventsToGroup,
+    addEventsToGroup,
     bulkAssignEventsToGroup,
     bulkUnassignEvents,
     unassignEventFromGroup,

@@ -136,6 +136,7 @@ export default {
       createGroup: createGroupAPI,
       updateGroup: updateGroupAPI,
       assignEventsToGroup: assignEventsToGroupAPI,
+      addEventsToGroup: addEventsToGroupAPI,
       unassignEvents: unassignEventsAPI,
       createAssignmentRule: createAssignmentRuleAPI,
       deleteAssignmentRule: deleteAssignmentRuleAPI,
@@ -233,12 +234,12 @@ export default {
           showNotification(`Failed to unassign events: ${result.error}`, 'error')
         }
       } else {
-        const result = await assignEventsToGroupAPI(groupId, eventTitles)
+        const result = await addEventsToGroupAPI(groupId, eventTitles)
         if (result.success) {
           const groupName = groups.value.find(g => g.id === groupId)?.name || 'Unknown Group'
-          showNotification(`Successfully assigned ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} to ${groupName}!`, 'success')
+          showNotification(`Successfully added ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} to ${groupName}!`, 'success')
         } else {
-          showNotification(`Failed to assign events: ${result.error}`, 'error')
+          showNotification(`Failed to add events: ${result.error}`, 'error')
         }
       }
     }
