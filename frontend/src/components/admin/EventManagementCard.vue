@@ -28,7 +28,7 @@
         >
           <span>📋</span>
           <span>All Events</span>
-          <span v-if="selectedEvents.length === 0" class="text-xs opacity-75">({{ recurringEvents.length }})</span>
+          <span class="text-xs opacity-75">({{ recurringEvents.length }})</span>
         </button>
         
         <!-- Unassigned Button -->
@@ -44,14 +44,7 @@
         >
           <span>❔</span>
           <span>Unassigned</span>
-          <span v-if="selectedEvents.length === 0" class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
-          <!-- Selection indicator -->
-          <span 
-            v-if="selectedEvents.length > 0 && getSelectedEventsInGroup('unassigned') > 0"
-            class="ml-1 px-1 py-0.5 bg-blue-500 text-white rounded text-xs font-bold"
-          >
-            {{ getSelectedEventsInGroup('unassigned') }}
-          </span>
+          <span class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
         </button>
         
         <!-- Group Buttons with Right-Click Context Menu -->
@@ -78,14 +71,7 @@
             class="min-w-0 bg-transparent border-none outline-none text-inherit font-medium"
             :style="{ width: Math.max(50, editingGroupName.length * 8) + 'px' }"
           />
-          <span v-if="selectedEvents.length === 0" class="text-xs opacity-75">({{ getGroupEventCount(group.id) }})</span>
-          <!-- Selection indicator -->
-          <span 
-            v-if="selectedEvents.length > 0 && getSelectedEventsInGroup(group.id) > 0"
-            class="ml-1 px-1 py-0.5 bg-blue-500 text-white rounded text-xs font-bold"
-          >
-            {{ getSelectedEventsInGroup(group.id) }}
-          </span>
+          <span class="text-xs opacity-75">({{ getGroupEventCount(group.id) }})</span>
         </button>
         
         <!-- Add Group Button -->
