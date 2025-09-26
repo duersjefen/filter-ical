@@ -24,6 +24,7 @@
               ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
+          :title="activeGroupFilters.length === 0 ? 'Currently showing all events' : 'Click to clear group filters and show all events • Hold Ctrl to select multiple filters'"
         >
           <span>📋</span>
           <span>All Events</span>
@@ -356,31 +357,17 @@
             v-model="eventSearch"
             type="text"
             :placeholder="activeGroupFilters.length > 0 ? 'Search in filtered groups...' : 'Search events...'"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            :class="{ 
-              'pr-32': activeGroupFilters.length > 0,
-              'pr-8': eventSearch.trim() && activeGroupFilters.length === 0 
-            }"
+            class="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
           
-          <!-- Search Clear Button - shows when there's search text and no group filters -->
+          <!-- Search Clear Button - shows when there's search text -->
           <button
-            v-if="eventSearch.trim() && activeGroupFilters.length === 0"
+            v-if="eventSearch.trim()"
             @click="eventSearch = ''; showSelectedOnly = false"
-            class="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             title="Clear search"
           >
             <span class="text-sm font-bold">×</span>
-          </button>
-          <!-- Clear Filter Button - shows when filtering by specific groups -->
-          <button
-            v-if="activeGroupFilters.length > 0"
-            @click="clearGroupFilters"
-            class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors flex items-center gap-1"
-            title="Clear group filters to search in all groups"
-          >
-            <span>🔍</span>
-            <span>All Groups</span>
           </button>
         </div>
         <div class="flex items-center gap-3">
