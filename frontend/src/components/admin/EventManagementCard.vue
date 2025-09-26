@@ -11,7 +11,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Group</h3>
         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <span>💡 Hold Ctrl to select multiple • Right-click to edit</span>
+          <span>💡 Hold Ctrl to select multiple groups • Right-click groups to edit • Right-click events to assign</span>
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
