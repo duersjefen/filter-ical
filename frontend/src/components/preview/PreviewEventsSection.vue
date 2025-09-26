@@ -12,32 +12,13 @@
     
     <!-- Content -->
     <div v-if="isExpanded">
-      <!-- Controls -->
-      <PreviewControls
-        :view-mode="viewMode"
-        @update:view-mode="viewMode = $event"
+      <!-- Chronological View with Month Grouping - No Scroll, Show Everything -->
+      <PreviewGroups
+        :groups="monthGroupedEvents"
+        view-mode="month"
+        :format-date-range="formatDateRange"
+        :get-recurring-event-key="getRecurringEventKey"
       />
-      
-      <!-- Content Container with scroll -->
-      <div class="max-h-[600px] overflow-y-auto">
-        <!-- List View -->
-        <PreviewList
-          v-if="viewMode === 'list'"
-          :events="sortedPreviewEvents"
-          :show-category="true"
-          :format-date-range="formatDateRange"
-          :get-recurring-event-key="getRecurringEventKey"
-        />
-        
-        <!-- Grouped Views -->
-        <PreviewGroups
-          v-else
-          :groups="groupedEvents"
-          :view-mode="viewMode"
-          :format-date-range="formatDateRange"
-          :get-recurring-event-key="getRecurringEventKey"
-        />
-      </div>
     </div>
   </div>
 </template>
@@ -47,8 +28,6 @@ import { ref, computed } from 'vue'
 import { formatDateRange } from '@/utils/dateFormatting'
 import { usePreview } from '@/composables/usePreview'
 import PreviewHeader from '@/components/preview/PreviewHeader.vue'
-import PreviewControls from '@/components/preview/PreviewControls.vue'
-import PreviewList from '@/components/preview/PreviewList.vue'
 import PreviewGroups from '@/components/preview/PreviewGroups.vue'
 
 const props = defineProps({
@@ -60,22 +39,14 @@ const {
   sortedPreviewEvents,
   hasPreviewEvents,
   previewEventCount,
-  groupEventsByCategory,
   groupEventsByMonth
 } = usePreview()
 
-
 // Local state
 const isExpanded = ref(false)
-const viewMode = ref('list')
 
-// Computed properties for grouped data
-const groupedEvents = computed(() => {
-  if (viewMode.value === 'category') {
-    return groupEventsByCategory(sortedPreviewEvents.value, props.getRecurringEventKey)
-  } else if (viewMode.value === 'month') {
-    return groupEventsByMonth(sortedPreviewEvents.value)
-  }
-  return []
+// Always show events grouped by month
+const monthGroupedEvents = computed(() => {
+  return groupEventsByMonth(sortedPreviewEvents.value)
 })
 </script>

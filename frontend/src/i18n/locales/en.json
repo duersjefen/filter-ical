@@ -96,6 +96,8 @@
     "noEventsToPreview": "No events to preview",
     "selectRecurringEventsForPreview": "Select events to preview events",
     "list": "List",
+    "chronological": "Chronological",
+    "grouped": "Grouped",
     "byRecurringEvent": "By Event Type",
     "byMonth": "By Month",
     "searchEvents": "Search events (title, location, description)...",
