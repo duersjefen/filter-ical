@@ -320,27 +320,69 @@
       </div>
     </div>
     
-    <!-- Hidden Selected Events Warning -->
+    <!-- Selected Events Panel - Always show when events are selected -->
     <div 
-      v-if="hasHiddenSelectedEvents" 
-      class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 flex items-center justify-between"
+      v-if="selectedEvents.length > 0" 
+      :class="[
+        'rounded-lg p-3 flex items-center justify-between',
+        hasHiddenSelectedEvents 
+          ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700'
+          : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
+      ]"
     >
       <div class="flex items-center gap-3">
-        <div class="w-6 h-6 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
-          <span class="text-amber-600 dark:text-amber-400 text-xs font-bold">⚠️</span>
+        <div :class="[
+          'w-6 h-6 rounded-full flex items-center justify-center',
+          hasHiddenSelectedEvents
+            ? 'bg-amber-100 dark:bg-amber-900/30'
+            : 'bg-blue-100 dark:bg-blue-900/30'
+        ]">
+          <span :class="[
+            'text-xs font-bold',
+            hasHiddenSelectedEvents
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-blue-600 dark:text-blue-400'
+          ]">
+            {{ hasHiddenSelectedEvents ? '⚠️' : '👁' }}
+          </span>
         </div>
         <div>
-          <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
-            {{ hiddenSelectedEvents.length }} selected event{{ hiddenSelectedEvents.length > 1 ? 's are' : ' is' }} hidden by current filters
+          <p :class="[
+            'text-sm font-medium',
+            hasHiddenSelectedEvents
+              ? 'text-amber-800 dark:text-amber-200'
+              : 'text-blue-800 dark:text-blue-200'
+          ]">
+            <span v-if="hasHiddenSelectedEvents">
+              {{ hiddenSelectedEvents.length }} selected event{{ hiddenSelectedEvents.length > 1 ? 's are' : ' is' }} hidden by filters
+            </span>
+            <span v-else>
+              {{ selectedEvents.length }} event{{ selectedEvents.length > 1 ? 's' : '' }} selected
+            </span>
           </p>
-          <p class="text-xs text-amber-700 dark:text-amber-300">
-            Showing {{ visibleSelectedEvents.length }} of {{ selectedEvents.length }} selected events
+          <p :class="[
+            'text-xs',
+            hasHiddenSelectedEvents
+              ? 'text-amber-700 dark:text-amber-300'
+              : 'text-blue-600 dark:text-blue-400'
+          ]">
+            <span v-if="hasHiddenSelectedEvents">
+              Showing {{ visibleSelectedEvents.length }} of {{ selectedEvents.length }} selected events
+            </span>
+            <span v-else>
+              View only your selected events (filtered mode)
+            </span>
           </p>
         </div>
       </div>
       <button
         @click="showAllSelectedEvents"
-        class="px-3 py-1 bg-amber-100 hover:bg-amber-200 dark:bg-amber-800 dark:hover:bg-amber-700 text-amber-800 dark:text-amber-200 rounded-md text-xs font-medium transition-colors"
+        :class="[
+          'px-3 py-1 rounded-md text-xs font-medium transition-colors',
+          hasHiddenSelectedEvents
+            ? 'bg-amber-100 hover:bg-amber-200 dark:bg-amber-800 dark:hover:bg-amber-700 text-amber-800 dark:text-amber-200'
+            : 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-800 dark:text-blue-200'
+        ]"
       >
         Show Only Selected
       </button>
