@@ -149,44 +149,63 @@
         left: eventContextMenu.x + 'px',
         zIndex: 1000
       }"
-      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-48 max-w-64"
+      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl py-2 min-w-52 max-w-64 backdrop-blur-sm"
       @click.stop
     >
+      <!-- Context Menu Header -->
+      <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-t-xl">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">{{ eventContextMenu.event?.title || 'Event Actions' }}</span>
+        </div>
+      </div>
       <!-- Add to Groups Section -->
-      <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length > 0">
-        <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700">
-          Add to Group
+      <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length > 0" class="py-1">
+        <div class="px-4 py-2 text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide flex items-center gap-2">
+          <span class="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">+</span>
+          <span>Add to Group</span>
         </div>
         <button
           v-for="group in getAvailableGroupsForEvent(eventContextMenu.event)"
           :key="`add-${group.id}`"
           @click="quickAddToGroup(eventContextMenu.event, group.id)"
-          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2"
+          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-3 transition-colors duration-150"
         >
-          <span class="text-green-600">+</span>
-          <span>{{ group.name }}</span>
+          <div class="w-5 h-5 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+            <span class="text-green-600 dark:text-green-400 text-xs font-bold">+</span>
+          </div>
+          <span class="font-medium">{{ group.name }}</span>
         </button>
       </div>
       
       <!-- Remove from Groups Section -->
-      <div v-if="getAssignedGroupsForEvent(eventContextMenu.event).length > 0">
-        <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700" :class="{ 'border-t': getAvailableGroupsForEvent(eventContextMenu.event).length > 0 }">
-          Remove from Group
+      <div v-if="getAssignedGroupsForEvent(eventContextMenu.event).length > 0" class="py-1" :class="{ 'border-t border-gray-100 dark:border-gray-700': getAvailableGroupsForEvent(eventContextMenu.event).length > 0 }">
+        <div class="px-4 py-2 text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide flex items-center gap-2">
+          <span class="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">−</span>
+          <span>Remove from Group</span>
         </div>
         <button
           v-for="group in getAssignedGroupsForEvent(eventContextMenu.event)"
           :key="`remove-${group.id}`"
           @click="quickRemoveFromGroup(eventContextMenu.event, group.id)"
-          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+          class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors duration-150"
         >
-          <span class="text-red-600">−</span>
-          <span>{{ group.name }}</span>
+          <div class="w-5 h-5 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+            <span class="text-red-600 dark:text-red-400 text-xs font-bold">−</span>
+          </div>
+          <span class="font-medium">{{ group.name }}</span>
         </button>
       </div>
       
       <!-- No actions available -->
-      <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length === 0 && getAssignedGroupsForEvent(eventContextMenu.event).length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 italic">
-        No group actions available
+      <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length === 0 && getAssignedGroupsForEvent(eventContextMenu.event).length === 0" class="px-4 py-6 text-center">
+        <div class="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+          <span class="text-gray-400 dark:text-gray-500 text-sm">📋</span>
+        </div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          <div class="font-medium">No group actions available</div>
+          <div class="text-xs mt-1">Create groups to assign events</div>
+        </div>
       </div>
     </div>
     
@@ -476,8 +495,8 @@
       >
         <!-- Drag Selection Overlay -->
         <div
-          v-if="dragSelection.active"
-          class="absolute pointer-events-none bg-blue-200 dark:bg-blue-600 opacity-25 border border-blue-400 dark:border-blue-500 rounded"
+          v-if="dragSelection.active && dragSelection.hasDragged"
+          class="absolute pointer-events-none bg-gradient-to-br from-blue-300 to-blue-400 dark:from-blue-500 dark:to-blue-600 opacity-30 border-2 border-blue-500 dark:border-blue-400 rounded-lg shadow-lg backdrop-blur-sm"
           :style="{
             left: Math.min(dragSelection.startX, dragSelection.currentX) + 'px',
             top: Math.min(dragSelection.startY, dragSelection.currentY) + 'px',
@@ -485,7 +504,9 @@
             height: Math.abs(dragSelection.currentY - dragSelection.startY) + 'px',
             zIndex: 10
           }"
-        ></div>
+        >
+          <div class="absolute inset-0 bg-white dark:bg-gray-900 opacity-10 rounded-lg"></div>
+        </div>
         
         <div class="grid gap-2" :class="{
           'grid-cols-1': filteredEvents.length === 1,
@@ -1159,8 +1180,8 @@ export default {
     
     // Drag selection methods
     const startDragSelection = (event) => {
-      // Only start drag selection on left mouse button and not on a card
-      if (event.button !== 0 || event.target.closest('[data-event-card]')) {
+      // Only start drag selection on left mouse button
+      if (event.button !== 0) {
         return
       }
       
@@ -1171,7 +1192,9 @@ export default {
         startY: event.clientY - containerRect.top,
         currentX: event.clientX - containerRect.left,
         currentY: event.clientY - containerRect.top,
-        initialSelection: [...selectedEvents.value]
+        initialSelection: [...selectedEvents.value],
+        dragThreshold: 5, // Minimum distance to start drag
+        hasDragged: false
       }
       
       // Prevent text selection during drag
@@ -1184,6 +1207,17 @@ export default {
       const containerRect = event.currentTarget.getBoundingClientRect()
       dragSelection.value.currentX = event.clientX - containerRect.left
       dragSelection.value.currentY = event.clientY - containerRect.top
+      
+      // Check if we've moved enough to start dragging
+      const deltaX = Math.abs(dragSelection.value.currentX - dragSelection.value.startX)
+      const deltaY = Math.abs(dragSelection.value.currentY - dragSelection.value.startY)
+      
+      if (!dragSelection.value.hasDragged && (deltaX > dragSelection.value.dragThreshold || deltaY > dragSelection.value.dragThreshold)) {
+        dragSelection.value.hasDragged = true
+      }
+      
+      // Only show selection rectangle and update selection after drag threshold
+      if (!dragSelection.value.hasDragged) return
       
       // Calculate which cards intersect with selection rectangle
       const selectionRect = {
@@ -1227,19 +1261,27 @@ export default {
     
     const endDragSelection = () => {
       if (dragSelection.value.active) {
+        const wasDragging = dragSelection.value.hasDragged
         dragSelection.value.active = false
-        // Emit the final selection
-        if (selectedEvents.value.length !== dragSelection.value.initialSelection.length || 
-            !selectedEvents.value.every(title => dragSelection.value.initialSelection.includes(title))) {
+        
+        // Only emit selection changes if we actually dragged
+        if (wasDragging && (selectedEvents.value.length !== dragSelection.value.initialSelection.length || 
+            !selectedEvents.value.every(title => dragSelection.value.initialSelection.includes(title)))) {
           emit('clear-event-selection') // Clear first
           selectedEvents.value.forEach(title => emit('toggle-event-selection', title))
         }
+        
+        // Reset drag state after a short delay to allow click handler to check
+        setTimeout(() => {
+          dragSelection.value.hasDragged = false
+        }, 10)
       }
     }
     
     const handleEventCardClick = (eventTitle, event) => {
-      // If we're in the middle of a drag selection, don't toggle
-      if (dragSelection.value.active) {
+      // If we just finished dragging, don't toggle selection
+      if (dragSelection.value.hasDragged) {
+        dragSelection.value.hasDragged = false
         return
       }
       toggleEventSelection(eventTitle)
