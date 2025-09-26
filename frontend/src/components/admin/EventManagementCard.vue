@@ -28,7 +28,7 @@
         >
           <span>📋</span>
           <span>All Events</span>
-          <span class="text-xs opacity-75">({{ recurringEvents.length }})</span>
+          <span v-if="selectedEvents.length === 0" class="text-xs opacity-75">({{ recurringEvents.length }})</span>
         </button>
         
         <!-- Unassigned Button -->
@@ -44,7 +44,7 @@
         >
           <span>❔</span>
           <span>Unassigned</span>
-          <span class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
+          <span v-if="selectedEvents.length === 0" class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
           <!-- Selection indicator -->
           <span 
             v-if="selectedEvents.length > 0 && getSelectedEventsInGroup('unassigned') > 0"
@@ -78,7 +78,7 @@
             class="min-w-0 bg-transparent border-none outline-none text-inherit font-medium"
             :style="{ width: Math.max(50, editingGroupName.length * 8) + 'px' }"
           />
-          <span class="text-xs opacity-75">({{ getGroupEventCount(group.id) }})</span>
+          <span v-if="selectedEvents.length === 0" class="text-xs opacity-75">({{ getGroupEventCount(group.id) }})</span>
           <!-- Selection indicator -->
           <span 
             v-if="selectedEvents.length > 0 && getSelectedEventsInGroup(group.id) > 0"
@@ -409,6 +409,7 @@
               Clear Selection
             </button>
             <button
+              v-if="hasHiddenSelectedEvents || showSelectedOnly"
               @click="showAllSelectedEvents"
               :class="[
                 'px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 border',
