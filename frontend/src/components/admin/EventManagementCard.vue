@@ -417,47 +417,27 @@
       </div>
       
       <!-- Events Card Grid -->
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-        <!-- Card Grid Header -->
-        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <input
-              type="checkbox"
-              :checked="isAllEventsSelected"
-              :indeterminate="isSomeEventsSelected && !isAllEventsSelected"
-              @change="toggleSelectAllEvents"
-              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              :title="`Select all ${filteredEvents.length} visible events`"
-            />
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Events</span>
-          </div>
-          <div class="text-xs text-gray-500 dark:text-gray-400">
-            {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }}
-          </div>
-        </div>
-        
-        <!-- Cards Container -->
-        <div class="p-4">
-          <div class="grid gap-3" :class="{
-            'grid-cols-1': filteredEvents.length === 1,
-            'grid-cols-1 sm:grid-cols-2': filteredEvents.length === 2,
-            'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3': filteredEvents.length >= 3 && filteredEvents.length <= 6,
-            'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4': filteredEvents.length > 6
-          }">
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+        <div class="grid gap-2" :class="{
+          'grid-cols-1': filteredEvents.length === 1,
+          'grid-cols-1 sm:grid-cols-2': filteredEvents.length === 2,
+          'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3': filteredEvents.length >= 3 && filteredEvents.length <= 6,
+          'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4': filteredEvents.length > 6
+        }">
             <!-- Event Cards -->
             <div
               v-for="event in filteredEvents"
               :key="event.title"
               @click="toggleEventSelection(event.title)"
               :class="[
-                'relative border rounded-lg p-4 cursor-pointer transition-all duration-200 hover:shadow-md',
+                'relative border rounded-lg p-3 cursor-pointer transition-all duration-200 hover:shadow-md',
                 selectedEvents.includes(event.title) 
                   ? 'border-blue-300 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20 shadow-md' 
                   : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
               ]"
             >
               <!-- Selection Checkbox -->
-              <div class="absolute top-3 right-3">
+              <div class="absolute top-2 right-2">
                 <input
                   type="checkbox"
                   :checked="selectedEvents.includes(event.title)"
@@ -467,36 +447,32 @@
                 />
               </div>
               
-              <!-- Event Title -->
-              <div class="pr-8 mb-3">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5">
-                  {{ event.title }}
-                </h3>
-              </div>
-              
-              <!-- Occurrence Count Badge -->
-              <div class="mb-3">
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                  <span class="text-xs">📅</span>
-                  {{ event.event_count }} occurrence{{ event.event_count !== 1 ? 's' : '' }}
-                </span>
+              <!-- Event Title with Count -->
+              <div class="pr-6 mb-2">
+                <div class="flex items-start gap-2">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 flex-shrink-0">
+                    {{ event.event_count }}
+                  </span>
+                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5 min-w-0">
+                    {{ event.title }}
+                  </h3>
+                </div>
               </div>
               
               <!-- Group Assignment -->
-              <div class="space-y-2">
-                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Groups</div>
+              <div class="space-y-1">
                 
                 <!-- Multi-Group Display -->
                 <div v-if="event.assigned_groups && event.assigned_groups.length > 0" class="flex flex-wrap gap-1">
                   <!-- Primary Group Badge -->
-                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
                     {{ event.assigned_groups[0].name }}
                   </span>
                   <!-- Additional Groups (max 2 more shown) -->
                   <span 
                     v-for="group in event.assigned_groups.slice(1, 2)" 
                     :key="group.id"
-                    class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
                   >
                     {{ group.name }}
                   </span>
@@ -508,10 +484,10 @@
                     <span 
                       @click="toggleGroupPopover(event.title)"
                       @click.stop
-                      class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                       :title="'Click to see all groups'"
                     >
-                      +{{ event.assigned_groups.length - 2 }} more
+                      +{{ event.assigned_groups.length - 2 }}
                     </span>
                     <!-- Groups Popover -->
                     <div 
@@ -545,11 +521,10 @@
                   </div>
                 </div>
                 <!-- Unassigned State -->
-                <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
+                <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
                   ❔ Unassigned
                 </span>
               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -823,6 +798,9 @@ export default {
     const toggleGroupFilter = (groupId, event) => {
       const isCtrlClick = event.ctrlKey || event.metaKey
       emit('toggle-group-filter', groupId, isCtrlClick, activeGroupFilters.value)
+      
+      // Clear search text when switching to group filters
+      eventSearch.value = ''
       
       // Exit selected-only mode when using normal filters
       showSelectedOnly.value = false
