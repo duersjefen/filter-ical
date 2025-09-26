@@ -216,17 +216,19 @@
       </div>
     </div>
     
-    <!-- Bulk Assignment Panel (shown when events are selected but not during drag) -->
-    <div v-if="selectedEvents.length > 0 && !dragSelection.active" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm">
-      <div v-if="selectedEvents.length > 1" class="flex items-center justify-center mb-3">
+    <!-- Bulk Assignment Panel (shown when events are selected, stays visible during drag to prevent layout shift) -->
+    <div v-if="selectedEvents.length > 0" class="bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-4 shadow-sm" :class="{ 'pointer-events-none opacity-75': dragSelection.active }">
+      <div class="flex items-center justify-center mb-3">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
             <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">{{ selectedEvents.length }}</span>
           </div>
           <div>
-            <h4 class="font-medium text-gray-900 dark:text-white">Bulk Actions</h4>
+            <h4 class="font-medium text-gray-900 dark:text-white">
+              {{ selectedEvents.length === 1 ? 'Event Actions' : 'Bulk Actions' }}
+            </h4>
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              {{ selectedEvents.length }} events selected
+              {{ selectedEvents.length === 1 ? '1 event selected' : `${selectedEvents.length} events selected` }}
             </p>
           </div>
         </div>
@@ -698,7 +700,10 @@ export default {
       startY: 0,
       currentX: 0,
       currentY: 0,
-      initialSelection: []
+      initialSelection: [],
+      dragThreshold: 10,
+      hasDragged: false,
+      isPotentialDrag: false
     })
     const deleteConfirmDialog = ref(null)
     const deleteConfirmMessage = ref('')
@@ -1244,14 +1249,15 @@ export default {
       
       const containerRect = event.currentTarget.getBoundingClientRect()
       dragSelection.value = {
-        active: true,
+        active: false, // Don't set active until we actually start dragging
         startX: event.clientX - containerRect.left,
         startY: event.clientY - containerRect.top,
         currentX: event.clientX - containerRect.left,
         currentY: event.clientY - containerRect.top,
         initialSelection: [...selectedEvents.value],
-        dragThreshold: 5, // Minimum distance to start drag
-        hasDragged: false
+        dragThreshold: 10, // Increased threshold for better click detection
+        hasDragged: false,
+        isPotentialDrag: true // Track that we might start dragging
       }
       
       // Prevent text selection during drag
@@ -1259,7 +1265,7 @@ export default {
     }
     
     const updateDragSelection = (event) => {
-      if (!dragSelection.value.active) return
+      if (!dragSelection.value.isPotentialDrag) return
       
       const containerRect = event.currentTarget.getBoundingClientRect()
       dragSelection.value.currentX = event.clientX - containerRect.left
@@ -1271,6 +1277,7 @@ export default {
       
       if (!dragSelection.value.hasDragged && (deltaX > dragSelection.value.dragThreshold || deltaY > dragSelection.value.dragThreshold)) {
         dragSelection.value.hasDragged = true
+        dragSelection.value.active = true // Only set active when we actually start dragging
       }
       
       // Only show selection rectangle and update selection after drag threshold
@@ -1317,13 +1324,12 @@ export default {
     }
     
     const endDragSelection = () => {
-      if (dragSelection.value.active) {
-        const wasDragging = dragSelection.value.hasDragged
-        dragSelection.value.active = false
-        
+      const wasDragging = dragSelection.value.active && dragSelection.value.hasDragged
+      
+      if (wasDragging) {
         // Only emit selection changes if we actually dragged
-        if (wasDragging && (selectedEvents.value.length !== dragSelection.value.initialSelection.length || 
-            !selectedEvents.value.every(title => dragSelection.value.initialSelection.includes(title)))) {
+        if (selectedEvents.value.length !== dragSelection.value.initialSelection.length || 
+            !selectedEvents.value.every(title => dragSelection.value.initialSelection.includes(title))) {
           emit('clear-event-selection') // Clear first
           selectedEvents.value.forEach(title => emit('toggle-event-selection', title))
         }
@@ -1333,6 +1339,10 @@ export default {
           dragSelection.value.hasDragged = false
         }, 10)
       }
+      
+      // Always reset the potential drag state
+      dragSelection.value.active = false
+      dragSelection.value.isPotentialDrag = false
     }
     
     const handleEventCardClick = (eventTitle, event) => {
