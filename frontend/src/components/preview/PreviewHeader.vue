@@ -17,7 +17,7 @@
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
         
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex-1">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 flex-1">
           🔍 {{ $t('preview.eventPreview') }}
         </h3>
       </div>
@@ -39,7 +39,7 @@
       </svg>
       
       <div class="flex-1">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
+        <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           🔍 {{ $t('preview.eventPreview') }}
         </h3>
         <p class="text-sm text-gray-600 dark:text-gray-400">

@@ -1,22 +1,22 @@
 <template>
-  <div class="p-4">
+  <div class="p-3 sm:p-4">
     <!-- Conditional Expand/Collapse All Buttons for Month View -->
     <div v-if="viewMode === 'month' && groups.length > 1" class="flex justify-start mb-2">
       <div class="flex gap-1">
         <button 
           v-if="!allExpanded"
           @click="expandAll"
-          class="text-xs px-1 py-0.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2 decoration-dotted hover:no-underline transition-all"
+          class="text-xs px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md font-medium transition-all duration-200"
         >
-          expand all
+          Expand All
         </button>
         <span v-if="!allExpanded && !allCollapsed" class="text-xs text-gray-400 dark:text-gray-500">·</span>
         <button 
           v-if="!allCollapsed"
           @click="collapseAll"
-          class="text-xs px-1 py-0.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2 decoration-dotted hover:no-underline transition-all"
+          class="text-xs px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md font-medium transition-all duration-200"
         >
-          collapse all
+          Collapse All
         </button>
       </div>
     </div>
@@ -31,7 +31,7 @@
           <!-- Minimal Month Toggle -->
           <div 
             @click="toggleGroupExpansion(group.name)"
-            class="flex items-center gap-2 py-1 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm transition-colors"
+            class="flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
           >
             <svg 
               class="w-3 h-3 transition-transform duration-200 text-gray-500 dark:text-gray-400" 
@@ -41,29 +41,21 @@
             >
               <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
-            <span class="font-medium text-gray-700 dark:text-gray-300">{{ group.name }}</span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">({{ group.events.length }})</span>
+            <span class="font-semibold text-gray-800 dark:text-gray-200">{{ group.name }}</span>
+            <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full font-medium">{{ group.events.length }}</span>
           </div>
           
           <!-- Events for this month -->
           <div v-if="expandedGroups.has(group.name)" class="ml-5 mb-4">
-            <div class="flex flex-col gap-2">
+            <div class="flex flex-col gap-1">
               <PreviewEventCard
-                v-for="event in group.events.slice(0, maxEventsPerGroup)" 
+                v-for="event in group.events" 
                 :key="event.uid"
                 :event="event"
                 :show-category="showCategoryInGroups"
                 :format-date-range="formatDateRange"
                 :get-recurring-event-key="getRecurringEventKey"
               />
-              
-              <!-- Show more indicator -->
-              <div 
-                v-if="group.events.length > maxEventsPerGroup" 
-                class="text-center text-gray-500 dark:text-gray-400 italic py-2 text-xs"
-              >
-                {{ $t('preview.andMoreEvents', { count: group.events.length - maxEventsPerGroup }) }}
-              </div>
             </div>
           </div>
         </template>
@@ -94,24 +86,16 @@
             </div>
             
             <!-- Group Content -->
-            <div v-if="expandedGroups.has(group.name)" class="p-4">
-              <div class="flex flex-col gap-3">
+            <div v-if="expandedGroups.has(group.name)" class="p-3 sm:p-4">
+              <div class="flex flex-col gap-2">
                 <PreviewEventCard
-                  v-for="event in group.events.slice(0, maxEventsPerGroup)" 
+                  v-for="event in group.events" 
                   :key="event.uid"
                   :event="event"
                   :show-category="showCategoryInGroups"
                   :format-date-range="formatDateRange"
                   :get-recurring-event-key="getRecurringEventKey"
                 />
-                
-                <!-- Show more indicator -->
-                <div 
-                  v-if="group.events.length > maxEventsPerGroup" 
-                  class="text-center text-gray-500 dark:text-gray-400 italic p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium mt-3"
-                >
-                  {{ $t('preview.andMoreEvents', { count: group.events.length - maxEventsPerGroup }) }}
-                </div>
               </div>
             </div>
           </div>
@@ -139,7 +123,6 @@ import PreviewEventCard from './PreviewEventCard.vue'
 const props = defineProps({
   groups: { type: Array, default: () => [] },
   viewMode: { type: String, default: 'category' },
-  maxEventsPerGroup: { type: Number, default: 10 },
   formatDateRange: { type: Function, required: true },
   getRecurringEventKey: { type: Function, required: true }
 })
