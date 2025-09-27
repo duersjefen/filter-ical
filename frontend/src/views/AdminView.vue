@@ -315,7 +315,10 @@ export default {
         const response = await rawRequest({
           method: 'GET',
           url: `${API_BASE_URL}/domains/${props.domain}/export-config`,
-          responseType: 'blob'
+          responseType: 'blob',
+          headers: {
+            'Accept': 'application/x-yaml'
+          }
         })
 
         // Create download

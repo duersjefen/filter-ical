@@ -447,12 +447,13 @@ export function useAdmin(domain) {
         return event.title?.toLowerCase().includes(searchValue) || false
       
       case 'description_contains':
-        return event.description?.toLowerCase().includes(searchValue) || false
+        // Use enhanced backend data: sample_description
+        const description = event.sample_description || ''
+        return description.toLowerCase().includes(searchValue)
       
       case 'category_contains':
-        // For now, we'll check if categories exist in event data
-        // This could be enhanced if we have category data available
-        const categories = event.categories || []
+        // Use enhanced backend data: sample_categories
+        const categories = event.sample_categories || []
         return Array.isArray(categories) && 
                categories.some(cat => cat.toLowerCase().includes(searchValue))
       

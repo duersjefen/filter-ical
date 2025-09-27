@@ -624,11 +624,23 @@ def get_available_recurring_events_with_assignments(db: Session, domain_key: str
             sample_event = events_data.get('events', [{}])[0]
             
             assigned_groups = assignment_map.get(title, [])
+            
+            # Extract rich sample event data for rule matching
+            sample_raw_ical = sample_event.get('raw_ical', '')
+            sample_description = sample_event.get('description', '')
+            
+            # Extract categories from raw iCal using existing backend function
+            from ..data.grouping import _extract_categories_from_raw_ical
+            sample_categories = _extract_categories_from_raw_ical(sample_raw_ical)
+            
             event_info = {
                 "title": title,
                 "event_count": events_data.get('event_count', 0),
                 "sample_start_time": sample_event.get('start'),  # Use 'start' from existing format
                 "sample_location": sample_event.get('location'),
+                "sample_description": sample_description,
+                "sample_raw_ical": sample_raw_ical,
+                "sample_categories": sample_categories,
                 "assigned_group_ids": assigned_groups,  # Multiple groups support
                 # Keep backward compatibility with single assignment
                 "assigned_group_id": assigned_groups[0] if assigned_groups else None

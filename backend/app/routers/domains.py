@@ -806,8 +806,9 @@ async def export_domain_config(
         # Check if client wants YAML format
         accept_header = request.headers.get('accept', '').lower()
         if 'application/x-yaml' in accept_header or 'text/yaml' in accept_header:
-            # Return raw YAML content
-            yaml_content = yaml.dump(export_config, default_flow_style=False, indent=2)
+            # Return raw YAML content with proper UTF-8 encoding
+            yaml_content = yaml.dump(export_config, default_flow_style=False, indent=2, 
+                                   allow_unicode=True, encoding=None)
             return Response(content=yaml_content, media_type="application/x-yaml")
         else:
             # Return JSON (default)

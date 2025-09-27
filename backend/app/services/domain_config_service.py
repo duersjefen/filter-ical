@@ -8,6 +8,8 @@ IMPERATIVE SHELL - Orchestrates pure functions with I/O operations.
 """
 
 import yaml
+import re
+import unicodedata
 from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 from sqlalchemy.orm import Session
@@ -19,6 +21,81 @@ from ..data.grouping import (
     validate_group_data, validate_assignment_rule_data,
     create_group_data, create_recurring_event_group_data, create_assignment_rule_data
 )
+
+
+def generate_semantic_id(group_name: str, existing_ids: set = None) -> str:
+    """
+    Generate a semantic ID from group name that matches domain YAML format.
+    
+    Args:
+        group_name: Display name of the group (e.g., "⚽ Fußball")
+        existing_ids: Set of existing IDs to avoid conflicts
+        
+    Returns:
+        Semantic ID (e.g., "fussball")
+        
+    Pure function - deterministic ID generation.
+    """
+    if existing_ids is None:
+        existing_ids = set()
+    
+    # Remove emojis and special characters
+    # First normalize Unicode characters
+    normalized = unicodedata.normalize('NFKD', group_name)
+    
+    # Remove emojis by filtering out emoji Unicode ranges
+    no_emoji = ''.join(char for char in normalized 
+                      if not (0x1F600 <= ord(char) <= 0x1F64F or  # Emoticons
+                             0x1F300 <= ord(char) <= 0x1F5FF or   # Misc Symbols
+                             0x1F680 <= ord(char) <= 0x1F6FF or   # Transport
+                             0x1F1E0 <= ord(char) <= 0x1F1FF or   # Flags
+                             0x2600 <= ord(char) <= 0x26FF or    # Misc symbols
+                             0x2700 <= ord(char) <= 0x27BF))     # Dingbats
+    
+    # Handle specific German and Norwegian characters before ASCII conversion
+    char_replacements = {
+        'ß': 'ss',       # German eszett
+        'ä': 'ae',       # German a-umlaut  
+        'ö': 'oe',       # German o-umlaut
+        'ü': 'ue',       # German u-umlaut
+        'Ä': 'Ae',       # German A-umlaut
+        'Ö': 'Oe',       # German O-umlaut
+        'Ü': 'Ue',       # German U-umlaut
+        'å': 'aa',       # Norwegian a-ring
+        'ø': 'oe',       # Norwegian o-slash
+        'æ': 'ae',       # Norwegian ae-ligature
+        'Å': 'Aa',       # Norwegian A-ring
+        'Ø': 'Oe',       # Norwegian O-slash
+        'Æ': 'Ae',       # Norwegian AE-ligature
+    }
+    
+    # Apply character replacements
+    text_with_replacements = no_emoji
+    for char, replacement in char_replacements.items():
+        text_with_replacements = text_with_replacements.replace(char, replacement)
+    
+    # Convert to lowercase and remove remaining accents
+    ascii_text = unicodedata.normalize('NFKD', text_with_replacements).encode('ascii', 'ignore').decode('ascii')
+    
+    # Replace spaces and special characters with underscores
+    clean_text = re.sub(r'[^\w\s]', '', ascii_text.lower())
+    slug = re.sub(r'\s+', '_', clean_text.strip())
+    
+    # Remove multiple consecutive underscores
+    slug = re.sub(r'_+', '_', slug).strip('_')
+    
+    # Handle empty result
+    if not slug:
+        slug = 'group'
+    
+    # Ensure uniqueness
+    base_slug = slug
+    counter = 1
+    while slug in existing_ids:
+        slug = f"{base_slug}_{counter}"
+        counter += 1
+    
+    return slug
 
 
 def load_domains_registry(domains_path: Path) -> Tuple[bool, Dict[str, Any], str]:
@@ -117,38 +194,49 @@ def export_domain_configuration(db: Session, domain_key: str) -> Tuple[bool, Dic
         if not domain_info:
             return False, {}, f"Domain '{domain_key}' not found in registry"
         
-        # Get groups
+        # Get groups and create semantic ID mapping
         groups = db.query(Group).filter(Group.domain_key == domain_key).all()
         groups_config = []
+        db_id_to_semantic_id = {}  # Map database ID to semantic ID
+        existing_semantic_ids = set()
+        
         for group in groups:
+            # Generate semantic ID from group name
+            semantic_id = generate_semantic_id(group.name, existing_semantic_ids)
+            existing_semantic_ids.add(semantic_id)
+            db_id_to_semantic_id[group.id] = semantic_id
+            
             groups_config.append({
-                "id": f"group_{group.id}",  # Create stable ID from database ID
+                "id": semantic_id,
                 "name": group.name,
-                "description": f"Group with {group.id} database ID"
+                "description": f"Group for {group.name.replace('🏐', 'volleyball').replace('⚽', 'football').replace('🥋', 'martial arts').replace('🏊', 'swimming').replace('👦', 'youth').replace('👶', 'children').replace('👴', 'seniors').replace('🎵', 'music').replace('📚', 'education').replace('⛪', 'religious').replace('🎉', 'events').replace('🇩🇪', 'German')} activities"
             })
         
-        # Get assignments organized by group
+        # Get assignments organized by group using semantic IDs
         assignments_config = {}
         assignments = db.query(RecurringEventGroup).filter(
             RecurringEventGroup.domain_key == domain_key
         ).all()
         
         for assignment in assignments:
-            group_id = f"group_{assignment.group_id}"
-            if group_id not in assignments_config:
-                assignments_config[group_id] = []
-            assignments_config[group_id].append(assignment.recurring_event_title)
+            semantic_id = db_id_to_semantic_id.get(assignment.group_id)
+            if semantic_id:
+                if semantic_id not in assignments_config:
+                    assignments_config[semantic_id] = []
+                assignments_config[semantic_id].append(assignment.recurring_event_title)
         
-        # Get assignment rules
+        # Get assignment rules using semantic IDs  
         rules = db.query(AssignmentRule).filter(AssignmentRule.domain_key == domain_key).all()
         rules_config = []
         for rule in rules:
-            rules_config.append({
-                "rule_type": rule.rule_type,
-                "rule_value": rule.rule_value,
-                "target_group_id": f"group_{rule.target_group_id}",
-                "description": f"Auto-assign rule for {rule.rule_type}"
-            })
+            semantic_id = db_id_to_semantic_id.get(rule.target_group_id)
+            if semantic_id:
+                rules_config.append({
+                    "rule_type": rule.rule_type,
+                    "rule_value": rule.rule_value,
+                    "target_group_id": semantic_id,
+                    "description": f"Auto-assign {rule.rule_type} containing '{rule.rule_value}'"
+                })
         
         # Build complete configuration
         export_config = {
@@ -205,18 +293,18 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
         db.query(AssignmentRule).filter(AssignmentRule.domain_key == domain_key).delete() 
         db.query(Group).filter(Group.domain_key == domain_key).delete()
         
-        # Create groups and build ID mapping
+        # Create groups and build ID mapping (supports both semantic IDs and legacy group_X format)
         groups_config = config['groups']
-        id_mapping = {}  # config_id -> database_id
+        id_mapping = {}  # semantic_id -> database_id
         
         for group_config in groups_config:
-            config_id = group_config['id']
+            semantic_id = group_config['id']  # Can be "fussball" or "group_1" 
             group_name = group_config['name']
             
             # Validate group data
             is_valid, error_msg = validate_group_data(group_name, domain_key)
             if not is_valid:
-                return False, f"Invalid group '{group_name}': {error_msg}"
+                return False, f"Invalid group '{group_name}' (ID: {semantic_id}): {error_msg}"
             
             # Create group
             group_data = create_group_data(domain_key, group_name)
@@ -224,15 +312,15 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
             db.add(new_group)
             db.flush()  # Get database ID
             
-            id_mapping[config_id] = new_group.id
+            id_mapping[semantic_id] = new_group.id
         
-        # Create assignments
+        # Create assignments using semantic IDs
         assignments_config = config['assignments']
-        for config_group_id, event_titles in assignments_config.items():
-            if config_group_id not in id_mapping:
-                return False, f"Unknown group ID in assignments: {config_group_id}"
+        for semantic_group_id, event_titles in assignments_config.items():
+            if semantic_group_id not in id_mapping:
+                return False, f"Unknown group ID in assignments: {semantic_group_id} (available: {list(id_mapping.keys())})"
             
-            db_group_id = id_mapping[config_group_id]
+            db_group_id = id_mapping[semantic_group_id]
             
             for event_title in event_titles:
                 assignment_data = create_recurring_event_group_data(
@@ -241,14 +329,14 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
                 assignment = RecurringEventGroup(**assignment_data)
                 db.add(assignment)
         
-        # Create assignment rules
+        # Create assignment rules using semantic IDs
         rules_config = config['rules']
         for rule_config in rules_config:
-            config_group_id = rule_config['target_group_id']
-            if config_group_id not in id_mapping:
-                return False, f"Unknown group ID in rules: {config_group_id}"
+            semantic_group_id = rule_config['target_group_id']
+            if semantic_group_id not in id_mapping:
+                return False, f"Unknown group ID in rules: {semantic_group_id} (available: {list(id_mapping.keys())})"
             
-            db_group_id = id_mapping[config_group_id]
+            db_group_id = id_mapping[semantic_group_id]
             
             # Validate rule data
             is_valid, error_msg = validate_assignment_rule_data(
