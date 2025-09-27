@@ -149,6 +149,67 @@ export function usePreview() {
         return dateA - dateB
       })
   }
+
+  /**
+   * Group events by year, then by month with deduplication
+   */
+  function groupEventsByYear(events) {
+    const yearGroups = {}
+    
+    events.forEach(event => {
+      const date = new Date(event.start || event.dtstart)
+      const year = date.getFullYear()
+      const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+      
+      // Initialize year group if doesn't exist
+      if (!yearGroups[year]) {
+        yearGroups[year] = {
+          year: year,
+          months: {},
+          totalEvents: 0
+        }
+      }
+      
+      // Initialize month within year if doesn't exist
+      if (!yearGroups[year].months[monthKey]) {
+        yearGroups[year].months[monthKey] = {
+          name: monthKey,
+          events: [],
+          seenIdentifiers: new Set()
+        }
+      }
+      
+      // Use consistent identifier strategy
+      const identifier = generateEventIdentifier(event)
+      
+      // Only add if we haven't seen this identifier in this month
+      if (!yearGroups[year].months[monthKey].seenIdentifiers.has(identifier)) {
+        yearGroups[year].months[monthKey].events.push(event)
+        yearGroups[year].months[monthKey].seenIdentifiers.add(identifier)
+        yearGroups[year].totalEvents++
+      }
+    })
+    
+    // Convert to final structure and sort
+    return Object.values(yearGroups)
+      .map(yearGroup => ({
+        year: yearGroup.year,
+        totalEvents: yearGroup.totalEvents,
+        months: Object.values(yearGroup.months)
+          .filter(month => month.events.length > 0)
+          .map(month => ({
+            name: month.name,
+            events: month.events
+          }))
+          .sort((a, b) => {
+            const dateA = new Date(a.events[0].start || a.events[0].dtstart)
+            const dateB = new Date(b.events[0].start || b.events[0].dtstart)
+            return dateA - dateB
+          })
+      }))
+      .filter(yearGroup => yearGroup.months.length > 0)
+      .sort((a, b) => a.year - b.year)
+  }
   
   // ===============================================
   // COMPUTED GROUPED EVENTS
@@ -182,6 +243,7 @@ export function usePreview() {
     // Grouping functions
     groupEventsByCategory,
     groupEventsByMonth,
+    groupEventsByYear,
     getGroupedEventsByCategory,
     getGroupedEventsByMonth,
     

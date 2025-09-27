@@ -1,22 +1,21 @@
 <template>
   <div class="p-3 sm:p-4">
-    <!-- Conditional Expand/Collapse All Buttons for Month View -->
-    <div v-if="viewMode === 'month' && groups.length > 1" class="flex justify-start mb-2">
+    <!-- Minimal Expand/Collapse All Buttons -->
+    <div v-if="(viewMode === 'month' || viewMode === 'year') && groups.length > 1" class="flex justify-start mb-3">
       <div class="flex gap-1">
         <button 
           v-if="!allExpanded"
           @click="expandAll"
-          class="text-xs px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md font-medium transition-all duration-200"
+          class="px-2 py-1 text-xs font-medium rounded transition-colors bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/40 dark:hover:bg-blue-800/60 dark:text-blue-300"
         >
-          Expand All
+          Expand All {{ viewMode === 'year' ? 'Years' : 'Months' }}
         </button>
-        <span v-if="!allExpanded && !allCollapsed" class="text-xs text-gray-400 dark:text-gray-500">·</span>
         <button 
           v-if="!allCollapsed"
           @click="collapseAll"
-          class="text-xs px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md font-medium transition-all duration-200"
+          class="px-2 py-1 text-xs font-medium rounded transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
         >
-          Collapse All
+          Collapse All {{ viewMode === 'year' ? 'Years' : 'Months' }}
         </button>
       </div>
     </div>
@@ -24,30 +23,124 @@
     <div class="flex flex-col gap-1">
       <div 
         v-for="group in groups" 
-        :key="group.name"
+        :key="viewMode === 'year' ? group.year : group.name"
       >
-        <!-- Minimal Month Header for month view, Full card for category view -->
-        <template v-if="viewMode === 'month'">
-          <!-- Minimal Month Toggle -->
+        <!-- Year View with Nested Months -->
+        <template v-if="viewMode === 'year'">
+          <!-- Year Header -->
+          <div 
+            @click="toggleGroupExpansion(group.year)"
+            class="flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg text-sm transition-colors border border-transparent hover:border-purple-200 dark:hover:border-purple-700 group"
+          >
+            <!-- Year expansion icon -->
+            <svg 
+              class="w-4 h-4 transition-transform duration-200 text-purple-500 dark:text-purple-400" 
+              :class="{ 'rotate-90': expandedGroups.has(group.year) }"
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            
+            <!-- Year title -->
+            <div class="flex-1">
+              <span class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                📅 {{ group.year }}
+              </span>
+            </div>
+            
+            <!-- Year event count -->
+            <span class="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full font-medium">
+              {{ group.totalEvents }}
+            </span>
+          </div>
+          
+          <!-- Nested Months for this Year -->
+          <div v-if="expandedGroups.has(group.year)" class="ml-6 mb-3">
+            <div class="space-y-1">
+              <div
+                v-for="month in group.months"
+                :key="month.name"
+              >
+                <!-- Month Header (nested under year) -->
+                <div 
+                  @click="toggleGroupExpansion(month.name)"
+                  class="flex items-center gap-2 py-1.5 px-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-sm transition-colors border border-transparent hover:border-blue-200 dark:hover:border-blue-700 group"
+                >
+                  <svg 
+                    class="w-3 h-3 transition-transform duration-200 text-blue-500 dark:text-blue-400" 
+                    :class="{ 'rotate-90': expandedGroups.has(month.name) }"
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                  
+                  <div class="flex-1">
+                    <span class="font-medium text-gray-800 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                      {{ month.name.split(' ')[0] }} <!-- Just month name, not year -->
+                    </span>
+                  </div>
+                  
+                  <span class="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full font-medium">
+                    {{ month.events.length }}
+                  </span>
+                </div>
+                
+                <!-- Events for this month -->
+                <div v-if="expandedGroups.has(month.name)" class="ml-6 mb-2">
+                  <div class="bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <PreviewEventCard
+                      v-for="event in month.events" 
+                      :key="event.uid"
+                      :event="event"
+                      :show-category="showCategoryInGroups"
+                      :format-date-range="formatDateRange"
+                      :get-recurring-event-key="getRecurringEventKey"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Enhanced Month Header -->
+        <template v-else-if="viewMode === 'month'">
           <div 
             @click="toggleGroupExpansion(group.name)"
-            class="flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
+            class="flex items-center gap-3 py-1.5 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
+            <!-- Compact expansion icon -->
             <svg 
-              class="w-3 h-3 transition-transform duration-200 text-gray-500 dark:text-gray-400" 
+              class="w-3 h-3 transition-transform duration-200 text-gray-400 dark:text-gray-500" 
               :class="{ 'rotate-90': expandedGroups.has(group.name) }"
               fill="currentColor" 
               viewBox="0 0 20 20"
             >
               <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
-            <span class="font-semibold text-gray-800 dark:text-gray-200">{{ group.name }}</span>
-            <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full font-medium">{{ group.events.length }}</span>
+            
+            <!-- Month title with improved typography -->
+            <div class="flex-1 flex items-baseline gap-2">
+              <span class="font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                {{ getMonthName(group.name) }}
+              </span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                {{ getYearFromMonth(group.name) }}
+              </span>
+            </div>
+            
+            <!-- Enhanced event count with context -->
+            <div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+              <span class="font-medium tabular-nums">{{ group.events.length }}</span>
+              <span class="hidden sm:inline">{{ group.events.length === 1 ? 'event' : 'events' }}</span>
+            </div>
           </div>
           
-          <!-- Events for this month -->
-          <div v-if="expandedGroups.has(group.name)" class="ml-5 mb-4">
-            <div class="flex flex-col gap-1">
+          <!-- Minimal Events List -->
+          <div v-if="expandedGroups.has(group.name)" class="ml-6 mb-3">
+            <div class="bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
               <PreviewEventCard
                 v-for="event in group.events" 
                 :key="event.uid"
@@ -102,13 +195,13 @@
         </template>
       </div>
       
-      <!-- Empty State -->
-      <div v-if="groups.length === 0" class="text-center py-8 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-        <div class="text-4xl mb-3">📂</div>
-        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+      <!-- Minimal Empty State -->
+      <div v-if="groups.length === 0" class="text-center py-6 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+        <div class="text-2xl mb-2">📂</div>
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
           {{ $t('preview.noGroupsToShow') }}
         </h3>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-xs text-gray-600 dark:text-gray-400">
           {{ $t('preview.selectEventsToSeeGroupedPreview') }}
         </p>
       </div>
@@ -135,9 +228,21 @@ const showCategoryInGroups = computed(() => props.viewMode === 'month')
 
 // Watch for groups changes and default all to expanded
 watch(() => props.groups, (newGroups) => {
+  // Clear existing expanded groups
+  expandedGroups.value.clear()
+  
   // Default all groups to expanded
   newGroups.forEach(group => {
-    expandedGroups.value.add(group.name)
+    if (props.viewMode === 'year') {
+      // For year view, expand years and their months
+      expandedGroups.value.add(group.year)
+      group.months?.forEach(month => {
+        expandedGroups.value.add(month.name)
+      })
+    } else {
+      // For month/category view, expand by name
+      expandedGroups.value.add(group.name)
+    }
   })
 }, { immediate: true })
 
@@ -152,17 +257,40 @@ const toggleGroupExpansion = (groupName) => {
 
 // Computed properties for conditional buttons
 const allExpanded = computed(() => {
-  return props.groups.length > 0 && props.groups.every(group => expandedGroups.value.has(group.name))
+  if (props.groups.length === 0) return false
+  
+  if (props.viewMode === 'year') {
+    return props.groups.every(group => {
+      const yearExpanded = expandedGroups.value.has(group.year)
+      const monthsExpanded = group.months?.every(month => expandedGroups.value.has(month.name)) ?? true
+      return yearExpanded && monthsExpanded
+    })
+  } else {
+    return props.groups.every(group => expandedGroups.value.has(group.name))
+  }
 })
 
 const allCollapsed = computed(() => {
-  return props.groups.length > 0 && props.groups.every(group => !expandedGroups.value.has(group.name))
+  if (props.groups.length === 0) return false
+  
+  if (props.viewMode === 'year') {
+    return props.groups.every(group => !expandedGroups.value.has(group.year))
+  } else {
+    return props.groups.every(group => !expandedGroups.value.has(group.name))
+  }
 })
 
 // Expand/Collapse all methods
 const expandAll = () => {
   props.groups.forEach(group => {
-    expandedGroups.value.add(group.name)
+    if (props.viewMode === 'year') {
+      expandedGroups.value.add(group.year)
+      group.months?.forEach(month => {
+        expandedGroups.value.add(month.name)
+      })
+    } else {
+      expandedGroups.value.add(group.name)
+    }
   })
 }
 
@@ -181,5 +309,15 @@ const getGroupHeaderClass = (viewMode) => {
   }
   
   return `${baseClass} bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 hover:from-purple-600 hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800`
+}
+
+// Extract month name from "Month Year" format
+const getMonthName = (monthString) => {
+  return monthString.split(' ')[0]
+}
+
+// Extract year from "Month Year" format  
+const getYearFromMonth = (monthString) => {
+  return monthString.split(' ')[1]
 }
 </script>
