@@ -60,7 +60,7 @@
               </div>
               
               <!-- Current Year Events -->
-              <div v-if="expandedGroups.has(month.name)" class="ml-6 mb-3">
+              <div v-if="expandedGroups.has(month.name)" class="mb-3">
                 <PreviewEventCard
                   v-for="event in month.events" 
                   :key="event.uid"
@@ -102,7 +102,7 @@
               </div>
               
               <!-- Other Year Months (when expanded) -->
-              <div v-if="expandedGroups.has(group.year)" class="ml-6 space-y-1">
+              <div v-if="expandedGroups.has(group.year)" class="space-y-1">
                 <div
                   v-for="month in group.months"
                   :key="month.name"
@@ -133,7 +133,7 @@
                   </div>
                   
                   <!-- Events for this month -->
-                  <div v-if="expandedGroups.has(month.name)" class="ml-5 mb-2">
+                  <div v-if="expandedGroups.has(month.name)" class="mb-2">
                     <PreviewEventCard
                       v-for="event in month.events" 
                       :key="event.uid"
@@ -182,7 +182,7 @@
           </div>
           
           <!-- Natural Events List -->
-          <div v-if="expandedGroups.has(group.name)" class="ml-6 mb-4 space-y-0">
+          <div v-if="expandedGroups.has(group.name)" class="mb-4 space-y-0">
             <PreviewEventCard
               v-for="event in group.events" 
               :key="event.uid"
