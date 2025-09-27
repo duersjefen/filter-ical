@@ -108,7 +108,7 @@
         <!-- Admin Panel Button (Domain views only, Desktop only) -->
         <button
           v-if="domainContext"
-          @click="router.push(`/${domainContext.id}/admin`)"
+          @click="router.push(`/${domainContext.domain_key}/admin`)"
           class="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-md items-center justify-center group"
           :title="$t('admin.adminPanel')"
         >
