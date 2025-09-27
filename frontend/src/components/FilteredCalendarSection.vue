@@ -1,29 +1,37 @@
 <template>
   <div 
     v-if="shouldShowSection" 
-    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4"
+    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4 hover:shadow-xl transition-shadow duration-300"
   >
     <div 
-      class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:from-slate-200 hover:to-slate-100 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200"
+      class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-5 lg:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:from-slate-200 hover:to-slate-100 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-300 group"
       @click="toggleExpanded"
       :title="isExpanded ? $t('filteredCalendar.minimizeSection') : $t('filteredCalendar.expandSection')"
     >
-      <div class="flex items-center gap-3">
-        <!-- Chevron icon (moved to left, matching groups card) -->
+      <div class="flex items-center gap-4">
+        <!-- Enhanced chevron icon with better animation -->
         <svg 
-          class="w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300 flex-shrink-0" 
-          :class="{ 'rotate-90': isExpanded }"
+          class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-all duration-300 flex-shrink-0" 
+          :class="{ 'rotate-90 text-blue-600 dark:text-blue-400': isExpanded }"
           fill="currentColor" 
           viewBox="0 0 20 20"
         >
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
         
-        <div class="flex-1">
-          <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            🔗 {{ $t('filteredCalendar.title') }}
-          </h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+        <!-- Enhanced header content with better visual hierarchy -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-3 mb-2">
+            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+              🔗 {{ $t('filteredCalendar.title') }}
+            </h3>
+            <!-- Status badge showing count of filtered calendars -->
+            <div v-if="filteredCalendars.length > 0" 
+                 class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm font-semibold rounded-full border border-blue-200 dark:border-blue-700">
+              {{ filteredCalendars.length }}
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>
@@ -100,58 +108,78 @@
             />
           </div>
 
-          <!-- Concise Groups Overview -->
-          <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600">
+          <!-- Enhanced Groups Overview with improved visual design -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
             <!-- Groups Display for Group-enabled Calendars -->
             <div v-if="hasGroups && groups && Object.keys(groups).length > 0">
-              <!-- Compact Groups Grid -->
-              <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              <!-- Enhanced Groups Grid with better spacing -->
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 <div 
                   v-for="(group, groupId) in groups" 
                   :key="groupId"
-                  class="relative bg-gray-50 dark:bg-gray-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600"
+                  class="relative bg-white dark:bg-gray-800 rounded-xl p-3 border shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105"
+                  :class="getGroupDisplayClass(groupId)"
                 >
-                  <!-- Status indicator stripe -->
+                  <!-- Enhanced status indicator with gradient -->
                   <div 
-                    class="absolute top-0 left-0 right-0 h-1 rounded-t-lg"
+                    class="absolute top-0 left-0 right-0 h-1.5 rounded-t-xl transition-all duration-300"
                     :class="getProgressBarClass(groupId)"
                   ></div>
                   
-                  <!-- Group Content -->
-                  <div class="pt-0.5">
-                    <!-- Group Name with Icon -->
-                    <div class="flex items-center gap-1.5 mb-1.5">
-                      <span class="text-sm">{{ getGroupDisplayName(group).split(' ')[0] || '📋' }}</span>
-                      <span class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  <!-- Group Content with improved layout -->
+                  <div class="pt-1">
+                    <!-- Group Name with better typography -->
+                    <div class="flex items-start gap-2 mb-2">
+                      <span class="text-lg leading-none">{{ getGroupDisplayName(group).split(' ')[0] || '📋' }}</span>
+                      <span class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight line-clamp-2 flex-1">
                         {{ getGroupDisplayName(group).substring(getGroupDisplayName(group).indexOf(' ') + 1) || group.name }}
                       </span>
                     </div>
                     
-                    <!-- Count and Status -->
-                    <div class="flex items-center justify-between">
-                      <!-- Count Badge -->
-                      <span 
-                        class="px-2 py-0.5 rounded-md text-xs font-bold" 
-                        :class="getCountDisplayClass(groupId)"
-                      >
-                        {{ getGroupSelectedCount(groupId) }}/{{ getGroupTotalCount(group) }}
-                      </span>
+                    <!-- Enhanced Count and Status display -->
+                    <div class="flex items-center justify-between mt-2">
+                      <!-- Improved Count Badge -->
+                      <div class="flex items-center gap-1">
+                        <span 
+                          class="px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm border" 
+                          :class="getCountDisplayClass(groupId)"
+                        >
+                          {{ getGroupSelectedCount(groupId) }}/{{ getGroupTotalCount(group) }}
+                        </span>
+                      </div>
                       
-                      <!-- Status Dot with better visibility -->
-                      <div 
-                        class="w-2 h-2 rounded-full border border-white dark:border-gray-800" 
-                        :class="getGroupSubscriptionDotClass(groupId)"
-                        :title="getGroupSubscriptionStatus(groupId)"
-                      ></div>
+                      <!-- Enhanced Status Indicator -->
+                      <div class="flex items-center gap-1">
+                        <div 
+                          class="w-3 h-3 rounded-full border-2 border-white dark:border-gray-700 shadow-sm" 
+                          :class="getGroupSubscriptionDotClass(groupId)"
+                          :title="getGroupSubscriptionStatus(groupId)"
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+              
+              <!-- Summary stats below grid -->
+              <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-600 dark:text-gray-400">
+                    {{ Object.keys(groups).length }} total groups
+                  </span>
+                  <span class="text-gray-600 dark:text-gray-400">
+                    {{ reactiveGroupBreakdown }}
+                  </span>
+                </div>
+              </div>
             </div>
             
-            <!-- Fallback for Non-Group Calendars -->
-            <div v-else class="text-sm text-gray-600 dark:text-gray-400">
-              {{ reactiveGroupBreakdown || $t('preview.noEventsSelected') }}
+            <!-- Enhanced fallback for Non-Group Calendars -->
+            <div v-else class="text-center py-4">
+              <div class="text-gray-500 dark:text-gray-400 text-lg mb-2">📂</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                {{ reactiveGroupBreakdown || $t('preview.noEventsSelected') }}
+              </div>
             </div>
           </div>
 
@@ -184,104 +212,149 @@
         </form>
       </div>
 
-      <!-- Existing Filtered Calendars (hidden during update mode) -->
-      <div v-if="filteredCalendars.length > 0 && !isUpdateMode">
-        <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">
-          {{ $t('filteredCalendar.yourFiltered') }} ({{ filteredCalendars.length }})
-        </h4>
+      <!-- Enhanced Existing Filtered Calendars Section -->
+      <div v-if="filteredCalendars.length > 0 && !isUpdateMode" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h4 class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            📋 {{ $t('filteredCalendar.yourFiltered') }}
+            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm font-semibold rounded-lg">
+              {{ filteredCalendars.length }}
+            </span>
+          </h4>
+        </div>
         
-        <div class="space-y-2">
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           <div
             v-for="calendar in filteredCalendars"
             :key="calendar.id"
-            class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+            class="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
           >
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <h5 class="font-medium text-gray-800 dark:text-gray-200">
-                    {{ calendar.name }}
-                  </h5>
-                  <button
-                    @click="startEditForm(calendar)"
-                    class="inline-flex items-center p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-300 transform hover:scale-[1.1] active:scale-[0.95]"
-                    :title="$t('common.edit')"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                  </button>
+            <!-- Calendar Header with Inline Editing -->
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                  <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                 </div>
                 
-                <!-- Compact Filter Summary -->
-                <div class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  <!-- Single line with filter info and date -->
-                  <div class="flex items-center gap-3 text-xs mb-2">
-                    <!-- Filter badge -->
-                    <span v-if="getFilterSummary(calendar.filter_config).hasFilter" 
-                          :class="getFilterSummary(calendar.filter_config).badgeClass">
-                      {{ getFilterSummary(calendar.filter_config).text }}
-                    </span>
-                    <span v-else
-                          class="bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200 px-2 py-1 rounded font-medium">
-                      📋 All events
-                    </span>
+                <!-- Inline Edit Name -->
+                <div class="flex-1 min-w-0">
+                  <div v-if="editingCalendarId === calendar.id" class="flex items-center gap-2">
+                    <input
+                      v-model="editForm.name"
+                      @keyup.enter="updateFilteredCalendar"
+                      @keyup.escape="cancelInlineEdit"
+                      @blur="updateFilteredCalendar"
+                      ref="inlineEditInput"
+                      class="flex-1 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded-lg px-3 py-1.5 text-lg font-bold text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      :disabled="updating"
+                    />
+                    <button
+                      @click="updateFilteredCalendar"
+                      :disabled="updating || !editForm.name.trim()"
+                      class="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200 disabled:opacity-50"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </button>
+                    <button
+                      @click="cancelInlineEdit"
+                      class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div v-else class="flex items-center gap-2 group/name cursor-pointer" @click="startInlineEdit(calendar)">
+                    <h5 class="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight">
+                      {{ calendar.name }}
+                    </h5>
+                    <div class="opacity-0 group-hover/name:opacity-100 transition-opacity duration-200">
+                      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Calendar Content -->
+            <div class="p-4">
+              <div class="flex-1">
+                
+                <!-- Enhanced Filter Summary with better visual hierarchy -->
+                <div class="space-y-3 mb-4">
+                  <!-- Filter Badge - Primary Visual Element -->
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span v-if="getFilterSummary(calendar.filter_config).hasFilter" 
+                            :class="getFilterSummary(calendar.filter_config).badgeClass + ' text-sm font-semibold px-3 py-1.5 rounded-lg border shadow-sm'">
+                        {{ getFilterSummary(calendar.filter_config).text }}
+                      </span>
+                      <span v-else
+                            class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded-lg font-semibold text-sm border border-gray-200 dark:border-gray-600 shadow-sm">
+                        📋 All events
+                      </span>
+                    </div>
                     
-                    <!-- Date info -->
-                    <span class="text-gray-500 dark:text-gray-400">
+                    <!-- Date info with improved styling -->
+                    <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
                       <span v-if="calendar.updated_at && calendar.updated_at !== calendar.created_at">
                         Updated {{ formatCreatedDate(calendar.updated_at) }}
                       </span>
                       <span v-else>
                         Created {{ formatCreatedDate(calendar.created_at) }}
                       </span>
-                    </span>
+                    </div>
                   </div>
                   
-                  <!-- Filter details display -->
-                  <div class="text-xs text-gray-600 dark:text-gray-300">
-                    <div v-if="hasGroups && calendar.filter_config?.groups?.length > 0">
-                      <!-- Group-based filter display -->
-                      <div class="flex flex-wrap gap-2 mb-2">
-                        <span 
-                          v-for="groupId in calendar.filter_config.groups" 
-                          :key="groupId"
-                          v-if="groups[groupId]"
-                          class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
-                        >
-                          <span>{{ getGroupDisplayName(groups[groupId]) }}</span>
-                        </span>
-                      </div>
-                    </div>
-                    <!-- Remove redundant individual events display since we show it in the badge above -->
-                  </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2 mt-2">
-                  <button
-                    @click="copyToClipboard(getFullExportUrl(calendar))"
-                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-xs transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[36px] border-2"
-                    :class="copySuccess === getFullExportUrl(calendar) 
-                      ? 'bg-green-500 text-white hover:bg-green-600 border-green-400 hover:border-green-500' 
-                      : 'bg-blue-500 text-white hover:bg-blue-600 border-blue-400 hover:border-blue-500'"
-                  >
-                    <span>{{ copySuccess === getFullExportUrl(calendar) 
-                      ? $t('filteredCalendar.copied') 
-                      : $t('filteredCalendar.copyUrl') }}</span>
-                  </button>
+                <!-- Enhanced Action Buttons with better visual hierarchy -->
+                <div class="flex flex-col sm:flex-row gap-2 mt-3">
+                  <!-- Primary Actions (first row on mobile) -->
+                  <div class="flex gap-2 flex-1">
+                    <button
+                      @click="copyToClipboard(getFullExportUrl(calendar))"
+                      class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md border"
+                      :class="copySuccess === getFullExportUrl(calendar) 
+                        ? 'bg-green-500 text-white hover:bg-green-600 border-green-400 hover:border-green-500' 
+                        : 'bg-blue-500 text-white hover:bg-blue-600 border-blue-400 hover:border-blue-500'"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                      </svg>
+                      <span>{{ copySuccess === getFullExportUrl(calendar) 
+                        ? $t('filteredCalendar.copied') 
+                        : $t('filteredCalendar.copyUrl') }}</span>
+                    </button>
+                    
+                    <button
+                      @click="loadFilterIntoPage(calendar)"
+                      class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md border border-amber-400 hover:border-amber-500"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                      <span>{{ $t('filteredCalendar.updateFilter') }}</span>
+                    </button>
+                  </div>
                   
-                  <button
-                    @click="loadFilterIntoPage(calendar)"
-                    class="inline-flex items-center gap-2 px-3 py-2 bg-amber-500 text-white hover:bg-amber-600 rounded-xl font-semibold text-xs transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[36px] border-2 border-amber-400 hover:border-amber-500"
-                  >
-                    <span>{{ $t('filteredCalendar.updateFilter') }}</span>
-                  </button>
-                  
+                  <!-- Destructive Action (separate for emphasis) -->
                   <button
                     @click="deleteFilteredCalendar(calendar.id)"
-                    class="inline-flex items-center gap-2 px-3 py-2 bg-red-500 text-white hover:bg-red-600 rounded-xl font-semibold text-xs transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[36px] border-2 border-red-400 hover:border-red-500"
+                    class="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md border border-red-400 hover:border-red-500 sm:w-auto w-full"
                     @click.stop
                   >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
                     <span>{{ $t('common.delete') }}</span>
                   </button>
                 </div>
@@ -291,101 +364,47 @@
         </div>
       </div>
 
-      <!-- Empty state - only show if no existing calendars and no events selected (and not in update mode) -->
-      <div v-else-if="filteredCalendars.length === 0 && selectedRecurringEvents.length === 0 && !isUpdateMode" class="text-center py-6">
-        <div class="text-6xl mb-4">📅</div>
-        <p class="text-gray-600 dark:text-gray-300 mb-4">
-          {{ $t('filteredCalendar.noFiltered') }}
-        </p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ $t('filteredCalendar.getStarted') }}
-        </p>
+      <!-- Enhanced Empty State -->
+      <div v-else-if="filteredCalendars.length === 0 && selectedRecurringEvents.length === 0 && !isUpdateMode" class="text-center py-8">
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-600">
+          <div class="text-6xl mb-4">📅</div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+            {{ $t('filteredCalendar.noFiltered') }}
+          </h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+            {{ $t('filteredCalendar.getStarted') }}
+          </p>
+          <!-- Visual guide -->
+          <div class="mt-6 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-md font-medium">
+              Select events above
+            </span>
+            <span>→</span>
+            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-md font-medium">
+              Create filter
+            </span>
+          </div>
+        </div>
       </div>
 
-      <!-- Loading state - only show if not creating/updating (avoid double loading indicators) -->
-      <div v-if="loading && !creating && !updating" class="text-center py-4">
-        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-        <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ $t('filteredCalendar.loadingCalendars') }}</p>
+      <!-- Enhanced Loading State -->
+      <div v-if="loading && !creating && !updating" class="text-center py-6">
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-700">
+          <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+          </div>
+          <h3 class="text-base font-semibold text-blue-900 dark:text-blue-100 mb-1">
+            {{ $t('filteredCalendar.loadingCalendars') }}
+          </h3>
+          <p class="text-sm text-blue-700 dark:text-blue-300">
+            Fetching your saved calendar filters...
+          </p>
+        </div>
       </div>
       </div>
     </div>
   </div>
 
-  <!-- Edit Modal -->
-  <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="cancelEditForm">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 transform transition-all duration-300" @click.stop>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-          </svg>
-        </div>
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-          {{ $t('filteredCalendar.editTitle') }}
-        </h3>
-      </div>
-      
-      <!-- Success feedback -->
-      <div v-if="editSuccess" class="mb-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-        <div class="flex items-center gap-2 text-green-800 dark:text-green-200">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-          </svg>
-          <span class="text-sm font-medium">{{ $t('filteredCalendar.calendarNameUpdated') }}</span>
-        </div>
-      </div>
-      
-      <form @submit.prevent="updateFilteredCalendar" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {{ $t('filteredCalendar.name') }}
-          </label>
-          <input
-            v-model="editForm.name"
-            type="text"
-            required
-            class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-all duration-200"
-            :disabled="updating"
-            ref="editNameInput"
-          />
-        </div>
-
-        <div class="flex gap-3 pt-2">
-          <button
-            type="submit"
-            :disabled="updating || !editForm.name.trim() || editSuccess"
-            class="flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 text-white shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2"
-            :class="{
-              'bg-green-500 border-green-400 cursor-not-allowed': editSuccess,
-              'bg-gray-400 border-gray-300 cursor-not-allowed': updating,
-              'bg-blue-500 hover:bg-blue-600 border-blue-400 hover:border-blue-500': !editSuccess && !updating,
-              'disabled:bg-gray-400 disabled:border-gray-300 disabled:cursor-not-allowed': !editSuccess && !updating
-            }"
-          >
-            <svg v-if="updating" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <svg v-else-if="editSuccess" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-            </svg>
-            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            {{ editSuccess ? $t('common.saved') : (updating ? $t('filteredCalendar.saving') : $t('common.save')) }}
-          </button>
-          <button
-            type="button"
-            @click="cancelEditForm"
-            :disabled="updating"
-            class="px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ $t('common.cancel') }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Confirm Dialog -->
   <ConfirmDialog
@@ -464,7 +483,6 @@ const {
 
 // Reactive state
 const isExpanded = ref(true) // Start expanded by default
-const showEditModal = ref(false)
 const hasEverHadRecurringEvents = ref(false) // Track if user has ever selected events
 const isUpdateMode = ref(false) // Track if user is updating an existing filter
 const updateModeCalendar = ref(null) // Store the calendar being updated
@@ -478,8 +496,8 @@ const editForm = ref({
 const confirmDialog = ref(null)
 const deleteCalendarId = ref(null)
 const copySuccess = ref(null) // Track which URL was successfully copied
-const editSuccess = ref(false) // Track edit success feedback
-const editNameInput = ref(null) // Reference to edit input for focus
+const editingCalendarId = ref(null) // Track which calendar is being edited inline
+const inlineEditInput = ref(null) // Reference to inline edit input for focus
 
 // Computed
 const formatDateTime = computed(() => formatDateTimeUtil)
@@ -588,30 +606,30 @@ const createFilteredCalendar = async () => {
   }
 }
 
-const startEditForm = (calendar) => {
+const startInlineEdit = (calendar) => {
+  editingCalendarId.value = calendar.id
   editForm.value = {
     id: calendar.id,
     name: calendar.name
   }
-  editSuccess.value = false
-  showEditModal.value = true
   
-  // Focus input after modal renders
+  // Focus input after DOM update
   nextTick(() => {
-    if (editNameInput.value) {
-      editNameInput.value.focus()
-      editNameInput.value.select()
+    if (inlineEditInput.value) {
+      inlineEditInput.value.focus()
+      inlineEditInput.value.select()
     }
   })
 }
 
-const cancelEditForm = () => {
-  showEditModal.value = false
+const cancelInlineEdit = () => {
+  editingCalendarId.value = null
   editForm.value = { id: '', name: '' }
-  editSuccess.value = false
 }
 
 const updateFilteredCalendar = async () => {
+  if (!editForm.value.name.trim() || updating.value) return
+  
   try {
     // Create filter config based on current recurring events selection
     const filterConfig = {
@@ -628,33 +646,16 @@ const updateFilteredCalendar = async () => {
     )
 
     if (success) {
-      // Set success state briefly to show green button
-      editSuccess.value = true
-      
-      // Close modal immediately after brief success feedback (250ms)
-      setTimeout(() => {
-        showEditModal.value = false
-        editForm.value = { id: '', name: '' }
-        editSuccess.value = false
-        emit('navigate-to-calendar')
-      }, 250)
+      // Close inline editor immediately
+      cancelInlineEdit()
+      emit('navigate-to-calendar')
     } else {
-      // Show error and close modal
       console.error('Failed to update calendar name - API returned false')
-      setTimeout(() => {
-        showEditModal.value = false
-        editForm.value = { id: '', name: '' }
-        editSuccess.value = false
-      }, 1000)
+      // Keep inline editor open for retry
     }
   } catch (error) {
     console.error('Error updating calendar:', error)
-    // Always close modal even on exception
-    setTimeout(() => {
-      showEditModal.value = false
-      editForm.value = { id: '', name: '' }
-      editSuccess.value = false
-    }, 1000)
+    // Keep inline editor open for retry
   }
 }
 
@@ -1045,13 +1046,17 @@ const getFilterSummary = (filterConfig) => {
     return { hasFilter: false, text: '', badgeClass: '' }
   }
   
-  // Build combined text
-  const parts = []
-  if (groupCount > 0) {
-    parts.push(`📊 ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}`)
-  }
-  if (eventCount > 0) {
-    parts.push(`📂 ${eventCount} ${eventCount === 1 ? 'event' : 'events'}`)
+  // Build combined text with clearer language
+  let text = ''
+  if (groupCount > 0 && eventCount > 0) {
+    // Both groups and recurring events
+    text = `📊 ${groupCount} ${groupCount === 1 ? 'group' : 'groups'} & ${eventCount} recurring ${eventCount === 1 ? 'event' : 'events'}`
+  } else if (groupCount > 0) {
+    // Only groups
+    text = `📊 ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}`
+  } else if (eventCount > 0) {
+    // Only recurring events
+    text = `📂 ${eventCount} recurring ${eventCount === 1 ? 'event' : 'events'}`
   }
   
   // Choose badge color based on primary selection type
@@ -1066,7 +1071,7 @@ const getFilterSummary = (filterConfig) => {
   
   return {
     hasFilter: true,
-    text: parts.join(' + '),
+    text: text,
     badgeClass
   }
 }
