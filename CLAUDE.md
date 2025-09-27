@@ -10,7 +10,8 @@ Production-ready Python + Vue 3 web application with comprehensive TDD workflow 
 1. **Write failing test FIRST** → `@pytest.mark.future` tests drive implementation
 2. **Make minimum implementation** → Code only what's needed to pass tests
 3. **Refactor safely** → `make test` ensures no regression
-4. **Deploy** → `make deploy` (with real-time monitoring)
+4. **Test & Commit** → Always run `make test` and commit after completing features/fixes
+5. **Deploy** → `make deploy` (with real-time monitoring)
 
 ### Commands
 ```bash
@@ -148,6 +149,7 @@ alembic upgrade head
 - Contract tests for API validation
 - Headless E2E tests only
 - Alembic for database changes
+- Run `make test` and commit after completing features/fixes
 
 **❌ NEVER:**
 - Manual server startup or non-standard ports
