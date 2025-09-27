@@ -57,7 +57,8 @@
     "noEventsFound": "No events found",
     "noEventsFoundDescription": "This calendar doesn't contain any events or there was an error loading them.",
     "loadingRecurringEventsOrNotFound": "Loading events or no events found...",
-    "loadingRecurringEventsDescription": "This may happen if the calendar has no events to group."
+    "loadingRecurringEventsDescription": "This may happen if the calendar has no events to group.",
+    "noGroupsAvailable": "No groups available"
   },
   "recurringEvents": {
     "include": "Include",
@@ -111,13 +112,16 @@
     "eventsWillBeIncluded": "{count} events will be included after filtering",
     "andMoreEvents": "... and {count} more events",
     "noDate": "No date",
-    "invalidDate": "Invalid date"
+    "invalidDate": "Invalid date",
+    "noEventsSelected": "No events selected"
   },
   "darkMode": {
     "toggle": "Toggle dark mode",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
   },
   "language": {
     "switch": "Switch language",
@@ -203,6 +207,7 @@
     "minimizeSection": "Minimize section",
     "expandSection": "Expand section",
     "updateFilter": "Update Filter",
+    "updating": "Updating...",
     "calendarNameUpdated": "Calendar name updated successfully!"
   },
   "ui": {
@@ -264,7 +269,32 @@
     "confirmAction": "Confirm Action",
     "confirm": "Confirm",
     "mobileNotOptimized": "Admin panel is optimized for desktop devices",
-    "mobileUseDesktop": "For the best experience managing events and groups, please use a desktop or tablet device."
+    "mobileUseDesktop": "For the best experience managing events and groups, please use a desktop or tablet device.",
+    "unassigned": "Unassigned",
+    "complete": "Complete",
+    "noEventsNeedAssignment": "No events need to be assigned",
+    "applyRuleToEvents": "Apply this rule to matching events",
+    "deleteThisRule": "Delete this rule",
+    "meetingRules": "Meeting Rules",
+    "matchMeetingTitles": "Match meeting titles",
+    "trainingEvents": "Training Events",
+    "matchTrainingContent": "Match training content",
+    "useMeetingInTitle": "Use \"Meeting\" in title rules to catch all meeting events",
+    "updating": "Updating...",
+    "noEventsSelected": "No events selected",
+    "oneEventSelected": "1 event selected",
+    "eventsSelected": "{count} events selected",
+    "clearSelection": "Clear selection of {count} events",
+    "clearSelectionButton": "Clear Selection",
+    "automaticEventAssignmentRules": "Automatic event assignment rules",
+    "createNewAutoRule": "Create New Auto Rule",
+    "autoRuleDescription": "Automatically assign new events to groups based on their content. Rules apply to incoming events and can also be used to organize existing unassigned events.",
+    "ruleType": "Rule Type",
+    "title": "Title",
+    "description": "Description",
+    "category": "Category",
+    "externalEvents": "External Events",
+    "matchExternalCategories": "Match external categories"
   },
   "titles": {
     "icalFilterSubscribe": "🗓️ PAISS"

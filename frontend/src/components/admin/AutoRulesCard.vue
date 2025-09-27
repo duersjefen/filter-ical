@@ -1,7 +1,7 @@
 <template>
   <AdminCardWrapper
     :title="$t('admin.autoRules')"
-    :subtitle="`${assignmentRules.length} rules • Automatic event assignment rules`"
+    :subtitle="`${assignmentRules.length} rules • ${$t('admin.automaticEventAssignmentRules')}`"
     icon="⚙️"
     :expanded="expanded"
     @toggle="$emit('toggle')"
@@ -14,15 +14,15 @@
           <span class="text-blue-600 dark:text-blue-400 text-xl">⚡</span>
         </div>
         <div class="flex-1">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Create New Auto Rule</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Automatically assign new events to groups based on their content. Rules apply to incoming events and can also be used to organize existing unassigned events.</p>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">{{ $t('admin.createNewAutoRule') }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ $t('admin.autoRuleDescription') }}</p>
         </div>
       </div>
       
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Rule Type -->
         <div class="space-y-3">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rule Type</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('admin.ruleType') }}</label>
           <div class="flex gap-2">
             <button
               v-for="type in ruleTypes"
@@ -233,7 +233,7 @@
             <div class="text-xs text-gray-500 dark:text-gray-400">
               <span v-if="event.willChange" class="text-green-700 dark:text-green-300">
                 <strong>Will add to:</strong> {{ getGroupName(newRule.target_group_id) }}
-                <span v-if="event.currentGroupName && event.currentGroupName !== 'Unassigned'" class="text-gray-500 dark:text-gray-400 ml-1">
+                <span v-if="event.currentGroupName && event.currentGroupName !== t('admin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
                   (currently: {{ event.currentGroupName }}{{ event.allGroupIds?.length > 1 ? ` +${event.allGroupIds.length - 1} more` : '' }})
                 </span>
               </span>
@@ -296,7 +296,7 @@
                   When <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span> 
                   → Assign to <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
                 </p>
-                <div v-if="getRuleStatus(rule) !== 'Complete'" class="flex items-center gap-6 text-xs">
+                <div v-if="getRuleStatus(rule) !== t('admin.complete')" class="flex items-center gap-6 text-xs">
                   <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span class="text-green-700 dark:text-green-300 font-medium">{{ getLiveMatchingEvents(rule).filter(e => e.willChange).length }} will be assigned</span>
@@ -425,7 +425,7 @@
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 <span v-if="event.willChange" class="text-green-700 dark:text-green-300">
                   <strong>Will add to:</strong> {{ getGroupName(rule.target_group_id) }}
-                  <span v-if="event.currentGroupName && event.currentGroupName !== 'Unassigned'" class="text-gray-500 dark:text-gray-400 ml-1">
+                  <span v-if="event.currentGroupName && event.currentGroupName !== t('admin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
                     (currently: {{ event.currentGroupName }}{{ event.allGroupIds?.length > 1 ? ` +${event.allGroupIds.length - 1} more` : '' }})
                   </span>
                 </span>
@@ -477,6 +477,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AdminCardWrapper from './AdminCardWrapper.vue'
 
 export default {
@@ -508,6 +509,9 @@ export default {
   },
   emits: ['toggle', 'create-rule', 'apply-rule', 'delete-rule-confirm'],
   setup(props, { emit }) {
+    // Translation
+    const { t } = useI18n()
+    
     // Local state
     const newRule = ref({
       rule_type: 'title_contains', // Default to title
@@ -518,44 +522,44 @@ export default {
     const expandedRules = ref({})
     
     // Rule types for easy selection
-    const ruleTypes = ref([
+    const ruleTypes = computed(() => [
       {
         value: 'title_contains',
-        label: 'Title',
+        label: t('admin.title'),
         icon: '📄'
       },
       {
         value: 'description_contains',
-        label: 'Description',
+        label: t('admin.description'),
         icon: '📝'
       },
       {
         value: 'category_contains',
-        label: 'Category',
+        label: t('admin.category'),
         icon: '🏷️'
       }
     ])
     
     // Rule templates for quick start
-    const ruleTemplates = ref([
+    const ruleTemplates = computed(() => [
       {
         type: 'title_contains',
-        name: 'Meeting Rules',
-        description: 'Match meeting titles',
+        name: t('admin.meetingRules'),
+        description: t('admin.matchMeetingTitles'),
         icon: '🤝',
         value: 'meeting'
       },
       {
         type: 'title_contains', 
-        name: 'Training Events',
-        description: 'Match training content',
+        name: t('admin.trainingEvents'),
+        description: t('admin.matchTrainingContent'),
         icon: '📚',
         value: 'training'
       },
       {
         type: 'title_contains',
-        name: 'External Events',
-        description: 'Match external categories',
+        name: t('admin.externalEvents'),
+        description: t('admin.matchExternalCategories'),
         icon: '🌐',
         value: 'external'
       }
@@ -758,7 +762,7 @@ export default {
     const getRuleStatus = (rule) => {
       const willChangeCount = getLiveMatchingEvents(rule).filter(e => e.willChange).length
       if (willChangeCount === 0) {
-        return 'Complete'
+        return t('admin.complete')
       } else if (willChangeCount < 5) {
         return 'Ready'
       } else {
@@ -769,7 +773,7 @@ export default {
     const getRuleStatusClass = (rule) => {
       const status = getRuleStatus(rule)
       switch (status) {
-        case 'Complete':
+        case t('admin.complete'):
           return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
         case 'Ready':
           return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
@@ -942,7 +946,7 @@ export default {
             description: description,
             categories: categories,
             currentGroupId: primaryGroupId,
-            currentGroupName: primaryGroupId ? getGroupName(primaryGroupId) : 'Unassigned',
+            currentGroupName: primaryGroupId ? getGroupName(primaryGroupId) : t('admin.unassigned'),
             allGroupIds: assignedGroupIds,
             willChange
           })
@@ -953,6 +957,7 @@ export default {
     }
     
     return {
+      t,
       newRule,
       expandedRules,
       ruleTypes,

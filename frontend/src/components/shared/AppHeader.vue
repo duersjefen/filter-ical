@@ -125,7 +125,7 @@
         <button 
           @click="toggleDarkMode"
           class="group relative w-12 h-6 sm:w-14 sm:h-7 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-md"
-          :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+          :title="isDarkMode ? $t('darkMode.switchToLight') : $t('darkMode.switchToDark')"
         >
           <!-- Toggle Track -->
           <div class="absolute inset-1 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 dark:from-slate-600 dark:to-slate-700 transition-all duration-300"></div>
@@ -187,7 +187,7 @@
           <button 
             @click="toggleDarkMode"
             class="group relative w-12 h-6 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg touch-manipulation"
-            :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            :title="isDarkMode ? $t('darkMode.switchToLight') : $t('darkMode.switchToDark')"
           >
             <!-- Toggle Track -->
             <div class="absolute inset-1 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 dark:from-slate-600 dark:to-slate-700 transition-all duration-300"></div>
@@ -396,10 +396,8 @@ const saveUsername = () => {
   
   if (trimmed && isValidUsername(trimmed)) {
     setUsername(trimmed)
-    console.log(`Username set to: ${trimmed}`)
   } else if (!trimmed) {
     clearUsername()
-    console.log('Username cleared - switched to public mode')
   }
   
   isEditing.value = false

@@ -127,7 +127,7 @@
               </div>
               <!-- Fallback for non-group calendars -->
               <div v-else class="text-sm text-gray-600 dark:text-gray-400">
-                {{ reactiveGroupBreakdown || 'No events selected' }}
+                {{ reactiveGroupBreakdown || $t('preview.noEventsSelected') }}
               </div>
             </div>
           </div>
@@ -142,7 +142,7 @@
                 : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white'"
             >
               <span v-if="isUpdateMode">
-                {{ creating ? 'Updating...' : '🔄 Update Filter' }}
+                {{ creating ? $t('filteredCalendar.updating') : $t('filteredCalendar.updateFilter') }}
               </span>
               <span v-else>
                 {{ creating ? $t('filteredCalendar.creating') : $t('filteredCalendar.create') }}
@@ -495,7 +495,7 @@ const reactiveGroupBreakdown = computed(() => {
   })
   
   if (groupBreakdowns.length === 0) {
-    return 'No groups available'
+    return t('calendar.noGroupsAvailable')
   }
   
   // Show ALL groups - no truncation
@@ -815,7 +815,7 @@ const getDetailedGroupBreakdown = () => {
   })
   
   if (groupBreakdowns.length === 0) {
-    return 'No groups available'
+    return t('calendar.noGroupsAvailable')
   }
   
   // Show ALL groups - no truncation

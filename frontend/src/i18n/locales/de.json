@@ -57,7 +57,8 @@
     "noEventsFound": "Keine Events gefunden",
     "noEventsFoundDescription": "Dieser Kalender enthält keine Events oder es gab einen Fehler beim Laden.",
     "loadingRecurringEventsOrNotFound": "Event-Typen werden geladen oder nicht gefunden...",
-    "loadingRecurringEventsDescription": "Dies kann passieren, wenn der Kalender keine Events zum Gruppieren hat."
+    "loadingRecurringEventsDescription": "Dies kann passieren, wenn der Kalender keine Events zum Gruppieren hat.",
+    "noGroupsAvailable": "Keine Gruppen verfügbar"
   },
   "recurringEvents": {
     "include": "Einschließen",
@@ -111,13 +112,16 @@
     "eventsWillBeIncluded": "{count} Events werden nach der Filterung enthalten sein",
     "andMoreEvents": "... und {count} weitere Events",
     "noDate": "Kein Datum",
-    "invalidDate": "Ungültiges Datum"
+    "invalidDate": "Ungültiges Datum",
+    "noEventsSelected": "Keine Events ausgewählt"
   },
   "darkMode": {
     "toggle": "Dunklen Modus umschalten",
     "light": "Hell",
     "dark": "Dunkel",
-    "system": "System"
+    "system": "System",
+    "switchToLight": "Zu hellem Modus wechseln",
+    "switchToDark": "Zu dunklem Modus wechseln"
   },
   "language": {
     "switch": "Sprache wechseln",
@@ -203,6 +207,7 @@
     "minimizeSection": "Bereich minimieren",
     "expandSection": "Bereich erweitern",
     "updateFilter": "Filter aktualisieren",
+    "updating": "Wird aktualisiert...",
     "calendarNameUpdated": "Kalendername erfolgreich aktualisiert!"
   },
   "ui": {
@@ -264,7 +269,32 @@
     "confirmAction": "Aktion bestätigen",
     "confirm": "Bestätigen",
     "mobileNotOptimized": "Das Admin-Panel ist für Desktop-Geräte optimiert",
-    "mobileUseDesktop": "Für die beste Erfahrung beim Verwalten von Events und Gruppen verwenden Sie bitte ein Desktop- oder Tablet-Gerät."
+    "mobileUseDesktop": "Für die beste Erfahrung beim Verwalten von Events und Gruppen verwenden Sie bitte ein Desktop- oder Tablet-Gerät.",
+    "unassigned": "Nicht zugewiesen",
+    "complete": "Vollständig",
+    "noEventsNeedAssignment": "Keine Events müssen zugewiesen werden",
+    "applyRuleToEvents": "Diese Regel auf passende Events anwenden",
+    "deleteThisRule": "Diese Regel löschen",
+    "meetingRules": "Meeting-Regeln",
+    "matchMeetingTitles": "Meeting-Titel abgleichen",
+    "trainingEvents": "Schulungsveranstaltungen",
+    "matchTrainingContent": "Schulungsinhalte abgleichen",
+    "useMeetingInTitle": "Verwenden Sie \"Meeting\" in Titel-Regeln, um alle Meeting-Events zu erfassen",
+    "updating": "Wird aktualisiert...",
+    "noEventsSelected": "Keine Events ausgewählt",
+    "oneEventSelected": "1 Event ausgewählt",
+    "eventsSelected": "{count} Events ausgewählt",
+    "clearSelection": "Auswahl von {count} Events löschen",
+    "clearSelectionButton": "Auswahl löschen",
+    "automaticEventAssignmentRules": "Automatische Event-Zuweisungsregeln",
+    "createNewAutoRule": "Neue Auto-Regel erstellen",
+    "autoRuleDescription": "Weisen Sie neue Events automatisch basierend auf ihrem Inhalt zu Gruppen zu. Regeln gelten für eingehende Events und können auch zur Organisation bestehender nicht zugewiesener Events verwendet werden.",
+    "ruleType": "Regeltyp",
+    "title": "Titel",
+    "description": "Beschreibung",
+    "category": "Kategorie",
+    "externalEvents": "Externe Events",
+    "matchExternalCategories": "Externe Kategorien abgleichen"
   },
   "titles": {
     "icalFilterSubscribe": "🗓️ PAISS"

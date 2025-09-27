@@ -290,7 +290,6 @@ const deleteCalendar = async (calendarId) => {
 const confirmDelete = async () => {
   if (!calendarToDelete.value) return
   
-  console.log('User confirmed deletion')
   const result = await appStore.deleteCalendar(calendarToDelete.value.id)
   
   if (!result.success && result.error) {
@@ -303,7 +302,6 @@ const confirmDelete = async () => {
 
 // Handle cancellation  
 const cancelDelete = () => {
-  console.log('User cancelled deletion')
   calendarToDelete.value = null
 }
 

@@ -260,7 +260,7 @@
       <div v-if="isUpdatingGroups" class="absolute top-3 right-3 z-10">
         <div class="flex items-center gap-2 bg-white dark:bg-gray-800 px-2 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
           <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Updating...</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ $t('admin.updating') }}</span>
         </div>
       </div>
       <div class="flex items-center justify-center mb-3">
@@ -289,9 +289,9 @@
                    ? 'text-gray-600 dark:text-gray-400' 
                    : 'text-gray-400 dark:text-gray-500'
                ]">
-              {{ selectedEvents.length === 0 ? 'No events selected' : 
-                 selectedEvents.length === 1 ? '1 event selected' : 
-                 `${selectedEvents.length} events selected` }}
+              {{ selectedEvents.length === 0 ? $t('admin.noEventsSelected') : 
+                 selectedEvents.length === 1 ? $t('admin.oneEventSelected') : 
+                 $t('admin.eventsSelected', { count: selectedEvents.length }) }}
             </p>
           </div>
         </div>
@@ -532,9 +532,9 @@
             @click="clearEventSelection"
             :disabled="selectedEvents.length === 0"
             class="px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-xs font-medium rounded-lg sm:rounded-md transition-all duration-200 border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] sm:min-h-0"
-            :title="selectedEvents.length === 0 ? 'No events selected' : `Clear selection of ${selectedEvents.length} events`"
+            :title="selectedEvents.length === 0 ? $t('admin.noEventsSelected') : $t('admin.clearSelection', { count: selectedEvents.length })"
           >
-            Clear Selection
+            {{ $t('admin.clearSelectionButton') }}
           </button>
           <button
             v-if="hasHiddenSelectedEvents || showSelectedOnly"
