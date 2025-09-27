@@ -338,22 +338,25 @@ def build_domain_events_with_auto_groups(grouped_events: Dict[str, List[Dict[str
             group_recurring_titles[group_id] = []
         group_recurring_titles[group_id].append(title)
     
+    # Track which events have been assigned to groups (for auto-grouping)
+    assigned_titles = set()
+    
     # Build groups with their recurring events
     groups_with_events = []
     
     for group_id, group_data in groups_map.items():
-        assigned_titles = group_recurring_titles.get(group_id, [])
+        assigned_titles_for_group = group_recurring_titles.get(group_id, [])
         
         # Find events for assigned titles
         group_recurring_events = []
-        for title in assigned_titles:
+        for title in assigned_titles_for_group:
             if title in grouped_events:
                 # grouped_events[title] already has correct structure: {title, event_count, events}
                 events_for_title = grouped_events[title]
                 group_recurring_events.append(events_for_title)
                 
-                # Remove from grouped_events so they don't appear as ungrouped
-                del grouped_events[title]
+                # Track that this title has been assigned to at least one group
+                assigned_titles.add(title)
         
         # Only include groups that have events with actual event data
         if group_recurring_events and any(event_data.get('events') for event_data in group_recurring_events):
@@ -363,11 +366,11 @@ def build_domain_events_with_auto_groups(grouped_events: Dict[str, List[Dict[str
                 "recurring_events": group_recurring_events
             })
     
-    # Handle remaining ungrouped events with auto-grouping
+    # Handle ungrouped events (events not assigned to any group) with auto-grouping
     ungrouped_events = []
     for title, events_data in grouped_events.items():
-        # events_data already has correct structure: {title, event_count, events}
-        if events_data.get('events'):  # Only include if there are actual events
+        # Only include events that haven't been assigned to any group
+        if title not in assigned_titles and events_data.get('events'):
             ungrouped_events.append(events_data)
     
     # Create auto-groups for ungrouped events
@@ -418,23 +421,25 @@ def build_domain_events_response(grouped_events: Dict[str, List[Dict[str, Any]]]
             group_recurring_titles[group_id] = []
         group_recurring_titles[group_id].append(title)
     
+    # Track which events have been assigned to groups (for ungrouped events)
+    assigned_titles = set()
+    
     # Build groups with their recurring events
     groups_with_events = []
-    ungrouped_events = []
     
     for group_id, group_data in groups_map.items():
-        assigned_titles = group_recurring_titles.get(group_id, [])
+        assigned_titles_for_group = group_recurring_titles.get(group_id, [])
         
         # Find events for assigned titles
         group_recurring_events = []
-        for title in assigned_titles:
+        for title in assigned_titles_for_group:
             if title in grouped_events:
                 # grouped_events[title] already has correct structure: {title, event_count, events}
                 events_for_title = grouped_events[title]
                 group_recurring_events.append(events_for_title)
                 
-                # Remove from grouped_events so they don't appear as ungrouped
-                del grouped_events[title]
+                # Track that this title has been assigned to at least one group
+                assigned_titles.add(title)
         
         # Only include groups that have events with actual event data
         if group_recurring_events and any(event_data.get('events') for event_data in group_recurring_events):
@@ -444,10 +449,11 @@ def build_domain_events_response(grouped_events: Dict[str, List[Dict[str, Any]]]
                 "recurring_events": group_recurring_events
             })
     
-    # Remaining events are ungrouped (only include those with actual events)
+    # Remaining events are ungrouped (events not assigned to any group)
+    ungrouped_events = []
     for title, events_data in grouped_events.items():
-        # events_data already has correct structure: {title, event_count, events}
-        if events_data.get('events'):  # Only include if there are actual events
+        # Only include events that haven't been assigned to any group
+        if title not in assigned_titles and events_data.get('events'):
             ungrouped_events.append(events_data)
     
     return {

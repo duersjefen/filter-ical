@@ -18,6 +18,7 @@ from app.data.grouping import (
     create_assignment_rule_data,
     apply_assignment_rules,
     build_domain_events_response,
+    build_domain_events_with_auto_groups,
     validate_group_data,
     validate_assignment_rule_data,
     _extract_categories_from_raw_ical,
@@ -547,6 +548,135 @@ END:VEVENT"""
         assert len(categories) == 2
         assert "Event" in categories
         assert "Deutschland" in categories
+
+
+@pytest.mark.unit
+class TestMultiGroupEventAssignment:
+    """Test that events can appear in multiple groups and stay synchronized."""
+    
+    def test_build_domain_events_with_auto_groups_multi_group_assignment(self):
+        """Test that events assigned to multiple groups appear in all groups."""
+        # Setup test data - an event that should appear in multiple groups
+        grouped_events = {
+            "Weekly Meeting": {
+                "title": "Weekly Meeting", 
+                "event_count": 5,
+                "events": [
+                    {"id": "1", "title": "Weekly Meeting", "start": "2024-01-01T10:00:00"},
+                    {"id": "2", "title": "Weekly Meeting", "start": "2024-01-08T10:00:00"},
+                ]
+            },
+            "Daily Standup": {
+                "title": "Daily Standup",
+                "event_count": 3,
+                "events": [
+                    {"id": "6", "title": "Daily Standup", "start": "2024-01-01T09:00:00"},
+                    {"id": "7", "title": "Daily Standup", "start": "2024-01-02T09:00:00"},
+                ]
+            }
+        }
+        
+        # Setup groups
+        groups_data = [
+            {"id": 1, "name": "Engineering Team"},
+            {"id": 2, "name": "Management Team"}
+        ]
+        
+        # Setup assignments - "Weekly Meeting" appears in BOTH groups
+        recurring_assignments = [
+            {"group_id": 1, "recurring_event_title": "Weekly Meeting"},
+            {"group_id": 1, "recurring_event_title": "Daily Standup"}, 
+            {"group_id": 2, "recurring_event_title": "Weekly Meeting"}  # Same event in multiple groups
+        ]
+        
+        # Test the fixed function
+        result = build_domain_events_with_auto_groups(
+            grouped_events, 
+            groups_data, 
+            recurring_assignments, 
+            "test-domain"
+        )
+        
+        # Should have 2 groups with events
+        assert len(result['groups']) == 2
+        
+        # Find the groups
+        engineering_group = next((g for g in result['groups'] if g['name'] == 'Engineering Team'), None)
+        management_group = next((g for g in result['groups'] if g['name'] == 'Management Team'), None)
+        
+        assert engineering_group is not None
+        assert management_group is not None
+        
+        # Engineering Team should have both events
+        eng_titles = [re['title'] for re in engineering_group['recurring_events']]
+        assert "Weekly Meeting" in eng_titles
+        assert "Daily Standup" in eng_titles
+        assert len(eng_titles) == 2
+        
+        # Management Team should have the shared event
+        mgmt_titles = [re['title'] for re in management_group['recurring_events']]
+        assert "Weekly Meeting" in mgmt_titles
+        assert len(mgmt_titles) == 1
+        
+        # Verify event data is identical in both groups
+        eng_weekly = next(re for re in engineering_group['recurring_events'] if re['title'] == "Weekly Meeting")
+        mgmt_weekly = next(re for re in management_group['recurring_events'] if re['title'] == "Weekly Meeting")
+        
+        assert eng_weekly['event_count'] == mgmt_weekly['event_count']
+        assert len(eng_weekly['events']) == len(mgmt_weekly['events'])
+        assert eng_weekly['events'][0]['id'] == mgmt_weekly['events'][0]['id']
+    
+    def test_build_domain_events_response_legacy_multi_group_assignment(self):
+        """Test that legacy function also supports multi-group assignment."""
+        # Same test data as above
+        grouped_events = {
+            "Weekly Meeting": {
+                "title": "Weekly Meeting", 
+                "event_count": 5,
+                "events": [{"id": "1", "title": "Weekly Meeting", "start": "2024-01-01T10:00:00"}]
+            }
+        }
+        
+        groups_data = [
+            {"id": 1, "name": "Engineering Team"},
+            {"id": 2, "name": "Management Team"}
+        ]
+        
+        recurring_assignments = [
+            {"group_id": 1, "recurring_event_title": "Weekly Meeting"},
+            {"group_id": 2, "recurring_event_title": "Weekly Meeting"}
+        ]
+        
+        # Test legacy function
+        result = build_domain_events_response(
+            grouped_events,
+            groups_data,
+            recurring_assignments
+        )
+        
+        # Should have both groups with the same event
+        assert len(result['groups']) == 2
+        
+        eng_group = next((g for g in result['groups'] if g['name'] == 'Engineering Team'), None)
+        mgmt_group = next((g for g in result['groups'] if g['name'] == 'Management Team'), None)
+        
+        assert eng_group is not None
+        assert mgmt_group is not None
+        
+        # Both should have the Weekly Meeting
+        eng_titles = [re['title'] for re in eng_group['recurring_events']]
+        mgmt_titles = [re['title'] for re in mgmt_group['recurring_events']]
+        
+        assert "Weekly Meeting" in eng_titles
+        assert "Weekly Meeting" in mgmt_titles
+        
+        # No ungrouped events since event is assigned to groups
+        assert len(result['ungrouped_events']) == 0
+
+
+@pytest.mark.unit 
+class TestCategoryAssignmentRulesExtended:
+    """Extended tests for category-based assignment rules."""
     
     def test_extract_categories_from_raw_ical_empty(self):
         """Test extracting categories from empty raw iCal content."""
