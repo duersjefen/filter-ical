@@ -100,35 +100,58 @@
             />
           </div>
 
+          <!-- Concise Groups Overview -->
           <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600">
-            <div class="space-y-3">
-              <!-- Group Subscriptions Display -->
-              <div v-if="hasGroups && groups && Object.keys(groups).length > 0" class="space-y-2">
-                <!-- All Groups in a flex wrap layout -->
-                <div class="flex flex-wrap gap-2 text-xs">
-                  <span 
-                    v-for="(group, groupId) in groups" 
-                    :key="groupId"
-                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 whitespace-nowrap font-medium transition-all duration-200"
-                    :class="getGroupDisplayClass(groupId)"
-                  >
-                    <!-- Large, prominent subscription icon -->
-                    <span class="text-sm font-bold">{{ getGroupSubscriptionIcon(groupId) }}</span>
-                    <!-- Subscription status text -->
-                    <span class="font-semibold text-xs uppercase tracking-wide">{{ getGroupSubscriptionStatus(groupId) }}</span>
-                    <!-- Count display -->
-                    <span class="px-2 py-1 rounded-md text-xs font-bold" :class="getCountDisplayClass(groupId)">
-                      {{ getGroupSelectedCount(groupId) }}/{{ getGroupTotalCount(group) }}
-                    </span>
-                    <!-- Group name with icon -->
-                    <span class="font-medium">{{ getGroupDisplayName(group) }}</span>
-                  </span>
+            <!-- Groups Display for Group-enabled Calendars -->
+            <div v-if="hasGroups && groups && Object.keys(groups).length > 0">
+              <!-- Compact Groups Grid -->
+              <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                <div 
+                  v-for="(group, groupId) in groups" 
+                  :key="groupId"
+                  class="relative bg-gray-50 dark:bg-gray-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600"
+                >
+                  <!-- Status indicator stripe -->
+                  <div 
+                    class="absolute top-0 left-0 right-0 h-1 rounded-t-lg"
+                    :class="getProgressBarClass(groupId)"
+                  ></div>
+                  
+                  <!-- Group Content -->
+                  <div class="pt-0.5">
+                    <!-- Group Name with Icon -->
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                      <span class="text-sm">{{ getGroupDisplayName(group).split(' ')[0] || '📋' }}</span>
+                      <span class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        {{ getGroupDisplayName(group).substring(getGroupDisplayName(group).indexOf(' ') + 1) || group.name }}
+                      </span>
+                    </div>
+                    
+                    <!-- Count and Status -->
+                    <div class="flex items-center justify-between">
+                      <!-- Count Badge -->
+                      <span 
+                        class="px-2 py-0.5 rounded-md text-xs font-bold" 
+                        :class="getCountDisplayClass(groupId)"
+                      >
+                        {{ getGroupSelectedCount(groupId) }}/{{ getGroupTotalCount(group) }}
+                      </span>
+                      
+                      <!-- Status Dot with better visibility -->
+                      <div 
+                        class="w-2 h-2 rounded-full border border-white dark:border-gray-800" 
+                        :class="getGroupSubscriptionDotClass(groupId)"
+                        :title="getGroupSubscriptionStatus(groupId)"
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <!-- Fallback for non-group calendars -->
-              <div v-else class="text-sm text-gray-600 dark:text-gray-400">
-                {{ reactiveGroupBreakdown || $t('preview.noEventsSelected') }}
-              </div>
+            </div>
+            
+            <!-- Fallback for Non-Group Calendars -->
+            <div v-else class="text-sm text-gray-600 dark:text-gray-400">
+              {{ reactiveGroupBreakdown || $t('preview.noEventsSelected') }}
             </div>
           </div>
 
@@ -469,33 +492,20 @@ const reactiveGroupBreakdown = computed(() => {
     return getBasicRecurringEventDisplay(props.selectedRecurringEvents)
   }
   
-  const groupBreakdowns = []
+  // For group calendars, show concise summary
+  const totalGroups = Object.keys(props.groups).length
+  const subscribedGroups = props.subscribedGroups ? props.subscribedGroups.size : 0
+  const selectedEvents = props.selectedRecurringEvents ? props.selectedRecurringEvents.length : 0
   
-  // Process all groups and show detailed breakdown
-  Object.entries(props.groups).forEach(([groupId, group]) => {
-    const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
-    const groupRecurringEvents = getGroupRecurringEvents(group)
-    const selectedInGroup = groupRecurringEvents.filter(event => 
-      props.selectedRecurringEvents && props.selectedRecurringEvents.includes(event)
-    ).length
-    const totalInGroup = groupRecurringEvents.length
-    
-    // Get group emoji/icon from name (first emoji) or use default
-    const groupIcon = group.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '📋'
-    const groupName = group.name.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
-    
-    const subscriptionIcon = isSubscribed ? '✅' : '☐'
-    const effectiveSelected = selectedInGroup
-    
-    groupBreakdowns.push(`${subscriptionIcon} ${effectiveSelected}/${totalInGroup} ${groupIcon} ${groupName}`)
-  })
-  
-  if (groupBreakdowns.length === 0) {
-    return t('calendar.noGroupsAvailable')
+  const parts = []
+  if (subscribedGroups > 0) {
+    parts.push(`${subscribedGroups}/${totalGroups} groups subscribed`)
+  }
+  if (selectedEvents > 0) {
+    parts.push(`${selectedEvents} events selected`)
   }
   
-  // Show ALL groups - no truncation
-  return groupBreakdowns.join(', ')
+  return parts.length > 0 ? parts.join(' • ') : t('preview.noEventsSelected')
 })
 
 // Show section if there are existing filtered calendars OR if events are selected
@@ -784,39 +794,6 @@ const getGroupRecurringEvents = (group) => {
   }).map(recurringEvent => recurringEvent.title)
 }
 
-const getDetailedGroupBreakdown = () => {
-  if (!props.hasGroups || !props.groups) {
-    return ''
-  }
-  
-  const groupBreakdowns = []
-  
-  // Process all groups and show detailed breakdown
-  Object.entries(props.groups).forEach(([groupId, group]) => {
-    const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
-    const groupRecurringEvents = getGroupRecurringEvents(group)
-    const selectedInGroup = groupRecurringEvents.filter(event => 
-      props.selectedRecurringEvents && props.selectedRecurringEvents.includes(event)
-    ).length
-    const totalInGroup = groupRecurringEvents.length
-    
-    // Get group emoji/icon from name (first emoji) or use default
-    const groupIcon = group.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '📋'
-    const groupName = group.name.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
-    
-    const subscriptionIcon = isSubscribed ? '✅' : '☐'
-    const effectiveSelected = selectedInGroup
-    
-    groupBreakdowns.push(`${subscriptionIcon} ${effectiveSelected}/${totalInGroup} ${groupIcon} ${groupName}`)
-  })
-  
-  if (groupBreakdowns.length === 0) {
-    return t('calendar.noGroupsAvailable')
-  }
-  
-  // Show ALL groups - no truncation
-  return groupBreakdowns.join(', ')
-}
 
 const getGroupSubscriptionDisplay = (selectedRecurringEvents, selectedGroups) => {
   if (!props.hasGroups || !props.groups) {
@@ -824,8 +801,8 @@ const getGroupSubscriptionDisplay = (selectedRecurringEvents, selectedGroups) =>
     return getBasicRecurringEventDisplay(selectedRecurringEvents)
   }
   
-  // Return the detailed group breakdown instead of the old simple display
-  return getDetailedGroupBreakdown()
+  // Use the concise reactive breakdown
+  return reactiveGroupBreakdown.value
 }
 
 const getSmartRecurringEventDisplay = (selectedRecurringEvents) => {
@@ -1001,6 +978,58 @@ const getConciseRecurringEvents = (recurringEvents) => {
   const remaining = recurringEvents.length - 1
   
   return `${firstEvent} and ${remaining} more...`
+}
+
+// New helper methods for enhanced group display
+const getGroupSelectionPercentage = (groupId) => {
+  const selectedCount = getGroupSelectedCount(groupId)
+  const totalCount = getGroupTotalCount(props.groups[groupId])
+  return totalCount > 0 ? (selectedCount / totalCount) * 100 : 0
+}
+
+const getGroupSubscriptionBadgeClass = (groupId) => {
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
+  const selectedCount = getGroupSelectedCount(groupId)
+  const totalCount = getGroupTotalCount(props.groups[groupId])
+  
+  if (isSubscribed) {
+    return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+  } else if (selectedCount === totalCount && totalCount > 0) {
+    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+  } else if (selectedCount > 0) {
+    return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+  } else {
+    return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+  }
+}
+
+const getGroupSubscriptionDotClass = (groupId) => {
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
+  const selectedCount = getGroupSelectedCount(groupId)
+  const totalCount = getGroupTotalCount(props.groups[groupId])
+  
+  if (isSubscribed) {
+    return 'bg-green-600 dark:bg-green-400'
+  } else if (selectedCount === totalCount && totalCount > 0) {
+    return 'bg-blue-600 dark:bg-blue-400'
+  } else if (selectedCount > 0) {
+    return 'bg-blue-500 dark:bg-blue-400'
+  } else {
+    return 'bg-gray-400 dark:bg-gray-500'
+  }
+}
+
+const getProgressBarClass = (groupId) => {
+  const selectedCount = getGroupSelectedCount(groupId)
+  const totalCount = getGroupTotalCount(props.groups[groupId])
+  
+  if (selectedCount === totalCount && totalCount > 0) {
+    return 'bg-gradient-to-r from-green-400 to-green-500'
+  } else if (selectedCount > 0) {
+    return 'bg-gradient-to-r from-blue-400 to-blue-500'
+  } else {
+    return 'bg-gray-300 dark:bg-gray-600'
+  }
 }
 
 // New function to combine group and event counts into a single clear display
