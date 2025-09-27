@@ -40,9 +40,12 @@ export function usePreview() {
   const sortedPreviewEvents = computed(() => {
     // First deduplicate by uid to prevent same event showing multiple times
     const uniqueEvents = new Map()
-    previewEvents.value.forEach(event => {
-      if (event.uid && !uniqueEvents.has(event.uid)) {
-        uniqueEvents.set(event.uid, event)
+    previewEvents.value.forEach((event, index) => {
+      // Use uid if available, otherwise create fallback identifier
+      const identifier = event.uid || `${event.title}-${event.start || event.dtstart}-${index}`
+      
+      if (!uniqueEvents.has(identifier)) {
+        uniqueEvents.set(identifier, event)
       }
     })
     
@@ -79,24 +82,27 @@ export function usePreview() {
   function groupEventsByCategory(events, getRecurringEventKey) {
     const groups = {}
     
-    events.forEach(event => {
+    events.forEach((event, index) => {
       const category = getRecurringEventKey(event)
       if (!groups[category]) {
         groups[category] = {
           name: category,
           events: [],
-          seenUids: new Set()
+          seenIdentifiers: new Set()
         }
       }
       
-      // Only add if we haven't seen this uid in this category
-      if (!groups[category].seenUids.has(event.uid)) {
+      // Use uid if available, otherwise create fallback identifier
+      const identifier = event.uid || `${event.title}-${event.start || event.dtstart}-${index}`
+      
+      // Only add if we haven't seen this identifier in this category
+      if (!groups[category].seenIdentifiers.has(identifier)) {
         groups[category].events.push(event)
-        groups[category].seenUids.add(event.uid)
+        groups[category].seenIdentifiers.add(identifier)
       }
     })
     
-    // Clean up seenUids before returning
+    // Clean up seenIdentifiers before returning
     return Object.values(groups).map(group => ({
       name: group.name,
       events: group.events
@@ -109,7 +115,7 @@ export function usePreview() {
   function groupEventsByMonth(events) {
     const groups = {}
     
-    events.forEach(event => {
+    events.forEach((event, index) => {
       const date = new Date(event.start || event.dtstart)
       const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
       
@@ -117,18 +123,21 @@ export function usePreview() {
         groups[monthKey] = {
           name: monthKey,
           events: [],
-          seenUids: new Set()
+          seenIdentifiers: new Set()
         }
       }
       
-      // Only add if we haven't seen this uid in this month
-      if (!groups[monthKey].seenUids.has(event.uid)) {
+      // Use uid if available, otherwise create fallback identifier
+      const identifier = event.uid || `${event.title}-${event.start || event.dtstart}-${index}`
+      
+      // Only add if we haven't seen this identifier in this month
+      if (!groups[monthKey].seenIdentifiers.has(identifier)) {
         groups[monthKey].events.push(event)
-        groups[monthKey].seenUids.add(event.uid)
+        groups[monthKey].seenIdentifiers.add(identifier)
       }
     })
     
-    // Clean up seenUids before returning and ensure we have events
+    // Clean up seenIdentifiers before returning and ensure we have events
     return Object.values(groups)
       .filter(group => group.events.length > 0)
       .map(group => ({
