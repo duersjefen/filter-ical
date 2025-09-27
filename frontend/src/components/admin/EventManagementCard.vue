@@ -147,47 +147,42 @@
     <!-- Event Context Menu -->
     <div
       v-if="eventContextMenu.visible"
-      :style="{
-        position: 'fixed',
-        top: eventContextMenu.y + 'px',
-        left: eventContextMenu.x + 'px',
-        zIndex: 1000
-      }"
+      :style="getContextMenuPosition()"
       :class="[
-        'bg-white/95 dark:bg-gray-800/95 border border-gray-200/50 dark:border-gray-600/50 rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden transform transition-all duration-200 scale-100 opacity-100',
+        'bg-white/98 dark:bg-gray-900/98 border border-gray-200/60 dark:border-gray-700/60 rounded-2xl shadow-[0_20px_25px_-5px_rgb(0_0_0_/_0.1),_0_10px_10px_-5px_rgb(0_0_0_/_0.04)] dark:shadow-[0_20px_25px_-5px_rgb(0_0_0_/_0.4),_0_10px_10px_-5px_rgb(0_0_0_/_0.2)] backdrop-blur-xl overflow-hidden transform transition-all duration-200 scale-100 opacity-100 ring-1 ring-black/5 dark:ring-white/10',
         getContextMenuWidthClass()
       ]"
       @click.stop
     >
-      <!-- Context Menu Header -->
-      <div class="px-3 py-2.5 border-b border-gray-100/60 dark:border-gray-700/60 bg-gradient-to-r from-slate-50/80 to-gray-50/80 dark:from-slate-800/40 dark:to-gray-800/40">
-        <div class="flex items-center gap-2.5">
+      <!-- Context Menu Header - Enhanced -->
+      <div class="px-4 py-3 border-b border-gray-100/70 dark:border-gray-700/70 bg-gradient-to-r from-indigo-50/90 via-blue-50/90 to-cyan-50/90 dark:from-indigo-900/30 dark:via-blue-900/30 dark:to-cyan-900/30 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-blue-500/5 to-cyan-500/5 dark:from-indigo-400/10 dark:via-blue-400/10 dark:to-cyan-400/10"></div>
+        <div class="relative flex items-center gap-3">
           <div class="relative">
-            <div class="w-3 h-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full shadow-sm"></div>
-            <div class="absolute inset-0 w-3 h-3 bg-blue-400 rounded-full animate-ping opacity-20"></div>
+            <div class="w-2.5 h-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full shadow-sm"></div>
+            <div class="absolute inset-0 w-2.5 h-2.5 bg-blue-400 rounded-full animate-ping opacity-30"></div>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{{ eventContextMenu.event?.title || 'Event Actions' }}</div>
+            <div class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate tracking-tight">{{ eventContextMenu.event?.title || 'Event Actions' }}</div>
           </div>
+          <div class="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full opacity-60"></div>
         </div>
       </div>
 
-      <!-- Actions Container - Horizontal Side by Side Layout -->
+      <!-- Actions Container - Enhanced Side by Side Layout -->
       <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length > 0 || getAssignedGroupsForEvent(eventContextMenu.event).length > 0" 
-           class="flex divide-x divide-gray-100 dark:divide-gray-700">
+           class="flex divide-x divide-gray-100/80 dark:divide-gray-700/80 bg-gradient-to-r from-gray-50/30 to-gray-100/30 dark:from-gray-800/30 dark:to-gray-700/30">
         
         <!-- Add to Groups Section (Left Side) -->
         <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length > 0" 
-             class="flex-1 p-3">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-5 h-5 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
-              <span class="text-white text-xs font-bold">+</span>
-            </div>
-            <span class="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wider">Add to Group</span>
+             class="flex-1 p-3 relative">
+          <div class="relative flex items-center gap-2 mb-2">
+            <span class="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide">Add to Group</span>
+            <div class="flex-1 h-px bg-gradient-to-r from-green-200 to-transparent dark:from-green-700/50"></div>
           </div>
           
-          <!-- Groups arranged in a compact grid without scrolling -->
-          <div class="grid gap-1.5" :class="{
+          <!-- Groups in responsive grid with proper spacing -->
+          <div class="grid gap-2" :class="{
             'grid-cols-1': getAvailableGroupsForEvent(eventContextMenu.event).length <= 3,
             'grid-cols-2': getAvailableGroupsForEvent(eventContextMenu.event).length > 3 && getAvailableGroupsForEvent(eventContextMenu.event).length <= 8,
             'grid-cols-3': getAvailableGroupsForEvent(eventContextMenu.event).length > 8
@@ -196,29 +191,24 @@
               v-for="group in getAvailableGroupsForEvent(eventContextMenu.event)"
               :key="`add-${group.id}`"
               @click="quickAddToGroup(eventContextMenu.event, group.id)"
-              class="w-full px-2.5 py-2 text-left text-xs text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 transition-all duration-150 rounded-md group border border-transparent hover:border-green-200 dark:hover:border-green-700 hover:shadow-sm"
+              class="group/btn w-full px-3 py-2 text-xs text-gray-700 dark:text-gray-300 bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-800/40 dark:hover:to-emerald-800/40 transition-all duration-200 rounded-lg border-l-4 border-green-500 hover:border-green-600 hover:shadow-md hover:shadow-green-100/50 dark:hover:shadow-green-900/20 transform hover:scale-[1.01] active:scale-[0.99] min-h-[2rem] cursor-pointer text-center font-medium hover:text-green-800 dark:hover:text-green-200"
               :title="`Add event to ${group.name}`"
             >
-              <div class="w-3 h-3 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 dark:group-hover:bg-green-800/40 transition-colors">
-                <span class="text-green-600 dark:text-green-400 text-xs leading-none">+</span>
-              </div>
-              <span class="font-medium truncate text-xs leading-tight">{{ group.name }}</span>
+              {{ group.name }}
             </button>
           </div>
         </div>
         
         <!-- Remove from Groups Section (Right Side) -->
         <div v-if="getAssignedGroupsForEvent(eventContextMenu.event).length > 0" 
-             class="flex-1 p-3">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-5 h-5 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center shadow-sm">
-              <span class="text-white text-xs font-bold">−</span>
-            </div>
-            <span class="text-xs font-bold text-red-700 dark:text-red-300 uppercase tracking-wider">Remove from Group</span>
+             class="flex-1 p-3 relative">
+          <div class="relative flex items-center gap-2 mb-2">
+            <span class="text-xs font-bold text-red-700 dark:text-red-300 uppercase tracking-wide">Remove from Group</span>
+            <div class="flex-1 h-px bg-gradient-to-r from-red-200 to-transparent dark:from-red-700/50"></div>
           </div>
           
-          <!-- Groups arranged in a compact grid without scrolling -->
-          <div class="grid gap-1.5" :class="{
+          <!-- Groups in responsive grid with proper spacing -->
+          <div class="grid gap-2" :class="{
             'grid-cols-1': getAssignedGroupsForEvent(eventContextMenu.event).length <= 3,
             'grid-cols-2': getAssignedGroupsForEvent(eventContextMenu.event).length > 3 && getAssignedGroupsForEvent(eventContextMenu.event).length <= 8,
             'grid-cols-3': getAssignedGroupsForEvent(eventContextMenu.event).length > 8
@@ -227,26 +217,23 @@
               v-for="group in getAssignedGroupsForEvent(eventContextMenu.event)"
               :key="`remove-${group.id}`"
               @click="quickRemoveFromGroup(eventContextMenu.event, group.id)"
-              class="w-full px-2.5 py-2 text-left text-xs text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-all duration-150 rounded-md group border border-transparent hover:border-red-200 dark:hover:border-red-700 hover:shadow-sm"
+              class="group/btn w-full px-3 py-2 text-xs text-gray-700 dark:text-gray-300 bg-gradient-to-r from-red-50/80 to-rose-50/80 dark:from-red-900/20 dark:to-rose-900/20 hover:from-red-100 hover:to-rose-100 dark:hover:from-red-800/40 dark:hover:to-rose-800/40 transition-all duration-200 rounded-lg border-l-4 border-red-500 hover:border-red-600 hover:shadow-md hover:shadow-red-100/50 dark:hover:shadow-red-900/20 transform hover:scale-[1.01] active:scale-[0.99] min-h-[2rem] cursor-pointer text-center font-medium hover:text-red-800 dark:hover:text-red-200"
               :title="`Remove event from ${group.name}`"
             >
-              <div class="w-3 h-3 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 dark:group-hover:bg-red-800/40 transition-colors">
-                <span class="text-red-600 dark:text-red-400 text-xs leading-none">−</span>
-              </div>
-              <span class="font-medium truncate text-xs leading-tight">{{ group.name }}</span>
+              {{ group.name }}
             </button>
           </div>
         </div>
       </div>
       
-      <!-- No actions available -->
+      <!-- No actions available - Enhanced -->
       <div v-if="getAvailableGroupsForEvent(eventContextMenu.event).length === 0 && getAssignedGroupsForEvent(eventContextMenu.event).length === 0" 
-           class="px-8 py-10 text-center">
+           class="px-6 py-8 text-center bg-gradient-to-br from-slate-50/50 to-gray-100/50 dark:from-slate-800/30 dark:to-gray-800/30">
         <div class="relative mx-auto mb-4">
-          <div class="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <span class="text-slate-400 dark:text-slate-500 text-2xl">📋</span>
+          <div class="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 rounded-2xl flex items-center justify-center shadow-lg ring-1 ring-slate-200/50 dark:ring-slate-600/50">
+            <span class="text-slate-400 dark:text-slate-500 text-xl">📋</span>
           </div>
-          <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-md ring-2 ring-white dark:ring-gray-800">
             <span class="text-white text-xs font-bold">!</span>
           </div>
         </div>
@@ -254,7 +241,7 @@
           <div class="font-bold text-sm text-gray-800 dark:text-gray-200">No group actions available</div>
           <div class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
             This event can't be assigned or removed from any groups right now. 
-            Create some groups first to enable group management!
+            <span class="font-medium text-blue-600 dark:text-blue-400">Create some groups first!</span>
           </div>
         </div>
       </div>
@@ -1247,19 +1234,69 @@ export default {
       return props.groups.filter(group => assignedGroupIds.includes(group.id))
     }
 
-    // Helper function to determine context menu width based on layout needs (no scrolling)
+    // Smart positioning to prevent menu from going off-screen
+    const getContextMenuPosition = () => {
+      if (!eventContextMenu.value.visible) return {}
+      
+      const x = eventContextMenu.value.x
+      const y = eventContextMenu.value.y
+      
+      // Estimate menu dimensions (more compact now)
+      const menuWidth = 400 // Reasonable estimate for most cases
+      const menuHeight = 200 // Much more compact height
+      
+      // Get viewport dimensions
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      
+      // Calculate best position
+      let finalX = x
+      let finalY = y
+      
+      // Check if menu would go off right edge
+      if (x + menuWidth > viewportWidth - 20) {
+        finalX = x - menuWidth - 10 // Show to the left of cursor
+      }
+      
+      // Check if menu would go off bottom edge
+      if (y + menuHeight > viewportHeight - 20) {
+        finalY = y - menuHeight - 10 // Show above cursor
+      }
+      
+      // Ensure menu doesn't go off top or left edges
+      finalX = Math.max(10, finalX)
+      finalY = Math.max(10, finalY)
+      
+      return {
+        position: 'fixed',
+        top: finalY + 'px',
+        left: finalX + 'px',
+        zIndex: 1000
+      }
+    }
+
+    // Helper function to determine context menu width (adaptive for better UX)
     const getContextMenuWidthClass = () => {
-      if (!eventContextMenu.value.event) return 'w-[26rem]'
+      if (!eventContextMenu.value.event) return 'min-w-96 max-w-4xl w-auto'
       
       const availableGroups = getAvailableGroupsForEvent(eventContextMenu.value.event)
       const assignedGroups = getAssignedGroupsForEvent(eventContextMenu.value.event)
+      
+      // Calculate longest group name to ensure no truncation
+      const allGroups = [...availableGroups, ...assignedGroups]
+      const longestName = allGroups.length > 0 ? 
+        Math.max(...allGroups.map(g => g.name.length)) : 10
+      
+      // Base width calculation - ensuring group names fit comfortably
+      // Each character ≈ 0.5rem, plus padding, icon space, etc.
+      const baseWidth = Math.max(24, longestName * 0.7 + 12) // More generous sizing
       const maxGroups = Math.max(availableGroups.length, assignedGroups.length)
       
-      // Dynamic width based on the side with most groups (ensuring both sides fit without scrolling)
-      if (maxGroups <= 3) return 'w-[26rem]'     // Small groups, wider base width
-      if (maxGroups <= 6) return 'w-[32rem]'     // Medium groups, wider
-      if (maxGroups <= 10) return 'w-[40rem]'    // Many groups, much wider
-      return 'w-[48rem]'                          // Very many groups, extra wide
+      // Adjust for grid layout (more columns = wider needed)
+      const cols = maxGroups <= 3 ? 1 : maxGroups <= 8 ? 2 : 3
+      const finalWidth = Math.max(baseWidth, cols * 12) // Ensure width accommodates columns
+      
+      return `min-w-96 max-w-5xl w-[${Math.min(finalWidth, 64)}rem]` // Cap at reasonable max
     }
 
     // Helper function to determine grid layout for groups based on count
@@ -1664,6 +1701,7 @@ export default {
       showEventContextMenu,
       getAvailableGroupsForEvent,
       getAssignedGroupsForEvent,
+      getContextMenuPosition,
       getContextMenuWidthClass,
       getGroupGridClass,
       getGroupColors,
