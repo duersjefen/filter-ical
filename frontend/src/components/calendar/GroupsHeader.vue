@@ -11,19 +11,23 @@
             🏷️ <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Groups</span>
           </h3>
         </div>
-        <!-- Mobile Switch Button - Compact Modern Design -->
+        <!-- Mobile Switch Button - Enhanced Modern Design -->
         <button
           @click="$emit('switch-to-types')"
-          class="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 transform hover:scale-105 active:scale-95"
+          class="group relative px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 active:scale-95"
           :title="$t('ui.switchToEventsView')"
         >
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-          </svg>
-          <span class="text-sm font-semibold text-white">Events</span>
-          <svg class="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-          </svg>
+          <!-- Switch Icon -->
+          <div class="flex items-center justify-center w-6 h-6 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-200">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          </div>
+          
+          <!-- Switch Text -->
+          <div class="text-xs font-bold text-white">
+            Events
+          </div>
         </button>
       </div>
       <!-- Enhanced status text on mobile -->
@@ -63,7 +67,7 @@
       <!-- Desktop Switch Button - Enhanced Modern Design -->
       <button
         @click="$emit('switch-to-types')"
-        class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
+        class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
         :title="$t('ui.switchToEventsView')"
       >
         <!-- Switch Icon -->
@@ -78,7 +82,7 @@
           <div class="text-sm font-bold text-white mb-0.5">
             Switch to Events View
           </div>
-          <div class="text-xs text-blue-100">
+          <div class="text-xs text-purple-100">
             Browse by event types
           </div>
         </div>

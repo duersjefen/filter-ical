@@ -199,10 +199,14 @@
                 <span v-if="isRecurringEventSelected(recurringEvent.title)" class="text-xs">✓</span>
               </div>
               
-              <!-- Recurring Event Info - Compact Layout -->
+              <!-- Recurring Event Info with Day Pattern -->
               <div class="flex-1 min-w-0">
                 <div class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
                   {{ recurringEvent.title.trim() }}
+                </div>
+                <!-- Day Pattern Display -->
+                <div v-if="getRecurringEventDayPattern(recurringEvent)" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {{ getRecurringEventDayPattern(recurringEvent) }}
                 </div>
               </div>
               
@@ -213,19 +217,25 @@
                   {{ recurringEvent.event_count }}
                 </div>
                 
-                <!-- Expansion Arrow (compact) -->
+                <!-- Enhanced Expansion Button -->
                 <button
                   @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
-                  class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors flex-shrink-0"
-                  :title="$t('ui.clickToViewEvents')"
+                  class="flex items-center gap-1 px-1.5 py-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-all duration-200 flex-shrink-0 group/expand"
+                  :class="isRecurringEventExpanded(recurringEvent.title) 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-500 dark:text-gray-400'"
+                  :title="isRecurringEventExpanded(recurringEvent.title) ? 'Hide individual events' : 'Show individual events'"
                 >
+                  <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
+                    {{ isRecurringEventExpanded(recurringEvent.title) ? 'Hide' : 'Show' }}
+                  </span>
                   <svg 
-                    class="w-3 h-3 text-gray-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 transition-transform duration-300" 
-                    :class="{ 'rotate-90': isRecurringEventExpanded(recurringEvent.title) }"
+                    class="w-3 h-3 transition-transform duration-300" 
+                    :class="{ 'rotate-180': isRecurringEventExpanded(recurringEvent.title) }"
                     fill="currentColor" 
                     viewBox="0 0 20 20"
                   >
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
                 </button>
               </div>
@@ -234,31 +244,50 @@
             <!-- Individual Events List -->
             <div v-if="isRecurringEventExpanded(recurringEvent.title)" class="border-t border-gray-100 dark:border-gray-700 bg-gray-25 dark:bg-gray-900/20">
               <!-- Loading State -->
-              <div v-if="recurringEventEvents[recurringEvent.title]?.loading" class="p-3 text-center">
+              <div v-if="recurringEventEvents[recurringEvent.title]?.loading" class="px-3 py-2 text-center">
                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ $t('groupCard.loadingEvents') }}</div>
               </div>
               
               <!-- Error State -->
-              <div v-else-if="recurringEventEvents[recurringEvent.title]?.error" class="p-3 text-center">
+              <div v-else-if="recurringEventEvents[recurringEvent.title]?.error" class="px-3 py-2 text-center">
                 <div class="text-xs text-red-500">{{ $t('groupCard.errorPrefix') }} {{ recurringEventEvents[recurringEvent.title].error }}</div>
               </div>
               
-              <!-- Events List (Ultra Compact Display) -->
-              <div v-else-if="recurringEventEvents[recurringEvent.title]?.events?.length">
+              <!-- Ultra-Compact Events List -->
+              <div v-else-if="recurringEventEvents[recurringEvent.title]?.events?.length" class="max-h-32 overflow-y-auto">
                 <div 
                   v-for="event in recurringEventEvents[recurringEvent.title].events" 
                   :key="event.id"
-                  class="px-2 py-0.5 bg-gray-50 dark:bg-gray-800/30 text-xs border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                  class="px-3 py-1 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <!-- Ultra Compact Event Details -->
-                  <div class="text-gray-700 dark:text-gray-300 leading-tight">
-                    {{ formatDateRange(event) }}<span v-if="event.is_recurring" class="ml-1">🔄</span><span v-if="event.location" class="text-gray-500 dark:text-gray-400 ml-1">• {{ event.location.trim() }}</span>
+                  <!-- Single Line Compact Layout -->
+                  <div class="flex items-center justify-between gap-2 text-xs">
+                    <!-- Left: Date and Title -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <!-- Concise Date with Pattern Awareness -->
+                        <span class="font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {{ formatCompactEventDate(event, !!getRecurringEventDayPattern(recurringEvent)) }}
+                        </span>
+                        <!-- Recurring indicator -->
+                        <span v-if="event.is_recurring" class="text-blue-500" title="Recurring event">🔄</span>
+                        <!-- Title (only if different) -->
+                        <span v-if="event.title !== recurringEvent.title" class="font-medium text-gray-800 dark:text-gray-200 truncate">
+                          {{ event.title.trim() }}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <!-- Right: Location -->
+                    <div v-if="event.location" class="text-gray-500 dark:text-gray-400 text-right truncate max-w-[40%]" :title="event.location.trim()">
+                      {{ event.location.trim() }}
+                    </div>
                   </div>
                 </div>
               </div>
               
               <!-- Empty State -->
-              <div v-else class="p-3 text-center">
+              <div v-else class="px-3 py-2 text-center">
                 <div class="text-xs text-gray-500 dark:text-gray-400">No events found</div>
               </div>
             </div>
@@ -491,6 +520,110 @@ const fetchRecurringEventEvents = async (eventTitle) => {
       events: [],
       loading: false,
       error: error.message
+    }
+  }
+}
+
+// Genius day pattern detection for recurring events
+const getRecurringEventDayPattern = (recurringEvent) => {
+  if (!recurringEvent.events || recurringEvent.events.length === 0) return null
+  
+  // Analyze the days of the week for this recurring event
+  const dayPattern = analyzeDayPattern(recurringEvent.events)
+  
+  if (dayPattern.type === 'consistent') {
+    // Always the same day - show the day (simple form for space constraints)
+    const day = dayPattern.days[0]
+    return `Every ${day}`
+  } else if (dayPattern.type === 'weekdays') {
+    return 'Weekdays'
+  } else if (dayPattern.type === 'weekends') {
+    return 'Weekends'
+  } else if (dayPattern.type === 'multiple' && dayPattern.days.length <= 3) {
+    // Multiple but consistent days - use abbreviated form for space
+    const shortDays = dayPattern.days.map(day => day.substring(0, 3))
+    return shortDays.join('/')
+  }
+  
+  return null // Too complex or irregular pattern
+}
+
+function analyzeDayPattern(events) {
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+  const weekends = ['Saturday', 'Sunday']
+  
+  // Get unique days of the week
+  const uniqueDays = [...new Set(events.map(event => {
+    const date = new Date(event.start || event.dtstart)
+    return dayNames[date.getDay()]
+  }))]
+  
+  if (uniqueDays.length === 1) {
+    return { type: 'consistent', days: uniqueDays }
+  }
+  
+  // Check if it's all weekdays
+  if (uniqueDays.every(day => weekdays.includes(day)) && uniqueDays.length >= 3) {
+    return { type: 'weekdays', days: uniqueDays }
+  }
+  
+  // Check if it's weekends
+  if (uniqueDays.every(day => weekends.includes(day))) {
+    return { type: 'weekends', days: uniqueDays }
+  }
+  
+  // Multiple specific days
+  if (uniqueDays.length <= 3) {
+    return { type: 'multiple', days: uniqueDays.sort((a, b) => dayNames.indexOf(a) - dayNames.indexOf(b)) }
+  }
+  
+  return { type: 'complex', days: uniqueDays }
+}
+
+// Enhanced date formatting for individual events
+function formatCompactEventDate(event, hasConsistentDay = false) {
+  const date = new Date(event.start || event.dtstart)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  
+  // Calculate days difference
+  const diffTime = eventDate - today
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  // Format time part
+  const timeStr = date.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: false 
+  })
+  
+  // Smart date formatting based on proximity
+  if (diffDays === 0) {
+    return `Today ${timeStr}`
+  } else if (diffDays === 1) {
+    return `Tomorrow ${timeStr}`
+  } else if (diffDays === -1) {
+    return `Yesterday ${timeStr}`
+  } else if (diffDays > 0 && diffDays <= 7) {
+    // For this week, show day if no consistent pattern, otherwise skip day
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
+    return hasConsistentDay ? timeStr : `${dayName} ${timeStr}`
+  } else if (diffDays >= -7 && diffDays < 0) {
+    // For last week, show day if no consistent pattern, otherwise skip day
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
+    return hasConsistentDay ? timeStr : `${dayName} ${timeStr}`
+  } else {
+    // For dates further away, show compact month/day
+    const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const currentYear = now.getFullYear()
+    const eventYear = date.getFullYear()
+    
+    if (eventYear !== currentYear) {
+      return `${monthDay} ${eventYear} ${timeStr}`
+    } else {
+      return `${monthDay} ${timeStr}`
     }
   }
 }
