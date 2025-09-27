@@ -11,14 +11,17 @@
             🏷️ Groups
           </h3>
         </div>
-        <!-- Mobile Switch Button -->
+        <!-- Mobile Switch Button - Compact Modern Design -->
         <button
           @click="$emit('switch-to-types')"
-          class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
+          class="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 transform hover:scale-105 active:scale-95"
           :title="$t('ui.switchToEventsView')"
         >
-          <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">{{ $t('labels.types') }}</span>
-          <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+          <span class="text-sm font-semibold text-white">Events</span>
+          <svg class="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
         </button>
@@ -34,7 +37,7 @@
     <!-- Desktop Layout -->
     <div class="hidden sm:flex items-center justify-between">
       <!-- Left: Header Info with collapse button -->
-      <div class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg p-2 -m-2 transition-colors duration-200" @click="$emit('toggle-collapse')">
+      <div class="flex items-center gap-3 flex-1 cursor-pointer" @click="$emit('toggle-collapse')">
         <!-- Dropdown Icon -->
         <svg 
           class="w-5 h-5 text-gray-400 transition-transform duration-200"
@@ -57,21 +60,31 @@
         </div>
       </div>
       
-      <!-- Desktop Switch Button -->
+      <!-- Desktop Switch Button - Enhanced Modern Design -->
       <button
         @click="$emit('switch-to-types')"
-        class="px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-2 group ml-4"
+        class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
         :title="$t('ui.switchToEventsView')"
       >
-        <div class="text-right">
-          <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-            Switch to
+        <!-- Switch Icon -->
+        <div class="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-200">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+        </div>
+        
+        <!-- Switch Text -->
+        <div class="text-left">
+          <div class="text-sm font-bold text-white mb-0.5">
+            Switch to Events View
           </div>
-          <div class="text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300">
-            📂 Events
+          <div class="text-xs text-blue-100">
+            Browse by event types
           </div>
         </div>
-        <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+        
+        <!-- Arrow Icon -->
+        <svg class="w-5 h-5 text-white group-hover:translate-x-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
       </button>

@@ -9,7 +9,7 @@
     />
 
     <!-- Collapsible Content -->
-    <div v-if="props.showGroupsSection" class="p-3 sm:p-4 lg:p-6">
+    <div v-if="props.showGroupsSection" class="p-3 sm:p-4">
       <!-- Control Bar Component -->
       <GroupsControlBar
         :has-selections="hasSelections"
@@ -26,7 +26,7 @@
       />
 
       <!-- Groups Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 items-start">
         <!-- All Groups (sorted by event count, descending) -->
         <GroupCard
           v-for="group in sortedGroups"

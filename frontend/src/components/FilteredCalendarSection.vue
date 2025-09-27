@@ -1,10 +1,10 @@
 <template>
   <div 
     v-if="shouldShowSection" 
-    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6"
+    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4"
   >
     <div 
-      class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 transition-all duration-200"
+      class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:from-slate-200 hover:to-slate-100 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200"
       @click="toggleExpanded"
       :title="isExpanded ? $t('filteredCalendar.minimizeSection') : $t('filteredCalendar.expandSection')"
     >
@@ -20,10 +20,10 @@
         </svg>
         
         <div class="flex-1">
-          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+          <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             🔗 {{ $t('filteredCalendar.title') }}
           </h3>
-          <p class="text-sm text-gray-600 dark:text-gray-300">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>
@@ -39,7 +39,7 @@
         'opacity-0 max-h-0 overflow-hidden': !isExpanded
       }"
     >
-      <div class="p-4 sm:p-6">
+      <div class="p-3 sm:p-4">
       <!-- Create/Update Form - Auto-show when events selected -->
       <div v-if="selectedRecurringEvents.length > 0 || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 

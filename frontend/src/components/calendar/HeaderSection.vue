@@ -14,14 +14,36 @@
     />
 
     <!-- Error Message -->
-    <div v-if="error" class="bg-gradient-to-r from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-800/30 border-2 border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 px-6 py-4 rounded-xl mb-6 flex justify-between items-center shadow-lg">
-      <div class="flex items-center gap-3">
-        <div class="text-2xl">⚠️</div>
-        <span class="font-semibold">{{ error }}</span>
+    <div v-if="error" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+      <!-- Header with gradient background matching admin cards -->
+      <div class="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-red-200 dark:border-red-700">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-red-600 dark:text-red-400 text-xl">⚠️</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg sm:text-xl font-bold text-red-800 dark:text-red-200 mb-1">
+                📊 Calendar Error
+              </h3>
+              <p class="text-sm text-red-600 dark:text-red-300">
+                An error occurred while loading
+              </p>
+            </div>
+          </div>
+          <button @click="$emit('clear-error')" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all duration-200 flex-shrink-0">
+            <span class="text-xl font-bold">&times;</span>
+          </button>
+        </div>
       </div>
-      <button @click="$emit('clear-error')" class="bg-none border-none text-red-800 dark:text-red-200 cursor-pointer text-xl hover:text-red-600 dark:hover:text-red-300 transition-all duration-300 hover:scale-110 p-2 rounded-full hover:bg-red-200 dark:hover:bg-red-800/50 font-bold">
-        &times;
-      </button>
+      
+      <!-- Content area -->
+      <div class="p-4">
+        <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+          <p class="text-red-800 dark:text-red-200 font-medium mb-2">Error Details:</p>
+          <p class="text-red-700 dark:text-red-300 text-sm leading-relaxed">{{ error }}</p>
+        </div>
+      </div>
     </div>
 
   </div>

@@ -13,15 +13,18 @@
               📂 {{ $t('calendar.recurringEvents') }}
             </h3>
           </div>
-          <!-- Mobile Switch Button - Only show if groups are available -->
+          <!-- Mobile Switch Button - Compact Modern Design -->
           <button
             v-if="hasGroups"
             @click="$emit('switch-to-groups')"
-            class="px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-1 group"
+            class="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 transform hover:scale-105 active:scale-95"
             :title="$t('ui.switchToGroupsView')"
           >
-            <span class="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">{{ $t('labels.groups') }}</span>
-            <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+            <span class="text-sm font-semibold text-white">Groups</span>
+            <svg class="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
           </button>
@@ -60,22 +63,32 @@
           </div>
         </div>
         
-        <!-- Desktop Switch Button - Only show if groups are available -->
+        <!-- Desktop Switch Button - Enhanced Modern Design -->
         <button
           v-if="hasGroups"
           @click="$emit('switch-to-groups')"
-          class="px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center gap-2 group ml-4"
+          class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
           title="Switch to Groups view"
         >
-          <div class="text-right">
-            <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-              Switch to
+          <!-- Switch Icon -->
+          <div class="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-200">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          </div>
+          
+          <!-- Switch Text -->
+          <div class="text-left">
+            <div class="text-sm font-bold text-white mb-0.5">
+              Switch to Groups View
             </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300">
-              🏷️ Groups
+            <div class="text-xs text-emerald-100">
+              Browse by calendar groups
             </div>
           </div>
-          <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+          
+          <!-- Arrow Icon -->
+          <svg class="w-5 h-5 text-white group-hover:translate-x-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
         </button>
@@ -90,15 +103,15 @@
         <template v-if="!searchTerm.trim()">
           <button 
             @click="$emit('clear-all')" 
-            class="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-600 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[120px]"
           >
-            ✗ {{ $t('recurringEvents.clearAll') }}
+            {{ $t('recurringEvents.clearAll') }}
           </button>
           <button 
             @click="$emit('select-all')" 
-            class="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-blue-600 dark:hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[120px]"
           >
-            ✓ {{ $t('recurringEvents.selectAll') }}
+            {{ $t('recurringEvents.selectAll') }}
           </button>
         </template>
         
@@ -107,16 +120,16 @@
           <button 
             v-if="hasAnyVisibleSelected"
             @click="clearAllVisible"
-            class="px-4 py-2 bg-rose-500 dark:bg-rose-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-rose-600 dark:hover:bg-rose-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[140px]"
           >
-            ✗ {{ $t('recurringEvents.clearVisible') }}
+            {{ $t('recurringEvents.clearVisible') }}
           </button>
           <button 
             v-if="!areAllVisibleSelected"
             @click="selectAllVisible"
-            class="px-4 py-2 bg-emerald-500 dark:bg-emerald-600 text-white dark:text-gray-200 rounded-lg font-semibold hover:bg-emerald-600 dark:hover:bg-emerald-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[140px]"
           >
-            ✓ {{ $t('recurringEvents.selectVisible', { count: filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }) }}
+            {{ $t('recurringEvents.selectVisible', { count: filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }) }}
           </button>
         </template>
         
@@ -124,10 +137,10 @@
         <button
           v-if="selectedRecurringEvents.length > 0 && !searchTerm.trim()"
           @click="$emit('toggle-selected-only')"
-          class="px-3 py-2 border-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
           :class="showSelectedOnly 
-            ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50' 
-            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
+            ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white' 
+            : 'bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-300 hover:from-gray-300 hover:to-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500'"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[160px]"
         >
           <span class="hidden sm:inline">{{ showSelectedOnly ? $t('viewControls.showAll') : $t('viewControls.showSelectedOnly') }}</span>
           <span class="sm:hidden">{{ showSelectedOnly ? $t('viewControls.showAllShort') : $t('viewControls.showSelectedShort') }}</span>
@@ -184,7 +197,7 @@
             <!-- Recurring Event Info - Enhanced Layout -->
             <div class="flex-1 min-w-0">
               <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
-                {{ recurringEvent.name }}
+                {{ recurringEvent.name.trim() }}
               </div>
             </div>
             
@@ -226,15 +239,15 @@
                 class="px-2 py-1.5 bg-gray-50 dark:bg-gray-800/30 rounded text-xs"
               >
                 <!-- Event Title (if different from recurring event name) -->
-                <div v-if="event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{{ event.title }}</div>
+                <div v-if="event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{{ event.title.trim() }}</div>
                 
                 <!-- Compact Event Details -->
                 <div class="text-gray-700 dark:text-gray-300">
-                  📅 {{ formatDateRange(event) }}
+                  {{ formatDateRange(event) }}
                   <span v-if="event.is_recurring" class="ml-1">🔄</span>
                 </div>
                 <div v-if="event.location" class="text-gray-600 dark:text-gray-400 mt-0.5">
-                  📍 {{ event.location }}
+                  📍 {{ event.location.trim() }}
                 </div>
               </div>
             </div>
@@ -297,7 +310,7 @@
             <!-- Select/Deselect All Button (always visible) -->
             <button
               @click.stop="handleSinglesToggle"
-              class="px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1 z-10 relative"
+              class="px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1 z-10 relative min-w-[100px]"
               :class="areAllSinglesSelected
                 ? 'bg-gray-500 hover:bg-gray-600 text-white'
                 : 'bg-blue-500 hover:bg-blue-600 text-white'"
@@ -336,22 +349,19 @@
                 <!-- Event Info - Enhanced Layout -->
                 <div class="flex-1 min-w-0">
                   <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors mb-1">
-                    {{ recurringEvent.name }}
+                    {{ recurringEvent.name.trim() }}
                   </div>
                   <!-- Event Details -->
                   <div class="space-y-0.5 h-8 flex flex-col justify-start">
-                    <div class="text-xs text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
-                      <span>📅</span>
-                      <span>{{ formatDateRange(recurringEvent.events[0]) }}</span>
+                    <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      {{ formatDateRange(recurringEvent.events[0]) }}
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 min-h-[1rem]">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 min-h-[1rem]">
                       <template v-if="recurringEvent.events[0].location">
-                        <span>📍</span>
                         <span class="truncate">{{ recurringEvent.events[0].location }}</span>
                       </template>
                       <template v-else>
                         <!-- Reserve space for consistency -->
-                        <span class="opacity-0">📍</span>
                         <span class="opacity-0">No location</span>
                       </template>
                     </div>
@@ -375,7 +385,6 @@
               @click="$emit('subscribe-all-groups')"
               class="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
             >
-              <span>📥</span>
               <span>{{ $t('viewControls.subscribeToAllGroups') }}</span>
             </button>
             
@@ -384,7 +393,6 @@
               @click="$emit('unsubscribe-all-groups')"
               class="px-6 py-2.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
             >
-              <span>📤</span>
               <span>{{ $t('viewControls.unsubscribeFromAllGroups') }}</span>
             </button>
           </div>

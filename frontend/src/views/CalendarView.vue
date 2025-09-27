@@ -9,10 +9,29 @@
     />
 
     <!-- Loading State -->
-    <div v-if="loading" class="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
-      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-6"></div>
-      <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">{{ $t('common.loadingEvents') }}</div>
-      <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">{{ $t('common.pleaseWait') }}</div>
+    <div v-if="loading" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+      <!-- Header with gradient background matching admin cards -->
+      <div class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-3">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-3 border-blue-600 border-t-transparent"></div>
+          <div class="flex-1">
+            <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              📊 {{ $t('common.loadingEvents') }}
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              {{ $t('common.pleaseWait') }}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Content area -->
+      <div class="p-6 text-center">
+        <div class="text-6xl mb-4">📅</div>
+        <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+          Organizing your calendar events...
+        </p>
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -84,38 +103,103 @@
 
     <!-- Event types not loaded fallback -->
     <template v-else-if="!loading && events.length > 0 && recurringEvents && Object.keys(recurringEvents).length === 0">
-      <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-lg border-2 border-amber-200 dark:border-amber-700 text-center p-8">
-        <div class="text-6xl mb-4">📂</div>
-        <p class="text-amber-800 dark:text-amber-200 mb-3 font-semibold text-lg">
-          {{ $t('calendar.loadingRecurringEventsOrNotFound') }}
-        </p>
-        <p class="text-amber-700 dark:text-amber-300 text-sm font-medium">
-          {{ $t('calendar.loadingRecurringEventsDescription') }}
-        </p>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+        <!-- Header with gradient background matching admin cards -->
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-amber-200 dark:border-amber-700">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-amber-600 dark:text-amber-400 text-xl">📂</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg sm:text-xl font-bold text-amber-800 dark:text-amber-200 mb-1">
+                📊 {{ $t('calendar.loadingRecurringEventsOrNotFound') }}
+              </h3>
+              <p class="text-sm text-amber-600 dark:text-amber-300">
+                Processing event categories
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Content area -->
+        <div class="p-6 text-center">
+          <div class="text-6xl mb-4">📅</div>
+          <p class="text-amber-700 dark:text-amber-300 leading-relaxed">
+            {{ $t('calendar.loadingRecurringEventsDescription') }}
+          </p>
+        </div>
       </div>
     </template>
 
     <!-- No Events Found -->
     <template v-else-if="!loading && events.length === 0">
-      <div class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
-        <div class="text-6xl mb-4">📅</div>
-        <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">{{ $t('calendar.noEventsFound') }}</h3>
-        <p class="text-red-700 dark:text-red-300 mb-6 font-medium">{{ $t('calendar.noEventsFoundDescription') }}</p>
-        <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
-          {{ $t('navigation.backToCalendars') }}
-        </button>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+        <!-- Header with gradient background matching admin cards -->
+        <div class="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-red-200 dark:border-red-700">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-red-600 dark:text-red-400 text-xl">📅</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg sm:text-xl font-bold text-red-800 dark:text-red-200 mb-1">
+                📊 {{ $t('calendar.noEventsFound') }}
+              </h3>
+              <p class="text-sm text-red-600 dark:text-red-300">
+                Calendar appears to be empty
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Content area -->
+        <div class="p-6 text-center">
+          <div class="text-6xl mb-6">🗂️</div>
+          <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800 mb-6">
+            <p class="text-red-700 dark:text-red-300 leading-relaxed">{{ $t('calendar.noEventsFoundDescription') }}</p>
+          </div>
+          
+          <!-- Action Button -->
+          <button @click="navigateHome" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
+            <span class="text-lg">🏠</span>
+            {{ $t('navigation.backToCalendars') }}
+          </button>
+        </div>
       </div>
     </template>
 
     <!-- Event Types not loaded fallback -->
     <template v-else-if="!loading && !recurringEvents">
-      <div class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl shadow-lg border-2 border-red-200 dark:border-red-700 text-center py-12 px-8">
-        <div class="text-6xl mb-4">📅</div>
-        <h3 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-4">{{ $t('calendar.noEventsFound') }}</h3>
-        <p class="text-red-700 dark:text-red-300 mb-6 font-medium">{{ $t('calendar.noEventsFoundDescription') }}</p>
-        <button @click="navigateHome" class="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl">
-          {{ $t('navigation.backToCalendars') }}
-        </button>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+        <!-- Header with gradient background matching admin cards -->
+        <div class="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-red-200 dark:border-red-700">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-red-600 dark:text-red-400 text-xl">📅</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg sm:text-xl font-bold text-red-800 dark:text-red-200 mb-1">
+                📊 {{ $t('calendar.noEventsFound') }}
+              </h3>
+              <p class="text-sm text-red-600 dark:text-red-300">
+                Unable to load event data
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Content area -->
+        <div class="p-6 text-center">
+          <div class="text-6xl mb-6">🗂️</div>
+          <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800 mb-6">
+            <p class="text-red-700 dark:text-red-300 leading-relaxed">{{ $t('calendar.noEventsFoundDescription') }}</p>
+          </div>
+          
+          <!-- Action Button -->
+          <button @click="navigateHome" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
+            <span class="text-lg">🏠</span>
+            {{ $t('navigation.backToCalendars') }}
+          </button>
+        </div>
       </div>
     </template>
   </div>
