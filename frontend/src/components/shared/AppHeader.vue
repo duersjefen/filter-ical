@@ -103,8 +103,21 @@
         <p v-if="subtitle && !hideSubtitle" class="text-sm sm:text-base opacity-80 font-medium text-white whitespace-nowrap">{{ subtitle }}</p>
       </div>
 
-      <!-- Right Side: Language & Dark Mode -->
+      <!-- Right Side: Admin, Language & Dark Mode -->
       <div class="flex items-center gap-2 justify-self-end">
+        <!-- Admin Panel Button (Domain views only, Desktop only) -->
+        <button
+          v-if="domainContext"
+          @click="router.push(`/${domainContext.id}/admin`)"
+          class="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-md items-center justify-center group"
+          :title="$t('admin.adminPanel')"
+        >
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-white/90 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+        
         <!-- Always show Language Toggle -->
         <LanguageToggle />
         
@@ -308,11 +321,13 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useDarkMode } from '../../composables/useDarkMode'
 import { useUsername } from '../../composables/useUsername'
 import LanguageToggle from '../LanguageToggle.vue'
 
 const { t } = useI18n()
+const router = useRouter()
 const { isDarkMode, toggleDarkMode } = useDarkMode()
 const { username, setUsername, clearUsername, hasCustomUsername, isValidUsername } = useUsername()
 
@@ -428,6 +443,10 @@ const props = defineProps({
   hideSubtitle: {
     type: Boolean,
     default: false
+  },
+  domainContext: {
+    type: Object,
+    default: null
   }
 })
 

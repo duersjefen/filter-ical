@@ -7,6 +7,7 @@
       :show-user-info="false"
       :show-back-button="true"
       :back-button-text="domainContext ? $t('domain.goToPersonalCalendars') : $t('navigation.backToCalendars')"
+      :domain-context="domainContext"
       page-context="calendar"
       hide-subtitle
       @navigate-back="domainContext ? $router.push('/home') : $emit('navigate-home')"

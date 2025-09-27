@@ -216,6 +216,7 @@
     "unsubscribeAndDeselect": "Unsubscribe and deselect this group"
   },
   "admin": {
+    "adminPanel": "Admin Panel",
     "loadingPanel": "Loading Admin Panel...",
     "pleaseWait": "Please wait",
     "manageGroups": "Manage Groups",

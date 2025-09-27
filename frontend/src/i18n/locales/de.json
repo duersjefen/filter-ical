@@ -216,6 +216,7 @@
     "unsubscribeAndDeselect": "Gruppe abbestellen und abwählen"
   },
   "admin": {
+    "adminPanel": "Admin-Panel",
     "loadingPanel": "Admin-Panel wird geladen...",
     "pleaseWait": "Bitte warten",
     "manageGroups": "Gruppen verwalten",
