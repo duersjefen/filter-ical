@@ -136,10 +136,10 @@
             <button
               type="submit"
               :disabled="!createForm.name.trim() || creating || !hasCustomUsername()"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              class="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2 flex items-center justify-center gap-2"
               :class="isUpdateMode 
-                ? 'bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white' 
-                : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white'"
+                ? 'bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white border-amber-400 hover:border-amber-500 disabled:border-gray-300' 
+                : 'bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white border-green-400 hover:border-green-500 disabled:border-gray-300'"
             >
               <span v-if="isUpdateMode">
                 {{ creating ? $t('filteredCalendar.updating') : $t('filteredCalendar.updateFilter') }}
@@ -153,7 +153,7 @@
               v-if="isUpdateMode"
               type="button"
               @click="exitUpdateMode"
-              class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+              class="px-4 py-3 bg-gray-500 hover:bg-gray-400 text-white rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2 border-gray-400 hover:border-gray-300"
             >
               Cancel
             </button>
@@ -181,10 +181,10 @@
                   </h5>
                   <button
                     @click="startEditForm(calendar)"
-                    class="inline-flex items-center p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-500 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-md transition-all duration-200 group"
+                    class="inline-flex items-center p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-300 transform hover:scale-[1.1] active:scale-[0.95]"
                     :title="$t('common.edit')"
                   >
-                    <svg class="w-4 h-4 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
                   </button>
@@ -237,13 +237,11 @@
                 <div class="flex flex-wrap gap-2 mt-2">
                   <button
                     @click="copyToClipboard(getFullExportUrl(calendar))"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
+                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-xs transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[36px] border-2"
                     :class="copySuccess === getFullExportUrl(calendar) 
-                      ? 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-800' 
-                      : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'"
+                      ? 'bg-green-500 text-white hover:bg-green-600 border-green-400 hover:border-green-500' 
+                      : 'bg-blue-500 text-white hover:bg-blue-600 border-blue-400 hover:border-blue-500'"
                   >
-                    <span v-if="copySuccess === getFullExportUrl(calendar)">✅</span>
-                    <span v-else>📋</span>
                     <span>{{ copySuccess === getFullExportUrl(calendar) 
                       ? $t('filteredCalendar.copied') 
                       : $t('filteredCalendar.copyUrl') }}</span>
@@ -251,18 +249,16 @@
                   
                   <button
                     @click="loadFilterIntoPage(calendar)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
+                    class="inline-flex items-center gap-2 px-3 py-2 bg-amber-500 text-white hover:bg-amber-600 rounded-xl font-semibold text-xs transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[36px] border-2 border-amber-400 hover:border-amber-500"
                   >
-                    <span>🔄</span>
                     <span>{{ $t('filteredCalendar.updateFilter') }}</span>
                   </button>
                   
                   <button
                     @click="deleteFilteredCalendar(calendar.id)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 dark:bg-rose-600 text-white hover:bg-rose-600 dark:hover:bg-rose-700 rounded-md font-medium text-xs transition-all duration-200 hover:shadow-sm"
+                    class="inline-flex items-center gap-2 px-3 py-2 bg-red-500 text-white hover:bg-red-600 rounded-xl font-semibold text-xs transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[36px] border-2 border-red-400 hover:border-red-500"
                     @click.stop
                   >
-                    <span>🗑️</span>
                     <span>{{ $t('common.delete') }}</span>
                   </button>
                 </div>
@@ -335,12 +331,12 @@
           <button
             type="submit"
             :disabled="updating || !editForm.name.trim() || editSuccess"
+            class="flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 text-white shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2"
             :class="{
-              'flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 text-white': true,
-              'bg-green-600 cursor-not-allowed': editSuccess,
-              'bg-gray-400 cursor-not-allowed': updating,
-              'bg-blue-600 hover:bg-blue-700': !editSuccess && !updating,
-              'disabled:bg-gray-400 disabled:cursor-not-allowed': !editSuccess && !updating
+              'bg-green-500 border-green-400 cursor-not-allowed': editSuccess,
+              'bg-gray-400 border-gray-300 cursor-not-allowed': updating,
+              'bg-blue-500 hover:bg-blue-600 border-blue-400 hover:border-blue-500': !editSuccess && !updating,
+              'disabled:bg-gray-400 disabled:border-gray-300 disabled:cursor-not-allowed': !editSuccess && !updating
             }"
           >
             <svg v-if="updating" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -359,7 +355,7 @@
             type="button"
             @click="cancelEditForm"
             :disabled="updating"
-            class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ $t('common.cancel') }}
           </button>

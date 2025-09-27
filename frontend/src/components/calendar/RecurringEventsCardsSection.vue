@@ -13,20 +13,14 @@
               📂 {{ $t('calendar.recurringEvents') }}
             </h3>
           </div>
-          <!-- Mobile Switch Button - Compact Modern Design -->
+          <!-- Mobile Switch Button - Standardized Design -->
           <button
             v-if="hasGroups"
             @click="$emit('switch-to-groups')"
-            class="group px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 transform hover:scale-105 active:scale-95"
+            class="px-4 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-[0.98] font-semibold text-sm min-h-[44px] border-2 border-green-400 hover:border-green-500"
             :title="$t('ui.switchToGroupsView')"
           >
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-            <span class="text-sm font-semibold text-white">Groups</span>
-            <svg class="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-            </svg>
+            <span>Groups</span>
           </button>
         </div>
         <!-- Status text on mobile -->
@@ -63,34 +57,14 @@
           </div>
         </div>
         
-        <!-- Desktop Switch Button - Enhanced Modern Design -->
+        <!-- Desktop Switch Button - Standardized Design -->
         <button
           v-if="hasGroups"
           @click="$emit('switch-to-groups')"
-          class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
+          class="px-4 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 ml-4 transform hover:scale-[1.02] active:scale-[0.98] font-semibold text-sm min-h-[44px] border-2 border-green-400 hover:border-green-500"
           title="Switch to Groups view"
         >
-          <!-- Switch Icon -->
-          <div class="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-200">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-          </div>
-          
-          <!-- Switch Text -->
-          <div class="text-left">
-            <div class="text-sm font-bold text-white mb-0.5">
-              Switch to Groups View
-            </div>
-            <div class="text-xs text-emerald-100">
-              Browse by calendar groups
-            </div>
-          </div>
-          
-          <!-- Arrow Icon -->
-          <svg class="w-5 h-5 text-white group-hover:translate-x-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-          </svg>
+          <span>Switch to Groups View</span>
         </button>
       </div>
     </div>
