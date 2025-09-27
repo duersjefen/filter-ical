@@ -9,18 +9,28 @@
       <div class="block sm:hidden">
         <div class="flex items-center justify-between mb-3">
           <div class="flex-1">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
               📂 {{ $t('calendar.recurringEvents') }}
             </h3>
           </div>
-          <!-- Mobile Switch Button - Standardized Design -->
+          <!-- Mobile Switch Button - Enhanced Modern Design -->
           <button
             v-if="hasGroups"
             @click="$emit('switch-to-groups')"
-            class="px-4 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-[0.98] font-semibold text-sm min-h-[44px] border-2 border-green-400 hover:border-green-500"
+            class="group relative px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 active:scale-95"
             :title="$t('ui.switchToGroupsView')"
           >
-            <span>Groups</span>
+            <!-- Switch Icon -->
+            <div class="flex items-center justify-center w-6 h-6 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-200">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            </div>
+            
+            <!-- Switch Text -->
+            <div class="text-xs font-bold text-white">
+              Groups
+            </div>
           </button>
         </div>
         <!-- Status text on mobile -->
@@ -46,7 +56,7 @@
           </svg>
           
           <div class="flex-1">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               📂 {{ $t('calendar.recurringEvents') }}
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -57,69 +67,96 @@
           </div>
         </div>
         
-        <!-- Desktop Switch Button - Standardized Design -->
+        <!-- Desktop Switch Button - Enhanced Modern Design -->
         <button
           v-if="hasGroups"
           @click="$emit('switch-to-groups')"
-          class="px-4 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 ml-4 transform hover:scale-[1.02] active:scale-[0.98] font-semibold text-sm min-h-[44px] border-2 border-green-400 hover:border-green-500"
+          class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
           title="Switch to Groups view"
         >
-          <span>Switch to Groups View</span>
+          <!-- Switch Icon -->
+          <div class="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-200">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          </div>
+          
+          <!-- Switch Text -->
+          <div class="text-left">
+            <div class="text-sm font-bold text-white mb-0.5">
+              Switch to Groups View
+            </div>
+            <div class="text-xs text-blue-100">
+              Browse by organized groups
+            </div>
+          </div>
+          
+          <!-- Arrow Icon -->
+          <svg class="w-5 h-5 text-white group-hover:translate-x-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
         </button>
       </div>
     </div>
 
     <!-- Collapsible Content -->
     <div v-if="props.showRecurringEventsSection" class="p-3 sm:p-4">
-      <!-- Enhanced Action Buttons -->
-      <div class="flex flex-wrap gap-3 justify-center mb-6 px-1">
-        <!-- When NOT searching: Show All/Clear All -->
-        <template v-if="!searchTerm.trim()">
-          <button 
-            @click="$emit('clear-all')" 
-            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-gray-500 hover:bg-gray-400 text-white border-2 border-gray-400 hover:border-gray-300"
-          >
-            {{ $t('recurringEvents.clearAll') }}
-          </button>
-          <button 
-            @click="$emit('select-all')" 
-            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-blue-500 hover:bg-blue-600 text-white border-2 border-blue-400 hover:border-blue-500"
-          >
-            {{ $t('recurringEvents.selectAll') }}
-          </button>
-        </template>
+      <!-- Enhanced Action Buttons - Left/Right Aligned Groups -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
+        <!-- Left: Selection Actions -->
+        <div class="flex flex-wrap gap-3 justify-center sm:justify-start">
+          <!-- When NOT searching: Show All/Deselect All with smart visibility -->
+          <template v-if="!searchTerm.trim()">
+            <button 
+              v-if="hasAnyRecurringEventsSelected"
+              @click="$emit('clear-all')" 
+              class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md min-h-[44px] bg-red-500 hover:bg-red-600 text-white border-2 border-red-400 hover:border-red-500 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {{ $t('recurringEvents.deselectAll') }}
+            </button>
+            <button 
+              v-if="!areAllRecurringEventsSelected"
+              @click="$emit('select-all')" 
+              class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md min-h-[44px] bg-blue-500 hover:bg-blue-600 text-white border-2 border-blue-400 hover:border-blue-500 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {{ $t('recurringEvents.selectAll') }}
+            </button>
+          </template>
+          
+          <!-- When searching: Show contextual buttons -->
+          <template v-else>
+            <button 
+              v-if="hasAnyVisibleSelected"
+              @click="clearAllVisible"
+              class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md min-h-[44px] bg-red-500 hover:bg-red-600 text-white border-2 border-red-400 hover:border-red-500 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {{ $t('recurringEvents.deselectVisible') }}
+            </button>
+            <button 
+              v-if="!areAllVisibleSelected"
+              @click="selectAllVisible"
+              class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md min-h-[44px] bg-blue-500 hover:bg-blue-600 text-white border-2 border-blue-400 hover:border-blue-500 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {{ $t('recurringEvents.selectVisible', { count: filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }) }}
+            </button>
+          </template>
+        </div>
         
-        <!-- When searching: Show contextual buttons -->
-        <template v-else>
-          <button 
-            v-if="hasAnyVisibleSelected"
-            @click="clearAllVisible"
-            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-red-500 hover:bg-red-600 text-white border-2 border-red-400 hover:border-red-500"
+        <!-- Right: View Actions -->
+        <div class="flex flex-wrap gap-3 justify-center sm:justify-end">
+          <!-- Enhanced Show Selected Only / Show All Toggle -->
+          <button
+            v-if="selectedRecurringEvents.length > 0 && !searchTerm.trim()"
+            @click="$emit('toggle-selected-only')"
+            :class="showSelectedOnly 
+              ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-400 hover:border-orange-500' 
+              : 'bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-400 hover:border-indigo-500'"
+            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md min-h-[44px] border-2 transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            {{ $t('recurringEvents.clearVisible') }}
+            <span class="hidden sm:inline">{{ showSelectedOnly ? $t('viewControls.showAll') : $t('viewControls.showSelectedOnly') }}</span>
+            <span class="sm:hidden">{{ showSelectedOnly ? $t('viewControls.showAllShort') : $t('viewControls.showSelectedShort') }}</span>
           </button>
-          <button 
-            v-if="!areAllVisibleSelected"
-            @click="selectAllVisible"
-            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-green-500 hover:bg-green-600 text-white border-2 border-green-400 hover:border-green-500"
-          >
-            {{ $t('recurringEvents.selectVisible', { count: filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }) }}
-          </button>
-        </template>
-        
-        <!-- Enhanced Show Selected Only / Show All Toggle -->
-        <button
-          v-if="selectedRecurringEvents.length > 0 && !searchTerm.trim()"
-          @click="$emit('toggle-selected-only')"
-          :class="showSelectedOnly 
-            ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-400 hover:border-orange-500' 
-            : 'bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-400 hover:border-indigo-500'"
-          class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2"
-        >
-          <span class="hidden sm:inline">{{ showSelectedOnly ? $t('viewControls.showAll') : $t('viewControls.showSelectedOnly') }}</span>
-          <span class="sm:hidden">{{ showSelectedOnly ? $t('viewControls.showAllShort') : $t('viewControls.showSelectedShort') }}</span>
-        </button>
-        
+        </div>
       </div>
 
       <!-- Event Type Search -->
@@ -478,6 +515,17 @@ const hasAnyVisibleSelected = computed(() => {
 // Check if filtering/search results in any visible events
 const hasAnyVisibleRecurringEvents = computed(() => {
   return filteredMainRecurringEvents.value.length > 0 || filteredSingleRecurringEvents.value.length > 0
+})
+
+// Overall selection state (all events, not just visible)
+const areAllRecurringEventsSelected = computed(() => {
+  if (props.allRecurringEvents.length === 0) return false
+  const allNames = props.allRecurringEvents.map(recurringEvent => recurringEvent.name)
+  return allNames.every(name => props.selectedRecurringEvents.includes(name))
+})
+
+const hasAnyRecurringEventsSelected = computed(() => {
+  return props.selectedRecurringEvents.length > 0
 })
 
 // Methods for visible event type selection

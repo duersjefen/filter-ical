@@ -39,7 +39,7 @@
           </div>
           
           <!-- Group Title with enhanced typography -->
-          <div class="text-lg sm:text-xl font-bold text-white mb-2 leading-tight">
+          <div class="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
             📋 {{ group.name }}
           </div>
           
@@ -107,27 +107,27 @@
       
       <!-- Enhanced Action Buttons with improved styling -->
       <div class="space-y-4">
-        <!-- Combined Primary Action Button - Subscribe + Select All -->
+        <!-- Enhanced Primary Action Button -->
         <button
           @click.stop="toggleSubscribeAndSelect"
-          class="w-full px-4 py-3.5 text-sm font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] min-h-[52px] group/btn"
+          class="w-full px-5 py-4 text-sm font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] min-h-[56px] group/btn border-2"
           :class="isBothSubscribedAndSelected 
-            ? 'bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white shadow-green-200 dark:shadow-green-900/30' 
-            : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 text-white shadow-blue-200 dark:shadow-blue-900/30'"
+            ? 'bg-green-500 hover:bg-green-600 text-white border-green-400 hover:border-green-500 shadow-green-500/30' 
+            : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-400 hover:border-blue-500 shadow-blue-500/30'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
-          <!-- Enhanced button content with icons -->
-          <div class="flex items-center gap-2">
-            <div 
-              class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300"
-              :class="isBothSubscribedAndSelected ? 'border-white bg-white/20' : 'border-white/70 group-hover/btn:border-white'"
-            >
-              <span v-if="isBothSubscribedAndSelected" class="text-white text-xs font-bold">✓</span>
-            </div>
-            <span class="font-bold tracking-wide">
-              {{ isBothSubscribedAndSelected ? 'SUBSCRIBED & SELECTED' : 'SUBSCRIBE & SELECT ALL' }}
-            </span>
+          <!-- Status icon -->
+          <div 
+            class="w-6 h-6 rounded-full border-2 border-white bg-white/20 flex items-center justify-center transition-all duration-300"
+          >
+            <span v-if="isBothSubscribedAndSelected" class="text-white text-sm font-bold">✓</span>
+            <span v-else class="text-white text-sm font-bold">+</span>
           </div>
+          
+          <!-- Button text -->
+          <span class="font-bold tracking-wide text-base">
+            {{ isBothSubscribedAndSelected ? 'SUBSCRIBED & SELECTED' : 'SUBSCRIBE & SELECT ALL' }}
+          </span>
         </button>
         
         <!-- Enhanced Individual Control Buttons -->

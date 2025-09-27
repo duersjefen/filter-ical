@@ -153,7 +153,7 @@ export default {
       
       // API Functions
       loadAllAdminData,
-      createGroup,
+      createGroup: createGroupAPI,
       updateGroup,
       addEventsToGroup,
       bulkUnassignEvents,
@@ -173,6 +173,7 @@ export default {
       events: true,   // Events card starts expanded
       config: false   // Configuration card starts collapsed
     })
+    // HMR trigger
 
     // Loading states
     const applyLoading = ref(false)
@@ -204,7 +205,7 @@ export default {
 
     // UI Handlers - Pure presentation logic
     const handleCreateGroup = async (groupName) => {
-      const result = await createGroup(groupName)
+      const result = await createGroupAPI(groupName)
       showNotification(
         result.success ? 'Group created successfully!' : `Failed to create group: ${result.error}`,
         result.success ? 'success' : 'error'
