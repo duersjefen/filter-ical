@@ -1,5 +1,5 @@
 <template>
-  <div v-if="hasAnyRecurringEvents" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+  <div v-if="hasAnyRecurringEvents" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/20 transition-all duration-500 transform" :class="{ 'hover:scale-[1.02]': !props.showRecurringEventsSection }">
     <!-- Header with Switch Button -->
     <div 
       class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700"
@@ -9,8 +9,8 @@
       <div class="block sm:hidden">
         <div class="flex items-center justify-between mb-3">
           <div class="flex-1">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-              📂 {{ $t('calendar.recurringEvents') }}
+            <h3 class="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+              📂 <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{{ $t('calendar.recurringEvents') }}</span>
             </h3>
           </div>
           <!-- Mobile Switch Button - Enhanced Modern Design -->
@@ -33,8 +33,8 @@
             </div>
           </button>
         </div>
-        <!-- Status text on mobile -->
-        <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
+        <!-- Enhanced status text on mobile -->
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center leading-tight mt-2">
           {{ summaryText || (selectedRecurringEvents.length > 0 
             ? $t('recurringEvents.selectedRecurringEvents', { count: selectedRecurringEvents.length, total: allRecurringEvents.length })
             : $t('recurringEvents.selectRecurringEventsBelow')) }}
@@ -56,10 +56,10 @@
           </svg>
           
           <div class="flex-1">
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              📂 {{ $t('calendar.recurringEvents') }}
+            <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
+              📂 <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{{ $t('calendar.recurringEvents') }}</span>
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+            <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
               {{ summaryText || (selectedRecurringEvents.length > 0 
                 ? $t('recurringEvents.selectedRecurringEvents', { count: selectedRecurringEvents.length, total: allRecurringEvents.length })
                 : $t('recurringEvents.selectRecurringEventsBelow')) }}

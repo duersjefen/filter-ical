@@ -1,5 +1,5 @@
 <template>
-  <div v-if="hasGroups" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+  <div v-if="hasGroups" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-400/20 transition-all duration-500 transform" :class="{ 'hover:scale-[1.02]': !props.showGroupsSection }">
     <!-- Header Component -->
     <GroupsHeader 
       :selection-summary="selectionSummary" 

@@ -17,11 +17,11 @@
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
         
-        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 flex-1">
-          🔍 {{ $t('preview.eventPreview') }}
+        <h3 class="text-2xl font-black text-gray-900 dark:text-gray-100 flex-1 tracking-tight">
+          🔍 <span class="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{{ $t('preview.eventPreview') }}</span>
         </h3>
       </div>
-      <p class="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">
+      <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center mt-2">
         {{ $t(`preview.${eventCountInfo.mobileMessage}`, { count: eventCountInfo.count }) }}
       </p>
     </div>
@@ -39,10 +39,10 @@
       </svg>
       
       <div class="flex-1">
-        <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          🔍 {{ $t('preview.eventPreview') }}
+        <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
+          🔍 <span class="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{{ $t('preview.eventPreview') }}</span>
         </h3>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-base font-medium text-gray-700 dark:text-gray-300">
           {{ $t(`preview.${eventCountInfo.desktopMessage}`, { count: eventCountInfo.count }) }}
         </p>
       </div>

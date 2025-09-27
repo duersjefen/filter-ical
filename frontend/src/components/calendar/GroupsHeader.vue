@@ -7,8 +7,8 @@
     <div class="block sm:hidden">
       <div class="flex items-center justify-between mb-3">
         <div class="flex-1">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-            🏷️ Groups
+          <h3 class="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+            🏷️ <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Groups</span>
           </h3>
         </div>
         <!-- Mobile Switch Button - Compact Modern Design -->
@@ -26,8 +26,8 @@
           </svg>
         </button>
       </div>
-      <!-- Status text on mobile -->
-      <p class="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
+      <!-- Enhanced status text on mobile -->
+      <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center leading-tight mt-2">
         {{ selectionSummary.selected > 0
           ? selectionSummary.compactText || selectionSummary.text
           : 'Subscribe to groups or select specific event types' }}
@@ -49,10 +49,10 @@
         </svg>
         
         <div class="flex-1">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            🏷️ Groups
+          <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
+            🏷️ <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Groups</span>
           </h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {{ selectionSummary.selected > 0
               ? selectionSummary.compactText || selectionSummary.text
               : 'Subscribe to groups or select specific event types' }}

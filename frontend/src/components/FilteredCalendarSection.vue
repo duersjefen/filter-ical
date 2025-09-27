@@ -1,7 +1,8 @@
 <template>
   <div 
     v-if="shouldShowSection" 
-    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4 hover:shadow-xl transition-shadow duration-300"
+    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4 hover:shadow-2xl hover:shadow-emerald-500/10 dark:hover:shadow-emerald-400/20 transition-all duration-500 transform"
+    :class="{ 'hover:scale-[1.02]': !isExpanded }"
   >
     <div 
       class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-5 lg:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:from-slate-200 hover:to-slate-100 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-300 group"
@@ -22,8 +23,8 @@
         <!-- Enhanced header content with better visual hierarchy -->
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3 mb-2">
-            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
-              🔗 {{ $t('filteredCalendar.title') }}
+            <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
+              🔗 <span class="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{{ $t('filteredCalendar.title') }}</span>
             </h3>
             <!-- Status badge showing count of filtered calendars -->
             <div v-if="filteredCalendars.length > 0" 
@@ -31,7 +32,7 @@
               {{ filteredCalendars.length }}
             </div>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {{ $t('filteredCalendar.description') }}
           </p>
         </div>

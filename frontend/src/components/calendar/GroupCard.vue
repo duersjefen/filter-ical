@@ -10,8 +10,8 @@
     @click="expandGroup"
     :title="$t('ui.clickAnywhereToToggle', { name: group.name })"
   >
-    <!-- Enhanced Group Header with better visual hierarchy -->
-    <div class="bg-gray-700 dark:bg-gray-700 px-4 sm:px-5 lg:px-6 py-5 border-b border-gray-600 dark:border-gray-600 relative overflow-hidden">
+    <!-- Enhanced Group Header with gradient pattern for consistency -->
+    <div class="bg-gradient-to-r from-gray-800 to-gray-700 dark:from-gray-700 dark:to-gray-800 px-6 py-5 border-b border-gray-600 dark:border-gray-600 relative overflow-hidden">
       <!-- Subscription status indicator stripe -->
       <div 
         class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
@@ -103,67 +103,67 @@
     </div>
     
     <!-- Enhanced Card Content with modern button design -->
-    <div class="p-4 sm:p-5 lg:p-6 bg-gray-600 dark:bg-gray-800">
+    <div class="p-6 bg-gray-600 dark:bg-gray-800">
       
       <!-- Compact Action Buttons -->
       <div class="space-y-2">
-        <!-- Compact Primary Action Button -->
+        <!-- Primary Action Button -->
         <button
           @click.stop="toggleSubscribeAndSelect"
-          class="w-full px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[36px] border"
+          class="w-full px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[44px] border"
           :class="isBothSubscribedAndSelected 
             ? 'bg-green-500 hover:bg-green-600 text-white border-green-400 hover:border-green-500' 
             : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-400 hover:border-blue-500'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
-          <!-- Compact Status icon -->
+          <!-- Status icon -->
           <div 
-            class="w-4 h-4 rounded-full border border-white bg-white/20 flex items-center justify-center"
+            class="w-5 h-5 rounded-full border border-white bg-white/20 flex items-center justify-center"
           >
-            <span v-if="isBothSubscribedAndSelected" class="text-white text-xs">✓</span>
-            <span v-else class="text-white text-xs">+</span>
+            <span v-if="isBothSubscribedAndSelected" class="text-white text-sm">✓</span>
+            <span v-else class="text-white text-sm">+</span>
           </div>
           
-          <!-- Compact Button text -->
-          <span class="font-semibold text-xs">
+          <!-- Button text -->
+          <span class="font-semibold text-sm">
             {{ isBothSubscribedAndSelected ? 'SUBSCRIBED & SELECTED' : 'SUBSCRIBE & SELECT ALL' }}
           </span>
         </button>
         
-        <!-- Compact Individual Control Buttons -->
+        <!-- Individual Control Buttons -->
         <div class="grid grid-cols-2 gap-2">
-          <!-- Compact Subscribe Button -->
+          <!-- Subscribe Button -->
           <button
             @click.stop="toggleGroupSubscription"
-            class="px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-300 flex items-center justify-center gap-1 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[32px]"
+            class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[40px]"
             :class="isGroupSubscribed 
               ? 'bg-blue-500 hover:bg-blue-600 text-white' 
               : 'bg-gray-500 hover:bg-gray-400 text-white border border-gray-400 hover:border-blue-400'"
             :title="isGroupSubscribed ? 'Unsubscribe from this group' : 'Subscribe to future events from this group'"
           >
             <div 
-              class="w-2 h-2 rounded-full"
+              class="w-3 h-3 rounded-full"
               :class="isGroupSubscribed ? 'bg-white' : 'bg-gray-400 group-hover:bg-blue-500'"
             ></div>
             <span>{{ isGroupSubscribed ? 'Subscribed' : 'Subscribe' }}</span>
           </button>
           
-          <!-- Compact Select All Button -->
+          <!-- Select All Button -->
           <button
             @click.stop="toggleSelectAllRecurringEvents"
-            class="px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-300 flex items-center justify-center gap-1 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[32px]"
+            class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[40px]"
             :class="areAllRecurringEventsSelected 
               ? 'bg-green-500 hover:bg-green-600 text-white' 
               : 'bg-gray-500 hover:bg-gray-400 text-white border border-gray-400 hover:border-green-400'"
             :title="areAllRecurringEventsSelected ? 'Deselect all recurring events' : 'Select all recurring events for current view'"
           >
             <div 
-              class="w-2 h-2 border rounded flex items-center justify-center"
+              class="w-3 h-3 border rounded flex items-center justify-center"
               :class="areAllRecurringEventsSelected 
                 ? 'border-white bg-white/20' 
                 : 'border-gray-400 group-hover:border-emerald-500'"
             >
-              <span v-if="areAllRecurringEventsSelected" class="text-white text-xs">✓</span>
+              <span v-if="areAllRecurringEventsSelected" class="text-white text-sm">✓</span>
             </div>
             <span>{{ areAllRecurringEventsSelected ? 'Selected' : 'Select All' }}</span>
           </button>

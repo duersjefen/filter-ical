@@ -1,7 +1,8 @@
 <template>
   <div 
     v-if="hasPreviewEvents" 
-    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden"
+    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden hover:shadow-2xl hover:shadow-amber-500/10 dark:hover:shadow-amber-400/20 transition-all duration-500 transform"
+    :class="{ 'hover:scale-[1.02]': !isExpanded }"
   >
     <!-- Header -->
     <PreviewHeader
