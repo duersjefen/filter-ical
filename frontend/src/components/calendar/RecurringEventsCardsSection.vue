@@ -97,19 +97,19 @@
 
     <!-- Collapsible Content -->
     <div v-if="props.showRecurringEventsSection" class="p-3 sm:p-4">
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap gap-2 justify-center mb-4 px-1">
+      <!-- Enhanced Action Buttons -->
+      <div class="flex flex-wrap gap-3 justify-center mb-6 px-1">
         <!-- When NOT searching: Show All/Clear All -->
         <template v-if="!searchTerm.trim()">
           <button 
             @click="$emit('clear-all')" 
-            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[120px]"
+            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-gray-500 hover:bg-gray-400 text-white border-2 border-gray-400 hover:border-gray-300"
           >
             {{ $t('recurringEvents.clearAll') }}
           </button>
           <button 
             @click="$emit('select-all')" 
-            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[120px]"
+            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-blue-500 hover:bg-blue-600 text-white border-2 border-blue-400 hover:border-blue-500"
           >
             {{ $t('recurringEvents.selectAll') }}
           </button>
@@ -120,27 +120,27 @@
           <button 
             v-if="hasAnyVisibleSelected"
             @click="clearAllVisible"
-            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[140px]"
+            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-red-500 hover:bg-red-600 text-white border-2 border-red-400 hover:border-red-500"
           >
             {{ $t('recurringEvents.clearVisible') }}
           </button>
           <button 
             v-if="!areAllVisibleSelected"
             @click="selectAllVisible"
-            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[140px]"
+            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] bg-green-500 hover:bg-green-600 text-white border-2 border-green-400 hover:border-green-500"
           >
             {{ $t('recurringEvents.selectVisible', { count: filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }) }}
           </button>
         </template>
         
-        <!-- Show Selected Only / Show All Toggle -->
+        <!-- Enhanced Show Selected Only / Show All Toggle -->
         <button
           v-if="selectedRecurringEvents.length > 0 && !searchTerm.trim()"
           @click="$emit('toggle-selected-only')"
           :class="showSelectedOnly 
-            ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white' 
-            : 'bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-300 hover:from-gray-300 hover:to-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500'"
-          class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap text-sm min-w-[160px]"
+            ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-400 hover:border-orange-500' 
+            : 'bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-400 hover:border-indigo-500'"
+          class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2"
         >
           <span class="hidden sm:inline">{{ showSelectedOnly ? $t('viewControls.showAll') : $t('viewControls.showSelectedOnly') }}</span>
           <span class="sm:hidden">{{ showSelectedOnly ? $t('viewControls.showAllShort') : $t('viewControls.showSelectedShort') }}</span>
@@ -307,13 +307,13 @@
               {{ selectedSinglesCount }}/{{ filteredSingleRecurringEvents.length }}
             </div>
             
-            <!-- Select/Deselect All Button (always visible) -->
+            <!-- Enhanced Select/Deselect All Button -->
             <button
               @click.stop="handleSinglesToggle"
-              class="px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1 z-10 relative min-w-[100px]"
+              class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2 z-10 relative min-w-[120px] border-2 transform hover:scale-[1.02] active:scale-[0.98] min-h-[40px]"
               :class="areAllSinglesSelected
-                ? 'bg-gray-500 hover:bg-gray-600 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'"
+                ? 'bg-gray-500 hover:bg-gray-400 text-white border-gray-400 hover:border-gray-300'
+                : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-400 hover:border-blue-500'"
             >
               <span v-if="areAllSinglesSelected">{{ $t('viewControls.deselectAllSingles') }}</span>
               <span v-else>{{ $t('viewControls.selectAllSingles') }}</span>
@@ -380,18 +380,18 @@
             What to do with future Events?
           </h4>
           <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <!-- Subscribe to All Groups -->
+            <!-- Enhanced Subscribe to All Groups -->
             <button
               @click="$emit('subscribe-all-groups')"
-              class="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
+              class="px-4 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-green-400 hover:border-green-500 min-h-[44px]"
             >
               <span>{{ $t('viewControls.subscribeToAllGroups') }}</span>
             </button>
             
-            <!-- Unsubscribe & Deselect All Groups -->
+            <!-- Enhanced Unsubscribe & Deselect All Groups -->
             <button
               @click="$emit('unsubscribe-all-groups')"
-              class="px-6 py-2.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
+              class="px-4 py-3 bg-gray-500 hover:bg-gray-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-gray-400 hover:border-gray-300 min-h-[44px]"
             >
               <span>{{ $t('viewControls.unsubscribeFromAllGroups') }}</span>
             </button>
