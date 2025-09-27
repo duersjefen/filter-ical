@@ -1,48 +1,96 @@
 <template>
-  <!-- Enhanced group card structure with admin panel styling -->
+  <!-- Enhanced group card with improved visual hierarchy -->
   <div 
-    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md hover:shadow-blue-500/10 dark:hover:shadow-blue-400/20 group"
+    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-blue-400/20 group hover:scale-[1.02] transform"
     :class="isGroupSelected 
-      ? 'ring-2 ring-blue-400 dark:ring-blue-500 shadow-blue-500/20' 
+      ? 'ring-2 ring-blue-500 dark:ring-blue-400 shadow-lg shadow-blue-500/20 scale-[1.01]' 
       : isPartiallySelected
-        ? 'ring-2 ring-blue-300 dark:ring-blue-400 shadow-blue-500/10'
+        ? 'ring-2 ring-blue-300 dark:ring-blue-400 shadow-md shadow-blue-500/10'
         : 'hover:ring-2 hover:ring-blue-300 dark:hover:ring-blue-600'"
     @click="expandGroup"
     :title="$t('ui.clickAnywhereToToggle', { name: group.name })"
   >
-    <!-- Group Header with gradient background matching admin cards -->
-    <div class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+    <!-- Enhanced Group Header with better visual hierarchy -->
+    <div class="bg-gray-700 dark:bg-gray-700 px-4 sm:px-5 lg:px-6 py-5 border-b border-gray-600 dark:border-gray-600 relative overflow-hidden">
+      <!-- Subscription status indicator stripe -->
+      <div 
+        class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
+        :class="isGroupSubscribed ? 'bg-green-400' : 'bg-gray-500'"
+      ></div>
+      
       <!-- Group Title and Info - Enhanced Layout -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-start gap-4">
+        <!-- Status Icon and Title Container -->
         <div class="flex-1 min-w-0">
-          <!-- Group Title -->
-          <div class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 mb-1">
-            {{ group.name }}
+          <div class="flex items-center gap-3 mb-2">
+            <!-- Subscription Status Badge -->
+            <div 
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300"
+              :class="isGroupSubscribed 
+                ? 'bg-green-600 text-white ring-1 ring-green-500' 
+                : 'bg-gray-500 text-white ring-1 ring-gray-400'"
+            >
+              <div 
+                class="w-2 h-2 rounded-full transition-colors duration-300"
+                :class="isGroupSubscribed ? 'bg-green-300' : 'bg-gray-300'"
+              ></div>
+              <span>{{ isGroupSubscribed ? 'SUBSCRIBED' : 'NOT SUBSCRIBED' }}</span>
+            </div>
           </div>
-          <!-- Description -->
-          <div v-if="group.description" class="text-sm text-gray-600 dark:text-gray-400 truncate">
-            {{ group.description }}
+          
+          <!-- Group Title with enhanced typography -->
+          <div class="text-lg sm:text-xl font-bold text-white mb-2 leading-tight">
+            📋 {{ group.name }}
           </div>
-          <div v-else class="text-sm text-gray-600 dark:text-gray-400">
-            Event group with {{ totalEventCount }} total events
+          
+          <!-- Enhanced Description with event count -->
+          <div class="text-sm text-gray-300 mb-3">
+            <div v-if="group.description" class="truncate mb-1">
+              {{ group.description }}
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="inline-flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                {{ totalEventCount }} total events
+              </span>
+              <span v-if="hasRecurringEvents" class="inline-flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
+                {{ recurringEventsCount }} recurring events
+              </span>
+            </div>
+          </div>
+          
+          <!-- Enhanced Progress Bar -->
+          <div v-if="hasRecurringEvents" class="w-full">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-medium text-gray-200">
+                {{ selectedGroupRecurringEvents.length }}/{{ recurringEventsCount }} selected
+              </span>
+              <span class="text-xs text-gray-300">
+                {{ Math.round((selectedGroupRecurringEvents.length / recurringEventsCount) * 100) }}%
+              </span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+              <div 
+                class="h-full transition-all duration-500 ease-out rounded-full"
+                :class="selectedGroupRecurringEvents.length === 0 
+                  ? 'bg-gray-600 w-0' 
+                  : selectedGroupRecurringEvents.length === recurringEventsCount
+                    ? 'bg-gradient-to-r from-green-400 to-emerald-500'
+                    : 'bg-gradient-to-r from-blue-400 to-indigo-500'"
+                :style="{ width: `${(selectedGroupRecurringEvents.length / recurringEventsCount) * 100}%` }"
+              ></div>
+            </div>
           </div>
         </div>
         
-        <!-- Selection bubble and dropdown arrow -->
-        <div class="flex items-center gap-3">
-          <!-- Selection count bubble (moved from description area) -->
-          <div v-if="hasRecurringEvents" 
-               class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
-               :class="getSelectionBubbleClasses()"
-               :title="eventCountDisplay"
+        <!-- Expansion Arrow - Enhanced Design -->
+        <div class="flex-shrink-0 self-start mt-1">
+          <div 
+            class="w-8 h-8 rounded-full bg-gray-500 shadow-sm border border-gray-400 flex items-center justify-center transition-all duration-300 group-hover:border-blue-400 group-hover:shadow-md group-hover:bg-gray-400"
           >
-            {{ selectedGroupRecurringEvents.length }}/{{ recurringEventsCount }}
-          </div>
-          
-          <!-- Expansion Arrow - updated to match admin panel style -->
-          <div class="flex-shrink-0">
             <svg 
-              class="w-5 h-5 text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-transform duration-300"
+              class="w-4 h-4 text-white transition-all duration-300"
               :class="{ 'rotate-90': isExpanded }"
               fill="currentColor" 
               viewBox="0 0 20 20"
@@ -54,50 +102,70 @@
       </div>
     </div>
     
-    <!-- Card Content -->
-    <div class="p-3 sm:p-4">
+    <!-- Enhanced Card Content with modern button design -->
+    <div class="p-4 sm:p-5 lg:p-6 bg-gray-600 dark:bg-gray-800">
       
-      <!-- Action Buttons: Enhanced admin panel style -->
-      <div class="space-y-3">
-        <!-- Combined Button - Primary Action (Subscribe + Select) -->
+      <!-- Enhanced Action Buttons with improved styling -->
+      <div class="space-y-4">
+        <!-- Combined Primary Action Button - Subscribe + Select All -->
         <button
           @click.stop="toggleSubscribeAndSelect"
-          class="w-full px-4 py-3 text-sm rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md min-h-[48px]"
+          class="w-full px-4 py-3.5 text-sm font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] min-h-[52px] group/btn"
           :class="isBothSubscribedAndSelected 
-            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white' 
-            : 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700'"
+            ? 'bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white shadow-green-200 dark:shadow-green-900/30' 
+            : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 text-white shadow-blue-200 dark:shadow-blue-900/30'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
-          <span v-if="isBothSubscribedAndSelected">{{ $t('groupCard.subscribedSelected') }}</span>
-          <span v-else>{{ $t('groupCard.subscribeSelect') }}</span>
+          <!-- Enhanced button content with icons -->
+          <div class="flex items-center gap-2">
+            <div 
+              class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+              :class="isBothSubscribedAndSelected ? 'border-white bg-white/20' : 'border-white/70 group-hover/btn:border-white'"
+            >
+              <span v-if="isBothSubscribedAndSelected" class="text-white text-xs font-bold">✓</span>
+            </div>
+            <span class="font-bold tracking-wide">
+              {{ isBothSubscribedAndSelected ? 'SUBSCRIBED & SELECTED' : 'SUBSCRIBE & SELECT ALL' }}
+            </span>
+          </div>
         </button>
         
-        <!-- Individual Control Buttons - Secondary Actions -->
-        <div class="grid grid-cols-2 gap-2">
-          <!-- Subscribe Only Button -->
+        <!-- Enhanced Individual Control Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Subscribe Only Button with enhanced design -->
           <button
             @click.stop="toggleGroupSubscription"
-            class="px-3 py-2.5 text-xs rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1 shadow-sm hover:shadow-md min-h-[40px] min-w-[90px]"
+            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] group/sub"
             :class="isGroupSubscribed 
-              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-              : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'"
+              ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+              : 'bg-gray-500 hover:bg-gray-400 text-white border-2 border-gray-400 hover:border-blue-400'"
             :title="isGroupSubscribed ? 'Unsubscribe from this group' : 'Subscribe to future events from this group'"
           >
-            <span v-if="isGroupSubscribed">{{ $t('groupCard.subscribed') }}</span>
-            <span v-else>{{ $t('groupCard.subscribe') }}</span>
+            <div 
+              class="w-3 h-3 rounded-full transition-all duration-300"
+              :class="isGroupSubscribed ? 'bg-white' : 'bg-gray-400 group-hover/sub:bg-blue-500'"
+            ></div>
+            <span>{{ isGroupSubscribed ? 'Subscribed' : 'Subscribe' }}</span>
           </button>
           
-          <!-- Select All Only Button -->
+          <!-- Select All Only Button with enhanced design -->
           <button
             @click.stop="toggleSelectAllRecurringEvents"
-            class="px-3 py-2.5 text-xs rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1 shadow-sm hover:shadow-md min-h-[40px] min-w-[90px]"
+            class="px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] group/sel"
             :class="areAllRecurringEventsSelected 
-              ? 'bg-green-600 hover:bg-green-700 text-white' 
-              : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'"
+              ? 'bg-green-500 hover:bg-green-600 text-white' 
+              : 'bg-gray-500 hover:bg-gray-400 text-white border-2 border-gray-400 hover:border-green-400'"
             :title="areAllRecurringEventsSelected ? 'Deselect all recurring events' : 'Select all recurring events for current view'"
           >
-            <span v-if="areAllRecurringEventsSelected">{{ $t('groupCard.deselectAll') }}</span>
-            <span v-else>{{ $t('groupCard.selectAll') }}</span>
+            <div 
+              class="w-3 h-3 border-2 rounded transition-all duration-300 flex items-center justify-center"
+              :class="areAllRecurringEventsSelected 
+                ? 'border-white bg-white/20' 
+                : 'border-gray-400 group-hover/sel:border-emerald-500'"
+            >
+              <span v-if="areAllRecurringEventsSelected" class="text-white text-xs">✓</span>
+            </div>
+            <span>{{ areAllRecurringEventsSelected ? 'Selected' : 'Select All' }}</span>
           </button>
         </div>
       </div>
