@@ -1,22 +1,22 @@
 <template>
-  <div class="preview-event-item py-1 px-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-    <!-- Optimized Single Line Layout -->
-    <div class="flex items-center gap-2 min-h-[20px]">
+  <div class="preview-event-item py-1.5 leading-relaxed">
+    <!-- Natural Single Line Layout -->
+    <div class="flex items-baseline gap-3">
       <!-- Event Title -->
-      <div class="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate flex-1 leading-tight">
+      <div class="font-medium text-gray-900 dark:text-gray-100 text-sm flex-1 leading-normal">
         {{ event.title.trim() }}
       </div>
       
       <!-- Compact Date -->
-      <div class="text-xs text-gray-600 dark:text-gray-400 font-mono whitespace-nowrap tabular-nums">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-mono whitespace-nowrap">
         {{ formatCompactDate(event) }}
       </div>
     </div>
     
-    <!-- Secondary Info (only if present and space allows) -->
-    <div v-if="hasSecondaryInfo" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate leading-tight">
-      <span v-if="event.location" class="mr-4">📍 {{ event.location.trim() }}</span>
-      <span v-if="showCategory && getRecurringEventKey(event) !== event.title" class="text-blue-600 dark:text-blue-400 font-medium">📂 {{ getRecurringEventKey(event) }}</span>
+    <!-- Secondary Info (flowing naturally) -->
+    <div v-if="hasSecondaryInfo" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-normal">
+      <span v-if="event.location" class="mr-4 opacity-80">📍 {{ event.location.trim() }}</span>
+      <span v-if="showCategory && getRecurringEventKey(event) !== event.title" class="text-blue-600 dark:text-blue-400 opacity-90">📂 {{ getRecurringEventKey(event) }}</span>
     </div>
   </div>
 </template>

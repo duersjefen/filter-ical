@@ -1,95 +1,139 @@
 <template>
-  <div class="p-3 sm:p-4">
-    <!-- Minimal Expand/Collapse All Buttons -->
-    <div v-if="(viewMode === 'month' || viewMode === 'year') && groups.length > 1" class="flex justify-start mb-3">
-      <div class="flex gap-1">
+  <div class="p-4">
+    <!-- Ultra-Minimal Toggle Buttons -->
+    <div v-if="(viewMode === 'month' || viewMode === 'year') && groups.length > 1" class="flex justify-start mb-4">
+      <div class="flex gap-2 text-xs">
         <button 
           v-if="!allExpanded"
           @click="expandAll"
-          class="px-2 py-1 text-xs font-medium rounded transition-colors bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/40 dark:hover:bg-blue-800/60 dark:text-blue-300"
+          class="px-2 py-1 font-medium rounded-sm transition-colors bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-800/40 dark:text-blue-400 opacity-75 hover:opacity-100"
         >
-          Expand All {{ viewMode === 'year' ? 'Years' : 'Months' }}
+          Expand All
         </button>
         <button 
           v-if="!allCollapsed"
           @click="collapseAll"
-          class="px-2 py-1 text-xs font-medium rounded transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+          class="px-2 py-1 font-medium rounded-sm transition-colors bg-gray-50 hover:bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:hover:bg-gray-700/50 dark:text-gray-400 opacity-75 hover:opacity-100"
         >
-          Collapse All {{ viewMode === 'year' ? 'Years' : 'Months' }}
+          Collapse All
         </button>
       </div>
     </div>
 
-    <div class="flex flex-col gap-1">
+    <div class="flex flex-col gap-3">
       <div 
         v-for="group in groups" 
         :key="viewMode === 'year' ? group.year : group.name"
       >
-        <!-- Year View with Nested Months -->
+        <!-- Year View with Smart Flattened Hierarchy -->
         <template v-if="viewMode === 'year'">
-          <!-- Year Header -->
-          <div 
-            @click="toggleGroupExpansion(group.year)"
-            class="flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg text-sm transition-colors border border-transparent hover:border-purple-200 dark:hover:border-purple-700 group"
-          >
-            <!-- Year expansion icon -->
-            <svg 
-              class="w-4 h-4 transition-transform duration-200 text-purple-500 dark:text-purple-400" 
-              :class="{ 'rotate-90': expandedGroups.has(group.year) }"
-              fill="currentColor" 
-              viewBox="0 0 20 20"
+          <!-- Current Year: Show months directly (no year wrapper) -->
+          <template v-if="group.year === new Date().getFullYear()">
+            <div
+              v-for="month in group.months"
+              :key="month.name"
+              class="mb-2"
             >
-              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-            </svg>
-            
-            <!-- Year title -->
-            <div class="flex-1">
-              <span class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
-                📅 {{ group.year }}
-              </span>
-            </div>
-            
-            <!-- Year event count -->
-            <span class="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full font-medium">
-              {{ group.totalEvents }}
-            </span>
-          </div>
-          
-          <!-- Nested Months for this Year -->
-          <div v-if="expandedGroups.has(group.year)" class="ml-6 mb-3">
-            <div class="space-y-1">
-              <div
-                v-for="month in group.months"
-                :key="month.name"
+              <!-- Current Year Month Header (direct, no nesting) -->
+              <div 
+                @click="toggleGroupExpansion(month.name)"
+                class="flex items-center gap-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
               >
-                <!-- Month Header (nested under year) -->
-                <div 
-                  @click="toggleGroupExpansion(month.name)"
-                  class="flex items-center gap-2 py-1.5 px-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-sm transition-colors border border-transparent hover:border-blue-200 dark:hover:border-blue-700 group"
+                <svg 
+                  class="w-4 h-4 transition-transform duration-200 text-blue-500 dark:text-blue-400" 
+                  :class="{ 'rotate-90': expandedGroups.has(month.name) }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
                 >
-                  <svg 
-                    class="w-3 h-3 transition-transform duration-200 text-blue-500 dark:text-blue-400" 
-                    :class="{ 'rotate-90': expandedGroups.has(month.name) }"
-                    fill="currentColor" 
-                    viewBox="0 0 20 20"
-                  >
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                  </svg>
-                  
-                  <div class="flex-1">
-                    <span class="font-medium text-gray-800 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
-                      {{ month.name.split(' ')[0] }} <!-- Just month name, not year -->
-                    </span>
-                  </div>
-                  
-                  <span class="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full font-medium">
-                    {{ month.events.length }}
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                
+                <div class="flex-1">
+                  <span class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                    {{ month.name.split(' ')[0] }}
                   </span>
                 </div>
                 
-                <!-- Events for this month -->
-                <div v-if="expandedGroups.has(month.name)" class="ml-6 mb-2">
-                  <div class="bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <span class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full font-medium">
+                  {{ month.events.length }}
+                </span>
+              </div>
+              
+              <!-- Current Year Events -->
+              <div v-if="expandedGroups.has(month.name)" class="ml-6 mb-3">
+                <PreviewEventCard
+                  v-for="event in month.events" 
+                  :key="event.uid"
+                  :event="event"
+                  :show-category="showCategoryInGroups"
+                  :format-date-range="formatDateRange"
+                  :get-recurring-event-key="getRecurringEventKey"
+                />
+              </div>
+            </div>
+          </template>
+          
+          <!-- Other Years: Simple collapsed groups -->
+          <template v-else>
+            <div class="mb-2">
+              <!-- Year Header (collapsed by default) -->
+              <div 
+                @click="toggleGroupExpansion(group.year)"
+                class="flex items-center gap-3 py-2 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
+              >
+                <svg 
+                  class="w-4 h-4 transition-transform duration-200 text-purple-500 dark:text-purple-400" 
+                  :class="{ 'rotate-90': expandedGroups.has(group.year) }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                
+                <div class="flex-1">
+                  <span class="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                    📅 {{ group.year }}
+                  </span>
+                </div>
+                
+                <span class="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full font-medium">
+                  {{ group.totalEvents }}
+                </span>
+              </div>
+              
+              <!-- Other Year Months (when expanded) -->
+              <div v-if="expandedGroups.has(group.year)" class="ml-6 space-y-1">
+                <div
+                  v-for="month in group.months"
+                  :key="month.name"
+                >
+                  <!-- Month Header -->
+                  <div 
+                    @click="toggleGroupExpansion(month.name)"
+                    class="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <svg 
+                      class="w-3 h-3 transition-transform duration-200 text-gray-500 dark:text-gray-400" 
+                      :class="{ 'rotate-90': expandedGroups.has(month.name) }"
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                    >
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    
+                    <div class="flex-1">
+                      <span class="font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
+                        {{ month.name.split(' ')[0] }}
+                      </span>
+                    </div>
+                    
+                    <span class="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full font-medium">
+                      {{ month.events.length }}
+                    </span>
+                  </div>
+                  
+                  <!-- Events for this month -->
+                  <div v-if="expandedGroups.has(month.name)" class="ml-5 mb-2">
                     <PreviewEventCard
                       v-for="event in month.events" 
                       :key="event.uid"
@@ -102,18 +146,18 @@
                 </div>
               </div>
             </div>
-          </div>
+          </template>
         </template>
 
-        <!-- Enhanced Month Header -->
+        <!-- Natural Month Header -->
         <template v-else-if="viewMode === 'month'">
           <div 
             @click="toggleGroupExpansion(group.name)"
-            class="flex items-center gap-3 py-1.5 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+            class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
-            <!-- Compact expansion icon -->
+            <!-- Minimal expansion icon -->
             <svg 
-              class="w-3 h-3 transition-transform duration-200 text-gray-400 dark:text-gray-500" 
+              class="w-4 h-4 transition-transform duration-200 text-gray-400 dark:text-gray-500" 
               :class="{ 'rotate-90': expandedGroups.has(group.name) }"
               fill="currentColor" 
               viewBox="0 0 20 20"
@@ -121,35 +165,32 @@
               <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
             
-            <!-- Month title with improved typography -->
+            <!-- Clean month title -->
             <div class="flex-1 flex items-baseline gap-2">
-              <span class="font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+              <span class="font-semibold text-gray-900 dark:text-gray-100">
                 {{ getMonthName(group.name) }}
               </span>
-              <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+              <span class="text-xs text-gray-500 dark:text-gray-400 font-mono opacity-75">
                 {{ getYearFromMonth(group.name) }}
               </span>
             </div>
             
-            <!-- Enhanced event count with context -->
-            <div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-              <span class="font-medium tabular-nums">{{ group.events.length }}</span>
-              <span class="hidden sm:inline">{{ group.events.length === 1 ? 'event' : 'events' }}</span>
+            <!-- Simple event count -->
+            <div class="text-xs text-gray-600 dark:text-gray-400 opacity-75">
+              <span class="font-medium">{{ group.events.length }}</span>
             </div>
           </div>
           
-          <!-- Minimal Events List -->
-          <div v-if="expandedGroups.has(group.name)" class="ml-6 mb-3">
-            <div class="bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <PreviewEventCard
-                v-for="event in group.events" 
-                :key="event.uid"
-                :event="event"
-                :show-category="showCategoryInGroups"
-                :format-date-range="formatDateRange"
-                :get-recurring-event-key="getRecurringEventKey"
-              />
-            </div>
+          <!-- Natural Events List -->
+          <div v-if="expandedGroups.has(group.name)" class="ml-6 mb-4 space-y-0">
+            <PreviewEventCard
+              v-for="event in group.events" 
+              :key="event.uid"
+              :event="event"
+              :show-category="showCategoryInGroups"
+              :format-date-range="formatDateRange"
+              :get-recurring-event-key="getRecurringEventKey"
+            />
           </div>
         </template>
 
@@ -195,13 +236,10 @@
         </template>
       </div>
       
-      <!-- Minimal Empty State -->
-      <div v-if="groups.length === 0" class="text-center py-6 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
-        <div class="text-2xl mb-2">📂</div>
-        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-          {{ $t('preview.noGroupsToShow') }}
-        </h3>
-        <p class="text-xs text-gray-600 dark:text-gray-400">
+      <!-- Ultra-Minimal Empty State -->
+      <div v-if="groups.length === 0" class="text-center py-8 opacity-60">
+        <div class="text-3xl mb-3 opacity-50">📂</div>
+        <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">
           {{ $t('preview.selectEventsToSeeGroupedPreview') }}
         </p>
       </div>
@@ -226,21 +264,27 @@ const expandedGroups = ref(new Set())
 // Category vs Month view should show category differently
 const showCategoryInGroups = computed(() => props.viewMode === 'month')
 
-// Watch for groups changes and default all to expanded
+// Watch for groups changes and use smart defaults
 watch(() => props.groups, (newGroups) => {
   // Clear existing expanded groups
   expandedGroups.value.clear()
   
-  // Default all groups to expanded
+  const currentYear = new Date().getFullYear()
+  
+  // Smart expansion based on relevance
   newGroups.forEach(group => {
     if (props.viewMode === 'year') {
-      // For year view, expand years and their months
-      expandedGroups.value.add(group.year)
-      group.months?.forEach(month => {
-        expandedGroups.value.add(month.name)
-      })
+      // For year view: expand current year only, collapse others
+      if (group.year === currentYear) {
+        expandedGroups.value.add(group.year)
+        // Expand current year's months
+        group.months?.forEach(month => {
+          expandedGroups.value.add(month.name)
+        })
+      }
+      // Other years stay collapsed by default
     } else {
-      // For month/category view, expand by name
+      // For month/category view, expand all by name (simpler case)
       expandedGroups.value.add(group.name)
     }
   })
