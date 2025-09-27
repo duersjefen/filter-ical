@@ -34,7 +34,7 @@
         :recurring-events="recurringEvents"
         :apply-loading="applyLoading"
         @toggle="toggleCard('rules')"
-        @create-rule="createRule"
+        @create-rule="handleCreateRule"
         @apply-rule="applyRule"
         @delete-rule-confirm="deleteRuleConfirm"
       />
@@ -46,9 +46,9 @@
         :groups="groups"
         :loading="loading"
         @toggle="toggleCard('events')"
-        @create-group="createGroup"
-        @update-group="updateGroup"
-        @delete-group="deleteGroup"
+        @create-group="handleCreateGroup"
+        @update-group="handleUpdateGroup"
+        @delete-group="handleDeleteGroup"
         @handle-group-assignment="handleGroupAssignment"
         @remove-from-group="handleRemoveFromGroup"
       />
@@ -153,16 +153,15 @@ export default {
       
       // API Functions
       loadAllAdminData,
-      createGroup: createGroupAPI,
-      updateGroup: updateGroupAPI,
-      assignEventsToGroup: assignEventsToGroupAPI,
-      addEventsToGroup: addEventsToGroupAPI,
-      unassignEvents: unassignEventsAPI,
-      createAssignmentRule: createAssignmentRuleAPI,
-      deleteAssignmentRule: deleteAssignmentRuleAPI,
+      createGroup,
+      updateGroup,
+      addEventsToGroup,
+      bulkUnassignEvents,
+      createAssignmentRule,
+      deleteAssignmentRule,
       applyExistingRule,
-      deleteGroup: deleteGroupAPI,
-      removeEventsFromGroup: removeEventsFromGroupAPI
+      deleteGroup,
+      removeEventsFromGroup
     } = useAdmin(props.domain)
 
     // HTTP functions for configuration management
@@ -203,59 +202,33 @@ export default {
       confirmDialog.value = { message, onConfirm }
     }
 
-    // Group Management Functions
-    const validateGroupName = (name, excludeGroupId = null) => {
-      if (!name || !name.trim()) {
-        return { valid: false, error: 'Group name cannot be empty' }
-      }
-      
-      if (groups.value.some(g => g.id !== excludeGroupId && g.name.toLowerCase() === name.trim().toLowerCase())) {
-        return { valid: false, error: 'Group name already exists' }
-      }
-      
-      return { valid: true }
+    // UI Handlers - Pure presentation logic
+    const handleCreateGroup = async (groupName) => {
+      const result = await createGroup(groupName)
+      showNotification(
+        result.success ? 'Group created successfully!' : `Failed to create group: ${result.error}`,
+        result.success ? 'success' : 'error'
+      )
     }
 
-    const createGroup = async (groupName) => {
-      const validation = validateGroupName(groupName)
-      if (!validation.valid) {
-        showNotification(validation.error, 'error')
-        return
-      }
-
-      const result = await createGroupAPI(groupName.trim())
-      if (result.success) {
-        showNotification('Group created successfully!', 'success')
-      } else {
-        showNotification(`Failed to create group: ${result.error}`, 'error')
-      }
-    }
-
-    const updateGroup = async (groupId, newName) => {
-      const validation = validateGroupName(newName, groupId)
-      if (!validation.valid) {
-        showNotification(validation.error, 'error')
-        return
-      }
-
-      const result = await updateGroupAPI(groupId, newName.trim())
-      if (result.success) {
-        showNotification('Group updated successfully!', 'success')
-      } else {
-        showNotification(`Failed to update group: ${result.error}`, 'error')
-      }
+    const handleUpdateGroup = async (groupId, newName) => {
+      const result = await updateGroup(groupId, newName)
+      showNotification(
+        result.success ? 'Group updated successfully!' : `Failed to update group: ${result.error}`,
+        result.success ? 'success' : 'error'
+      )
     }
 
     const handleGroupAssignment = async (groupId, eventTitles) => {
       if (groupId === 'unassigned') {
-        const result = await unassignEventsAPI(eventTitles)
+        const result = await bulkUnassignEvents(eventTitles)
         if (result.success) {
           showNotification(`Successfully unassigned ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''}!`, 'success')
         } else {
           showNotification(`Failed to unassign events: ${result.error}`, 'error')
         }
       } else {
-        const result = await addEventsToGroupAPI(groupId, eventTitles)
+        const result = await addEventsToGroup(groupId, eventTitles)
         if (result.success) {
           const groupName = groups.value.find(g => g.id === groupId)?.name || 'Unknown Group'
           showNotification(`Successfully added ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} to ${groupName}!`, 'success')
@@ -265,14 +238,13 @@ export default {
       }
     }
 
-    // Rule Management Functions
-    const createRule = async (ruleData) => {
-      const result = await createAssignmentRuleAPI(ruleData.rule_type, ruleData.rule_value, ruleData.target_group_id)
-      if (result.success) {
-        showNotification('Assignment rule created successfully!', 'success')
-      } else {
-        showNotification(`Failed to create assignment rule: ${result.error}`, 'error')
-      }
+    // Rule Management Handlers
+    const handleCreateRule = async (ruleData) => {
+      const result = await createAssignmentRule(ruleData.rule_type, ruleData.rule_value, ruleData.target_group_id)
+      showNotification(
+        result.success ? 'Assignment rule created successfully!' : `Failed to create assignment rule: ${result.error}`,
+        result.success ? 'success' : 'error'
+      )
     }
 
     const applyRule = async (rule) => {
@@ -299,7 +271,7 @@ export default {
     }
 
     const deleteRule = async (ruleId) => {
-      const result = await deleteAssignmentRuleAPI(ruleId)
+      const result = await deleteAssignmentRule(ruleId)
       if (result.success) {
         showNotification('Assignment rule deleted successfully!', 'success')
       } else {
@@ -384,23 +356,17 @@ export default {
       }
     }
 
-    // Delete Group Function
-    const deleteGroup = async (groupId) => {
-      const result = await deleteGroupAPI(groupId)
-      if (result.success) {
-        showNotification('Group deleted successfully!', 'success')
-      } else {
-        showNotification(`Failed to delete group: ${result.error}`, 'error')
-      }
+    // Delete Group Handler
+    const handleDeleteGroup = async (groupId) => {
+      const result = await deleteGroup(groupId)
+      showNotification(
+        result.success ? 'Group deleted successfully!' : `Failed to delete group: ${result.error}`,
+        result.success ? 'success' : 'error'
+      )
     }
 
     const handleRemoveFromGroup = async (groupId, eventTitles) => {
-      if (!removeEventsFromGroupAPI) {
-        showNotification('Remove from group functionality not yet implemented in backend', 'error')
-        return
-      }
-      
-      const result = await removeEventsFromGroupAPI(groupId, eventTitles)
+      const result = await removeEventsFromGroup(groupId, eventTitles)
       if (result.success) {
         const groupName = groups.value.find(g => g.id === parseInt(groupId))?.name || 'Unknown Group'
         showNotification(`Successfully removed ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} from ${groupName}!`, 'success')
@@ -440,10 +406,10 @@ export default {
 
       // Methods
       toggleCard,
-      createGroup,
-      updateGroup,
+      handleCreateGroup,
+      handleUpdateGroup,
       handleGroupAssignment,
-      createRule,
+      handleCreateRule,
       applyRule,
       deleteRuleConfirm,
       
@@ -453,7 +419,7 @@ export default {
       resetConfigurationConfirm,
       
       // Group management
-      deleteGroup,
+      handleDeleteGroup,
       handleRemoveFromGroup
     }
   }

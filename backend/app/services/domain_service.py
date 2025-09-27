@@ -200,10 +200,12 @@ def assign_recurring_events_to_group(db: Session, domain_key: str, group_id: int
     I/O Operation - Database operations.
     """
     try:
-        # Remove existing assignments for this group
-        db.query(RecurringEventGroup).filter(
-            RecurringEventGroup.group_id == group_id
-        ).delete()
+        # Remove existing assignments for the specific events in this group only
+        if recurring_event_titles:
+            db.query(RecurringEventGroup).filter(
+                RecurringEventGroup.group_id == group_id,
+                RecurringEventGroup.recurring_event_title.in_(recurring_event_titles)
+            ).delete(synchronize_session=False)
         
         # Create new assignments
         assignment_count = 0
@@ -672,6 +674,51 @@ def bulk_unassign_recurring_events(db: Session, domain_key: str, event_titles: L
         # Delete existing assignments for these event titles
         deleted_count = db.query(RecurringEventGroup).filter(
             RecurringEventGroup.domain_key == domain_key,
+            RecurringEventGroup.recurring_event_title.in_(event_titles)
+        ).delete(synchronize_session=False)
+        
+        db.commit()
+        
+        return True, deleted_count, ""
+        
+    except Exception as e:
+        db.rollback()
+        return False, 0, f"Database error: {str(e)}"
+
+
+def remove_events_from_specific_group(db: Session, domain_key: str, group_id: int, 
+                                     event_titles: List[str]) -> Tuple[bool, int, str]:
+    """
+    Remove recurring events from a specific group while preserving assignments to other groups.
+    
+    Args:
+        db: Database session
+        domain_key: Domain identifier  
+        group_id: Group ID to remove events from
+        event_titles: List of event titles to remove
+        
+    Returns:
+        Tuple of (success, removed_count, error_message)
+        
+    I/O Operation - Database deletion with specific group filtering.
+    """
+    try:
+        if not event_titles:
+            return True, 0, "No events to remove"
+        
+        # Verify group exists and belongs to domain
+        group = db.query(Group).filter(
+            Group.id == group_id,
+            Group.domain_key == domain_key
+        ).first()
+        
+        if not group:
+            return False, 0, "Group not found or access denied"
+        
+        # Delete assignments only for specific events in specific group
+        deleted_count = db.query(RecurringEventGroup).filter(
+            RecurringEventGroup.domain_key == domain_key,
+            RecurringEventGroup.group_id == group_id,
             RecurringEventGroup.recurring_event_title.in_(event_titles)
         ).delete(synchronize_session=False)
         

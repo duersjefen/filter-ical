@@ -1464,7 +1464,7 @@ export default {
             updateEventsOptimistically(eventsToRemove, groupId, 'remove')
             
             // Emit for actual API call
-            handleRemoveFromGroup(groupId, eventsToRemove)
+            emit('remove-from-group', groupId, eventsToRemove)
           }
         }
         

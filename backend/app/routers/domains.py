@@ -19,7 +19,8 @@ from ..services.domain_service import (
     assign_recurring_events_to_group, create_assignment_rule,
     get_assignment_rules, auto_assign_events_with_rules,
     get_available_recurring_events, get_available_recurring_events_with_assignments,
-    bulk_unassign_recurring_events, update_group, delete_group, delete_assignment_rule
+    bulk_unassign_recurring_events, update_group, delete_group, delete_assignment_rule,
+    remove_events_from_specific_group
 )
 from ..services.domain_config_service import (
     export_domain_configuration, import_domain_configuration
@@ -198,6 +199,50 @@ async def assign_recurring_events(
         
         return {
             "message": f"{count} recurring events assigned to group"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/{domain}/groups/{group_id}/remove-events")
+async def remove_events_from_group(
+    domain: str,
+    group_id: int,
+    removal_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Remove events from specific group (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+        
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+        
+        # Validate request data
+        if "recurring_event_titles" not in removal_data:
+            raise HTTPException(status_code=400, detail="recurring_event_titles is required")
+        
+        event_titles = removal_data["recurring_event_titles"]
+        if not isinstance(event_titles, list):
+            raise HTTPException(status_code=400, detail="recurring_event_titles must be an array")
+        
+        # Remove events from specific group
+        success, count, error = remove_events_from_specific_group(db, domain, group_id, event_titles)
+        if not success:
+            if "not found" in error.lower():
+                raise HTTPException(status_code=404, detail=error)
+            else:
+                raise HTTPException(status_code=400, detail=error)
+        
+        return {
+            "message": f"{count} events removed from group",
+            "removed_count": count
         }
         
     except HTTPException:

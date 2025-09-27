@@ -92,6 +92,26 @@ class TestContractCompliance:
         # For now, we expect 404 (not implemented)
         assert response.status_code in [200, 404]  # 404 until implemented
     
+    def test_remove_events_endpoint_contract_structure(self, test_client: TestClient):
+        """Test remove events endpoint follows OpenAPI contract structure."""
+        # Test with sample data structure that matches OpenAPI spec
+        test_payload = {
+            "recurring_event_titles": ["Test Event 1", "Test Event 2"]
+        }
+        
+        response = test_client.put("/domains/exter/groups/1/remove-events", json=test_payload)
+        
+        # When properly implemented, should return 200 with removal response
+        # For now, we expect 404 (domain not configured) or 400 (validation error)
+        assert response.status_code in [200, 400, 404]
+        
+        # If successful, validate response structure matches OpenAPI contract
+        if response.status_code == 200:
+            data = response.json()
+            assert "message" in data
+            assert "removed_count" in data
+            assert isinstance(data["removed_count"], int)
+    
     def test_ical_export_contract_structure(self, test_client: TestClient):
         """Test iCal export endpoint follows OpenAPI contract structure."""
         # Test with a sample UUID
@@ -161,3 +181,22 @@ class TestErrorHandling:
         # Try invalid methods on existing paths
         response = test_client.patch("/health")
         assert response.status_code == 405
+    
+    def test_remove_events_endpoint_validation(self, test_client: TestClient):
+        """Test remove events endpoint input validation."""
+        # Test missing required field
+        response = test_client.put("/domains/exter/groups/1/remove-events", json={})
+        assert response.status_code == 400
+        
+        # Test invalid data type for recurring_event_titles
+        response = test_client.put("/domains/exter/groups/1/remove-events", json={
+            "recurring_event_titles": "not an array"
+        })
+        assert response.status_code == 400
+        
+        # Test valid structure (may fail due to domain/group not existing, but structure is correct)
+        response = test_client.put("/domains/exter/groups/1/remove-events", json={
+            "recurring_event_titles": ["Valid Event Title"]
+        })
+        # Should not be 422 (validation error) - the structure is correct
+        assert response.status_code != 422

@@ -318,6 +318,53 @@ paths:
         '404':
           description: Domain or group not found
 
+  /domains/{domain}/groups/{groupId}/remove-events:
+    put:
+      summary: Remove events from specific group (admin)
+      description: Remove recurring events from a specific group while preserving assignments to other groups
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recurring_event_titles]
+              properties:
+                recurring_event_titles:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Weekly Team Meeting", "Monthly Review"]
+      responses:
+        '200':
+          description: Events successfully removed from group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "2 events removed from group"
+                  removed_count:
+                    type: integer
+                    example: 2
+        '400':
+          description: Invalid input
+        '404':
+          description: Domain or group not found
+
   /domains/{domain}/assignment-rules:
     post:
       summary: Create auto-assignment rule (admin)

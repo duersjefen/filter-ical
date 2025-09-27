@@ -67,6 +67,15 @@ export function useAdmin(domain) {
   }
 
   const createGroup = async (name) => {
+    // Validation
+    if (!name || !name.trim()) {
+      return { success: false, error: 'Group name cannot be empty' }
+    }
+    
+    if (groups.value.some(g => g.name.toLowerCase() === name.trim().toLowerCase())) {
+      return { success: false, error: 'Group name already exists' }
+    }
+    
     try {
       const result = await post(`/domains/${domain}/groups`, { name: name.trim() })
       await loadGroups() // Refresh groups list
@@ -78,6 +87,15 @@ export function useAdmin(domain) {
   }
 
   const updateGroup = async (groupId, name) => {
+    // Validation
+    if (!name || !name.trim()) {
+      return { success: false, error: 'Group name cannot be empty' }
+    }
+    
+    if (groups.value.some(g => g.id !== groupId && g.name.toLowerCase() === name.trim().toLowerCase())) {
+      return { success: false, error: 'Group name already exists' }
+    }
+    
     try {
       const result = await put(`/domains/${domain}/groups/${groupId}`, { name: name.trim() })
       await loadGroups() // Refresh groups list
@@ -204,68 +222,17 @@ export function useAdmin(domain) {
   }
 
   const removeEventsFromGroup = async (groupId, eventTitles) => {
-    try {
-      // Since the backend doesn't have "remove from specific group" yet,
-      // we'll implement this using the existing assign functionality
-      // by reassigning events to their other groups (excluding the target group)
-      
-      // First, get current assignments for these events
+    const result = await put(`/domains/${domain}/groups/${groupId}/remove-events`, {
+      recurring_event_titles: Array.isArray(eventTitles) ? eventTitles : [eventTitles]
+    })
+    
+    if (result.success) {
+      // Refresh events after removal
       await loadRecurringEventsWithAssignments()
-      
-      const updatedAssignments = []
-      
-      eventTitles.forEach(eventTitle => {
-        const event = recurringEvents.value.find(e => e.title === eventTitle)
-        if (event && event.assigned_group_ids) {
-          // Remove the target group from the event's group assignments
-          const remainingGroupIds = event.assigned_group_ids.filter(id => id !== parseInt(groupId))
-          
-          if (remainingGroupIds.length > 0) {
-            // Event still has other groups, reassign to first remaining group
-            updatedAssignments.push({
-              eventTitle: eventTitle,
-              targetGroupId: remainingGroupIds[0],
-              allGroupIds: remainingGroupIds
-            })
-          } else {
-            // Event has no other groups, unassign completely
-            updatedAssignments.push({
-              eventTitle: eventTitle,
-              targetGroupId: null,
-              allGroupIds: []
-            })
-          }
-        }
-      })
-
-      // Process the assignments
-      const results = []
-      for (const assignment of updatedAssignments) {
-        if (assignment.targetGroupId === null) {
-          // Unassign completely
-          const result = await unassignEventFromGroup(assignment.eventTitle)
-          results.push(result)
-        } else {
-          // For now, we can only assign to one group at a time with current backend
-          // This is a limitation - we need a proper "remove from specific group" API
-          const result = await assignEventsToGroup(assignment.targetGroupId, [assignment.eventTitle])
-          results.push(result)
-        }
-      }
-
-      // Check if all operations succeeded
-      const allSucceeded = results.every(result => result.success)
-      
-      if (allSucceeded) {
-        return { success: true, data: { removedCount: eventTitles.length } }
-      } else {
-        const errors = results.filter(r => !r.success).map(r => r.error)
-        return { success: false, error: `Some operations failed: ${errors.join(', ')}` }
-      }
-      
-    } catch (err) {
-      console.error('Failed to remove events from group:', err)
-      return { success: false, error: err.message }
+      return { success: true, data: result.data }
+    } else {
+      console.error('Failed to remove events from group:', result.error)
+      return { success: false, error: result.error }
     }
   }
 
