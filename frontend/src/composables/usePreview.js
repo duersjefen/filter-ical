@@ -8,7 +8,7 @@
 import { computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useSelectionStore } from '../stores/selectionStore'
-import { filterEventsBySelection, filterFutureEvents } from '../utils/eventHelpers'
+import { filterEventsBySelection, filterFutureEvents, generateEventIdentifier } from '../utils/eventHelpers'
 
 export function usePreview() {
   const appStore = useAppStore()
@@ -38,11 +38,10 @@ export function usePreview() {
    * Removes duplicate events that appear in multiple groups
    */
   const sortedPreviewEvents = computed(() => {
-    // First deduplicate by uid to prevent same event showing multiple times
+    // Deduplicate using robust content-based identifiers (backup safety net)
     const uniqueEvents = new Map()
-    previewEvents.value.forEach((event, index) => {
-      // Use uid if available, otherwise create fallback identifier
-      const identifier = event.uid || `${event.title}-${event.start || event.dtstart}-${index}`
+    previewEvents.value.forEach(event => {
+      const identifier = generateEventIdentifier(event)
       
       if (!uniqueEvents.has(identifier)) {
         uniqueEvents.set(identifier, event)
@@ -82,7 +81,7 @@ export function usePreview() {
   function groupEventsByCategory(events, getRecurringEventKey) {
     const groups = {}
     
-    events.forEach((event, index) => {
+    events.forEach(event => {
       const category = getRecurringEventKey(event)
       if (!groups[category]) {
         groups[category] = {
@@ -92,8 +91,8 @@ export function usePreview() {
         }
       }
       
-      // Use uid if available, otherwise create fallback identifier
-      const identifier = event.uid || `${event.title}-${event.start || event.dtstart}-${index}`
+      // Use consistent identifier strategy
+      const identifier = generateEventIdentifier(event)
       
       // Only add if we haven't seen this identifier in this category
       if (!groups[category].seenIdentifiers.has(identifier)) {
@@ -115,7 +114,7 @@ export function usePreview() {
   function groupEventsByMonth(events) {
     const groups = {}
     
-    events.forEach((event, index) => {
+    events.forEach(event => {
       const date = new Date(event.start || event.dtstart)
       const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
       
@@ -127,8 +126,8 @@ export function usePreview() {
         }
       }
       
-      // Use uid if available, otherwise create fallback identifier
-      const identifier = event.uid || `${event.title}-${event.start || event.dtstart}-${index}`
+      // Use consistent identifier strategy
+      const identifier = generateEventIdentifier(event)
       
       // Only add if we haven't seen this identifier in this month
       if (!groups[monthKey].seenIdentifiers.has(identifier)) {

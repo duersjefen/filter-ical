@@ -4,6 +4,38 @@
  */
 
 /**
+ * Generate a unique identifier for an event
+ * Priority: UID > title+start+end > title+start+description_hash
+ */
+export function generateEventIdentifier(event) {
+  // First priority: use UID if available
+  if (event.uid) {
+    return event.uid
+  }
+  
+  // Second priority: use title + start + end
+  const title = event.title || event.summary || 'untitled'
+  const start = event.start || event.dtstart || ''
+  const end = event.end || event.dtend || ''
+  
+  if (start && end) {
+    return `${title}-${start}-${end}`
+  }
+  
+  // Third priority: use title + start + description hash
+  if (start) {
+    const description = event.description || ''
+    const descHash = description ? description.length.toString() : '0'
+    return `${title}-${start}-${descHash}`
+  }
+  
+  // Fallback: title + description hash
+  const description = event.description || ''
+  const descHash = description ? description.length.toString() : '0'
+  return `${title}-${descHash}`
+}
+
+/**
  * Get the key used for filtering events by title
  */
 export function getRecurringEventKey(event) {

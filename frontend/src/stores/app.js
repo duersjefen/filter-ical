@@ -332,6 +332,7 @@ export const useAppStore = defineStore('app', () => {
   /**
    * Extract all events from groups data for preview consumption
    * This computed property ensures reactivity when groups data changes
+   * Deduplicates events that appear in multiple groups
    */
   const allEventsFromGroups = computed(() => {
     const extractedEvents = []
@@ -354,7 +355,39 @@ export const useAppStore = defineStore('app', () => {
       })
     }
     
-    return extractedEvents
+    // Deduplicate events using robust identifier strategy
+    const uniqueEvents = new Map()
+    extractedEvents.forEach(event => {
+      // Generate stable identifier using event content
+      let identifier
+      if (event.uid) {
+        identifier = event.uid
+      } else {
+        // Create content-based identifier
+        const title = event.title || event.summary || 'untitled'
+        const start = event.start || event.dtstart || ''
+        const end = event.end || event.dtend || ''
+        
+        if (start && end) {
+          identifier = `${title}-${start}-${end}`
+        } else if (start) {
+          const description = event.description || ''
+          const descHash = description ? description.length.toString() : '0'
+          identifier = `${title}-${start}-${descHash}`
+        } else {
+          const description = event.description || ''
+          const descHash = description ? description.length.toString() : '0'
+          identifier = `${title}-${descHash}`
+        }
+      }
+      
+      // Only keep the first occurrence of each unique event
+      if (!uniqueEvents.has(identifier)) {
+        uniqueEvents.set(identifier, event)
+      }
+    })
+    
+    return Array.from(uniqueEvents.values())
   })
 
 
