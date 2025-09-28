@@ -8,13 +8,13 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex-1">
           <h3 class="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-            🏷️ <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Groups</span>
+            🏷️ <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">Groups</span>
           </h3>
         </div>
         <!-- Mobile Switch Button - Enhanced Modern Design -->
         <button
           @click="$emit('switch-to-types')"
-          class="group relative px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 active:scale-95"
+          class="group relative px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 active:scale-95"
           :title="$t('ui.switchToEventsView')"
         >
           <!-- Switch Icon -->
@@ -54,7 +54,7 @@
         
         <div class="flex-1">
           <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
-            🏷️ <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Groups</span>
+            🏷️ <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">Groups</span>
           </h3>
           <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {{ selectionSummary.selected > 0
@@ -67,7 +67,7 @@
       <!-- Desktop Switch Button - Enhanced Modern Design -->
       <button
         @click="$emit('switch-to-types')"
-        class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
+        class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
         :title="$t('ui.switchToEventsView')"
       >
         <!-- Switch Icon -->

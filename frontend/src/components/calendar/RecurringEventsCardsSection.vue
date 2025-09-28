@@ -10,14 +10,14 @@
         <div class="flex items-center justify-between mb-3">
           <div class="flex-1">
             <h3 class="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-              📂 <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{{ $t('calendar.recurringEvents') }}</span>
+              📂 <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('calendar.recurringEvents') }}</span>
             </h3>
           </div>
           <!-- Mobile Switch Button - Enhanced Modern Design -->
           <button
             v-if="hasGroups"
             @click="$emit('switch-to-groups')"
-            class="group relative px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 active:scale-95"
+            class="group relative px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:scale-105 active:scale-95"
             :title="$t('ui.switchToGroupsView')"
           >
             <!-- Switch Icon -->
@@ -57,7 +57,7 @@
           
           <div class="flex-1">
             <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
-              📂 <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{{ $t('calendar.recurringEvents') }}</span>
+              📂 <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('calendar.recurringEvents') }}</span>
             </h3>
             <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
               {{ summaryText || (selectedRecurringEvents.length > 0 
@@ -71,7 +71,7 @@
         <button
           v-if="hasGroups"
           @click="$emit('switch-to-groups')"
-          class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
+          class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
           title="Switch to Groups view"
         >
           <!-- Switch Icon -->
@@ -239,30 +239,30 @@
           :key="recurringEvent.name"
           class="border rounded-lg transition-all duration-200 cursor-pointer group/item"
           :class="selectedRecurringEvents.includes(recurringEvent.name)
-            ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500 shadow-sm' 
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400 shadow-md shadow-blue-100 dark:shadow-blue-900/30 ring-1 ring-blue-200 dark:ring-blue-800' 
             : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm'"
           @click="$emit('toggle-recurring-event', recurringEvent.name)"
           :title="`Click to ${selectedRecurringEvents.includes(recurringEvent.name) ? 'deselect' : 'select'} ${recurringEvent.name}`"
         >
           <!-- Two-Row Event Header -->
-          <div class="p-3 transition-colors">
-            <!-- Row 1: Checkbox and Title -->
-            <div class="flex items-center gap-3 mb-2">
-              <!-- Checkbox -->
-              <div 
-                class="w-4 h-4 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0"
-                :class="selectedRecurringEvents.includes(recurringEvent.name)
-                  ? 'bg-blue-500 border-blue-500 text-white' 
-                  : 'border-gray-300 dark:border-gray-400 bg-white dark:bg-gray-700 group-hover/item:border-blue-400'"
+          <div class="p-3 transition-colors relative">
+            <!-- Selected Indicator Icon (top-right corner) -->
+            <div 
+              v-if="selectedRecurringEvents.includes(recurringEvent.name)"
+              class="absolute top-2 right-2 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-10"
+            >
+              ✓
+            </div>
+            
+            <!-- Row 1: Full-width Title -->
+            <div class="mb-2 pr-6">
+              <!-- Event Title with full space -->
+              <div class="font-semibold text-gray-900 dark:text-gray-100 truncate transition-colors"
+                   :class="selectedRecurringEvents.includes(recurringEvent.name)
+                     ? 'text-blue-700 dark:text-blue-300' 
+                     : 'group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400'"
               >
-                <span v-if="selectedRecurringEvents.includes(recurringEvent.name)">✓</span>
-              </div>
-              
-              <!-- Event Title -->
-              <div class="flex-1 min-w-0">
-                <div class="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
-                  {{ recurringEvent.name.trim() }}
-                </div>
+                {{ recurringEvent.name.trim() }}
               </div>
             </div>
             
@@ -481,7 +481,7 @@
               :key="recurringEvent.name"
               class="group/card relative bg-gray-50 dark:bg-gray-800/50 rounded-lg border transition-all duration-300 cursor-pointer overflow-hidden hover:shadow-md"
               :class="selectedRecurringEvents.includes(recurringEvent.name)
-                ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-500 shadow-sm scale-[1.02]' 
+                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400 shadow-md shadow-emerald-100 dark:shadow-emerald-900/30 ring-1 ring-emerald-200 dark:ring-emerald-800 scale-[1.02]' 
                 : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-500'"
               @click="$emit('toggle-recurring-event', recurringEvent.name)"
               :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? 'Deselect' : 'Select'} ${recurringEvent.name}`"
@@ -493,27 +493,25 @@
               ></div>
               
               <!-- Card Content -->
-              <div class="p-4">
+              <div class="p-4 relative">
+                <!-- Selected Indicator Icon (top-right corner) -->
+                <div 
+                  v-if="selectedRecurringEvents.includes(recurringEvent.name)"
+                  class="absolute top-2 right-2 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-10"
+                >
+                  ✓
+                </div>
+                
                 <!-- Header -->
-                <div class="flex items-start gap-3 mb-3">
-                  <!-- Checkbox -->
-                  <div 
-                    class="flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 mt-1"
-                    :class="selectedRecurringEvents.includes(recurringEvent.name)
-                      ? 'bg-emerald-500 border-emerald-500 text-white' 
-                      : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 group-hover/card:border-emerald-400'"
+                <div class="mb-3 pr-6">
+                  <!-- Event Title with full space -->
+                  <h4 class="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight truncate transition-colors"
+                      :class="selectedRecurringEvents.includes(recurringEvent.name)
+                        ? 'text-emerald-700 dark:text-emerald-300' 
+                        : 'group-hover/card:text-emerald-600 dark:group-hover/card:text-emerald-400'"
                   >
-                    <svg v-if="selectedRecurringEvents.includes(recurringEvent.name)" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  
-                  <!-- Event Title -->
-                  <div class="flex-1 min-w-0">
-                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight truncate group-hover/card:text-emerald-600 dark:group-hover/card:text-emerald-400 transition-colors">
-                      {{ recurringEvent.name.trim() }}
-                    </h4>
-                  </div>
+                    {{ recurringEvent.name.trim() }}
+                  </h4>
                 </div>
                 
                 <!-- Event Details -->

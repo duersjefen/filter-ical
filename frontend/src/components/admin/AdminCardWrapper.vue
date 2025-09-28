@@ -21,7 +21,7 @@
         
         <div class="flex-1 min-w-0">
           <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-1 sm:mb-2 tracking-tight">
-            {{ icon }} <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{{ title }}</span>
+            {{ icon }} <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ title }}</span>
           </h3>
           <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {{ subtitle }}

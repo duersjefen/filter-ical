@@ -11,7 +11,7 @@
     :title="$t('ui.clickAnywhereToToggle', { name: group.name })"
   >
     <!-- Enhanced Group Header with gradient pattern for consistency -->
-    <div class="bg-gradient-to-r from-gray-800 to-gray-700 dark:from-gray-700 dark:to-gray-800 px-6 py-5 border-b border-gray-600 dark:border-gray-600 relative overflow-hidden">
+    <div class="bg-gradient-to-r from-slate-200 to-slate-300 dark:from-gray-700 dark:to-gray-800 px-6 py-5 border-b border-slate-300 dark:border-gray-600 relative overflow-hidden">
       <!-- Subscription status indicator stripe -->
       <div 
         class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
@@ -39,12 +39,12 @@
           </div>
           
           <!-- Group Title with enhanced typography -->
-          <div class="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
+          <div class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-2 leading-tight">
             📋 {{ group.name }}
           </div>
           
           <!-- Enhanced Description with event count -->
-          <div class="text-sm text-gray-300 mb-3">
+          <div class="text-sm text-gray-600 dark:text-gray-300 mb-3">
             <div v-if="group.description" class="truncate mb-1">
               {{ group.description }}
             </div>
@@ -63,10 +63,10 @@
           <!-- Enhanced Progress Bar -->
           <div v-if="hasRecurringEvents" class="w-full">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-medium text-gray-200">
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-200">
                 {{ selectedGroupRecurringEvents.length }}/{{ recurringEventsCount }} selected
               </span>
-              <span class="text-xs text-gray-300">
+              <span class="text-xs text-gray-600 dark:text-gray-300">
                 {{ Math.round((selectedGroupRecurringEvents.length / recurringEventsCount) * 100) }}%
               </span>
             </div>

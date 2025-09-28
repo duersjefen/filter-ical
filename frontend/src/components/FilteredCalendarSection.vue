@@ -24,7 +24,7 @@
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3 mb-2">
             <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
-              🔗 <span class="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{{ $t('filteredCalendar.title') }}</span>
+              🔗 <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('filteredCalendar.title') }}</span>
             </h3>
             <!-- Status badge showing count of filtered calendars -->
             <div v-if="filteredCalendars.length > 0" 

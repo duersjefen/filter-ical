@@ -1,4 +1,4 @@
-- Auto rules not working, UX must be improved.
+- Fix dates (every Sunday), also German translation.
+- Wild colors in admin -> groups
 - Finalize internationalization.
-
 - Deploy
