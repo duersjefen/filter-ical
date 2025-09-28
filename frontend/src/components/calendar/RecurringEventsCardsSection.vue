@@ -319,7 +319,7 @@
                   :title="expandedRecurringEvents.has(recurringEvent.name) ? 'Hide individual events' : 'Show individual events'"
                 >
                   <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
-                    {{ expandedRecurringEvents.has(recurringEvent.name) ? 'Hide' : 'Show' }}
+                    {{ expandedRecurringEvents.has(recurringEvent.name) ? $t('admin.hide') : $t('admin.show') }}
                   </span>
                   <svg 
                     class="w-3 h-3 transition-transform duration-300" 
@@ -538,7 +538,7 @@
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400 shadow-lg ring-2 ring-emerald-200 dark:ring-emerald-700/50 scale-[1.01]' 
                   : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-25 dark:hover:bg-emerald-950/10'"
                 @click="handleCardClick(recurringEvent.name, $event)"
-                :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? 'Deselect' : 'Select'} ${recurringEvent.name} • Drag to select multiple`"
+                :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? $t('status.deselectEvent') : $t('status.selectEvent')} ${recurringEvent.name} • ${$t('admin.dragToSelectMultiple')}`"
               >
               <!-- Selection Indicator -->
               <div 

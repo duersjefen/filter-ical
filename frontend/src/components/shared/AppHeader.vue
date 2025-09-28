@@ -64,7 +64,7 @@
                 {{ contextMessage }}
               </span>
               <div class="ml-1 px-2 py-0.5 bg-white/20 rounded-full">
-                <span class="text-xs font-bold text-white">CLICK</span>
+                <span class="text-xs font-bold text-white">{{ $t('admin.click') }}</span>
               </div>
             </div>
           </div>

@@ -47,7 +47,7 @@
           :title="'Filter unassigned events • Hold Ctrl to select multiple filters'"
         >
           <span>❔</span>
-          <span>Unassigned</span>
+          <span>{{ t('admin.unassigned') }}</span>
           <span class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
         </button>
         
@@ -140,7 +140,7 @@
         class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
       >
         <span>🗑️</span>
-        <span>Delete Group</span>
+        <span>{{ t('admin.deleteGroup') }}</span>
       </button>
     </div>
     
@@ -396,7 +396,7 @@
                       ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
                       : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-800 hover:from-red-100 hover:to-rose-100 dark:from-red-900/20 dark:to-rose-900/20 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
                   ]"
-                  :title="`${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'Add' : 'Remove'} ${getSmartGroupAction(group.id).secondaryCount} events ${getSmartGroupAction(group.id).secondaryAction === 'add' ? 'to' : 'from'} ${group.name}`"
+                  :title="`${getSmartGroupAction(group.id).secondaryAction === 'add' ? t('admin.add') : t('admin.remove')} ${getSmartGroupAction(group.id).secondaryCount} ${t('admin.events')} ${getSmartGroupAction(group.id).secondaryAction === 'add' ? t('admin.to') : t('admin.from')} ${group.name}`"
                 >
                   <div class="flex items-center justify-center gap-2">
                     <div v-if="!isGroupUpdating(group.id)" :class="[
@@ -669,7 +669,7 @@
     title="Delete Group"
     :message="deleteConfirmMessage"
     confirm-text="Delete Group"
-    cancel-text="Cancel"
+    :cancel-text="t('admin.cancel')"
     @confirm="confirmDeleteGroup"
     @cancel="cancelDeleteGroup"
   />

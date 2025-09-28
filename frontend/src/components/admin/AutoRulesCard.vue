@@ -219,11 +219,11 @@
                   </h5>
                   <!-- Show description for description rules -->
                   <div v-if="newRule.rule_type === 'description_contains' && event.description" class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                    <span class="font-medium">Description:</span> {{ event.description }}
+                    <span class="font-medium">{{ t('admin.description') }}:</span> {{ event.description }}
                   </div>
                   <!-- Show categories for category rules -->
                   <div v-if="newRule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    <span class="font-medium">Categories:</span> {{ event.categories.join(', ') }}
+                    <span class="font-medium">{{ t('admin.categories') }}:</span> {{ event.categories.join(', ') }}
                   </div>
                 </div>
               </div>
@@ -343,7 +343,7 @@
                 >
                   <span v-if="applyLoading" class="text-base">⏳</span>
                   <span v-else class="text-base">⚡</span>
-                  <span>Apply</span>
+                  <span>{{ t('admin.apply') }}</span>
                 </button>
                 <button
                   @click.stop="deleteRuleConfirm(rule)"
@@ -411,11 +411,11 @@
                     </h5>
                     <!-- Show description for description rules -->
                     <div v-if="rule.rule_type === 'description_contains' && event.description" class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                      <span class="font-medium">Description:</span> {{ event.description }}
+                      <span class="font-medium">{{ t('admin.description') }}:</span> {{ event.description }}
                     </div>
                     <!-- Show categories for category rules -->
                     <div v-if="rule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      <span class="font-medium">Categories:</span> {{ event.categories.join(', ') }}
+                      <span class="font-medium">{{ t('admin.categories') }}:</span> {{ event.categories.join(', ') }}
                     </div>
                   </div>
                 </div>
@@ -461,11 +461,11 @@
           <div class="flex items-start gap-3 text-sm text-blue-800 dark:text-blue-200">
             <span class="text-lg flex-shrink-0">💡</span>
             <div class="text-left">
-              <p class="font-semibold mb-1">Pro Tips:</p>
+              <p class="font-semibold mb-1">{{ t('admin.proTips') }}</p>
               <ul class="space-y-1 text-xs">
-                <li>• Use "Meeting" in title rules to catch all meeting events</li>
-                <li>• Description rules work great for project names</li>
-                <li>• Category rules help organize external vs internal events</li>
+                <li>• {{ t('admin.useMeetingInTitleRules') }}</li>
+                <li>• {{ t('admin.descriptionRulesForProjects') }}</li>
+                <li>• {{ t('admin.categoryRulesForOrganization') }}</li>
               </ul>
             </div>
           </div>
@@ -764,9 +764,9 @@ export default {
       if (willChangeCount === 0) {
         return t('admin.complete')
       } else if (willChangeCount < 5) {
-        return 'Ready'
+        return t('admin.ready')
       } else {
-        return 'Pending'
+        return t('status.pending')
       }
     }
     
@@ -775,9 +775,9 @@ export default {
       switch (status) {
         case t('admin.complete'):
           return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-        case 'Ready':
+        case t('admin.ready'):
           return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-        case 'Pending':
+        case t('status.pending'):
           return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200'
         default:
           return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
@@ -786,9 +786,9 @@ export default {
     
     const getRuleTypeLabel = (ruleType) => {
       const labels = {
-        title_contains: 'Title Contains',
-        description_contains: 'Description Contains', 
-        category_contains: 'Category Contains'
+        title_contains: t('admin.titleContains'),
+        description_contains: t('admin.descriptionContains'), 
+        category_contains: t('admin.categoryContains')
       }
       return labels[ruleType] || ruleType
     }

@@ -8,7 +8,7 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex-1">
           <h3 class="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-            🏷️ <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">Groups</span>
+            🏷️ <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('admin.groups') }}</span>
           </h3>
         </div>
         <!-- Mobile Switch Button - Enhanced Modern Design -->
@@ -54,7 +54,7 @@
         
         <div class="flex-1">
           <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
-            🏷️ <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">Groups</span>
+            🏷️ <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('admin.groups') }}</span>
           </h3>
           <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {{ selectionSummary.selected > 0

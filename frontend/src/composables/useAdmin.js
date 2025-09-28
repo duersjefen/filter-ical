@@ -7,6 +7,7 @@
 
 import { ref, computed } from 'vue'
 import { useHTTP } from './useHTTP'
+import i18n from '@/i18n'
 
 export function useAdmin(domain) {
   const { get, post, put, del } = useHTTP()
@@ -459,7 +460,7 @@ export function useAdmin(domain) {
     ).map(event => ({
       ...event,
       currentGroupName: event.assigned_group_id ? 
-        getGroupName(event.assigned_group_id) : 'Unassigned',
+        getGroupName(event.assigned_group_id) : i18n.global.t('admin.unassigned'),
       willChange: event.assigned_group_id !== parseInt(targetGroupId)
     }))
 

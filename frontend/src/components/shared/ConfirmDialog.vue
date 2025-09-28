@@ -13,7 +13,7 @@
         <div class="flex items-center gap-3">
           <div class="text-2xl">⚠️</div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {{ title }}
+            {{ displayTitle }}
           </h3>
         </div>
       </div>
@@ -31,13 +31,13 @@
           @click="cancel"
           class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
         >
-          {{ cancelText }}
+          {{ displayCancelText }}
         </button>
         <button
           @click="confirm"
           class="px-4 py-2 text-white bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg font-medium transition-colors shadow-md"
         >
-          {{ confirmText }}
+          {{ displayConfirmText }}
         </button>
       </div>
     </div>
@@ -45,13 +45,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // Props
 const props = defineProps({
   title: {
     type: String,
-    default: 'Confirm Action'
+    default: ''
   },
   message: {
     type: String,
@@ -59,11 +62,11 @@ const props = defineProps({
   },
   confirmText: {
     type: String,
-    default: 'Delete'
+    default: ''
   },
   cancelText: {
     type: String,
-    default: 'Cancel'
+    default: ''
   }
 })
 
@@ -72,6 +75,11 @@ const emit = defineEmits(['confirm', 'cancel'])
 
 // State
 const show = ref(false)
+
+// Computed properties for defaults
+const displayTitle = computed(() => props.title || t('admin.confirmAction'))
+const displayConfirmText = computed(() => props.confirmText || t('admin.delete'))
+const displayCancelText = computed(() => props.cancelText || t('admin.cancel'))
 
 // Methods
 const open = () => {
