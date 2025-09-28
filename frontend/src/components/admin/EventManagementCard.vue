@@ -598,6 +598,12 @@
                   : 'border-gray-200 dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-600 bg-white dark:bg-gray-800 hover:bg-blue-25 dark:hover:bg-blue-950/10'
               ]"
             >
+              <!-- Selection Indicator Line -->
+              <div 
+                class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
+                :class="selectedEvents.includes(event.title) ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'"
+              ></div>
+              
               <!-- Event Title with clean layout -->
               <div class="mb-2">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5">

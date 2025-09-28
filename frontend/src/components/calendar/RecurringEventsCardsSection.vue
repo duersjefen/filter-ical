@@ -232,116 +232,147 @@
         </div>
       </div>
       
-      <!-- Concise Event Cards Grid - 4 columns for better space usage -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4 items-start">
-        <div 
-          v-for="recurringEvent in filteredMainRecurringEvents" 
-          :key="recurringEvent.name"
-          class="border rounded-lg transition-all duration-200 cursor-pointer group/item"
-          :class="selectedRecurringEvents.includes(recurringEvent.name)
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400 shadow-md shadow-blue-100 dark:shadow-blue-900/30 ring-1 ring-blue-200 dark:ring-blue-800' 
-            : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm'"
-          @click="$emit('toggle-recurring-event', recurringEvent.name)"
-          :title="`Click to ${selectedRecurringEvents.includes(recurringEvent.name) ? 'deselect' : 'select'} ${recurringEvent.name}`"
+      <!-- Enhanced Event Cards Grid with Drag Selection -->
+      <div 
+        class="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+        @mousedown="startDragSelection"
+        @mousemove="updateDragSelection"
+        @mouseup="endDragSelection"
+        @mouseleave="endDragSelection"
+      >
+        <!-- Drag Selection Overlay -->
+        <div
+          v-if="dragSelection.dragging"
+          class="absolute pointer-events-none bg-gradient-to-br from-blue-300 to-blue-400 dark:from-blue-500 dark:to-blue-600 opacity-30 border-2 border-blue-500 dark:border-blue-400 rounded-lg shadow-lg backdrop-blur-sm"
+          :style="{
+            left: Math.min(dragSelection.startX, dragSelection.currentX) + 'px',
+            top: Math.min(dragSelection.startY, dragSelection.currentY) + 'px',
+            width: Math.abs(dragSelection.currentX - dragSelection.startX) + 'px',
+            height: Math.abs(dragSelection.currentY - dragSelection.startY) + 'px',
+            zIndex: 10
+          }"
         >
-          <!-- Two-Row Event Header -->
-          <div class="p-3 transition-colors relative">
-            <!-- Selected Indicator Icon (top-right corner) -->
+          <div class="absolute inset-0 bg-white dark:bg-gray-900 opacity-10 rounded-lg"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4 items-start">
+          <div 
+            v-for="recurringEvent in filteredMainRecurringEvents" 
+            :key="recurringEvent.name"
+            :ref="el => { if (el) cardRefs[`main-${recurringEvent.name}`] = el }"
+            class="relative border-2 rounded-lg transition-all duration-200 cursor-pointer group/item transform hover:scale-[1.01]"
+            :class="selectedRecurringEvents.includes(recurringEvent.name)
+              ? 'border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30 shadow-lg ring-2 ring-blue-200 dark:ring-blue-700/50 scale-[1.01]' 
+              : 'border-gray-200 dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-600 bg-white dark:bg-gray-800 hover:bg-blue-25 dark:hover:bg-blue-950/10 hover:shadow-md'"
+            @click="handleCardClick(recurringEvent.name, $event)"
+            :title="`Click to ${selectedRecurringEvents.includes(recurringEvent.name) ? 'deselect' : 'select'} ${recurringEvent.name} • Drag to select multiple`"
+          >
+            <!-- Selection Indicator Line -->
             <div 
-              v-if="selectedRecurringEvents.includes(recurringEvent.name)"
-              class="absolute top-2 right-2 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-10"
-            >
-              ✓
-            </div>
+              class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
+              :class="selectedRecurringEvents.includes(recurringEvent.name) ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'"
+            ></div>
             
-            <!-- Row 1: Full-width Title -->
-            <div class="mb-2 pr-6">
-              <!-- Event Title with full space -->
-              <div class="font-semibold text-gray-900 dark:text-gray-100 truncate transition-colors"
-                   :class="selectedRecurringEvents.includes(recurringEvent.name)
-                     ? 'text-blue-700 dark:text-blue-300' 
-                     : 'group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400'"
+            <!-- Two-Row Event Header -->
+            <div class="p-3 transition-colors relative">
+              <!-- Selected Indicator Icon (top-right corner) -->
+              <div 
+                v-if="selectedRecurringEvents.includes(recurringEvent.name)"
+                class="absolute top-2 right-2 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-10"
               >
-                {{ recurringEvent.name.trim() }}
+                ✓
               </div>
-            </div>
-            
-            <!-- Row 2: Day Pattern, Count, and Expand Button -->
-            <div class="flex items-center justify-between gap-2">
-              <!-- Day Pattern -->
-              <div class="flex-1 min-w-0">
-                <div v-if="getRecurringEventDayPattern(recurringEvent)" class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {{ getRecurringEventDayPattern(recurringEvent) }}
+              
+              <!-- Row 1: Full-width Title -->
+              <div class="mb-2 pr-6">
+                <!-- Event Title with full space -->
+                <div class="font-semibold text-gray-900 dark:text-gray-100 truncate transition-colors"
+                     :class="selectedRecurringEvents.includes(recurringEvent.name)
+                       ? 'text-blue-700 dark:text-blue-300' 
+                       : 'group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400'"
+                >
+                  {{ recurringEvent.name.trim() }}
                 </div>
               </div>
               
-              <!-- Count Badge -->
-              <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors flex-shrink-0">
-                {{ recurringEvent.count }}
-              </div>
-              
-              <!-- Enhanced Expansion Button -->
-              <button
-                @click.stop="$emit('toggle-expansion', recurringEvent.name)"
-                class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-all duration-200 flex-shrink-0 group/expand"
-                :class="expandedRecurringEvents.has(recurringEvent.name) 
-                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
-                  : 'text-gray-500 dark:text-gray-400'"
-                :title="expandedRecurringEvents.has(recurringEvent.name) ? 'Hide individual events' : 'Show individual events'"
-              >
-                <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
-                  {{ expandedRecurringEvents.has(recurringEvent.name) ? 'Hide' : 'Show' }}
-                </span>
-                <svg 
-                  class="w-3 h-3 transition-transform duration-300" 
-                  :class="{ 'rotate-180': expandedRecurringEvents.has(recurringEvent.name) }"
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
+              <!-- Row 2: Day Pattern, Count, and Expand Button -->
+              <div class="flex items-center justify-between gap-2">
+                <!-- Day Pattern -->
+                <div class="flex-1 min-w-0">
+                  <div v-if="getRecurringEventDayPattern(recurringEvent)" class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {{ getRecurringEventDayPattern(recurringEvent) }}
+                  </div>
+                </div>
+                
+                <!-- Count Badge -->
+                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover/item:bg-blue-100 dark:group-hover/item:bg-blue-900/40 group-hover/item:text-blue-800 dark:group-hover/item:text-blue-200 transition-colors flex-shrink-0">
+                  {{ recurringEvent.count }}
+                </div>
+                
+                <!-- Enhanced Expansion Button -->
+                <button
+                  @click.stop="$emit('toggle-expansion', recurringEvent.name)"
+                  class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-all duration-200 flex-shrink-0 group/expand"
+                  :class="expandedRecurringEvents.has(recurringEvent.name) 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-500 dark:text-gray-400'"
+                  :title="expandedRecurringEvents.has(recurringEvent.name) ? 'Hide individual events' : 'Show individual events'"
                 >
-                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </button>
+                  <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
+                    {{ expandedRecurringEvents.has(recurringEvent.name) ? 'Hide' : 'Show' }}
+                  </span>
+                  <svg 
+                    class="w-3 h-3 transition-transform duration-300" 
+                    :class="{ 'rotate-180': expandedRecurringEvents.has(recurringEvent.name) }"
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
-          
-          <!-- Concise Expandable Events List -->
-          <div 
-            v-if="expandedRecurringEvents.has(recurringEvent.name)"
-            class="border-t border-gray-100 dark:border-gray-700 bg-gray-25 dark:bg-gray-900/20"
-          >
-            <!-- Ultra-Compact Events List -->
-            <div class="max-h-48 overflow-y-auto">
-              <div 
-                v-for="event in recurringEvent.events" 
-                :key="event.uid"
-                class="px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <!-- Single Line Layout -->
-                <div class="flex items-center justify-between gap-3 text-xs">
-                  <!-- Left: Date and Title -->
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <!-- Concise Date with Pattern Awareness -->
-                      <span class="font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                        {{ formatCompactEventDate(event, !!getRecurringEventDayPattern(recurringEvent)) }}
-                      </span>
-                      <!-- Recurring indicator -->
-                      <span v-if="event.is_recurring" class="text-blue-500" title="Recurring event">🔄</span>
-                      <!-- Title (only if different) -->
-                      <span v-if="event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 truncate">
-                        {{ event.title.trim() }}
-                      </span>
+            
+            <!-- Concise Expandable Events List -->
+            <div 
+              v-if="expandedRecurringEvents.has(recurringEvent.name)"
+              class="border-t border-gray-100 dark:border-gray-700 bg-gray-25 dark:bg-gray-900/20"
+            >
+              <!-- Ultra-Compact Events List -->
+              <div class="max-h-48 overflow-y-auto">
+                <div 
+                  v-for="event in recurringEvent.events" 
+                  :key="event.uid"
+                  class="px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <!-- Single Line Layout -->
+                  <div class="flex items-center justify-between gap-3 text-xs">
+                    <!-- Left: Date and Title -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <!-- Concise Date with Pattern Awareness -->
+                        <span class="font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {{ formatCompactEventDate(event, !!getRecurringEventDayPattern(recurringEvent)) }}
+                        </span>
+                        <!-- Recurring indicator -->
+                        <span v-if="event.is_recurring" class="text-blue-500" title="Recurring event">🔄</span>
+                        <!-- Title (only if different) -->
+                        <span v-if="event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 truncate">
+                          {{ event.title.trim() }}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <!-- Right: Location -->
+                    <div v-if="event.location" class="text-gray-500 dark:text-gray-400 text-right truncate max-w-[40%]" :title="event.location.trim()">
+                      {{ event.location.trim() }}
                     </div>
                   </div>
-                  
-                  <!-- Right: Location -->
-                  <div v-if="event.location" class="text-gray-500 dark:text-gray-400 text-right truncate max-w-[40%]" :title="event.location.trim()">
-                    {{ event.location.trim() }}
-                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -473,19 +504,42 @@
           </div>
         </div>
 
-        <!-- Expanded Unique Events List -->
+        <!-- Enhanced Unique Events List with Drag Selection -->
         <div v-if="showSingleEvents" class="p-6">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <div 
-              v-for="recurringEvent in filteredSingleRecurringEvents"
-              :key="recurringEvent.name"
-              class="group/card relative bg-gray-50 dark:bg-gray-800/50 rounded-lg border transition-all duration-300 cursor-pointer overflow-hidden hover:shadow-md"
-              :class="selectedRecurringEvents.includes(recurringEvent.name)
-                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400 shadow-md shadow-emerald-100 dark:shadow-emerald-900/30 ring-1 ring-emerald-200 dark:ring-emerald-800 scale-[1.02]' 
-                : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-500'"
-              @click="$emit('toggle-recurring-event', recurringEvent.name)"
-              :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? 'Deselect' : 'Select'} ${recurringEvent.name}`"
+          <div 
+            class="relative"
+            @mousedown="startDragSelection"
+            @mousemove="updateDragSelection"
+            @mouseup="endDragSelection"
+            @mouseleave="endDragSelection"
+          >
+            <!-- Drag Selection Overlay for Single Events -->
+            <div
+              v-if="dragSelection.dragging"
+              class="absolute pointer-events-none bg-gradient-to-br from-emerald-300 to-teal-400 dark:from-emerald-500 dark:to-teal-600 opacity-30 border-2 border-emerald-500 dark:border-emerald-400 rounded-lg shadow-lg backdrop-blur-sm"
+              :style="{
+                left: Math.min(dragSelection.startX, dragSelection.currentX) + 'px',
+                top: Math.min(dragSelection.startY, dragSelection.currentY) + 'px',
+                width: Math.abs(dragSelection.currentX - dragSelection.startX) + 'px',
+                height: Math.abs(dragSelection.currentY - dragSelection.startY) + 'px',
+                zIndex: 10
+              }"
             >
+              <div class="absolute inset-0 bg-white dark:bg-gray-900 opacity-10 rounded-lg"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div 
+                v-for="recurringEvent in filteredSingleRecurringEvents"
+                :key="recurringEvent.name"
+                :ref="el => { if (el) cardRefs[`single-${recurringEvent.name}`] = el }"
+                class="group/card relative bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 transition-all duration-300 cursor-pointer overflow-hidden transform hover:scale-[1.01] hover:shadow-md"
+                :class="selectedRecurringEvents.includes(recurringEvent.name)
+                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400 shadow-lg ring-2 ring-emerald-200 dark:ring-emerald-700/50 scale-[1.01]' 
+                  : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-25 dark:hover:bg-emerald-950/10'"
+                @click="handleCardClick(recurringEvent.name, $event)"
+                :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? 'Deselect' : 'Select'} ${recurringEvent.name} • Drag to select multiple`"
+              >
               <!-- Selection Indicator -->
               <div 
                 class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
@@ -572,11 +626,25 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { analyzeSmartRecurringPattern } from '@/utils/dateFormatting'
 
 const { t } = useI18n()
+
+// Drag selection state
+const dragSelection = ref({
+  dragging: false,
+  startX: 0,
+  startY: 0,
+  currentX: 0,
+  currentY: 0,
+  initialSelection: [],
+  containerRect: null
+})
+
+// Card refs for drag selection
+const cardRefs = ref({})
 
 const props = defineProps({
   recurringEvents: { type: Array, default: () => [] },
@@ -862,6 +930,169 @@ function formatCompactEventDate(event, hasConsistentDay = false) {
     }
   }
 }
+
+// Drag selection methods
+const startDragSelection = (event) => {
+  // Only start drag selection on left mouse button
+  if (event.button !== 0) return
+  
+  const containerRect = event.currentTarget.getBoundingClientRect()
+  dragSelection.value = {
+    dragging: true,
+    startX: event.clientX - containerRect.left,
+    startY: event.clientY - containerRect.top,
+    currentX: event.clientX - containerRect.left,
+    currentY: event.clientY - containerRect.top,
+    initialSelection: [...props.selectedRecurringEvents],
+    containerRect: containerRect
+  }
+  
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+const updateDragSelection = (event) => {
+  if (!dragSelection.value.dragging) return
+  
+  // Use stored container rect for stable coordinates
+  const containerRect = dragSelection.value.containerRect
+  dragSelection.value.currentX = event.clientX - containerRect.left
+  dragSelection.value.currentY = event.clientY - containerRect.top
+  
+  event.preventDefault()
+  event.stopPropagation()
+  
+  // Calculate which cards intersect with selection rectangle
+  const selectionRect = {
+    left: Math.min(dragSelection.value.startX, dragSelection.value.currentX),
+    top: Math.min(dragSelection.value.startY, dragSelection.value.currentY),
+    right: Math.max(dragSelection.value.startX, dragSelection.value.currentX),
+    bottom: Math.max(dragSelection.value.startY, dragSelection.value.currentY)
+  }
+  
+  const newSelection = [...dragSelection.value.initialSelection]
+  
+  // Check main recurring events
+  filteredMainRecurringEvents.value.forEach(recurringEvent => {
+    const cardElement = cardRefs.value[`main-${recurringEvent.name}`]
+    if (cardElement) {
+      const cardRect = cardElement.getBoundingClientRect()
+      const containerRect = cardElement.closest('.grid').getBoundingClientRect()
+      
+      const cardRelativeRect = {
+        left: cardRect.left - containerRect.left,
+        top: cardRect.top - containerRect.top,
+        right: cardRect.right - containerRect.left,
+        bottom: cardRect.bottom - containerRect.top
+      }
+      
+      // Check if card intersects with selection rectangle
+      const intersects = !(cardRelativeRect.right < selectionRect.left || 
+                         cardRelativeRect.left > selectionRect.right || 
+                         cardRelativeRect.bottom < selectionRect.top || 
+                         cardRelativeRect.top > selectionRect.bottom)
+      
+      if (intersects) {
+        if (!newSelection.includes(recurringEvent.name)) {
+          newSelection.push(recurringEvent.name)
+        }
+      }
+    }
+  })
+  
+  // Check single recurring events
+  filteredSingleRecurringEvents.value.forEach(recurringEvent => {
+    const cardElement = cardRefs.value[`single-${recurringEvent.name}`]
+    if (cardElement) {
+      const cardRect = cardElement.getBoundingClientRect()
+      const containerRect = cardElement.closest('.grid').getBoundingClientRect()
+      
+      const cardRelativeRect = {
+        left: cardRect.left - containerRect.left,
+        top: cardRect.top - containerRect.top,
+        right: cardRect.right - containerRect.left,
+        bottom: cardRect.bottom - containerRect.top
+      }
+      
+      // Check if card intersects with selection rectangle
+      const intersects = !(cardRelativeRect.right < selectionRect.left || 
+                         cardRelativeRect.left > selectionRect.right || 
+                         cardRelativeRect.bottom < selectionRect.top || 
+                         cardRelativeRect.top > selectionRect.bottom)
+      
+      if (intersects) {
+        if (!newSelection.includes(recurringEvent.name)) {
+          newSelection.push(recurringEvent.name)
+        }
+      }
+    }
+  })
+  
+  // Emit selection updates
+  const currentlySelected = props.selectedRecurringEvents
+  const toDeselect = currentlySelected.filter(name => !newSelection.includes(name))
+  const toSelect = newSelection.filter(name => !currentlySelected.includes(name))
+  
+  toDeselect.forEach(name => emit('toggle-recurring-event', name))
+  toSelect.forEach(name => emit('toggle-recurring-event', name))
+}
+
+const endDragSelection = () => {
+  if (!dragSelection.value.dragging) return
+  
+  // Check if this was just a click (minimal movement)
+  const deltaX = Math.abs(dragSelection.value.currentX - dragSelection.value.startX)
+  const deltaY = Math.abs(dragSelection.value.currentY - dragSelection.value.startY) 
+  const wasClick = deltaX < 5 && deltaY < 5
+  
+  if (wasClick) {
+    // Restore original selection for clicks - let normal click handler take over
+    const currentlySelected = props.selectedRecurringEvents
+    const originalSelection = dragSelection.value.initialSelection
+    
+    const toDeselect = currentlySelected.filter(name => !originalSelection.includes(name))
+    const toSelect = originalSelection.filter(name => !currentlySelected.includes(name))
+    
+    toDeselect.forEach(name => emit('toggle-recurring-event', name))
+    toSelect.forEach(name => emit('toggle-recurring-event', name))
+  }
+  
+  // Reset drag state
+  dragSelection.value.dragging = false
+}
+
+const handleCardClick = (recurringEventName, event) => {
+  // If we're currently dragging, don't handle clicks
+  if (dragSelection.value.dragging) {
+    return
+  }
+  emit('toggle-recurring-event', recurringEventName)
+}
+
+// Global escape handler for drag selection cleanup
+onMounted(() => {
+  const handleEscape = (event) => {
+    if (event.key === 'Escape' && dragSelection.value.dragging) {
+      endDragSelection()
+    }
+  }
+  
+  // Global cleanup for drag state
+  const handleBeforeUnload = () => {
+    dragSelection.value.dragging = false
+  }
+  
+  document.addEventListener('keydown', handleEscape)
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  
+  // Cleanup listeners on unmount
+  onUnmounted(() => {
+    document.removeEventListener('keydown', handleEscape)
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+    // Reset drag state if component unmounts during drag
+    dragSelection.value.dragging = false
+  })
+})
 
 </script>
 
