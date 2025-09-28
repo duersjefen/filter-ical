@@ -845,9 +845,10 @@ function formatCompactEventDate(event, hasConsistentDay = false) {
       return `${dayName} ${monthDay} ${timeStr}`
     }
   } else if (diffDays >= -7 && diffDays < 0) {
-    // For last week, always show day name + time
+    // For last week, show day name + date to distinguish from future events
     const dayName = date.toLocaleDateString(locale, { weekday: 'short' })
-    return `${dayName} ${timeStr}`
+    const monthDay = date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+    return `${dayName} ${monthDay} ${timeStr}`
   } else {
     // For dates further away, always show month/day regardless of pattern
     const monthDay = date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
