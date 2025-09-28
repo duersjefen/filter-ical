@@ -44,6 +44,7 @@ runs:
           cd /opt/websites
           operation="${{ inputs.operation }}"
           requested_containers="${{ inputs.containers }}"
+          ECR_REGISTRY="310829530903.dkr.ecr.eu-north-1.amazonaws.com"
           
           echo "🐳 Executing operation: $operation on requested containers: $requested_containers"
           
@@ -92,10 +93,45 @@ runs:
                 fi
               done
               
-              # Zero-downtime deployment
+              # ECR Authentication refresh
+              echo "🔑 Refreshing ECR authentication..."
+              aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 310829530903.dkr.ecr.eu-north-1.amazonaws.com
+              
+              # Zero-downtime deployment with proper error detection
               echo "🚀 Executing zero-downtime deployment..."
-              docker-compose pull $containers
-              docker-compose up -d --no-deps $containers
+              echo "📥 Pulling latest images (MUST succeed)..."
+              if ! docker-compose pull $containers; then
+                echo "❌ CRITICAL: Docker pull failed! ECR authentication or network issue"
+                echo "🔍 Current images before failed pull:"
+                docker-compose images $containers || true
+                exit 1
+              fi
+              
+              echo "✅ Images pulled successfully, updating containers..."
+              if ! docker-compose up -d --no-deps $containers; then
+                echo "❌ CRITICAL: Container startup failed!"
+                docker-compose ps $containers || true
+                exit 1
+              fi
+              
+              # Verify containers are actually using new images
+              echo "🔍 Verifying deployment actually updated containers..."
+              sleep 5  # Give containers time to start
+              for container in $containers; do
+                # Get the image ID of the running container
+                running_image=$(docker-compose ps -q "$container" | xargs docker inspect --format='{{.Image}}' 2>/dev/null || echo "")
+                # Get the image ID of the latest pulled image
+                latest_image=$(docker images --format="{{.ID}}" "$ECR_REGISTRY/$container:latest" 2>/dev/null | head -1 || echo "")
+                
+                if [ -n "$running_image" ] && [ -n "$latest_image" ] && [ "$running_image" = "$latest_image" ]; then
+                  echo "✅ $container: Successfully updated to latest image"
+                else
+                  echo "❌ CRITICAL: $container is NOT running the latest image!"
+                  echo "   Running: $running_image"
+                  echo "   Latest:  $latest_image"
+                  exit 1
+                fi
+              done
               ;;
               
             "clean-deploy")
@@ -127,9 +163,17 @@ runs:
               echo "🗄️  Removing database volumes for clean deployment..."
               docker volume ls -q | grep -E "(data|db|database|postgres|mysql|sqlite)" | xargs -r docker volume rm 2>/dev/null || true
               
-              # Pull latest images
-              echo "📥 Pulling latest container images..."
-              docker-compose pull $containers
+              # ECR Authentication refresh
+              echo "🔑 Refreshing ECR authentication..."
+              aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 310829530903.dkr.ecr.eu-north-1.amazonaws.com
+              
+              # Pull latest images with error detection
+              echo "📥 Pulling latest container images (MUST succeed)..."
+              if ! docker-compose pull $containers; then
+                echo "❌ CRITICAL: Docker pull failed during clean deployment!"
+                echo "🔍 ECR authentication or network issue detected"
+                exit 1
+              fi
               
               # Start containers fresh (will trigger startup scripts)
               echo "🚀 Starting containers with fresh database..."
