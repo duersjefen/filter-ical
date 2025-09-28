@@ -97,29 +97,25 @@ def test_db_engine():
     Base.metadata.drop_all(bind=engine)
 
 
-@pytest.fixture(scope="function")
-def test_db_session(test_db_engine):
-    """Create test database session with rollback."""
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
-    session = TestingSessionLocal()
-    
-    yield session
-    
-    session.rollback()
-    session.close()
+# Removed test_db_session - test_client now uses test_db_engine directly
 
 
 @pytest.fixture(scope="function")
-def test_client(test_db_session) -> Generator[TestClient, None, None]:
+def test_client(test_db_engine) -> Generator[TestClient, None, None]:
     """
     Create FastAPI test client with test database.
     
     This overrides the database dependency to use our test database
     instead of the production database.
     """
+    # Create session from the engine that has tables
+    from sqlalchemy.orm import sessionmaker
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
+    test_session = TestingSessionLocal()
+    
     def override_get_db():
         try:
-            yield test_db_session
+            yield test_session
         finally:
             pass
     
@@ -131,6 +127,8 @@ def test_client(test_db_session) -> Generator[TestClient, None, None]:
         yield client
     
     # Cleanup
+    test_session.rollback()
+    test_session.close()
     app.dependency_overrides.clear()
 
 

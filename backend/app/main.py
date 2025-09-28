@@ -47,21 +47,27 @@ async def lifespan(app: FastAPI):
     
     # Ensure domain calendars exist (from domains.yaml configuration)
     from .services.domain_service import load_domains_config, ensure_domain_calendar_exists
-    from .core.database import get_session_sync
     
     try:
         success, domains_config, error = load_domains_config(settings.domains_config_path)
         if success and domains_config:
-            session = get_session_sync()
-            for domain_key in domains_config.get('domains', {}):
-                domain_success, calendar, domain_error = await ensure_domain_calendar_exists(
-                    session, domain_key, domains_config
-                )
-                if domain_success:
-                    print(f"✅ Domain calendar '{domain_key}' ready")
-                else:
-                    print(f"⚠️ Domain calendar '{domain_key}' issue: {domain_error}")
-            session.close()
+            # Use dependency injection pattern - get session through DI
+            from .core.database import get_db
+            db_gen = get_db()
+            session = next(db_gen)
+            try:
+                for domain_key in domains_config.get('domains', {}):
+                    domain_success, calendar, domain_error = await ensure_domain_calendar_exists(
+                        session, domain_key, domains_config
+                    )
+                    if domain_success:
+                        print(f"✅ Domain calendar '{domain_key}' ready")
+                    else:
+                        print(f"⚠️ Domain calendar '{domain_key}' issue: {domain_error}")
+                # Commit changes to ensure they're visible to other sessions
+                session.commit()
+            finally:
+                session.close()
     except Exception as e:
         print(f"⚠️ Domain calendar setup warning: {e}")
     
@@ -76,14 +82,21 @@ async def lifespan(app: FastAPI):
             available_configs = list_available_domain_configs(domains_dir)
             
             if available_configs:
-                session = get_session_sync()
-                for domain_key in available_configs:
-                    success, error = seed_domain_from_yaml(session, domain_key)
-                    if success:
-                        print(f"✅ Domain '{domain_key}' configuration loaded from YAML")
-                    else:
-                        print(f"⚠️ Domain '{domain_key}' seeding issue: {error}")
-                session.close()
+                # Use dependency injection pattern - get session through DI
+                from .core.database import get_db
+                db_gen = get_db()
+                session = next(db_gen)
+                try:
+                    for domain_key in available_configs:
+                        success, error = seed_domain_from_yaml(session, domain_key)
+                        if success:
+                            print(f"✅ Domain '{domain_key}' configuration loaded from YAML")
+                        else:
+                            print(f"⚠️ Domain '{domain_key}' seeding issue: {error}")
+                    # Commit changes to ensure they're visible to other sessions
+                    session.commit()
+                finally:
+                    session.close()
             else:
                 print("📋 No domain configuration files found")
                 
