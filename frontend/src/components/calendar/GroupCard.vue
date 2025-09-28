@@ -564,12 +564,19 @@ function formatCompactEventDate(event, hasConsistentDay = false) {
     return `${t('preview.tomorrow', 'Tomorrow')} ${timeStr}`
   } else if (diffDays === -1) {
     return `${t('preview.yesterday', 'Yesterday')} ${timeStr}`
-  } else if (diffDays > 0 && diffDays <= 7) {
-    // For this week, always show day name + time (pattern is shown in header)
+  } else if (diffDays > 0 && diffDays <= 14) {
+    // For the next two weeks, show day name + date when needed for clarity
     const dayName = date.toLocaleDateString(locale, { weekday: 'short' })
-    return `${dayName} ${timeStr}`
+    if (diffDays <= 7) {
+      // This week - just show day name
+      return `${dayName} ${timeStr}`
+    } else {
+      // Next week - show day name + date to distinguish from this week
+      const monthDay = date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+      return `${dayName} ${monthDay} ${timeStr}`
+    }
   } else if (diffDays >= -7 && diffDays < 0) {
-    // For last week, always show day name + time (pattern is shown in header) 
+    // For last week, always show day name + time
     const dayName = date.toLocaleDateString(locale, { weekday: 'short' })
     return `${dayName} ${timeStr}`
   } else {
