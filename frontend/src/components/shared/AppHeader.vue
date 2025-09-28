@@ -1,15 +1,15 @@
 <template>
-  <div class="relative mb-6 sm:mb-8 py-4 sm:py-6 px-4 sm:px-6 bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 dark:from-slate-800 dark:via-slate-900 dark:to-black text-white rounded-lg shadow-lg">
+  <div class="relative mb-6 sm:mb-8 py-6 sm:py-8 px-4 sm:px-6 bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 dark:from-slate-800 dark:via-slate-900 dark:to-black text-white rounded-xl shadow-xl border border-slate-500/20 dark:border-slate-700/30 backdrop-blur-sm">
     
     <!-- Desktop: Single row layout with Back + Username + Title + Right Controls -->
-    <div class="hidden sm:grid sm:grid-cols-3 sm:gap-4 items-center mb-4 sm:mb-6">
+    <div class="hidden sm:grid sm:grid-cols-3 sm:gap-4 items-center">
       <!-- Left Side: Back Button + Username Control -->
       <div class="flex items-center gap-3 sm:gap-4 justify-self-start">
         <!-- Back Navigation -->
         <div v-if="showBackButton">
           <button 
             @click="$emit('navigate-back')" 
-            class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-md flex items-center justify-center group"
+            class="w-9 h-9 sm:w-10 sm:h-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg hover:shadow-xl flex items-center justify-center group hover:scale-105 active:scale-95"
             :title="backButtonText"
           >
             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-white/90 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,7 +21,7 @@
         <!-- Username Control -->
         <div>
           <!-- Editing Mode -->
-          <div v-if="isEditing" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-md border border-white/30 dark:border-gray-600 px-2 py-1.5 sm:px-3 sm:py-2">
+          <div v-if="isEditing" class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-lg border border-white/40 dark:border-gray-600 px-3 py-2 sm:px-4 sm:py-2.5">
             <div class="flex items-center gap-1.5 sm:gap-2">
               <input
                 ref="desktopUsernameInputRef"
@@ -30,21 +30,21 @@
                 @keyup.escape="cancelEdit"
                 @blur="saveUsername"
                 type="text"
-                class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-lg text-sm w-32 sm:w-40 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 shadow-sm"
+                class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-xl text-sm w-32 sm:w-40 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 shadow-md transition-all duration-200"
                 :placeholder="$t('ui.enterYourName')"
                 maxlength="20"
                 autocomplete="off"
               />
               <button 
                 @click="saveUsername"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-1.5 py-1 rounded text-xs font-medium transition-colors duration-200"
+                class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
                 :title="$t('common.save')"
               >
                 ✓
               </button>
               <button 
                 @click="cancelEdit"
-                class="bg-gray-500 hover:bg-gray-600 text-white px-1.5 py-1 rounded text-xs font-medium transition-colors duration-200"
+                class="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
                 :title="$t('common.cancel')"
               >
                 ✕
@@ -56,7 +56,7 @@
           <div 
             v-else-if="!hasCustomUsername()" 
             @click="startEdit"
-            class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-sm rounded-lg shadow-md border-2 border-blue-400/50 hover:border-blue-300/70 px-3 py-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 group"
+            class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-md rounded-xl shadow-lg border-2 border-blue-400/50 hover:border-blue-300/70 px-3 py-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 group"
           >
             <div class="flex items-center gap-2">
               <div class="w-2.5 h-2.5 bg-blue-300 rounded-full animate-pulse shadow-sm"></div>
@@ -70,7 +70,7 @@
           </div>
           
           <!-- Personal Mode -->
-          <div v-else class="bg-white/10 backdrop-blur-sm rounded-lg shadow-md border border-white/20 px-2.5 py-1.5 sm:px-3 sm:py-2">
+          <div v-else class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/20 px-3 py-2 sm:px-4 sm:py-2.5">
             <div class="flex items-center gap-2">
               <div class="w-2 h-2 bg-green-400 rounded-full"></div>
               <span class="text-white text-xs sm:text-sm font-medium">
@@ -78,7 +78,7 @@
               </span>
               <button 
                 @click="startEdit"
-                class="text-white/60 hover:text-white transition-colors duration-300 p-0.5 hover:bg-white/10 rounded"
+                class="text-white/60 hover:text-white transition-all duration-300 p-1 hover:bg-white/10 rounded-lg hover:scale-110 active:scale-95"
                 :title="$t('username.edit')"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@
               </button>
               <button 
                 @click="clearUsername"
-                class="bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded text-xs font-medium transition-all duration-300 hover:shadow-md"
+                class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
                 :title="$t('username.logout')"
               >
                 {{ $t('username.logout') }}
@@ -99,8 +99,8 @@
 
       <!-- Center: Title (perfectly centered) -->
       <div class="text-center justify-self-center">
-        <h1 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-white whitespace-nowrap">{{ title }}</h1>
-        <p v-if="subtitle && !hideSubtitle" class="text-sm sm:text-base opacity-80 font-medium text-white whitespace-nowrap">{{ subtitle }}</p>
+        <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white whitespace-nowrap tracking-tight drop-shadow-sm">{{ title }}</h1>
+        <p v-if="subtitle && !hideSubtitle" class="text-sm sm:text-base opacity-85 font-medium text-white/90 whitespace-nowrap mt-1">{{ subtitle }}</p>
       </div>
 
       <!-- Right Side: Admin, Language & Dark Mode -->
@@ -109,7 +109,7 @@
         <button
           v-if="domainContext"
           @click="router.push(`/${domainContext.domain_key}/admin`)"
-          class="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-md items-center justify-center group"
+          class="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg hover:shadow-xl items-center justify-center group hover:scale-105 active:scale-95"
           :title="$t('admin.adminPanel')"
         >
           <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-white/90 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +124,7 @@
         <!-- Always show Dark Mode Toggle -->
         <button 
           @click="toggleDarkMode"
-          class="group relative w-12 h-6 sm:w-14 sm:h-7 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-md"
+          class="group relative w-12 h-6 sm:w-14 sm:h-7 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
           :title="isDarkMode ? $t('darkMode.switchToLight') : $t('darkMode.switchToDark')"
         >
           <!-- Toggle Track -->
@@ -170,7 +170,7 @@
           <div v-if="showBackButton">
             <button 
               @click="$emit('navigate-back')" 
-              class="w-9 h-9 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg flex items-center justify-center group touch-manipulation"
+              class="w-10 h-10 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-xl border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg hover:shadow-xl flex items-center justify-center group touch-manipulation hover:scale-105 active:scale-95"
               :title="backButtonText"
             >
               <svg class="w-4 h-4 text-white group-hover:text-white/90 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,7 +186,7 @@
           
           <button 
             @click="toggleDarkMode"
-            class="group relative w-12 h-6 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg touch-manipulation"
+            class="group relative w-12 h-6 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg hover:shadow-xl touch-manipulation hover:scale-105 active:scale-95"
             :title="isDarkMode ? $t('darkMode.switchToLight') : $t('darkMode.switchToDark')"
           >
             <!-- Toggle Track -->
@@ -223,14 +223,14 @@
 
       <!-- Title Section -->
       <div class="text-center mb-4">
-        <h1 class="text-xl font-semibold mb-1">{{ title }}</h1>
-        <p v-if="subtitle && !hideSubtitle" class="text-sm opacity-80 font-medium">{{ subtitle }}</p>
+        <h1 class="text-xl font-bold mb-1 tracking-tight drop-shadow-sm">{{ title }}</h1>
+        <p v-if="subtitle && !hideSubtitle" class="text-sm opacity-85 font-medium text-white/90 mt-1">{{ subtitle }}</p>
       </div>
 
       <!-- Username Section - Below title -->
       <div class="flex justify-center">
         <!-- Editing Mode -->
-        <div v-if="isEditing" class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-md border border-white/30 dark:border-gray-600 px-3 py-2">
+        <div v-if="isEditing" class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-lg border border-white/40 dark:border-gray-600 px-4 py-3">
           <div class="flex items-center gap-2">
             <input
               ref="mobileUsernameInputRef"
@@ -239,21 +239,21 @@
               @keyup.escape="cancelEdit"
               @blur="saveUsername"
               type="text"
-              class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 touch-manipulation shadow-sm"
+              class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-xl text-sm w-36 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 touch-manipulation shadow-md transition-all duration-200"
               :placeholder="$t('ui.enterYourName')"
               maxlength="20"
               autocomplete="off"
             />
             <button 
               @click="saveUsername"
-              class="w-8 h-8 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded text-sm font-medium transition-colors duration-200 shadow-md touch-manipulation"
+              class="w-9 h-9 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
               :title="$t('common.save')"
             >
               ✓
             </button>
             <button 
               @click="cancelEdit"
-              class="w-8 h-8 bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white rounded text-sm font-medium transition-colors duration-200 shadow-md touch-manipulation"
+              class="w-9 h-9 bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
               :title="$t('common.cancel')"
             >
               ✕
@@ -265,7 +265,7 @@
         <div 
           v-else-if="!hasCustomUsername()" 
           @click="startEdit"
-          class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 active:from-blue-500/40 active:to-purple-500/40 backdrop-blur-sm rounded-lg shadow-md border border-blue-400/50 hover:border-blue-300/70 px-4 py-3 cursor-pointer transition-all duration-200 group touch-manipulation"
+          class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 active:from-blue-500/40 active:to-purple-500/40 backdrop-blur-md rounded-xl shadow-lg border border-blue-400/50 hover:border-blue-300/70 px-5 py-4 cursor-pointer transition-all duration-200 group touch-manipulation hover:scale-105 active:scale-95"
         >
           <div class="flex items-center justify-center gap-2">
             <div class="w-2.5 h-2.5 bg-blue-300 rounded-full animate-pulse shadow-sm"></div>
@@ -276,7 +276,7 @@
         </div>
         
         <!-- Personal Mode -->
-        <div v-else class="bg-white/10 backdrop-blur-sm rounded-lg shadow-md border border-white/20 px-3 py-2">
+        <div v-else class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/20 px-4 py-3">
           <div class="flex items-center gap-3">
             <div class="w-2.5 h-2.5 bg-green-400 rounded-full shadow-sm"></div>
             <span class="text-white text-sm font-medium">
@@ -284,7 +284,7 @@
             </span>
             <button 
               @click="startEdit"
-              class="w-8 h-8 text-white/60 hover:text-white hover:bg-white/10 rounded transition-all duration-200 flex items-center justify-center touch-manipulation"
+              class="w-9 h-9 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 flex items-center justify-center touch-manipulation hover:scale-110 active:scale-95"
               :title="$t('username.edit')"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,7 +293,7 @@
             </button>
             <button 
               @click="clearUsername"
-              class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded text-sm font-medium transition-all duration-200 shadow-md touch-manipulation"
+              class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
               :title="$t('username.logout')"
             >
               {{ $t('username.logout') }}
