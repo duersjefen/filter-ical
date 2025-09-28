@@ -2,6 +2,7 @@
  * Event classification and grouping utilities
  * Pure functions for event processing logic
  */
+import i18n from '@/i18n'
 
 /**
  * Generate a unique identifier for an event
@@ -39,14 +40,14 @@ export function generateEventIdentifier(event) {
  * Get the key used for filtering events by title
  */
 export function getRecurringEventKey(event) {
-  return event.title || event.summary || 'Untitled Event'
+  return event.title || event.summary || i18n.global.t('dateTime.untitledEvent')
 }
 
 /**
  * Get the key used for grouping events by type in preview
  */
 export function getEventGroupKey(event) {
-  return event.title || event.summary || 'Unknown Event Type'
+  return event.title || event.summary || i18n.global.t('dateTime.unknownEventType')
 }
 
 /**

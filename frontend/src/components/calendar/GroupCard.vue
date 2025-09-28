@@ -34,7 +34,7 @@
                 class="w-2 h-2 rounded-full transition-colors duration-300"
                 :class="isGroupSubscribed ? 'bg-green-300' : 'bg-gray-300'"
               ></div>
-              <span>{{ isGroupSubscribed ? 'SUBSCRIBED' : 'NOT SUBSCRIBED' }}</span>
+              <span>{{ isGroupSubscribed ? $t('status.subscribed') : $t('status.notSubscribed') }}</span>
             </div>
           </div>
           
@@ -139,13 +139,13 @@
             :class="isGroupSubscribed 
               ? 'bg-blue-500 hover:bg-blue-600 text-white' 
               : 'bg-gray-500 hover:bg-gray-400 text-white border border-gray-400 hover:border-blue-400'"
-            :title="isGroupSubscribed ? 'Unsubscribe from this group' : 'Subscribe to future events from this group'"
+            :title="isGroupSubscribed ? $t('status.unsubscribeFromGroup') : $t('status.subscribeToGroup')"
           >
             <div 
               class="w-3 h-3 rounded-full"
               :class="isGroupSubscribed ? 'bg-white' : 'bg-gray-400 group-hover:bg-blue-500'"
             ></div>
-            <span>{{ isGroupSubscribed ? 'Subscribed' : 'Subscribe' }}</span>
+            <span>{{ isGroupSubscribed ? $t('status.subscribed') : $t('status.subscribe') }}</span>
           </button>
           
           <!-- Select All Button -->
@@ -155,7 +155,7 @@
             :class="areAllRecurringEventsSelected 
               ? 'bg-green-500 hover:bg-green-600 text-white' 
               : 'bg-gray-500 hover:bg-gray-400 text-white border border-gray-400 hover:border-green-400'"
-            :title="areAllRecurringEventsSelected ? 'Deselect all recurring events' : 'Select all recurring events for current view'"
+            :title="areAllRecurringEventsSelected ? $t('status.deselectAllEvents') : $t('status.selectAllEvents')"
           >
             <div 
               class="w-3 h-3 border rounded flex items-center justify-center"
@@ -165,7 +165,7 @@
             >
               <span v-if="areAllRecurringEventsSelected" class="text-white text-sm">✓</span>
             </div>
-            <span>{{ areAllRecurringEventsSelected ? 'Selected' : 'Select All' }}</span>
+            <span>{{ areAllRecurringEventsSelected ? $t('status.selected') : $t('status.selectAll') }}</span>
           </button>
         </div>
       </div>
@@ -224,7 +224,7 @@
                   :class="isRecurringEventExpanded(recurringEvent.title) 
                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
                     : 'text-gray-500 dark:text-gray-400'"
-                  :title="isRecurringEventExpanded(recurringEvent.title) ? 'Hide individual events' : 'Show individual events'"
+                  :title="isRecurringEventExpanded(recurringEvent.title) ? $t('status.hideIndividualEvents') : $t('status.showIndividualEvents')"
                 >
                   <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
                     {{ isRecurringEventExpanded(recurringEvent.title) ? 'Hide' : 'Show' }}
@@ -270,7 +270,7 @@
                           {{ formatCompactEventDate(event, !!getRecurringEventDayPattern(recurringEvent)) }}
                         </span>
                         <!-- Recurring indicator -->
-                        <span v-if="event.is_recurring" class="text-blue-500" title="Recurring event">🔄</span>
+                        <span v-if="event.is_recurring" class="text-blue-500" :title="$t('status.recurringEvent')">🔄</span>
                         <!-- Title (only if different) -->
                         <span v-if="event.title !== recurringEvent.title" class="font-medium text-gray-800 dark:text-gray-200 truncate">
                           {{ event.title.trim() }}

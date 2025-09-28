@@ -119,6 +119,7 @@ import { useAdmin } from '../composables/useAdmin'
 import { useHTTP } from '../composables/useHTTP'
 import { useMobileDetection } from '../composables/useMobileDetection'
 import { API_BASE_URL } from '../constants/api'
+import { useI18n } from 'vue-i18n'
 import AppHeader from '../components/shared/AppHeader.vue'
 import AutoRulesCard from '../components/admin/AutoRulesCard.vue'
 import EventManagementCard from '../components/admin/EventManagementCard.vue'
@@ -141,6 +142,9 @@ export default {
   setup(props) {
     // Mobile detection
     const { isMobile } = useMobileDetection()
+    
+    // i18n
+    const { t } = useI18n()
 
     // Use the admin composable for all data and functionality
     const {
@@ -207,7 +211,7 @@ export default {
     const handleCreateGroup = async (groupName) => {
       const result = await createGroupAPI(groupName)
       showNotification(
-        result.success ? 'Group created successfully!' : `Failed to create group: ${result.error}`,
+        result.success ? t('admin.groupCreatedSuccessfully') : t('admin.failedToCreateGroup', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -215,7 +219,7 @@ export default {
     const handleUpdateGroup = async (groupId, newName) => {
       const result = await updateGroup(groupId, newName)
       showNotification(
-        result.success ? 'Group updated successfully!' : `Failed to update group: ${result.error}`,
+        result.success ? t('admin.groupUpdatedSuccessfully') : t('admin.failedToUpdateGroup', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -231,7 +235,7 @@ export default {
       } else {
         const result = await addEventsToGroup(groupId, eventTitles)
         if (result.success) {
-          const groupName = groups.value.find(g => g.id === groupId)?.name || 'Unknown Group'
+          const groupName = groups.value.find(g => g.id === groupId)?.name || t('admin.unknownGroup')
           showNotification(`Successfully added ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} to ${groupName}!`, 'success')
         } else {
           showNotification(`Failed to add events: ${result.error}`, 'error')
@@ -243,7 +247,7 @@ export default {
     const handleCreateRule = async (ruleData) => {
       const result = await createAssignmentRule(ruleData.rule_type, ruleData.rule_value, ruleData.target_group_id)
       showNotification(
-        result.success ? 'Assignment rule created successfully!' : `Failed to create assignment rule: ${result.error}`,
+        result.success ? t('admin.assignmentRuleCreatedSuccessfully') : t('admin.failedToCreateAssignmentRule', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -267,14 +271,14 @@ export default {
     }
 
     const deleteRuleConfirm = (rule) => {
-      const message = `Are you sure you want to delete the rule "${rule.rule_type}: ${rule.rule_value}"?`
+      const message = t('admin.confirmDeleteRule', { ruleType: rule.rule_type, ruleValue: rule.rule_value })
       showConfirmDialog(message, () => deleteRule(rule.id))
     }
 
     const deleteRule = async (ruleId) => {
       const result = await deleteAssignmentRule(ruleId)
       if (result.success) {
-        showNotification('Assignment rule deleted successfully!', 'success')
+        showNotification(t('admin.assignmentRuleDeletedSuccessfully'), 'success')
       } else {
         showNotification(`Failed to delete assignment rule: ${result.error}`, 'error')
       }
@@ -305,7 +309,7 @@ export default {
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
 
-        showNotification('Configuration exported successfully!', 'success')
+        showNotification(t('admin.configurationExportedSuccessfully'), 'success')
       } catch (error) {
         showNotification(`Failed to export configuration: ${error.message}`, 'error')
       }
@@ -324,7 +328,7 @@ export default {
         })
 
         if (result.success) {
-          showNotification('Configuration imported successfully!', 'success')
+          showNotification(t('admin.configurationImportedSuccessfully'), 'success')
           loadAllAdminData() // Reload data
         } else {
           showNotification(`Failed to import configuration: ${result.error}`, 'error')
@@ -338,7 +342,7 @@ export default {
     }
 
     const resetConfigurationConfirm = () => {
-      const message = 'Are you sure you want to reset all configuration? This will delete all groups, rules, and assignments. This action cannot be undone.'
+      const message = t('admin.confirmResetConfiguration')
       showConfirmDialog(message, resetConfiguration)
     }
 
@@ -347,7 +351,7 @@ export default {
         const result = await post(`/domains/${props.domain}/reset-config`)
 
         if (result.success) {
-          showNotification('Configuration reset successfully!', 'success')
+          showNotification(t('admin.configurationResetSuccessfully'), 'success')
           loadAllAdminData() // Reload data
         } else {
           showNotification(`Failed to reset configuration: ${result.error}`, 'error')
@@ -361,7 +365,7 @@ export default {
     const handleDeleteGroup = async (groupId) => {
       const result = await deleteGroup(groupId)
       showNotification(
-        result.success ? 'Group deleted successfully!' : `Failed to delete group: ${result.error}`,
+        result.success ? t('admin.groupDeletedSuccessfully') : t('admin.failedToDeleteGroup', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -369,7 +373,7 @@ export default {
     const handleRemoveFromGroup = async (groupId, eventTitles) => {
       const result = await removeEventsFromGroup(groupId, eventTitles)
       if (result.success) {
-        const groupName = groups.value.find(g => g.id === parseInt(groupId))?.name || 'Unknown Group'
+        const groupName = groups.value.find(g => g.id === parseInt(groupId))?.name || t('admin.unknownGroup')
         showNotification(`Successfully removed ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} from ${groupName}!`, 'success')
       } else {
         showNotification(`Failed to remove events from group: ${result.error}`, 'error')

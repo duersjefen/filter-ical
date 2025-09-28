@@ -677,6 +677,7 @@
 
 <script>
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AdminCardWrapper from './AdminCardWrapper.vue'
 import ConfirmDialog from '../shared/ConfirmDialog.vue'
 
@@ -710,6 +711,9 @@ export default {
     'clear-event-selection', 'remove-from-group'
   ],
   setup(props, { emit }) {
+    // i18n
+    const { t } = useI18n()
+    
     // Local state
     const eventSearch = ref('')
     const selectedEvents = ref([])
@@ -1102,7 +1106,7 @@ export default {
     
     const deleteGroupConfirm = (group) => {
       groupToDelete.value = group
-      deleteConfirmMessage.value = `Are you sure you want to delete the group "${group.name}"? This will unassign all events from this group.`
+      deleteConfirmMessage.value = t('admin.confirmDeleteGroup', { name: group.name })
       deleteConfirmDialog.value.open()
     }
     

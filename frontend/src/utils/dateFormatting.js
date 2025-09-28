@@ -69,7 +69,7 @@ function getCurrentLocale() {
  */
 export function formatDateTime(dateString) {
   const date = parseIcalDate(dateString)
-  if (!date) return 'No date'
+  if (!date) return i18n.global.t('dateTime.noDate')
   
   try {
     const locale = getCurrentLocale()
@@ -96,7 +96,7 @@ export function formatDateTime(dateString) {
     }
   } catch (error) {
     console.warn('Date formatting error:', error, 'for date:', dateString)
-    return 'Invalid date'
+    return i18n.global.t('dateTime.invalidDate')
   }
 }
 
@@ -104,7 +104,7 @@ export function formatDateTime(dateString) {
  * Format a date range for events
  */
 export function formatDateRange(event) {
-  if (!event) return 'No event'
+  if (!event) return i18n.global.t('dateTime.noEvent')
   
   // Handle multiple possible API field names
   const startField = event.start || event.dtstart || event.start_time || event.startTime || event.datetime_start
@@ -114,7 +114,7 @@ export function formatDateRange(event) {
   const startDate = parseIcalDate(startField)
   const endDate = parseIcalDate(endField)
   
-  if (!startDate) return 'No start date'
+  if (!startDate) return i18n.global.t('dateTime.noStartDate')
   
   // If no end date, show single date/time
   if (!endDate) {

@@ -72,7 +72,7 @@
           v-if="hasGroups"
           @click="$emit('switch-to-groups')"
           class="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 ml-4 transform hover:scale-105 active:scale-95"
-          title="Switch to Groups view"
+          :title="$t('status.switchToGroupsView')"
         >
           <!-- Switch Icon -->
           <div class="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-200">
@@ -174,7 +174,7 @@
                 <path v-else fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
               </svg>
               <span class="hidden sm:inline">{{ showSelectedOnly ? $t('viewControls.showAll') : $t('viewControls.showSelectedOnly') }}</span>
-              <span class="sm:hidden">{{ showSelectedOnly ? 'Show All' : 'Show Selected' }}</span>
+              <span class="sm:hidden">{{ showSelectedOnly ? $t('status.showAll') : $t('status.showSelected') }}</span>
             </button>
           </div>
         </div>

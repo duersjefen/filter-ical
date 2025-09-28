@@ -828,7 +828,7 @@ const getGroupAwareDisplay = (selectedRecurringEvents) => {
   const subscribedGroups = props.subscribedGroups.size || 0
   
   if (subscribedGroups === 0 && (!selectedRecurringEvents || selectedRecurringEvents.length === 0)) {
-    return 'No groups or events selected'
+    return t('errors.noGroupsOrEventsSelected')
   }
   
   // Create summary for compact display
@@ -918,13 +918,13 @@ const getGroupSubscriptionStatus = (groupId) => {
   const totalCount = getGroupTotalCount(props.groups[groupId])
   
   if (isSubscribed) {
-    return 'SUBSCRIBED'
+    return t('status.subscribed')
   } else if (selectedCount === totalCount && totalCount > 0) {
-    return 'ALL SELECTED'
+    return t('status.allSelected')
   } else if (selectedCount > 0) {
-    return 'PARTIAL'
+    return t('status.partial')
   } else {
-    return 'NOT SELECTED'
+    return t('status.notSelected')
   }
 }
 

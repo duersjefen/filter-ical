@@ -8,14 +8,20 @@ export const ErrorTypes = {
   UNKNOWN: 'unknown'
 }
 
-export const ErrorMessages = {
-  [ErrorTypes.NETWORK]: 'Network connection failed. Please check your internet connection.',
-  [ErrorTypes.VALIDATION]: 'Please check your input and try again.',
-  [ErrorTypes.AUTHENTICATION]: 'Authentication failed. Please log in again.',
-  [ErrorTypes.NOT_FOUND]: 'The requested resource was not found.',
-  [ErrorTypes.SERVER]: 'Server error occurred. Please try again later.',
-  [ErrorTypes.CALENDAR]: 'Failed to process calendar data. Please check the calendar URL.',
-  [ErrorTypes.UNKNOWN]: 'An unexpected error occurred. Please try again.'
+import { t } from '@/i18n'
+
+export const getErrorMessage = (errorType) => {
+  const messageKeys = {
+    [ErrorTypes.NETWORK]: 'errors.networkError',
+    [ErrorTypes.VALIDATION]: 'errors.validationError',
+    [ErrorTypes.AUTHENTICATION]: 'errors.authenticationError',
+    [ErrorTypes.NOT_FOUND]: 'errors.notFoundError',
+    [ErrorTypes.SERVER]: 'errors.serverError',
+    [ErrorTypes.CALENDAR]: 'errors.calendarError',
+    [ErrorTypes.UNKNOWN]: 'errors.unknownError'
+  }
+  
+  return t(messageKeys[errorType] || messageKeys[ErrorTypes.UNKNOWN])
 }
 
 export class AppError extends Error {
@@ -29,7 +35,7 @@ export class AppError extends Error {
 
 export function parseApiError(error) {
   if (!error.response) {
-    return new AppError(ErrorMessages[ErrorTypes.NETWORK], ErrorTypes.NETWORK, error)
+    return new AppError(getErrorMessage(ErrorTypes.NETWORK), ErrorTypes.NETWORK, error)
   }
 
   const status = error.response.status
@@ -38,26 +44,26 @@ export function parseApiError(error) {
   switch (status) {
     case 400:
       return new AppError(
-        data?.message || ErrorMessages[ErrorTypes.VALIDATION],
+        data?.message || getErrorMessage(ErrorTypes.VALIDATION),
         ErrorTypes.VALIDATION,
         error
       )
     case 401:
     case 403:
       return new AppError(
-        data?.message || ErrorMessages[ErrorTypes.AUTHENTICATION],
+        data?.message || getErrorMessage(ErrorTypes.AUTHENTICATION),
         ErrorTypes.AUTHENTICATION,
         error
       )
     case 404:
       return new AppError(
-        data?.message || ErrorMessages[ErrorTypes.NOT_FOUND],
+        data?.message || getErrorMessage(ErrorTypes.NOT_FOUND),
         ErrorTypes.NOT_FOUND,
         error
       )
     case 422:
       return new AppError(
-        data?.message || 'Invalid calendar format or URL',
+        data?.message || t('errors.invalidCalendarFormat'),
         ErrorTypes.CALENDAR,
         error
       )
@@ -65,13 +71,13 @@ export function parseApiError(error) {
     case 502:
     case 503:
       return new AppError(
-        data?.message || ErrorMessages[ErrorTypes.SERVER],
+        data?.message || getErrorMessage(ErrorTypes.SERVER),
         ErrorTypes.SERVER,
         error
       )
     default:
       return new AppError(
-        data?.message || ErrorMessages[ErrorTypes.UNKNOWN],
+        data?.message || getErrorMessage(ErrorTypes.UNKNOWN),
         ErrorTypes.UNKNOWN,
         error
       )
