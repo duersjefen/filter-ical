@@ -74,8 +74,11 @@ async def add_calendar(
         if warnings:
             response["warnings"] = warnings
             response["event_count"] = event_count if sync_success else 0
-            
-        return response
+        
+        # Return 201 Created for successful calendar creation (REST convention)
+        from fastapi import status
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=status.HTTP_201_CREATED, content=response)
         
     except HTTPException:
         raise

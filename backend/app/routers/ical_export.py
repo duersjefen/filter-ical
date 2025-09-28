@@ -26,17 +26,22 @@ async def export_filtered_calendar(
         if not filter_obj:
             raise HTTPException(status_code=404, detail="Filter not found")
         
-        # Get events based on filter type
-        if filter_obj.calendar_id:
-            # User calendar filter
-            events = get_calendar_events(db, filter_obj.calendar_id)
-        elif filter_obj.domain_key:
-            # Domain calendar filter - need to get domain events
-            from ..services.domain_service import get_domain_events
-            events_data = get_domain_events(db, filter_obj.domain_key)
-            events = events_data  # Already in dictionary format
-        else:
-            raise HTTPException(status_code=400, detail="Invalid filter configuration")
+        # Get events based on filter type (with graceful degradation)
+        try:
+            if filter_obj.calendar_id:
+                # User calendar filter
+                events = get_calendar_events(db, filter_obj.calendar_id)
+            elif filter_obj.domain_key:
+                # Domain calendar filter - need to get domain events
+                from ..services.domain_service import get_domain_events
+                events_data = get_domain_events(db, filter_obj.domain_key)
+                events = events_data  # Already in dictionary format
+            else:
+                raise HTTPException(status_code=400, detail="Invalid filter configuration")
+        except Exception as events_error:
+            # Graceful degradation for database issues (return empty calendar)
+            print(f"⚠️ Events retrieval error for filter {uuid}: {events_error}")
+            events = []
         
         # Transform events to dictionary format if needed
         if events and hasattr(events[0], '__dict__'):

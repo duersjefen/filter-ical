@@ -587,6 +587,11 @@ components:
           items:
             $ref: '#/components/schemas/GroupWithEvents'
           description: "All events organized into groups. Ungrouped events are automatically assigned to 'Other Recurring Events' or 'Special Events' groups."
+        ungrouped_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecurringEvent'
+          description: "Events that are not assigned to any specific group."
 
     GroupWithEvents:
       type: object
