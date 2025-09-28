@@ -385,7 +385,7 @@ def seed_domain_from_yaml(db: Session, domain_key: str) -> Tuple[bool, str]:
     I/O Operation - Load and import domain configuration.
     """
     try:
-        domains_dir = settings.domains_config_path.parent / "domains"
+        domains_dir = settings.domains_config_path.parent
         
         # Load domain configuration
         success, config, error = load_domain_configuration(domain_key, domains_dir)
