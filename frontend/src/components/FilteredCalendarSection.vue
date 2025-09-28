@@ -470,7 +470,7 @@ const emit = defineEmits(['navigate-to-calendar', 'load-filter'])
 
 // Composables
 const { t } = useI18n()
-const { hasCustomUsername } = useUsername()
+const { hasCustomUsername, getUserId } = useUsername()
 const { 
   filteredCalendars, 
   loading, 
@@ -1077,6 +1077,26 @@ const getFilterSummary = (filterConfig) => {
   }
 }
 
+// Watch for selected calendar changes to reload filtered calendars
+watch(() => props.selectedCalendar, async (newCalendar) => {
+  if (newCalendar?.id) {
+    await loadFilteredCalendars(newCalendar.id)
+  } else {
+    // Clear filtered calendars if no calendar is selected
+    filteredCalendars.value = []
+  }
+}, { immediate: false })
+
+// Watch for user authentication changes to reload filtered calendars
+watch(() => getUserId(), async (newUserId, oldUserId) => {
+  if (newUserId !== oldUserId) {
+    console.log('🔄 User changed in FilteredCalendarSection - reloading filtered calendars')
+    if (props.selectedCalendar?.id) {
+      await loadFilteredCalendars(props.selectedCalendar.id)
+    }
+  }
+}, { immediate: false })
+
 // Watch for recurring event changes to auto-populate form name and track user interaction
 watch([() => props.selectedRecurringEvents], () => {
   updateFormName()
@@ -1104,6 +1124,9 @@ onMounted(async () => {
   if (props.selectedCalendar?.id) {
     await loadFilteredCalendars(props.selectedCalendar.id)
     updateFormName()
+  } else {
+    // Ensure filtered calendars are cleared if no calendar is selected on mount
+    filteredCalendars.value = []
   }
 })
 </script>

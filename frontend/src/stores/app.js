@@ -28,6 +28,9 @@ export const useAppStore = defineStore('app', () => {
       // Clear current calendars to prevent confusion
       calendars.value = []
       
+      // Clear filtered calendars to prevent showing stale data
+      filteredCalendars.value = []
+      
       // Reload calendars with new authentication state
       fetchCalendars()
     })

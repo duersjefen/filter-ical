@@ -6,10 +6,12 @@
 import { ref } from 'vue'
 import { useHTTP } from './useHTTP'
 import { useAppStore } from '../stores/app'
+import { useUsername } from './useUsername'
 
 export function useFilteredCalendarAPI() {
   // HTTP client
   const { get, post, put, del, loading, error, clearError, setError } = useHTTP()
+  const { getUserId } = useUsername()
   
   // State
   const filteredCalendars = ref([])
@@ -18,6 +20,26 @@ export function useFilteredCalendarAPI() {
   const deleting = ref(false)
   
   const appStore = useAppStore()
+
+  /**
+   * Pure function: Build authenticated endpoint for filtered calendars
+   */
+  const buildFilterEndpoint = (calendarIdOrDomain, filterId = null) => {
+    const currentUserId = getUserId()
+    
+    if (typeof calendarIdOrDomain === 'string' && calendarIdOrDomain.startsWith('cal_domain_')) {
+      // Domain calendar: extract domain from cal_domain_exter -> exter
+      const domain = calendarIdOrDomain.replace('cal_domain_', '')
+      const base = `/domains/${domain}/filters`
+      const withId = filterId ? `${base}/${filterId}` : base
+      return `${withId}?username=${currentUserId}`
+    } else {
+      // Regular calendar
+      const base = `/calendars/${calendarIdOrDomain}/filters`
+      const withId = filterId ? `${base}/${filterId}` : base
+      return `${withId}?username=${currentUserId}`
+    }
+  }
 
   /**
    * Pure function: Create filtered calendar data payload
@@ -75,17 +97,18 @@ export function useFilteredCalendarAPI() {
       return
     }
     
-    // Determine if this is a domain calendar or regular calendar
-    let endpoint
-    if (typeof calendarIdOrDomain === 'string' && calendarIdOrDomain.startsWith('cal_domain_')) {
-      // Domain calendar: extract domain from cal_domain_exter -> exter
-      const domain = calendarIdOrDomain.replace('cal_domain_', '')
-      endpoint = `/domains/${domain}/filters`
-    } else {
-      // Regular calendar
-      endpoint = `/calendars/${calendarIdOrDomain}/filters`
+    // Check authentication state - only load filtered calendars for logged-in users
+    const currentUserId = getUserId()
+    const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
+    
+    if (!hasCustomUsername) {
+      console.log('👤 User is anonymous - clearing filtered calendars')
+      filteredCalendars.value = []
+      return
     }
     
+    // Build authenticated endpoint
+    const endpoint = buildFilterEndpoint(calendarIdOrDomain)
     const result = await get(endpoint)
     
     if (result.success && result.data) {
@@ -124,6 +147,15 @@ export function useFilteredCalendarAPI() {
       return false
     }
 
+    // Check authentication state - only logged-in users can create filtered calendars
+    const currentUserId = getUserId()
+    const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
+    
+    if (!hasCustomUsername) {
+      setError('Login required to create filtered calendars')
+      return false
+    }
+
     creating.value = true
     
     // Map to backend filter format - convert recurring event names to subscribed_event_ids
@@ -133,17 +165,8 @@ export function useFilteredCalendarAPI() {
       subscribed_event_ids: selectedEvents || []
     }
     
-    // Determine if this is a domain calendar or regular calendar
-    let endpoint
-    if (typeof sourceCalendarId === 'string' && sourceCalendarId.startsWith('cal_domain_')) {
-      // Domain calendar: extract domain from cal_domain_exter -> exter
-      const domain = sourceCalendarId.replace('cal_domain_', '')
-      endpoint = `/domains/${domain}/filters`
-    } else {
-      // Regular calendar
-      endpoint = `/calendars/${sourceCalendarId}/filters`
-    }
-    
+    // Build authenticated endpoint
+    const endpoint = buildFilterEndpoint(sourceCalendarId)
     const result = await post(endpoint, payload)
     
     creating.value = false
@@ -190,7 +213,6 @@ export function useFilteredCalendarAPI() {
         return false
       }
 
-      let endpoint
       let payload = { ...updates }
       
       // If filter_config is provided, map it to backend format
@@ -201,16 +223,17 @@ export function useFilteredCalendarAPI() {
         delete payload.filter_config
       }
 
-      if (filterToUpdate.domain_key) {
-        // Domain calendar filter
-        endpoint = `/domains/${filterToUpdate.domain_key}/filters/${filterId}`
-      } else if (filterToUpdate.calendar_id) {
-        // User calendar filter
-        endpoint = `/calendars/${filterToUpdate.calendar_id}/filters/${filterId}`
-      } else {
+      // Build authenticated endpoint with filter ID
+      const calendarIdOrDomain = filterToUpdate.domain_key 
+        ? `cal_domain_${filterToUpdate.domain_key}` 
+        : filterToUpdate.calendar_id
+      
+      if (!calendarIdOrDomain) {
         setError('Invalid filter: missing calendar_id or domain_key')
         return false
       }
+      
+      const endpoint = buildFilterEndpoint(calendarIdOrDomain, filterId)
 
       const result = await put(endpoint, payload)
       
@@ -256,17 +279,17 @@ export function useFilteredCalendarAPI() {
     deleting.value = true
 
     try {
-      let endpoint
-      if (filterToDelete.domain_key) {
-        // Domain calendar filter
-        endpoint = `/domains/${filterToDelete.domain_key}/filters/${filterId}`
-      } else if (filterToDelete.calendar_id) {
-        // User calendar filter
-        endpoint = `/calendars/${filterToDelete.calendar_id}/filters/${filterId}`
-      } else {
+      // Build authenticated endpoint with filter ID
+      const calendarIdOrDomain = filterToDelete.domain_key 
+        ? `cal_domain_${filterToDelete.domain_key}` 
+        : filterToDelete.calendar_id
+      
+      if (!calendarIdOrDomain) {
         setError('Invalid filter: missing calendar_id or domain_key')
         return false
       }
+      
+      const endpoint = buildFilterEndpoint(calendarIdOrDomain, filterId)
 
       const result = await del(endpoint)
       
