@@ -33,7 +33,30 @@ jobs:
     timeout-minutes: 10
     steps:
     - uses: actions/checkout@v4
-    - run: echo "⚠️ TEMPORARILY SKIPPING CONTRACT TESTS FOR DEPLOYMENT"
+    
+    # Build test container and run contract tests
+    - name: 🔧 Build Backend Test Container  
+      run: |
+        cd backend
+        docker build -t test-backend --target test .
+    
+    - name: 📋 Run Contract Tests
+      run: |
+        cd backend
+        echo "🧪 Running contract tests to validate API compliance..."
+        docker run --rm \
+          -e ENV=test \
+          -e DATABASE_URL=sqlite:///test.db \
+          test-backend python3 -m pytest tests/test_contracts.py -v --tb=short
+    
+    - name: 🧪 Run Unit Tests  
+      run: |
+        cd backend
+        echo "🔬 Running unit tests..."
+        docker run --rm \
+          -e ENV=test \
+          -e DATABASE_URL=sqlite:///test.db \
+          test-backend python3 -m pytest tests/ -m unit -v --tb=short
 
   deploy:
     name: 🚀 Deploy to Production
