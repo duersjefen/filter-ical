@@ -192,74 +192,41 @@ export function analyzeSmartRecurringPattern(events, t) {
   const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
   const weekends = ['saturday', 'sunday']
   
-  // Get unique days of the week with event counts
-  const dayFrequency = {}
-  const eventDates = []
-  
-  events.forEach(event => {
+  // Get unique days of the week
+  const uniqueDays = [...new Set(events.map(event => {
     const date = new Date(event.start || event.dtstart)
     if (!isNaN(date.getTime())) {
-      const dayName = dayNames[date.getDay()]
-      dayFrequency[dayName] = (dayFrequency[dayName] || 0) + 1
-      eventDates.push(date)
+      return dayNames[date.getDay()]
     }
-  })
-  
-  const uniqueDays = Object.keys(dayFrequency)
+    return null
+  }).filter(Boolean))]
   
   if (uniqueDays.length === 0) return null
   
-  // Calculate time span of events
-  if (eventDates.length > 0) {
-    eventDates.sort((a, b) => a.getTime() - b.getTime())
-    const timeSpanWeeks = (eventDates[eventDates.length - 1].getTime() - eventDates[0].getTime()) / (1000 * 60 * 60 * 24 * 7)
-    
-    if (uniqueDays.length === 1 && events.length >= 3) {
-      const day = uniqueDays[0]
-      
-      // Analyze the actual intervals between events to detect true weekly vs bi-weekly patterns
-      const intervals = []
-      for (let i = 1; i < eventDates.length; i++) {
-        const daysDiff = (eventDates[i].getTime() - eventDates[i-1].getTime()) / (1000 * 60 * 60 * 24)
-        intervals.push(Math.round(daysDiff))
-      }
-      
-      // Check if it's truly weekly (intervals around 7 days)
-      const weeklyIntervals = intervals.filter(interval => Math.abs(interval - 7) <= 1)
-      const biWeeklyIntervals = intervals.filter(interval => Math.abs(interval - 14) <= 1)
-      
-      if (weeklyIntervals.length >= intervals.length * 0.8) {
-        // Mostly weekly intervals - true "Every [Day]" pattern
-        return `${t('datePatterns.every')} ${t(`datePatterns.dayNames.${day}`)}`
-      } else if (biWeeklyIntervals.length >= intervals.length * 0.6) {
-        // Mostly bi-weekly intervals - not "every" but regular bi-weekly
-        return `${t('datePatterns.eventsOn')} ${t(`datePatterns.dayNames.${day}`)}`
-      } else if (timeSpanWeeks >= 4) {
-        // Long span but irregular intervals
-        return `${t('datePatterns.eventsOn')} ${t(`datePatterns.dayNames.${day}`)}`
-      } else {
-        // Short span, just coincidentally same day
-        return `${t('datePatterns.eventsOn')} ${t(`datePatterns.dayNames.${day}`)}`
-      }
-    }
-    
-    // Check if it's all weekdays (and actually recurring weekly)
-    if (uniqueDays.every(day => weekdays.includes(day)) && uniqueDays.length >= 3 && timeSpanWeeks >= 2) {
-      return t('datePatterns.weekdays')
-    }
-    
-    // Check if it's weekends (and actually recurring weekly)
-    if (uniqueDays.every(day => weekends.includes(day)) && timeSpanWeeks >= 2) {
-      return t('datePatterns.weekends')
-    }
-    
-    // Multiple days but not clearly a pattern, or not recurring enough
-    if (uniqueDays.length <= 3) {
-      // Use abbreviated form for space
-      const shortDays = uniqueDays.map(day => t(`datePatterns.dayNamesShort.${day}`))
-      return shortDays.join('/')
-    }
+  // Sort days in week order for consistent display
+  const sortedDays = uniqueDays.sort((a, b) => dayNames.indexOf(a) - dayNames.indexOf(b))
+  
+  if (sortedDays.length === 1) {
+    // Single day - just show the day name
+    const day = sortedDays[0]
+    return t(`datePatterns.dayNames.${day}`)
   }
   
-  return null // Too complex or irregular pattern
+  // Check if it's all weekdays
+  if (sortedDays.every(day => weekdays.includes(day)) && sortedDays.length >= 3) {
+    return t('datePatterns.weekdays')
+  }
+  
+  // Check if it's weekends
+  if (sortedDays.every(day => weekends.includes(day))) {
+    return t('datePatterns.weekends')
+  }
+  
+  // Multiple specific days - show abbreviated form
+  if (sortedDays.length <= 3) {
+    const shortDays = sortedDays.map(day => t(`datePatterns.dayNamesShort.${day}`))
+    return shortDays.join('/')
+  }
+  
+  return null // Too many days to display clearly
 }

@@ -1,3 +1,2 @@
-- Fix dates (every Sunday), also German translation.
 - Finalize internationalization.
 - Deploy
