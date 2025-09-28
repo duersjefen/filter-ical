@@ -2,6 +2,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
     <AppHeader 
       :title="$t('admin.manageEventsGroups', { domain })"
+      :subtitle="$t('admin.adminPanelSubtitle')"
       :back-button-text="$t('admin.backToCalendar', { domain })"
       :show-back-button="true"
       page-context="admin"

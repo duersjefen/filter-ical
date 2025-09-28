@@ -9,7 +9,7 @@
     <!-- Group Filter Bar -->
     <div class="space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h3 class="text-base sm:text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Group</h3>
+        <h3 class="text-base sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.filterByGroup') }}</h3>
         <div class="hidden sm:flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <span>💡 Hold Ctrl to select multiple groups • Right-click groups to edit • Right-click events to assign • Drag to select multiple events</span>
         </div>
@@ -31,7 +31,7 @@
           :title="activeGroupFilters.length === 0 ? 'Currently showing all events' : 'Click to clear group filters and show all events • Hold Ctrl to select multiple filters'"
         >
           <span>📋</span>
-          <span>All Events</span>
+          <span>{{ t('admin.allEvents') }}</span>
           <span class="text-xs opacity-75">({{ recurringEvents.length }})</span>
         </button>
         
@@ -95,7 +95,7 @@
             @keyup.enter="createGroup"
             @keyup.escape="cancelAddGroup"
             @blur="handleAddGroupBlur"
-            placeholder="Group name..."
+            :placeholder="t('admin.groupNamePlaceholder')"
             class="px-4 py-3 sm:px-3 sm:py-2 border border-green-300 dark:border-green-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 text-base sm:text-sm min-w-32 flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
             ref="newGroupInput"
           />
@@ -354,7 +354,7 @@
               <div class="px-3 py-1 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-500 flex-shrink-0">
                 <div class="flex items-center justify-between">
                   <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">{{ group.name }}</span>
-                  <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse" title="Mixed state - some events in/out"></div>
+                  <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse" :title="t('admin.mixedState')"></div>
                 </div>
               </div>
               
@@ -463,7 +463,7 @@
         @click="showSelectedOnly = false"
         class="px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-800 dark:text-blue-200 rounded-md text-xs font-medium transition-colors"
       >
-        Show All Events
+        {{ t('admin.showAllEvents') }}
       </button>
     </div>
     
@@ -485,7 +485,7 @@
             v-if="eventSearch.trim()"
             @click="eventSearch = ''; showSelectedOnly = false"
             class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-            title="Clear search"
+            :title="t('admin.clearSearch')"
           >
             <span class="text-base sm:text-sm font-bold">×</span>
           </button>
@@ -648,7 +648,7 @@
                     {{ event.event_count }}
                   </span>
                   <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
-                    ❔ Unassigned
+                    ❔ {{ t('admin.unassigned') }}
                   </span>
                 </div>
               </div>
@@ -658,7 +658,7 @@
       
       <div v-if="filteredEvents.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
         <div class="text-4xl mb-2">📅</div>
-        <p>No events found matching your criteria</p>
+        <p>{{ t('admin.noEventsFound') }}</p>
       </div>
     </div>
   </AdminCardWrapper>
@@ -666,9 +666,9 @@
   <!-- Delete Group Confirmation Dialog -->
   <ConfirmDialog
     ref="deleteConfirmDialog"
-    title="Delete Group"
+    :title="t('admin.deleteGroup')"
     :message="deleteConfirmMessage"
-    confirm-text="Delete Group"
+    :confirm-text="t('admin.deleteGroup')"
     :cancel-text="t('admin.cancel')"
     @confirm="confirmDeleteGroup"
     @cancel="cancelDeleteGroup"
@@ -1588,6 +1588,9 @@ export default {
     }
     
     return {
+      // i18n
+      t,
+      
       // State
       eventSearch,
       selectedEvents,
