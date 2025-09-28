@@ -44,7 +44,7 @@ runs:
           cd /opt/websites
           operation="${{ inputs.operation }}"
           requested_containers="${{ inputs.containers }}"
-          ECR_REGISTRY="310829530903.dkr.ecr.eu-north-1.amazonaws.com"
+          ECR_REGISTRY="$ECR_REGISTRY"
           
           echo "🐳 Executing operation: $operation on requested containers: $requested_containers"
           
@@ -277,6 +277,7 @@ runs:
         EC2_HOST: ${{ env.EC2_HOST }}
         EC2_USER: ${{ env.EC2_USER }}
         EC2_SSH_KEY: ${{ env.EC2_SSH_KEY }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
     
     - name: Handle Operation Success  
       if: success()

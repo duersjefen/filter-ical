@@ -203,6 +203,8 @@ jobs:
         operation: ${{ steps.changes.outputs.clean_deploy == 'true' && 'clean-deploy' || 'deploy' }}
         nginx_restart: 'true'
         nginx_container: 'nginx'
+      env:
+        ECR_REGISTRY: ${{ steps.config.outputs.ecr_registry }}
     
     - name: 🧪 Validate Deployment Success
       id: validate
