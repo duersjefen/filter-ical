@@ -161,3 +161,4 @@ alembic upgrade head
 
 **PURPOSE:** This architecture ensures 100% testability, zero frontend coupling, fearless refactoring, and production reliability.
 - The dev server is normally already running, no need to start it most of the time.
+- Don't rerun "make dev", when the servers are still running!

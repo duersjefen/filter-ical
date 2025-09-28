@@ -592,40 +592,28 @@
               @click="handleEventCardClick(event.title, $event)"
               @contextmenu.prevent="showEventContextMenu(event, $event)"
               :class="[
-                'relative border rounded-lg p-3 cursor-pointer transition-all duration-200 hover:shadow-md',
+                'relative border-2 rounded-lg p-3 cursor-pointer transition-all duration-200 hover:shadow-md transform hover:scale-[1.01]',
                 selectedEvents.includes(event.title) 
-                  ? 'border-blue-300 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20 shadow-md' 
-                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
+                  ? 'border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30 shadow-lg ring-2 ring-blue-200 dark:ring-blue-700/50 scale-[1.01]' 
+                  : 'border-gray-200 dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-600 bg-white dark:bg-gray-800 hover:bg-blue-25 dark:hover:bg-blue-950/10'
               ]"
             >
-              <!-- Selection Checkbox -->
-              <div class="absolute top-2 right-2">
-                <input
-                  type="checkbox"
-                  :checked="selectedEvents.includes(event.title)"
-                  @change="toggleEventSelection(event.title)"
-                  @click.stop
-                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
+              <!-- Event Title with clean layout -->
+              <div class="mb-2">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5">
+                  {{ event.title }}
+                </h3>
               </div>
               
-              <!-- Event Title with Count -->
-              <div class="pr-6 mb-2">
-                <div class="flex items-start gap-2">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 flex-shrink-0">
-                    {{ event.event_count }}
-                  </span>
-                  <h3 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5 min-w-0">
-                    {{ event.title }}
-                  </h3>
-                </div>
-              </div>
-              
-              <!-- Group Assignment -->
+              <!-- Group Assignment with count -->
               <div class="space-y-1">
                 
-                <!-- Multi-Group Display -->
-                <div v-if="event.assigned_groups && event.assigned_groups.length > 0" class="flex flex-wrap gap-1">
+                <!-- Multi-Group Display with count -->
+                <div v-if="event.assigned_groups && event.assigned_groups.length > 0" class="flex flex-wrap items-center gap-1">
+                  <!-- Event count before bubbles -->
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 mr-1">
+                    {{ event.event_count }}
+                  </span>
                   <!-- Primary Group Badge -->
                   <span :class="`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getGroupColorClasses(event.assigned_groups[0].id)}`">
                     {{ event.assigned_groups[0].name }}
@@ -638,49 +626,25 @@
                   >
                     {{ group.name }}
                   </span>
-                  <!-- Overflow Indicator with Popover -->
-                  <div 
+                  <!-- Overflow Indicator with Tooltip -->
+                  <span 
                     v-if="event.assigned_groups.length > 2"
-                    class="relative inline-block"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 transition-colors"
+                    :title="event.assigned_groups.slice(2).map(g => g.name).join(', ')"
                   >
-                    <span 
-                      @click="toggleGroupPopover(event.title)"
-                      @click.stop
-                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                      :title="'Click to see all groups'"
-                    >
-                      +{{ event.assigned_groups.length - 2 }}
-                    </span>
-                    <!-- Groups Popover -->
-                    <div 
-                      v-if="groupPopover.visible && groupPopover.eventTitle === event.title"
-                      class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-48 z-50"
-                      @click.stop
-                    >
-                      <div class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">All Groups:</div>
-                      <div class="space-y-1">
-                        <div 
-                          v-for="group in event.assigned_groups"
-                          :key="group.id"
-                          :class="`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mr-1 mb-1 ${getGroupColorClasses(group.id)}`"
-                        >
-                          {{ group.name }}
-                          <span v-if="group === event.assigned_groups[0]" class="text-xs opacity-75">(primary)</span>
-                        </div>
-                      </div>
-                      <button 
-                        @click="closeGroupPopover" 
-                        class="mt-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
+                    +{{ event.assigned_groups.length - 2 }}
+                  </span>
                 </div>
-                <!-- Unassigned State -->
-                <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
-                  ❔ Unassigned
-                </span>
+                <!-- Unassigned State with count -->
+                <div v-else class="flex flex-wrap items-center gap-1">
+                  <!-- Event count before unassigned badge -->
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 mr-1">
+                    {{ event.event_count }}
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
+                    ❔ Unassigned
+                  </span>
+                </div>
               </div>
           </div>
         </div>
@@ -766,7 +730,6 @@ export default {
     const deleteConfirmDialog = ref(null)
     const deleteConfirmMessage = ref('')
     const groupToDelete = ref(null)
-    const groupPopover = ref({ visible: false, eventTitle: null })
     
     // Loading and visual feedback state
     const isUpdatingGroups = ref(false)
@@ -1177,30 +1140,6 @@ export default {
       contextMenu.value.visible = false
     }
     
-    const toggleGroupPopover = (eventTitle) => {
-      if (groupPopover.value.visible && groupPopover.value.eventTitle === eventTitle) {
-        closeGroupPopover()
-      } else {
-        groupPopover.value = {
-          visible: true,
-          eventTitle: eventTitle
-        }
-        
-        // Close popover when clicking elsewhere
-        const closePopover = () => {
-          closeGroupPopover()
-          document.removeEventListener('click', closePopover)
-        }
-        
-        setTimeout(() => {
-          document.addEventListener('click', closePopover)
-        }, 0)
-      }
-    }
-    
-    const closeGroupPopover = () => {
-      groupPopover.value = { visible: false, eventTitle: null }
-    }
     
     // Event context menu methods
     const showEventContextMenu = (event, mouseEvent) => {
@@ -1307,21 +1246,21 @@ export default {
       return 'grid grid-cols-4 gap-1 px-2'
     }
 
-    // Color palette for consistent group coloring
+    // Ultra-minimal monochrome palette - uniform appearance with subtle text variations
     const groupColorPalette = [
-      // Primary colors with good contrast
-      { bg: 'bg-green-100', text: 'text-green-800', darkBg: 'dark:bg-green-900/30', darkText: 'dark:text-green-200' },
-      { bg: 'bg-blue-100', text: 'text-blue-800', darkBg: 'dark:bg-blue-900/30', darkText: 'dark:text-blue-200' },
-      { bg: 'bg-purple-100', text: 'text-purple-800', darkBg: 'dark:bg-purple-900/30', darkText: 'dark:text-purple-200' },
-      { bg: 'bg-amber-100', text: 'text-amber-800', darkBg: 'dark:bg-amber-900/30', darkText: 'dark:text-amber-200' },
-      { bg: 'bg-rose-100', text: 'text-rose-800', darkBg: 'dark:bg-rose-900/30', darkText: 'dark:text-rose-200' },
-      { bg: 'bg-teal-100', text: 'text-teal-800', darkBg: 'dark:bg-teal-900/30', darkText: 'dark:text-teal-200' },
-      { bg: 'bg-orange-100', text: 'text-orange-800', darkBg: 'dark:bg-orange-900/30', darkText: 'dark:text-orange-200' },
-      { bg: 'bg-indigo-100', text: 'text-indigo-800', darkBg: 'dark:bg-indigo-900/30', darkText: 'dark:text-indigo-200' },
-      { bg: 'bg-emerald-100', text: 'text-emerald-800', darkBg: 'dark:bg-emerald-900/30', darkText: 'dark:text-emerald-200' },
-      { bg: 'bg-cyan-100', text: 'text-cyan-800', darkBg: 'dark:bg-cyan-900/30', darkText: 'dark:text-cyan-200' },
-      { bg: 'bg-pink-100', text: 'text-pink-800', darkBg: 'dark:bg-pink-900/30', darkText: 'dark:text-pink-200' },
-      { bg: 'bg-lime-100', text: 'text-lime-800', darkBg: 'dark:bg-lime-900/30', darkText: 'dark:text-lime-200' }
+      // All groups use same neutral background with slight text variations for distinction
+      { bg: 'bg-gray-100', text: 'text-gray-600', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-400' },
+      { bg: 'bg-gray-100', text: 'text-gray-700', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-300' },
+      { bg: 'bg-gray-100', text: 'text-gray-600', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-400' },
+      { bg: 'bg-gray-100', text: 'text-gray-700', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-300' },
+      { bg: 'bg-gray-100', text: 'text-gray-600', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-400' },
+      { bg: 'bg-gray-100', text: 'text-gray-700', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-300' },
+      { bg: 'bg-gray-100', text: 'text-gray-600', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-400' },
+      { bg: 'bg-gray-100', text: 'text-gray-700', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-300' },
+      { bg: 'bg-gray-100', text: 'text-gray-600', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-400' },
+      { bg: 'bg-gray-100', text: 'text-gray-700', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-300' },
+      { bg: 'bg-gray-100', text: 'text-gray-600', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-400' },
+      { bg: 'bg-gray-100', text: 'text-gray-700', darkBg: 'dark:bg-gray-700/30', darkText: 'dark:text-gray-300' }
     ]
 
     // Helper function to get consistent colors for a group
@@ -1654,7 +1593,6 @@ export default {
       deleteConfirmDialog,
       deleteConfirmMessage,
       groupToDelete,
-      groupPopover,
       isUpdatingGroups,
       updatingGroupIds,
       dragSelection,
@@ -1696,8 +1634,6 @@ export default {
       showContextMenu,
       editGroupFromMenu,
       deleteGroupFromMenu,
-      toggleGroupPopover,
-      closeGroupPopover,
       showEventContextMenu,
       getAvailableGroupsForEvent,
       getAssignedGroupsForEvent,
