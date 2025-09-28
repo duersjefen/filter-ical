@@ -301,7 +301,10 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { formatDateRange } from '@/utils/dateFormatting'
+import { useI18n } from 'vue-i18n'
+import { formatDateRange, analyzeSmartRecurringPattern } from '@/utils/dateFormatting'
+
+const { t } = useI18n()
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -524,64 +527,16 @@ const fetchRecurringEventEvents = async (eventTitle) => {
   }
 }
 
-// Genius day pattern detection for recurring events
+// Smart day pattern detection for recurring events with i18n support
 const getRecurringEventDayPattern = (recurringEvent) => {
   if (!recurringEvent.events || recurringEvent.events.length === 0) return null
   
-  // Analyze the days of the week for this recurring event
-  const dayPattern = analyzeDayPattern(recurringEvent.events)
-  
-  if (dayPattern.type === 'consistent') {
-    // Always the same day - show the day (simple form for space constraints)
-    const day = dayPattern.days[0]
-    return `Every ${day}`
-  } else if (dayPattern.type === 'weekdays') {
-    return 'Weekdays'
-  } else if (dayPattern.type === 'weekends') {
-    return 'Weekends'
-  } else if (dayPattern.type === 'multiple' && dayPattern.days.length <= 3) {
-    // Multiple but consistent days - use abbreviated form for space
-    const shortDays = dayPattern.days.map(day => day.substring(0, 3))
-    return shortDays.join('/')
-  }
-  
-  return null // Too complex or irregular pattern
+  // Use the new smart pattern analysis
+  return analyzeSmartRecurringPattern(recurringEvent.events, t)
 }
 
-function analyzeDayPattern(events) {
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-  const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-  const weekends = ['Saturday', 'Sunday']
-  
-  // Get unique days of the week
-  const uniqueDays = [...new Set(events.map(event => {
-    const date = new Date(event.start || event.dtstart)
-    return dayNames[date.getDay()]
-  }))]
-  
-  if (uniqueDays.length === 1) {
-    return { type: 'consistent', days: uniqueDays }
-  }
-  
-  // Check if it's all weekdays
-  if (uniqueDays.every(day => weekdays.includes(day)) && uniqueDays.length >= 3) {
-    return { type: 'weekdays', days: uniqueDays }
-  }
-  
-  // Check if it's weekends
-  if (uniqueDays.every(day => weekends.includes(day))) {
-    return { type: 'weekends', days: uniqueDays }
-  }
-  
-  // Multiple specific days
-  if (uniqueDays.length <= 3) {
-    return { type: 'multiple', days: uniqueDays.sort((a, b) => dayNames.indexOf(a) - dayNames.indexOf(b)) }
-  }
-  
-  return { type: 'complex', days: uniqueDays }
-}
 
-// Enhanced date formatting for individual events
+// Enhanced date formatting for individual events with i18n support
 function formatCompactEventDate(event, hasConsistentDay = false) {
   const date = new Date(event.start || event.dtstart)
   const now = new Date()
@@ -592,8 +547,11 @@ function formatCompactEventDate(event, hasConsistentDay = false) {
   const diffTime = eventDate - today
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   
+  // Get current locale for proper formatting
+  const locale = t('language.switch') === 'Sprache wechseln' ? 'de-DE' : 'en-US'
+  
   // Format time part
-  const timeStr = date.toLocaleTimeString('en-US', { 
+  const timeStr = date.toLocaleTimeString(locale, { 
     hour: 'numeric', 
     minute: '2-digit',
     hour12: false 
@@ -601,22 +559,22 @@ function formatCompactEventDate(event, hasConsistentDay = false) {
   
   // Smart date formatting based on proximity
   if (diffDays === 0) {
-    return `Today ${timeStr}`
+    return `${t('preview.today', 'Today')} ${timeStr}`
   } else if (diffDays === 1) {
-    return `Tomorrow ${timeStr}`
+    return `${t('preview.tomorrow', 'Tomorrow')} ${timeStr}`
   } else if (diffDays === -1) {
-    return `Yesterday ${timeStr}`
+    return `${t('preview.yesterday', 'Yesterday')} ${timeStr}`
   } else if (diffDays > 0 && diffDays <= 7) {
-    // For this week, show day if no consistent pattern, otherwise skip day
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
-    return hasConsistentDay ? timeStr : `${dayName} ${timeStr}`
+    // For this week, always show day name + time (pattern is shown in header)
+    const dayName = date.toLocaleDateString(locale, { weekday: 'short' })
+    return `${dayName} ${timeStr}`
   } else if (diffDays >= -7 && diffDays < 0) {
-    // For last week, show day if no consistent pattern, otherwise skip day
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
-    return hasConsistentDay ? timeStr : `${dayName} ${timeStr}`
+    // For last week, always show day name + time (pattern is shown in header) 
+    const dayName = date.toLocaleDateString(locale, { weekday: 'short' })
+    return `${dayName} ${timeStr}`
   } else {
-    // For dates further away, show compact month/day
-    const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    // For dates further away, always show month/day regardless of pattern
+    const monthDay = date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
     const currentYear = now.getFullYear()
     const eventYear = date.getFullYear()
     

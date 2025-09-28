@@ -23,6 +23,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   event: { type: Object, required: true },
@@ -36,7 +39,7 @@ const hasSecondaryInfo = computed(() => {
   return props.event.location || (props.showCategory && props.getRecurringEventKey(props.event) !== props.event.title)
 })
 
-// Format date in a more compact way with better readability
+// Format date in a more compact way with better readability and i18n support
 const formatCompactDate = (event) => {
   const date = new Date(event.start || event.dtstart)
   const now = new Date()
@@ -47,8 +50,11 @@ const formatCompactDate = (event) => {
   const diffTime = eventDate - today
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   
+  // Get current locale for proper formatting
+  const locale = t('language.switch') === 'Sprache wechseln' ? 'de-DE' : 'en-US'
+  
   // Format time part with better spacing
-  const timeStr = date.toLocaleTimeString('en-US', { 
+  const timeStr = date.toLocaleTimeString(locale, { 
     hour: 'numeric', 
     minute: '2-digit',
     hour12: false 
@@ -56,18 +62,18 @@ const formatCompactDate = (event) => {
   
   // Smart date formatting based on proximity with consistent spacing
   if (diffDays === 0) {
-    return `Today·${timeStr}`
+    return `${t('preview.today')}·${timeStr}`
   } else if (diffDays === 1) {
-    return `Tomorrow·${timeStr}`
+    return `${t('preview.tomorrow')}·${timeStr}`
   } else if (diffDays === -1) {
-    return `Yesterday·${timeStr}`
+    return `${t('preview.yesterday')}·${timeStr}`
   } else if (diffDays > 0 && diffDays <= 7) {
-    return `${date.toLocaleDateString('en-US', { weekday: 'short' })}·${timeStr}`
+    return `${date.toLocaleDateString(locale, { weekday: 'short' })}·${timeStr}`
   } else if (diffDays >= -7 && diffDays < 0) {
-    return `${date.toLocaleDateString('en-US', { weekday: 'short' })}·${timeStr}`
+    return `${date.toLocaleDateString(locale, { weekday: 'short' })}·${timeStr}`
   } else {
     // For dates further away, show month/day with year if needed
-    const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const monthDay = date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
     const currentYear = now.getFullYear()
     const eventYear = date.getFullYear()
     

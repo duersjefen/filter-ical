@@ -115,7 +115,10 @@
     "andMoreEvents": "... and {count} more events",
     "noDate": "No date",
     "invalidDate": "Invalid date",
-    "noEventsSelected": "No events selected"
+    "noEventsSelected": "No events selected",
+    "today": "Today",
+    "tomorrow": "Tomorrow", 
+    "yesterday": "Yesterday"
   },
   "darkMode": {
     "toggle": "Toggle dark mode",
@@ -365,5 +368,29 @@
     "voluntaryNotice": "All donations are voluntary and appreciated.",
     "copyright": "© 2025 PAISS",
     "madeWith": "Made with ❤️ for the community"
+  },
+  "datePatterns": {
+    "every": "Every",
+    "weekdays": "Weekdays",
+    "weekends": "Weekends",
+    "eventsOn": "Events on",
+    "dayNames": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday", 
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "dayNamesShort": {
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu", 
+      "friday": "Fri",
+      "saturday": "Sat",
+      "sunday": "Sun"
+    }
   }
 }

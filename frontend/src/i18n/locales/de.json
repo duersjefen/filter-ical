@@ -115,7 +115,10 @@
     "andMoreEvents": "... und {count} weitere Events",
     "noDate": "Kein Datum",
     "invalidDate": "Ungültiges Datum",
-    "noEventsSelected": "Keine Events ausgewählt"
+    "noEventsSelected": "Keine Events ausgewählt",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "yesterday": "Gestern"
   },
   "darkMode": {
     "toggle": "Dunklen Modus umschalten",
@@ -377,5 +380,29 @@
     "voluntaryNotice": "Alle Spenden sind freiwillig und geschätzt.",
     "copyright": "© 2025 PAISS",
     "madeWith": "Mit ❤️ für die Community gemacht"
+  },
+  "datePatterns": {
+    "every": "Jeden",
+    "weekdays": "Werktage",
+    "weekends": "Wochenende",
+    "eventsOn": "Events am",
+    "dayNames": {
+      "monday": "Montag",
+      "tuesday": "Dienstag", 
+      "wednesday": "Mittwoch",
+      "thursday": "Donnerstag",
+      "friday": "Freitag",
+      "saturday": "Samstag",
+      "sunday": "Sonntag"
+    },
+    "dayNamesShort": {
+      "monday": "Mo",
+      "tuesday": "Di",
+      "wednesday": "Mi", 
+      "thursday": "Do",
+      "friday": "Fr",
+      "saturday": "Sa",
+      "sunday": "So"
+    }
   }
 }
