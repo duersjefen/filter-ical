@@ -18,6 +18,7 @@ COPY app/ ./app/
 # Copy OpenAPI specification and domains configuration
 COPY openapi.yaml ./
 COPY domains.yaml ./
+COPY domains/ ./domains/
 
 # Test stage
 FROM base AS test

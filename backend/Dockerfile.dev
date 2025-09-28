@@ -20,6 +20,7 @@ RUN pip install --no-cache-dir watchdog
 # Copy OpenAPI specification and domains configuration
 COPY openapi.yaml ./
 COPY domains.yaml ./
+COPY domains/ ./domains/
 
 # Create data directory for database
 RUN mkdir -p /app/data
