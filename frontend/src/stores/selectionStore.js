@@ -383,7 +383,7 @@ export const useSelectionStore = defineStore('selection', () => {
     }
     
     if (effectiveSelectedEvents === 0 && subscribedGroupsCount === 0) {
-      return 'No events or groups selected'
+      return 'common.noEventsOrGroupsSelected'
     }
     
     const parts = []

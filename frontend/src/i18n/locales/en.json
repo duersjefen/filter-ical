@@ -20,7 +20,21 @@
     "add": "Add",
     "remove": "Remove",
     "select": "Select",
-    "deselect": "Deselect"
+    "deselect": "Deselect",
+    "created": "Created",
+    "updated": "Updated",
+    "totalGroups": "total groups",
+    "groupsSubscribed": "groups subscribed",
+    "eventsSelected": "events selected",
+    "totalEvents": "total events",
+    "recurringEvents": "recurring events",
+    "group": "group",
+    "groups": "groups",
+    "event": "event",
+    "events": "events",
+    "onetimeEvents": "One-time events",
+    "selected": "selected",
+    "noEventsOrGroupsSelected": "No events or groups selected"
   },
   "username": {
     "placeholder": "Enter your name...",
@@ -230,7 +244,9 @@
     "enterYourName": "Enter your name",
     "readOnlyMode": "Read-only mode",
     "switchToEventsView": "Switch to Events view",
+    "browseByEventTypes": "Browse by event types",
     "switchToGroupsView": "Switch to Groups view",
+    "browseByOrganizedGroups": "Browse by organized groups",
     "clickToViewEvents": "Click to view individual events",
     "clickAnywhereToToggle": "Click anywhere to expand/collapse {name} details",
     "subscribeAndSelect": "Subscribe to group and select all event types",
@@ -414,8 +430,8 @@
     "createGroup": "Create Group"
   },
   "groupCard": {
-    "subscribedSelected": "✅ Subscribed & Selected",
-    "subscribeSelect": "🎯 Subscribe & Select",
+    "subscribedSelected": "Subscribed & Selected",
+    "subscribeSelect": "Subscribe & Select",
     "subscribed": "✅ Subscribed",
     "subscribe": "📥 Subscribe",
     "deselectAll": "✓ Deselect All",
@@ -432,7 +448,8 @@
     "selectAllSingles": "✓ Select All",
     "subscribeToAllGroups": "Subscribe to All Groups",
     "unsubscribeFromAllGroups": "Unsubscribe from All Groups",
-    "groupsView": "Groups view"
+    "groupsView": "Groups view",
+    "fineGrainedControlText": "For fine-grained control and customization, switch to"
   },
   "labels": {
     "types": "📂 Types",
@@ -479,7 +496,8 @@
     "selected": "Selected",
     "selectAll": "Select All",
     "subscribed": "Subscribed",
-    "subscribe": "Subscribe"
+    "subscribe": "Subscribe",
+    "subscribeToGroupsOrSelectEvents": "Subscribe to groups or select specific event types"
   },
   "dateTime": {
     "noDate": "No date",
@@ -522,6 +540,9 @@
     "deselectAll": "Deselect All",
     "expandAll": "Expand All",
     "collapseAll": "Collapse All",
+    "expandAllEvents": "Expand All",
+    "collapseAllEvents": "Collapse All",
+    "selectAllResults": "Select all results",
     "addGroup": "Add Group",
     "editName": "Edit Name",
     "cancel": "Cancel",

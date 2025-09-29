@@ -20,7 +20,21 @@
     "add": "Hinzufügen",
     "remove": "Entfernen",
     "select": "Auswählen",
-    "deselect": "Abwählen"
+    "deselect": "Abwählen",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "totalGroups": "Gruppen insgesamt",
+    "groupsSubscribed": "Gruppen abonniert",
+    "eventsSelected": "Events ausgewählt",
+    "totalEvents": "Events insgesamt",
+    "recurringEvents": "wiederkehrende Events",
+    "group": "Gruppe",
+    "groups": "Gruppen",
+    "event": "Event",
+    "events": "Events",
+    "onetimeEvents": "Einmalige Events",
+    "selected": "ausgewählt",
+    "noEventsOrGroupsSelected": "Keine Events oder Gruppen ausgewählt"
   },
   "username": {
     "placeholder": "Namen eingeben...",
@@ -230,7 +244,9 @@
     "enterYourName": "Geben Sie Ihren Namen ein",
     "readOnlyMode": "Nur-Lese-Modus",
     "switchToEventsView": "Zur Events-Ansicht wechseln",
+    "browseByEventTypes": "Nach wiederkehrende durchsuchen",
     "switchToGroupsView": "Zur Gruppen-Ansicht wechseln",
+    "browseByOrganizedGroups": "Nach Gruppen durchsuchen",
     "clickToViewEvents": "Klicken Sie, um einzelne Events anzuzeigen",
     "clickAnywhereToToggle": "Klicken Sie irgendwo, um {name}-Details ein-/auszublenden",
     "subscribeAndSelect": "Gruppe abonnieren und alle Events auswählen",
@@ -414,8 +430,8 @@
     "createGroup": "Gruppe erstellen"
   },
   "groupCard": {
-    "subscribedSelected": "✅ Abonniert & Ausgewählt",
-    "subscribeSelect": "🎯 Abonnieren & Auswählen",
+    "subscribedSelected": "Abonniert & Ausgewählt",
+    "subscribeSelect": "Abonnieren & Auswählen",
     "subscribed": "✅ Abonniert",
     "subscribe": "📥 Abonnieren",
     "deselectAll": "✓ Alle abwählen",
@@ -432,7 +448,8 @@
     "selectAllSingles": "✓ Alle auswählen",
     "subscribeToAllGroups": "Alle Gruppen abonnieren",
     "unsubscribeFromAllGroups": "Alle Gruppen abbestellen",
-    "groupsView": "Gruppenansicht"
+    "groupsView": "Gruppenansicht",
+    "fineGrainedControlText": "Für detaillierte Kontrolle und Anpassung wechseln Sie zur"
   },
   "labels": {
     "types": "📂 Typen",
@@ -491,7 +508,8 @@
     "selected": "Ausgewählt",
     "selectAll": "Alle auswählen",
     "subscribed": "Abonniert",
-    "subscribe": "Abonnieren"
+    "subscribe": "Abonnieren",
+    "subscribeToGroupsOrSelectEvents": "Gruppen abonnieren oder wiederkehrende Events auswählen"
   },
   "dateTime": {
     "noDate": "Kein Datum",
@@ -534,6 +552,9 @@
     "deselectAll": "Alle abwählen",
     "expandAll": "Alle erweitern",
     "collapseAll": "Alle einklappen",
+    "expandAllEvents": "Alle erweitern",
+    "collapseAllEvents": "Alle einklappen",
+    "selectAllResults": "Alle Ergebnisse auswählen",
     "addGroup": "Gruppe hinzufügen",
     "editName": "Name bearbeiten",
     "cancel": "Abbrechen",

@@ -49,8 +49,8 @@
       }"
     >
       <div class="p-3 sm:p-4">
-      <!-- Create/Update Form - Auto-show when events selected -->
-      <div v-if="selectedRecurringEvents.length > 0 || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
+      <!-- Create/Update Form - Auto-show when events selected or groups subscribed -->
+      <div v-if="selectedRecurringEvents.length > 0 || (subscribedGroups && subscribedGroups.size > 0) || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
              : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
@@ -166,7 +166,7 @@
               <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
                 <div class="flex items-center justify-between text-sm">
                   <span class="text-gray-600 dark:text-gray-400">
-                    {{ Object.keys(groups).length }} total groups
+                    {{ Object.keys(groups).length }} {{ t('common.totalGroups') }}
                   </span>
                   <span class="text-gray-600 dark:text-gray-400">
                     {{ reactiveGroupBreakdown }}
@@ -307,10 +307,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                       <span v-if="calendar.updated_at && calendar.updated_at !== calendar.created_at">
-                        Updated {{ formatCreatedDate(calendar.updated_at) }}
+                        {{ t('common.updated') }} {{ formatCreatedDate(calendar.updated_at) }}
                       </span>
                       <span v-else>
-                        Created {{ formatCreatedDate(calendar.created_at) }}
+                        {{ t('common.created') }} {{ formatCreatedDate(calendar.created_at) }}
                       </span>
                     </div>
                   </div>
@@ -469,7 +469,7 @@ const props = defineProps({
 const emit = defineEmits(['navigate-to-calendar', 'load-filter'])
 
 // Composables
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { hasCustomUsername, getUserId } = useUsername()
 const { 
   filteredCalendars, 
@@ -518,10 +518,10 @@ const reactiveGroupBreakdown = computed(() => {
   
   const parts = []
   if (subscribedGroups > 0) {
-    parts.push(`${subscribedGroups}/${totalGroups} groups subscribed`)
+    parts.push(`${subscribedGroups}/${totalGroups} ${t('common.groupsSubscribed')}`)
   }
   if (selectedEvents > 0) {
-    parts.push(`${selectedEvents} events selected`)
+    parts.push(`${selectedEvents} ${t('common.eventsSelected')}`)
   }
   
   return parts.length > 0 ? parts.join(' • ') : t('preview.noEventsSelected')
@@ -706,7 +706,7 @@ const exitUpdateMode = () => {
 
 const formatCreatedDate = (dateString) => {
   if (!dateString) {
-    return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    return new Date().toLocaleDateString(locale.value, { year: 'numeric', month: 'short', day: 'numeric' })
   }
   
   try {
@@ -728,14 +728,14 @@ const formatCreatedDate = (dateString) => {
       date = new Date()
     }
     
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString(locale.value, { 
       year: 'numeric', 
       month: 'short', 
       day: 'numeric'
     })
   } catch (error) {
     console.error('Date formatting error:', error, 'for date:', dateString)
-    return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    return new Date().toLocaleDateString(locale.value, { year: 'numeric', month: 'short', day: 'numeric' })
   }
 }
 
@@ -835,7 +835,7 @@ const getGroupAwareDisplay = (selectedRecurringEvents) => {
   const parts = []
   
   if (subscribedGroups > 0) {
-    parts.push(`${subscribedGroups}/${totalGroups} groups subscribed`)
+    parts.push(`${subscribedGroups}/${totalGroups} ${t('common.groupsSubscribed')}`)
   }
   
   const individualEvents = selectedRecurringEvents || []
@@ -1051,7 +1051,7 @@ const getFilterSummary = (filterConfig) => {
   let text = ''
   if (groupCount > 0 && eventCount > 0) {
     // Both groups and recurring events
-    text = `📊 ${groupCount} ${groupCount === 1 ? 'group' : 'groups'} & ${eventCount} recurring ${eventCount === 1 ? 'event' : 'events'}`
+    text = `📊 ${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} & ${eventCount} ${t('common.recurringEvents')}`
   } else if (groupCount > 0) {
     // Only groups
     text = `📊 ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}`

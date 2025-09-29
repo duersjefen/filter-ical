@@ -51,11 +51,11 @@
             <div class="flex items-center gap-2 text-xs">
               <span class="inline-flex items-center gap-1">
                 <span class="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-                {{ totalEventCount }} total events
+                {{ totalEventCount }} {{ t('common.totalEvents') }}
               </span>
               <span v-if="hasRecurringEvents" class="inline-flex items-center gap-1">
                 <span class="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
-                {{ recurringEventsCount }} recurring events
+                {{ recurringEventsCount }} {{ t('common.recurringEvents') }}
               </span>
             </div>
           </div>
@@ -110,19 +110,17 @@
         <!-- Primary Action Button -->
         <button
           @click.stop="toggleSubscribeAndSelect"
-          class="w-full px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[44px] border"
+          class="w-full"
           :class="isBothSubscribedAndSelected 
-            ? 'bg-green-500 hover:bg-green-600 text-white border-green-400 hover:border-green-500' 
-            : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-400 hover:border-blue-500'"
+            ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-2 border-green-600 hover:border-green-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50 min-h-[44px]' 
+            : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
-          <!-- Status icon -->
-          <div 
-            class="w-5 h-5 rounded-full border border-white bg-white/20 flex items-center justify-center"
-          >
-            <span v-if="isBothSubscribedAndSelected" class="text-white text-sm">✓</span>
-            <span v-else class="text-white text-sm">+</span>
-          </div>
+          <!-- Standardized SVG Icon -->
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path v-if="isBothSubscribedAndSelected" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            <path v-else fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
           
           <!-- Button text -->
           <span class="font-semibold text-sm">
@@ -135,36 +133,22 @@
           <!-- Subscribe Button -->
           <button
             @click.stop="toggleGroupSubscription"
-            class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[40px]"
             :class="isGroupSubscribed 
-              ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-              : 'bg-gray-500 hover:bg-gray-400 text-white border border-gray-400 hover:border-blue-400'"
+              ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-green-600 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-transparent hover:border-green-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 dark:from-green-900/20 dark:to-green-800/40 dark:text-green-300 dark:hover:from-green-800/40 dark:hover:to-green-900/60 dark:hover:text-green-200' 
+              : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border border-transparent hover:border-gray-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300'"
             :title="isGroupSubscribed ? $t('status.unsubscribeFromGroup') : $t('status.subscribeToGroup')"
           >
-            <div 
-              class="w-3 h-3 rounded-full"
-              :class="isGroupSubscribed ? 'bg-white' : 'bg-gray-400 group-hover:bg-blue-500'"
-            ></div>
             <span>{{ isGroupSubscribed ? $t('status.subscribed') : $t('status.subscribe') }}</span>
           </button>
           
           <!-- Select All Button -->
           <button
             @click.stop="toggleSelectAllRecurringEvents"
-            class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] min-h-[40px]"
             :class="areAllRecurringEventsSelected 
-              ? 'bg-green-500 hover:bg-green-600 text-white' 
-              : 'bg-gray-500 hover:bg-gray-400 text-white border border-gray-400 hover:border-green-400'"
+              ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-transparent hover:border-blue-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:from-blue-900/20 dark:to-blue-800/40 dark:text-blue-300 dark:hover:from-blue-800/40 dark:hover:to-blue-900/60 dark:hover:text-blue-200' 
+              : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border border-transparent hover:border-gray-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300'"
             :title="areAllRecurringEventsSelected ? $t('status.deselectAllEvents') : $t('status.selectAllEvents')"
           >
-            <div 
-              class="w-3 h-3 border rounded flex items-center justify-center"
-              :class="areAllRecurringEventsSelected 
-                ? 'border-white bg-white/20' 
-                : 'border-gray-400 group-hover:border-emerald-500'"
-            >
-              <span v-if="areAllRecurringEventsSelected" class="text-white text-sm">✓</span>
-            </div>
             <span>{{ areAllRecurringEventsSelected ? $t('status.selected') : $t('status.selectAll') }}</span>
           </button>
         </div>
@@ -220,10 +204,9 @@
                 <!-- Enhanced Expansion Button -->
                 <button
                   @click.stop="toggleRecurringEventExpansion(recurringEvent.title)"
-                  class="flex items-center gap-1 px-1.5 py-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-all duration-200 flex-shrink-0 group/expand"
                   :class="isRecurringEventExpanded(recurringEvent.title) 
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
-                    : 'text-gray-500 dark:text-gray-400'"
+                    ? 'inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-transparent hover:border-blue-200 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:from-blue-900/20 dark:to-blue-800/40 dark:text-blue-300 dark:hover:from-blue-800/40 dark:hover:to-blue-900/60 dark:hover:text-blue-200' 
+                    : 'inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-slate-500 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 border border-transparent hover:border-slate-300 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300'"
                   :title="isRecurringEventExpanded(recurringEvent.title) ? $t('status.hideIndividualEvents') : $t('status.showIndividualEvents')"
                 >
                   <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
@@ -231,11 +214,11 @@
                   </span>
                   <svg 
                     class="w-3 h-3 transition-transform duration-300" 
-                    :class="{ 'rotate-180': isRecurringEventExpanded(recurringEvent.title) }"
+                    :class="{ 'rotate-90': isRecurringEventExpanded(recurringEvent.title) }"
                     fill="currentColor" 
                     viewBox="0 0 20 20"
                   >
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                   </svg>
                 </button>
               </div>

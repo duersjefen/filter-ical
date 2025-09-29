@@ -84,10 +84,10 @@
           <!-- Switch Text -->
           <div class="text-left">
             <div class="text-sm font-bold text-white mb-0.5">
-              Switch to Groups View
+              {{ $t('ui.switchToGroupsView') }}
             </div>
             <div class="text-xs text-blue-100">
-              Browse by organized groups
+              {{ $t('ui.browseByOrganizedGroups') }}
             </div>
           </div>
           
@@ -112,23 +112,23 @@
               <button 
                 v-if="!areAllRecurringEventsSelected && allRecurringEvents.length > 0"
                 @click="$emit('select-all')" 
-                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]"
               >
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                {{ $t('recurringEvents.selectAll') }}
+                {{ $t('controls.selectAll') }}
               </button>
               
               <button 
                 v-if="hasAnyRecurringEventsSelected"
                 @click="$emit('clear-all')" 
-                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg bg-gray-600 hover:bg-gray-700 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 border-2 border-gray-600 hover:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-gray-500/50 min-h-[44px]"
               >
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
-                {{ $t('recurringEvents.deselectAll') }}
+                {{ $t('controls.deselectAll') }}
               </button>
             </template>
             
@@ -137,18 +137,18 @@
               <button 
                 v-if="!areAllVisibleSelected && (filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length) > 0"
                 @click="selectAllVisible"
-                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]"
               >
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                Select visible ({{ filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }})
+                {{ $t('controls.selectVisible', { count: filteredMainRecurringEvents.length + filteredSingleRecurringEvents.length }) }}
               </button>
               
               <button 
                 v-if="hasAnyVisibleSelected"
                 @click="clearAllVisible"
-                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg bg-gray-600 hover:bg-gray-700 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 border-2 border-gray-600 hover:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-gray-500/50 min-h-[44px]"
               >
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -156,31 +156,58 @@
                 {{ $t('recurringEvents.deselectVisible') }}
               </button>
             </template>
-          </div>
-          
-          <!-- View Controls -->
-          <div class="flex justify-center sm:justify-end">
-            <!-- Show Selected Only Toggle -->
+            
+            <!-- Show Selected Only Toggle - Moved to main actions -->
             <button
               v-if="selectedRecurringEvents.length > 0 && !searchTerm.trim()"
               @click="$emit('toggle-selected-only')"
-              class="inline-flex items-center gap-2 px-4 py-3 sm:py-2.5 text-sm font-medium rounded-lg border-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] sm:min-h-auto w-full sm:w-auto justify-center touch-manipulation"
+              class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
               :class="showSelectedOnly 
-                ? 'bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 hover:border-orange-300 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700' 
-                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 hover:border-indigo-300 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700'"
+                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-2 border-emerald-200 hover:border-emerald-300 shadow-sm dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700' 
+                : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-2 border-blue-200 hover:border-blue-300 shadow-sm dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700'"
             >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path v-if="showSelectedOnly" fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                <path v-else fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+              <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showSelectedOnly }" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
               </svg>
               <span class="hidden sm:inline">{{ showSelectedOnly ? $t('viewControls.showAll') : $t('viewControls.showSelectedOnly') }}</span>
               <span class="sm:hidden">{{ showSelectedOnly ? $t('status.showAll') : $t('status.showSelected') }}</span>
             </button>
           </div>
+          
+          <!-- View Controls -->
+          <div class="flex justify-center sm:justify-end gap-3">
+            <!-- Expand/Collapse Individual Events Controls -->
+            <div v-if="hasAnyMainRecurringEvents && !searchTerm.trim()" class="flex gap-2">
+              <button
+                v-if="!allIndividualEventsExpanded"
+                @click="expandAllIndividualEvents"
+                class="inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-transparent hover:border-blue-200 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:from-blue-900/20 dark:to-blue-800/40 dark:text-blue-300 dark:hover:from-blue-800/40 dark:hover:to-blue-900/60 dark:hover:text-blue-200"
+                :title="$t('controls.expandAllIndividualEvents')"
+              >
+                <svg class="w-3 h-3 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                {{ $t('controls.expandAll') }}
+              </button>
+              
+              <button
+                v-if="!allIndividualEventsCollapsed"
+                @click="collapseAllIndividualEvents"
+                class="inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-slate-500 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 border border-transparent hover:border-slate-300 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300"
+                :title="$t('controls.collapseAllIndividualEvents')"
+              >
+                <svg class="w-3 h-3 transition-transform duration-200 rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                {{ $t('controls.collapseAll') }}
+              </button>
+            </div>
+          </div>
         </div>
         
         <!-- Removed redundant selection summary as it's already in the header -->
       </div>
+
 
       <!-- Enhanced Search Interface -->
       <div class="mb-6">
@@ -227,11 +254,11 @@
             @click="selectAllVisible"
             class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
           >
-            Select all results
+            {{ $t('controls.selectAllResults') }}
           </button>
         </div>
       </div>
-      
+
       <!-- Enhanced Event Cards Grid with Drag Selection -->
       <div 
         class="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
@@ -414,7 +441,7 @@
             <button 
               v-if="searchTerm.trim()"
               @click="$emit('update:search-term', '')"
-              class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]"
             >
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
@@ -424,7 +451,7 @@
             <button 
               v-else
               @click="$emit('toggle-selected-only')"
-              class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]"
             >
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
@@ -466,7 +493,7 @@
                   {{ $t('recurringEvents.uniqueEvents') }}
                 </h3>
                 <p class="text-sm text-emerald-700 dark:text-emerald-300">
-                  One-time events • {{ selectedSinglesCount }}/{{ filteredSingleRecurringEvents.length }} selected
+                  {{ $t('common.onetimeEvents') }} • {{ selectedSinglesCount }}/{{ filteredSingleRecurringEvents.length }} {{ $t('common.selected') }}
                 </p>
               </div>
             </div>
@@ -489,16 +516,15 @@
               <!-- Select/Deselect Button -->
               <button
                 @click.stop="handleSinglesToggle"
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
                 :class="areAllSinglesSelected
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 hover:border-emerald-400 dark:bg-gray-700 dark:hover:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-600'"
+                  ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-2 border-green-600 hover:border-green-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50 min-h-[44px]'
+                  : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]'"
               >
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path v-if="areAllSinglesSelected" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                   <path v-else fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                <span>{{ areAllSinglesSelected ? 'Deselect All' : 'Select All' }}</span>
+                <span>{{ areAllSinglesSelected ? $t('controls.deselectAll') : $t('controls.selectAll') }}</span>
               </button>
             </div>
           </div>
@@ -589,18 +615,20 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Bulk Groups Actions -->
-      <div v-if="hasGroups" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+      <div v-if="hasGroups" 
+           class="border-t border-gray-200 dark:border-gray-600 pb-6"
+           :class="filteredSingleRecurringEvents.length > 0 ? 'mt-4 pt-4' : 'mt-6 pt-6'">
         <div class="text-center">
-          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
             What to do with future Events?
           </h4>
           <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <!-- Enhanced Subscribe to All Groups -->
             <button
               @click="$emit('subscribe-all-groups')"
-              class="px-4 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-green-400 hover:border-green-500 min-h-[44px]"
+              class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-2 border-green-600 hover:border-green-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50 min-h-[44px]"
             >
               <span>{{ $t('viewControls.subscribeToAllGroups') }}</span>
             </button>
@@ -608,16 +636,21 @@
             <!-- Enhanced Unsubscribe & Deselect All Groups -->
             <button
               @click="$emit('unsubscribe-all-groups')"
-              class="px-4 py-3 bg-gray-500 hover:bg-gray-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-gray-400 hover:border-gray-300 min-h-[44px]"
+              class="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 border-2 border-gray-600 hover:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-gray-500/50 min-h-[44px]"
             >
               <span>{{ $t('viewControls.unsubscribeFromAllGroups') }}</span>
             </button>
           </div>
           
           <!-- Helper Text -->
-          <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-            💡 For fine-grained control and customization, switch to 
-            <span class="font-medium text-blue-600 dark:text-blue-400">{{ $t('viewControls.groupsView') }}</span>
+          <p class="mt-4 text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            💡 {{ $t('viewControls.fineGrainedControlText') }}
+            <button 
+              @click="$emit('switch-to-groups')"
+              class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 underline decoration-dotted underline-offset-2 hover:decoration-solid transition-all cursor-pointer"
+            >
+              {{ $t('viewControls.groupsView') }}
+            </button>
           </p>
         </div>
       </div>
@@ -752,6 +785,25 @@ const hasAnyRecurringEventsSelected = computed(() => {
   return props.selectedRecurringEvents.length > 0
 })
 
+// Individual events expansion state for main recurring events
+const hasAnyMainRecurringEvents = computed(() => {
+  return filteredMainRecurringEvents.value.length > 0
+})
+
+const allIndividualEventsExpanded = computed(() => {
+  if (filteredMainRecurringEvents.value.length === 0) return false
+  return filteredMainRecurringEvents.value.every(recurringEvent => 
+    props.expandedRecurringEvents.has(recurringEvent.name)
+  )
+})
+
+const allIndividualEventsCollapsed = computed(() => {
+  if (filteredMainRecurringEvents.value.length === 0) return false
+  return filteredMainRecurringEvents.value.every(recurringEvent => 
+    !props.expandedRecurringEvents.has(recurringEvent.name)
+  )
+})
+
 // Methods for visible event type selection
 function selectAllVisible() {
   // Select all visible main recurring events
@@ -785,6 +837,23 @@ function clearAllVisible() {
   visibleSingleNames.forEach(name => {
     if (props.selectedRecurringEvents.includes(name)) {
       emit('toggle-recurring-event', name)
+    }
+  })
+}
+
+// Methods for individual events expansion control
+function expandAllIndividualEvents() {
+  filteredMainRecurringEvents.value.forEach(recurringEvent => {
+    if (!props.expandedRecurringEvents.has(recurringEvent.name)) {
+      emit('toggle-expansion', recurringEvent.name)
+    }
+  })
+}
+
+function collapseAllIndividualEvents() {
+  filteredMainRecurringEvents.value.forEach(recurringEvent => {
+    if (props.expandedRecurringEvents.has(recurringEvent.name)) {
+      emit('toggle-expansion', recurringEvent.name)
     }
   })
 }

@@ -33,8 +33,8 @@
       <!-- Enhanced status text on mobile -->
       <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center leading-tight mt-2">
         {{ selectionSummary.selected > 0
-          ? selectionSummary.compactText || selectionSummary.text
-          : 'Subscribe to groups or select specific event types' }}
+          ? translatedSummaryText
+          : $t('status.subscribeToGroupsOrSelectEvents') }}
       </p>
     </div>
 
@@ -58,8 +58,8 @@
           </h3>
           <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {{ selectionSummary.selected > 0
-              ? selectionSummary.compactText || selectionSummary.text
-              : 'Subscribe to groups or select specific event types' }}
+              ? translatedSummaryText
+              : $t('status.subscribeToGroupsOrSelectEvents') }}
           </p>
         </div>
       </div>
@@ -80,10 +80,10 @@
         <!-- Switch Text -->
         <div class="text-left">
           <div class="text-sm font-bold text-white mb-0.5">
-            Switch to Events View
+            {{ $t('ui.switchToEventsView') }}
           </div>
           <div class="text-xs text-purple-100">
-            Browse by event types
+            {{ $t('ui.browseByEventTypes') }}
           </div>
         </div>
         
@@ -97,7 +97,12 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
+const props = defineProps({
   selectionSummary: {
     type: Object,
     required: true,
@@ -107,6 +112,15 @@ defineProps({
     type: Boolean,
     default: false
   }
+})
+
+// Helper to translate text if it's a translation key
+const translatedSummaryText = computed(() => {
+  const text = props.selectionSummary.compactText || props.selectionSummary.text
+  if (text && text.startsWith('common.')) {
+    return t(text)
+  }
+  return text
 })
 
 defineEmits([
