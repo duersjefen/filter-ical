@@ -90,11 +90,70 @@ jobs:
         role-session-name: GitHubActionsSession-Dev
         aws-region: ${{ env.AWS_REGION }}
     
-    - name: 🚀 Deploy to Development Environment
+    - name: 🔑 Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: 🏗️ Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🏗️ Build and Push Branch Preview Images
+      env:
+        BRANCH_NAME: ${{ github.ref_name }}
+        SAFE_BRANCH_NAME: ${{ github.ref_name }}
+        IMAGE_TAG: dev-${{ github.sha }}
       run: |
-        echo "🚧 Development deployment for branch: ${{ github.ref_name }}"
-        echo "✅ This would deploy to dev.filter-ical.de"
-        echo "📝 No real infrastructure changes - development uses local/temporary resources"
+        # Create safe branch name for container naming (replace / and special chars)
+        SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+        echo "🚧 Building branch preview: $BRANCH_NAME → $SAFE_BRANCH_NAME"
+        echo "📍 Preview URL will be: https://$SAFE_BRANCH_NAME.dev.filter-ical.de"
+        
+        # Build applications first
+        make ci-build
+        
+        # Build and push development containers
+        docker build -t "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/ical-viewer-backend:dev-latest" \
+          --build-arg BUILDKIT_INLINE_CACHE=1 backend/
+        docker tag "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-backend:dev-latest"
+        
+        docker build -t "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/ical-viewer-frontend:dev-latest" \
+          --build-arg BUILDKIT_INLINE_CACHE=1 frontend/
+        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-frontend:dev-latest"
+        
+        # Push to ECR
+        docker push "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/ical-viewer-backend:dev-latest" &
+        docker push "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/ical-viewer-frontend:dev-latest" &
+        wait
+        
+    - name: 🚀 Deploy Branch Preview to Development Server
+      uses: ./.github/actions/execute-remote-docker
+      with:
+        containers: 'ical-viewer-backend-dev ical-viewer-frontend-dev'
+        operation: 'deploy'
+        nginx_restart: 'true'
+        nginx_container: 'nginx'
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+        EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+        IMAGE_TAG: dev-${{ github.sha }}
+        BRANCH_NAME: ${{ github.ref_name }}
+        
+    - name: 🧪 Validate Branch Preview Deployment
+      env:
+        BRANCH_NAME: ${{ github.ref_name }}
+        SAFE_BRANCH_NAME: ${{ github.ref_name }}
+      run: |
+        SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+        PREVIEW_URL="https://$SAFE_BRANCH_NAME.dev.filter-ical.de"
+        echo "🎯 Branch Preview Ready!"
+        echo "📍 Preview URL: $PREVIEW_URL"
+        echo "🌿 Branch: $BRANCH_NAME"
+        echo "💡 Share this URL to demo your feature!"
 
   # =============================================================================
   # STAGING ENVIRONMENT (main/master only)
