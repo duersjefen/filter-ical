@@ -1,0 +1,74 @@
+name: Emergency Server Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_cleanup:
+        description: 'Type "YES" to confirm cleanup'
+        required: true
+        type: string
+
+jobs:
+  cleanup-server:
+    if: github.event.inputs.confirm_cleanup == 'YES'
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: 🧹 Emergency Docker Cleanup on Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          debug: true
+          script: |
+            echo "🚨 EMERGENCY CLEANUP: Freeing disk space on server"
+            
+            # Check current disk usage
+            echo "📊 Current disk usage:"
+            df -h
+            
+            # Check Docker disk usage
+            echo "🐳 Docker disk usage:"
+            docker system df
+            
+            # Stop non-essential containers (keep nginx and current running services)
+            echo "🛑 Stopping old containers..."
+            docker ps -a --filter "status=exited" -q | head -10 | xargs --no-run-if-empty docker rm
+            
+            # Remove dangling images
+            echo "🗑️ Removing dangling images..."
+            docker image prune -f
+            
+            # Remove unused volumes
+            echo "📦 Removing unused volumes..."
+            docker volume prune -f
+            
+            # Clean build cache
+            echo "🧹 Cleaning build cache..."
+            docker builder prune -f --keep-storage 1GB
+            
+            # Remove unused networks
+            echo "🌐 Removing unused networks..."
+            docker network prune -f
+            
+            # More aggressive cleanup if still low on space
+            AVAILABLE_SPACE=$(df / --output=avail | tail -1)
+            if [ "$AVAILABLE_SPACE" -lt 2097152 ]; then  # Less than 2GB
+              echo "⚠️  Still low on space, performing aggressive cleanup..."
+              
+              # Remove ALL unused images (not just dangling)
+              docker image prune -a -f --filter "until=24h"
+              
+              # Keep only last 2 versions of each image
+              docker images --format "table {{.Repository}}:{{.Tag}}" | tail -n +2 | sort | uniq -c | awk '$1 > 2 {print $2}' | head -5 | xargs --no-run-if-empty docker rmi
+              
+            fi
+            
+            # Final status
+            echo "✅ Cleanup completed!"
+            echo "📊 Final disk usage:"
+            df -h
+            echo "🐳 Final Docker usage:"
+            docker system df
