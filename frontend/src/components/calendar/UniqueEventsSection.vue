@@ -194,11 +194,12 @@ const emit = defineEmits([
 // Filtered events based on search and selection
 const filteredSingleRecurringEvents = computed(() => {
   let recurringEvents = props.singleRecurringEvents
+    .filter(recurringEvent => recurringEvent && recurringEvent.name) // Filter out null/undefined events
   
   // Filter by selection if showSelectedOnly is true
   if (props.showSelectedOnly) {
     recurringEvents = recurringEvents.filter(recurringEvent => 
-      props.selectedRecurringEvents.includes(recurringEvent.name)
+      recurringEvent && recurringEvent.name && props.selectedRecurringEvents.includes(recurringEvent.name)
     )
   }
   
@@ -206,7 +207,7 @@ const filteredSingleRecurringEvents = computed(() => {
   if (props.searchTerm.trim()) {
     const searchTerm = props.searchTerm.toLowerCase()
     recurringEvents = recurringEvents.filter(recurringEvent => 
-      recurringEvent.name.toLowerCase().includes(searchTerm)
+      recurringEvent && recurringEvent.name && recurringEvent.name.toLowerCase().includes(searchTerm)
     )
   }
   
@@ -216,12 +217,16 @@ const filteredSingleRecurringEvents = computed(() => {
 // Singles selection state
 const areAllSinglesSelected = computed(() => {
   if (filteredSingleRecurringEvents.value.length === 0) return false
-  const singleNames = filteredSingleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+  const singleNames = filteredSingleRecurringEvents.value
+    .filter(recurringEvent => recurringEvent && recurringEvent.name)
+    .map(recurringEvent => recurringEvent.name)
   return singleNames.every(name => props.selectedRecurringEvents.includes(name))
 })
 
 const selectedSinglesCount = computed(() => {
-  const singleNames = filteredSingleRecurringEvents.value.map(recurringEvent => recurringEvent.name)
+  const singleNames = filteredSingleRecurringEvents.value
+    .filter(recurringEvent => recurringEvent && recurringEvent.name)
+    .map(recurringEvent => recurringEvent.name)
   return singleNames.filter(name => props.selectedRecurringEvents.includes(name)).length
 })
 
