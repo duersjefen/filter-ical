@@ -354,9 +354,9 @@
     "enterSearchValue": "Suchwert eingeben...",
     "unknownGroup": "Unbekannte Gruppe",
     "ruleTypePlaceholders": {
-      "title_contains": "z.B. \"Meeting\" oder \"Schulung\"",
+      "title_contains": "z.B. \"Meeting\" oder \"Training\"",
       "description_contains": "z.B. \"Projekt\" oder \"Review\"",
-      "category_contains": "z.B. \"Extern\" oder \"Schulung\""
+      "category_contains": "z.B. \"Extern\" oder \"Training\""
     },
     "confirmAction": "Aktion bestätigen",
     "delete": "Löschen",
@@ -391,7 +391,18 @@
     "enter": "Enter",
     "ready": "Bereit",
     "complete": "Vollständig",
-    "dragToSelectMultiple": "Ziehen zum Mehrfachauswählen"
+    "dragToSelectMultiple": "Ziehen zum Mehrfachauswählen",
+    "searchValue": "Suchwert",
+    "targetGroup": "Zielgruppe",
+    "activeRules": "Aktive Regeln",
+    "whenCategoryContainsExample": "Wenn Kategorie 'Event' enthält → Zu BCC Event zuweisen",
+    "fillAllFieldsForPreview": "Alle Felder ausfüllen, um Live-Vorschau zu sehen",
+    "when": "Wenn",
+    "assignTo": "Zuweisen zu",
+    "titleContainsDesc": "Titel enthält",
+    "descriptionContainsDesc": "Beschreibung enthält", 
+    "categoryContainsDesc": "Kategorie enthält",
+    "matches": "entspricht"
   },
   "titles": {
     "icalFilterSubscribe": "🗓️ PAISS"

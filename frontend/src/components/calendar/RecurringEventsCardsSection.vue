@@ -462,25 +462,25 @@
         </div>
       </div>
 
-      <!-- Enhanced Unique Events Section -->
+      <!-- Unique Events - Card subsection INSIDE main Events card -->
       <div 
         v-if="filteredSingleRecurringEvents.length > 0" 
-        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-md"
+        class="mt-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden"
       >
-        <!-- Modern Header -->
+        <!-- Unique Events Header -->
         <div 
-          class="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 px-6 py-4 border-b border-emerald-200 dark:border-emerald-700 cursor-pointer hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/30 dark:hover:to-teal-900/30 transition-all duration-200"
+          class="bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-600 cursor-pointer hover:from-gray-200 hover:to-gray-100 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200"
           @click="$emit('toggle-singles-visibility')"
           :title="showSingleEvents ? 'Click to collapse unique events' : 'Click to expand unique events'"
         >
           <div class="flex items-center justify-between">
             <!-- Left: Title and Info -->
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
               <!-- Expand/Collapse Icon -->
               <div class="flex-shrink-0">
-                <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center transition-transform duration-300"
+                <div class="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center transition-transform duration-300"
                      :class="{ 'rotate-180': showSingleEvents }">
-                  <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-3 h-3 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
                 </div>
@@ -488,27 +488,26 @@
               
               <!-- Title and Description -->
               <div>
-                <h3 class="text-lg font-bold text-emerald-900 dark:text-emerald-100 mb-1 flex items-center gap-2">
-                  <span class="text-xl">📄</span>
-                  {{ $t('recurringEvents.uniqueEvents') }}
-                </h3>
-                <p class="text-sm text-emerald-700 dark:text-emerald-300">
+                <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                  📄 {{ $t('recurringEvents.uniqueEvents') }}
+                </h4>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
                   {{ $t('common.onetimeEvents') }} • {{ selectedSinglesCount }}/{{ filteredSingleRecurringEvents.length }} {{ $t('common.selected') }}
                 </p>
               </div>
             </div>
             
             <!-- Right: Actions -->
-            <div class="flex items-center gap-3">
-              <!-- Selection Progress -->
-              <div class="hidden sm:flex items-center gap-2">
-                <div class="w-16 h-2 bg-emerald-200 dark:bg-emerald-800 rounded-full overflow-hidden">
+            <div class="flex items-center gap-2">
+              <!-- Progress indicator -->
+              <div class="hidden sm:flex items-center gap-1">
+                <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
                   <div 
-                    class="h-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-300"
+                    class="h-full bg-gray-600 dark:bg-gray-400 transition-all duration-300"
                     :style="{ width: `${filteredSingleRecurringEvents.length > 0 ? (selectedSinglesCount / filteredSingleRecurringEvents.length) * 100 : 0}%` }"
                   ></div>
                 </div>
-                <span class="text-xs font-medium text-emerald-700 dark:text-emerald-300 min-w-[3rem]">
+                <span class="text-xs font-medium text-gray-600 dark:text-gray-400 min-w-[2rem]">
                   {{ Math.round(filteredSingleRecurringEvents.length > 0 ? (selectedSinglesCount / filteredSingleRecurringEvents.length) * 100 : 0) }}%
                 </span>
               </div>
@@ -516,22 +515,23 @@
               <!-- Select/Deselect Button -->
               <button
                 @click.stop="handleSinglesToggle"
+                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200"
                 :class="areAllSinglesSelected
-                  ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-2 border-green-600 hover:border-green-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50 min-h-[44px]'
-                  : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]'"
+                  ? 'bg-green-100 hover:bg-green-200 text-green-700 border border-green-300 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400 dark:border-green-600'
+                  : 'bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-300 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 dark:border-blue-600'"
               >
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path v-if="areAllSinglesSelected" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                   <path v-else fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                <span>{{ areAllSinglesSelected ? $t('controls.deselectAll') : $t('controls.selectAll') }}</span>
+                {{ areAllSinglesSelected ? $t('controls.deselectAll') : $t('controls.selectAll') }}
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Enhanced Unique Events List with Drag Selection -->
-        <div v-if="showSingleEvents" class="p-6">
+        <!-- Unique Events Grid - Same styling as main events grid -->
+        <div v-if="showSingleEvents">
           <div 
             class="relative"
             @mousedown="startDragSelection"
@@ -561,15 +561,15 @@
                 :ref="el => { if (el) cardRefs[`single-${recurringEvent.name}`] = el }"
                 class="group/card relative bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 transition-all duration-300 cursor-pointer overflow-hidden transform hover:scale-[1.01] hover:shadow-md"
                 :class="selectedRecurringEvents.includes(recurringEvent.name)
-                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400 shadow-lg ring-2 ring-emerald-200 dark:ring-emerald-700/50 scale-[1.01]' 
-                  : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-25 dark:hover:bg-emerald-950/10'"
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400 shadow-lg ring-2 ring-blue-200 dark:ring-blue-700/50 scale-[1.01]' 
+                  : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-25 dark:hover:bg-blue-950/10'"
                 @click="handleCardClick(recurringEvent.name, $event)"
                 :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? $t('status.deselectEvent') : $t('status.selectEvent')} ${recurringEvent.name} • ${$t('admin.dragToSelectMultiple')}`"
               >
               <!-- Selection Indicator -->
               <div 
                 class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
-                :class="selectedRecurringEvents.includes(recurringEvent.name) ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'"
+                :class="selectedRecurringEvents.includes(recurringEvent.name) ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'"
               ></div>
               
               <!-- Card Content -->
@@ -577,7 +577,7 @@
                 <!-- Selected Indicator Icon (top-right corner) -->
                 <div 
                   v-if="selectedRecurringEvents.includes(recurringEvent.name)"
-                  class="absolute top-2 right-2 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-10"
+                  class="absolute top-2 right-2 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-10"
                 >
                   ✓
                 </div>
@@ -587,8 +587,8 @@
                   <!-- Event Title with full space -->
                   <h4 class="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight truncate transition-colors"
                       :class="selectedRecurringEvents.includes(recurringEvent.name)
-                        ? 'text-emerald-700 dark:text-emerald-300' 
-                        : 'group-hover/card:text-emerald-600 dark:group-hover/card:text-emerald-400'"
+                        ? 'text-blue-700 dark:text-blue-300' 
+                        : 'group-hover/card:text-blue-600 dark:group-hover/card:text-blue-400'"
                   >
                     {{ recurringEvent.name.trim() }}
                   </h4>

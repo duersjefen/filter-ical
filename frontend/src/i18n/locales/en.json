@@ -391,7 +391,18 @@
     "enter": "Enter",
     "ready": "Ready",
     "complete": "Complete",
-    "dragToSelectMultiple": "Drag to select multiple"
+    "dragToSelectMultiple": "Drag to select multiple",
+    "searchValue": "Search Value",
+    "targetGroup": "Target Group",
+    "activeRules": "Active Rules",
+    "whenCategoryContainsExample": "When category contains 'Event' → Assign to BCC Event",
+    "fillAllFieldsForPreview": "Fill all fields to see live preview",
+    "when": "When",
+    "assignTo": "Assign to",
+    "titleContainsDesc": "title contains",
+    "descriptionContainsDesc": "description contains",
+    "categoryContainsDesc": "category contains", 
+    "matches": "matches"
   },
   "titles": {
     "icalFilterSubscribe": "🗓️ PAISS"

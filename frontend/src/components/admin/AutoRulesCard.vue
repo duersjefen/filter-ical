@@ -46,7 +46,7 @@
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <span class="flex items-center gap-2">
               <span class="text-green-600 dark:text-green-400">🔍</span>
-              Search Value
+              {{ $t('admin.searchValue') }}
             </span>
           </label>
           <div class="relative">
@@ -71,7 +71,7 @@
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <span class="flex items-center gap-2">
               <span class="text-purple-600 dark:text-purple-400">📁</span>
-              Target Group
+              {{ $t('admin.targetGroup') }}
             </span>
           </label>
           <select 
@@ -83,51 +83,6 @@
               {{ group.name }} ({{ getGroupEventCount(group.id) }} events)
             </option>
           </select>
-        </div>
-      </div>
-      
-      <!-- Smart Suggestions (if no rules exist and using title rules) -->
-      <div v-if="newRule.rule_type === 'title_contains' && newRule.rule_value === '' && assignmentRules.length === 0" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
-          <span>💡</span>
-          Quick Start Templates
-        </h4>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button
-            v-for="template in ruleTemplates"
-            :key="template.type"
-            @click="applyTemplate(template)"
-            class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left"
-          >
-            <span class="text-lg">{{ template.icon }}</span>
-            <div>
-              <div class="text-sm font-medium text-gray-900 dark:text-white">{{ template.name }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">{{ template.description }}</div>
-            </div>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Smart Suggestions (only for title rules) -->
-      <div v-if="newRule.rule_type === 'title_contains' && newRule.rule_value !== '' && getSmartSuggestions().length > 0" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-        <h4 class="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-3 flex items-center gap-2">
-          <span>🎯</span>
-          Smart Suggestions
-        </h4>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          <button
-            v-for="suggestion in getSmartSuggestions()"
-            :key="suggestion.value"
-            @click="applySuggestion(suggestion)"
-            class="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200 text-left text-xs"
-            :class="{ 'ring-2 ring-orange-400': suggestion.isUnassigned }"
-          >
-            <span class="text-sm">{{ suggestion.icon }}</span>
-            <div class="flex-1 min-w-0">
-              <div class="font-medium text-gray-900 dark:text-white truncate">{{ suggestion.value }}</div>
-              <div class="text-amber-700 dark:text-amber-300">{{ suggestion.reason }}</div>
-            </div>
-          </button>
         </div>
       </div>
       
@@ -144,7 +99,7 @@
             </span>
             <span v-else class="flex items-center gap-2">
               <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
-              Fill all fields to see live preview
+              {{ $t('admin.fillAllFieldsForPreview') }}
             </span>
           </div>
         </div>
@@ -214,15 +169,26 @@
                   {{ event.event_count }}
                 </span>
                 <div class="flex-1">
-                  <h5 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5">
+                  <h5 
+                    class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5 cursor-help" 
+                    :title="event.title"
+                  >
                     {{ event.title }}
                   </h5>
                   <!-- Show description for description rules -->
-                  <div v-if="newRule.rule_type === 'description_contains' && event.description" class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                  <div 
+                    v-if="newRule.rule_type === 'description_contains' && event.description" 
+                    class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help" 
+                    :title="event.description"
+                  >
                     <span class="font-medium">{{ t('admin.description') }}:</span> {{ event.description }}
                   </div>
                   <!-- Show categories for category rules -->
-                  <div v-if="newRule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <div 
+                    v-if="newRule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" 
+                    class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help" 
+                    :title="event.categories.join(', ')"
+                  >
                     <span class="font-medium">{{ t('admin.categories') }}:</span> {{ event.categories.join(', ') }}
                   </div>
                 </div>
@@ -252,6 +218,7 @@
           </div>
         </div>
       </div>
+      
     </div>
     
     <!-- Rules List -->
@@ -259,7 +226,7 @@
       <div v-if="assignmentRules.length > 0" class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <span class="text-2xl">🎯</span>
-          Active Rules ({{ assignmentRules.length }})
+          {{ $t('admin.activeRules') }} ({{ assignmentRules.length }})
         </h3>
       </div>
       
@@ -293,8 +260,8 @@
                   </span>
                 </div>
                 <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
-                  When <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span> 
-                  → Assign to <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
+                  {{ $t('admin.when') }} <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span> 
+                  → {{ $t('admin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
                 </p>
                 <div v-if="getRuleStatus(rule) !== t('admin.complete')" class="flex items-center gap-6 text-xs">
                   <div class="flex items-center gap-2">
@@ -406,15 +373,26 @@
                     {{ event.event_count }}
                   </span>
                   <div class="flex-1">
-                    <h5 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5">
+                    <h5 
+                      class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-5 cursor-help" 
+                      :title="event.title"
+                    >
                       {{ event.title }}
                     </h5>
                     <!-- Show description for description rules -->
-                    <div v-if="rule.rule_type === 'description_contains' && event.description" class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                    <div 
+                      v-if="rule.rule_type === 'description_contains' && event.description" 
+                      class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help" 
+                      :title="event.description"
+                    >
                       <span class="font-medium">{{ t('admin.description') }}:</span> {{ event.description }}
                     </div>
                     <!-- Show categories for category rules -->
-                    <div v-if="rule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    <div 
+                      v-if="rule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" 
+                      class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help" 
+                      :title="event.categories.join(', ')"
+                    >
                       <span class="font-medium">{{ t('admin.categories') }}:</span> {{ event.categories.join(', ') }}
                     </div>
                   </div>
@@ -540,30 +518,6 @@ export default {
       }
     ])
     
-    // Rule templates for quick start
-    const ruleTemplates = computed(() => [
-      {
-        type: 'title_contains',
-        name: t('admin.meetingRules'),
-        description: t('admin.matchMeetingTitles'),
-        icon: '🤝',
-        value: 'meeting'
-      },
-      {
-        type: 'title_contains', 
-        name: t('admin.trainingEvents'),
-        description: t('admin.matchTrainingContent'),
-        icon: '📚',
-        value: 'training'
-      },
-      {
-        type: 'title_contains',
-        name: t('admin.externalEvents'),
-        description: t('admin.matchExternalCategories'),
-        icon: '🌐',
-        value: 'external'
-      }
-    ])
     
     // Computed properties
     const isFormValid = computed(() => {
@@ -636,21 +590,6 @@ export default {
       emit('delete-rule-confirm', rule)
     }
     
-    const applyTemplate = (template) => {
-      newRule.value = {
-        rule_type: template.type,
-        rule_value: template.value,
-        target_group_id: ''
-      }
-    }
-    
-    const applySuggestion = (suggestion) => {
-      newRule.value = {
-        rule_type: suggestion.type,
-        rule_value: suggestion.value,
-        target_group_id: ''
-      }
-    }
     
     const resetForm = () => {
       newRule.value = {
@@ -680,71 +619,6 @@ export default {
       ).length
     }
     
-    // Smart suggestions based on existing events
-    const getSmartSuggestions = () => {
-      if (!Array.isArray(props.recurringEvents) || props.recurringEvents.length === 0) {
-        return []
-      }
-      
-      const suggestions = []
-      const commonWords = {}
-      
-      // Analyze event titles for common patterns
-      props.recurringEvents.forEach(event => {
-        const words = event.title.toLowerCase().split(/[\s\-_]+/).filter(word => word.length > 3)
-        words.forEach(word => {
-          commonWords[word] = (commonWords[word] || 0) + 1
-        })
-      })
-      
-      // Create suggestions for common words that appear in multiple events
-      Object.entries(commonWords)
-        .filter(([word, count]) => count >= 3 && count <= props.recurringEvents.length * 0.8)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 5)
-        .forEach(([word, count]) => {
-          suggestions.push({
-            type: 'title_contains',
-            value: word,
-            reason: `Found in ${count} events`,
-            icon: '🔍',
-            priority: count
-          })
-        })
-      
-      // Suggest rules for unassigned events
-      const unassignedEvents = props.recurringEvents.filter(event => 
-        !event.assigned_group_ids || event.assigned_group_ids.length === 0
-      )
-      
-      if (unassignedEvents.length > 0) {
-        // Find common patterns in unassigned events
-        const unassignedWords = {}
-        unassignedEvents.forEach(event => {
-          const words = event.title.toLowerCase().split(/[\s\-_]+/).filter(word => word.length > 3)
-          words.forEach(word => {
-            unassignedWords[word] = (unassignedWords[word] || 0) + 1
-          })
-        })
-        
-        Object.entries(unassignedWords)
-          .filter(([word, count]) => count >= 2)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 3)
-          .forEach(([word, count]) => {
-            suggestions.push({
-              type: 'title_contains',
-              value: word,
-              reason: `${count} unassigned events`,
-              icon: '❔',
-              priority: count + 100, // Higher priority for unassigned
-              isUnassigned: true
-            })
-          })
-      }
-      
-      return suggestions.sort((a, b) => b.priority - a.priority).slice(0, 6)
-    }
     
     const getMatchCountBadgeClass = (rule) => {
       const matchCount = getLiveMatchingEvents(rule).length
@@ -795,11 +669,11 @@ export default {
     
     const getRuleTypeDescription = (ruleType) => {
       const descriptions = {
-        title_contains: 'title contains',
-        description_contains: 'description contains',
-        category_contains: 'category contains'
+        title_contains: t('admin.titleContainsDesc'),
+        description_contains: t('admin.descriptionContainsDesc'),
+        category_contains: t('admin.categoryContainsDesc')
       }
-      return descriptions[ruleType] || 'matches'
+      return descriptions[ruleType] || t('admin.matches')
     }
     
     const getRuleTypeIcon = (ruleType) => {
@@ -822,11 +696,11 @@ export default {
     
     const getRulePlaceholder = (ruleType) => {
       const placeholders = {
-        title_contains: 'e.g., "Meeting" or "Training"',
-        description_contains: 'e.g., "Project" or "Review"',
-        category_contains: 'e.g., "Exter" or "Training"'
+        title_contains: t('admin.ruleTypePlaceholders.title_contains'),
+        description_contains: t('admin.ruleTypePlaceholders.description_contains'),
+        category_contains: t('admin.ruleTypePlaceholders.category_contains')
       }
-      return placeholders[ruleType] || 'Enter search value...'
+      return placeholders[ruleType] || t('admin.enterSearchValue')
     }
     
     const getGroupName = (groupId) => {
@@ -961,19 +835,15 @@ export default {
       newRule,
       expandedRules,
       ruleTypes,
-      ruleTemplates,
       isFormValid,
       toggleRuleDropdown,
       createRule,
       applyRule,
       deleteRuleConfirm,
-      applyTemplate,
-      applySuggestion,
       resetForm,
       updateRuleTypePreview,
       debouncedUpdatePreview,
       getGroupEventCount,
-      getSmartSuggestions,
       getMatchCountBadgeClass,
       getRuleStatus,
       getRuleStatusClass,
