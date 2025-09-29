@@ -74,7 +74,7 @@ jobs:
     name: 🚧 Deploy to Development
     needs: test
     runs-on: ubuntu-latest
-    environment: development
+    # environment: development  # TODO: Create GitHub Environment in settings
     timeout-minutes: 10
     
     # Deploy development for any branch (fast feedback)
@@ -103,7 +103,7 @@ jobs:
     name: 🎭 Deploy to Staging
     needs: test
     runs-on: ubuntu-latest
-    environment: staging
+    # environment: staging  # TODO: Create GitHub Environment in settings
     timeout-minutes: 15
     
     # Only deploy staging from main/master
@@ -169,7 +169,7 @@ jobs:
     - name: 🧪 Validate Staging Deployment
       uses: ./.github/actions/validate-endpoints
       with:
-        domain: ${{ vars.STAGING_DOMAIN_NAME }}
+        domain: ${{ vars.DOMAIN_NAME_VAR }}  # TODO: Create separate staging domain
         endpoints: '/,/health,/domains/exter/groups'
         timeout: '30'
         retries: '5'
@@ -181,7 +181,7 @@ jobs:
     name: 🌟 Deploy to Production
     needs: deploy-staging
     runs-on: ubuntu-latest
-    environment: production
+    # environment: production  # TODO: Create GitHub Environment in settings
     timeout-minutes: 20
     
     # Only deploy production from main/master after staging succeeds
@@ -281,7 +281,7 @@ jobs:
     name: 🔄 Emergency Production Rollback
     needs: deploy-production
     runs-on: ubuntu-latest
-    environment: production
+    # environment: production  # TODO: Create GitHub Environment in settings
     if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
