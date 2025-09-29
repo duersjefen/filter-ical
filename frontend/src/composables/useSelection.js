@@ -9,10 +9,12 @@ import { useSelectionStore } from '../stores/selectionStore'
 import { useAppStore } from '../stores/app'
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
 export function useSelection() {
   const selectionStore = useSelectionStore()
   const appStore = useAppStore()
+  const { t } = useI18n()
   
   // Extract reactive refs properly from stores
   const {
@@ -102,7 +104,14 @@ export function useSelection() {
       }
     }
     
-    return selectionStore.getGroupBreakdownSummary(groups)
+    const result = selectionStore.getGroupBreakdownSummary(groups)
+    
+    // Handle translation keys that the store returns
+    if (result === 'common.noEventsOrGroupsSelected') {
+      return t('common.noEventsOrGroupsSelected')
+    }
+    
+    return result
   }
   
   // ===============================================
