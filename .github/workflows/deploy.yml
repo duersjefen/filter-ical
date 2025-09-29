@@ -223,7 +223,23 @@ jobs:
         docker push "$ECR_REGISTRY/filter-ical-frontend:staging-latest" &
         wait
     
-    - name: 📁 Sync Infrastructure to Staging Server
+    - name: 📋 Calculate Infrastructure File Checksums
+      run: |
+        echo "🔍 Calculating checksums for infrastructure files..."
+        mkdir -p .tmp
+        
+        # Calculate checksums
+        sha256sum .infra/docker/docker-compose.production.yml > .tmp/compose-checksum.txt
+        sha256sum .infra/docker/nginx.conf > .tmp/nginx-checksum.txt
+        
+        echo "📋 Expected checksums:"
+        cat .tmp/compose-checksum.txt .tmp/nginx-checksum.txt
+        
+        # Add checksums to environment
+        echo "EXPECTED_COMPOSE_CHECKSUM=$(cat .tmp/compose-checksum.txt | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "EXPECTED_NGINX_CHECKSUM=$(cat .tmp/nginx-checksum.txt | cut -d' ' -f1)" >> $GITHUB_ENV
+
+    - name: 📁 Sync Infrastructure to Staging Server  
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -239,7 +255,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        envs: ECR_REGISTRY,AWS_ACCOUNT_ID,AWS_REGION
+        envs: ECR_REGISTRY,AWS_ACCOUNT_ID,AWS_REGION,EXPECTED_COMPOSE_CHECKSUM,EXPECTED_NGINX_CHECKSUM
         script: |
           cd /opt/websites || { echo "❌ Failed to access /opt/websites"; exit 1; }
           
@@ -258,7 +274,32 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Infrastructure files present"
+          # CHECKSUM VERIFICATION - Industry best practice
+          echo "🔍 Verifying file integrity with checksums..."
+          
+          # Verify docker-compose file
+          actual_compose_checksum=$(sha256sum docker-compose.production.yml | cut -d' ' -f1)
+          if [[ "$actual_compose_checksum" != "$EXPECTED_COMPOSE_CHECKSUM" ]]; then
+            echo "❌ CRITICAL: docker-compose.production.yml checksum mismatch!"
+            echo "   Expected: $EXPECTED_COMPOSE_CHECKSUM"
+            echo "   Actual:   $actual_compose_checksum"
+            echo "   File was not properly synced to server"
+            exit 1
+          fi
+          echo "✅ docker-compose.production.yml checksum verified"
+          
+          # Verify nginx file  
+          actual_nginx_checksum=$(sha256sum nginx.conf | cut -d' ' -f1)
+          if [[ "$actual_nginx_checksum" != "$EXPECTED_NGINX_CHECKSUM" ]]; then
+            echo "❌ CRITICAL: nginx.conf checksum mismatch!"
+            echo "   Expected: $EXPECTED_NGINX_CHECKSUM"  
+            echo "   Actual:   $actual_nginx_checksum"
+            echo "   File was not properly synced to server"
+            exit 1
+          fi
+          echo "✅ nginx.conf checksum verified"
+          
+          echo "✅ All infrastructure files validated with checksum verification"
           
           # Validate docker-compose file with environment variables
           export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-310829530903}"
@@ -392,6 +433,22 @@ jobs:
         docker push "$ECR_REGISTRY/filter-ical-frontend:latest" &
         wait
     
+    - name: 📋 Calculate Infrastructure File Checksums
+      run: |
+        echo "🔍 Calculating checksums for infrastructure files..."
+        mkdir -p .tmp
+        
+        # Calculate checksums
+        sha256sum .infra/docker/docker-compose.production.yml > .tmp/compose-checksum.txt
+        sha256sum .infra/docker/nginx.conf > .tmp/nginx-checksum.txt
+        
+        echo "📋 Expected checksums:"
+        cat .tmp/compose-checksum.txt .tmp/nginx-checksum.txt
+        
+        # Add checksums to environment
+        echo "EXPECTED_COMPOSE_CHECKSUM=$(cat .tmp/compose-checksum.txt | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "EXPECTED_NGINX_CHECKSUM=$(cat .tmp/nginx-checksum.txt | cut -d' ' -f1)" >> $GITHUB_ENV
+
     - name: 📁 Sync Infrastructure to Production Server
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -408,7 +465,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        envs: ECR_REGISTRY,AWS_ACCOUNT_ID,AWS_REGION
+        envs: ECR_REGISTRY,AWS_ACCOUNT_ID,AWS_REGION,EXPECTED_COMPOSE_CHECKSUM,EXPECTED_NGINX_CHECKSUM
         script: |
           cd /opt/websites || { echo "❌ Failed to access /opt/websites"; exit 1; }
           
@@ -427,7 +484,32 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Infrastructure files present"
+          # CHECKSUM VERIFICATION - Industry best practice
+          echo "🔍 Verifying file integrity with checksums..."
+          
+          # Verify docker-compose file
+          actual_compose_checksum=$(sha256sum docker-compose.production.yml | cut -d' ' -f1)
+          if [[ "$actual_compose_checksum" != "$EXPECTED_COMPOSE_CHECKSUM" ]]; then
+            echo "❌ CRITICAL: docker-compose.production.yml checksum mismatch!"
+            echo "   Expected: $EXPECTED_COMPOSE_CHECKSUM"
+            echo "   Actual:   $actual_compose_checksum"
+            echo "   File was not properly synced to server"
+            exit 1
+          fi
+          echo "✅ docker-compose.production.yml checksum verified"
+          
+          # Verify nginx file  
+          actual_nginx_checksum=$(sha256sum nginx.conf | cut -d' ' -f1)
+          if [[ "$actual_nginx_checksum" != "$EXPECTED_NGINX_CHECKSUM" ]]; then
+            echo "❌ CRITICAL: nginx.conf checksum mismatch!"
+            echo "   Expected: $EXPECTED_NGINX_CHECKSUM"  
+            echo "   Actual:   $actual_nginx_checksum"
+            echo "   File was not properly synced to server"
+            exit 1
+          fi
+          echo "✅ nginx.conf checksum verified"
+          
+          echo "✅ All infrastructure files validated with checksum verification"
           
           # Validate docker-compose file with environment variables
           export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-310829530903}"
