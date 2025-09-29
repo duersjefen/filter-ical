@@ -88,6 +88,9 @@ def test_db_engine():
     # Use in-memory SQLite for speed
     engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     
+    # Import all models to register them with SQLAlchemy
+    from app.models.calendar import Calendar, Event, Group, RecurringEventGroup, AssignmentRule, Filter
+    
     # Create all tables
     Base.metadata.create_all(bind=engine)
     
@@ -108,27 +111,62 @@ def test_client(test_db_engine) -> Generator[TestClient, None, None]:
     This overrides the database dependency to use our test database
     instead of the production database.
     """
-    # Create session from the engine that has tables
+    # Create a single session that will be shared across all requests
     from sqlalchemy.orm import sessionmaker
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
-    test_session = TestingSessionLocal()
+    
+    # Create ONE session for the entire test
+    shared_session = TestingSessionLocal()
     
     def override_get_db():
         try:
-            yield test_session
+            yield shared_session
         finally:
+            # Don't close the session here - we'll close it at the end of the test
             pass
     
-    # Create app with test settings
-    app = create_application()
+    # Import FastAPI and create minimal app without lifespan for testing
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    from app.core.config import settings
+    
+    # Create test app without the problematic lifespan
+    app = FastAPI(
+        title=settings.app_name,
+        debug=settings.debug,
+        # No lifespan for tests - we'll manage database state ourselves
+    )
+    
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Override database dependency BEFORE importing routers
     app.dependency_overrides[get_db] = override_get_db
+    
+    # Import and include routers
+    from app.routers import calendars, domains, ical_export, test
+    app.include_router(calendars.router, prefix="/calendars", tags=["calendars"])
+    app.include_router(domains.router, prefix="/domains", tags=["domains"])
+    app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
+    app.include_router(test.router, prefix="/test", tags=["test"])
+    
+    # Health check endpoint
+    @app.get("/health")
+    async def health_check():
+        """Health check endpoint for monitoring."""
+        return {"status": "healthy", "app": settings.app_name}
     
     with TestClient(app) as client:
         yield client
     
-    # Cleanup
-    test_session.rollback()
-    test_session.close()
+    # Cleanup - now we can safely close the session
+    shared_session.close()
     app.dependency_overrides.clear()
 
 
