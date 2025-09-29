@@ -6,15 +6,21 @@
         <button 
           v-if="!allExpanded"
           @click="expandAll"
-          class="px-2 py-1 font-medium rounded-sm transition-colors bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-800/40 dark:text-blue-400 opacity-75 hover:opacity-100"
+          class="inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-transparent hover:border-blue-200 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:from-blue-900/20 dark:to-blue-800/40 dark:text-blue-300 dark:hover:from-blue-800/40 dark:hover:to-blue-900/60 dark:hover:text-blue-200"
         >
+          <svg class="w-3 h-3 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
           {{ $t('controls.expandAll') }}
         </button>
         <button 
           v-if="!allCollapsed"
           @click="collapseAll"
-          class="px-2 py-1 font-medium rounded-sm transition-colors bg-gray-50 hover:bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:hover:bg-gray-700/50 dark:text-gray-400 opacity-75 hover:opacity-100"
+          class="inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-slate-500 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 border border-transparent hover:border-slate-300 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300"
         >
+          <svg class="w-3 h-3 transition-transform duration-200 rotate-90" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
           {{ $t('controls.collapseAll') }}
         </button>
       </div>
