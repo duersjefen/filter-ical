@@ -29,7 +29,7 @@
             </svg>
           </div>
           <p class="text-amber-800 dark:text-amber-200 font-medium">
-            Please set a username above to save and manage your calendars
+            {{ $t('messages.pleaseSetUsername') }}
           </p>
         </div>
       </div>

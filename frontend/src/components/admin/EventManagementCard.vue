@@ -11,11 +11,11 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h3 class="text-base sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.filterByGroup') }}</h3>
         <div class="hidden sm:flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <span>💡 Hold Ctrl to select multiple groups • Right-click groups to edit • Right-click events to assign • Drag to select multiple events</span>
+          <span>💡 {{ $t('messages.holdCtrlMultipleGroups') }}</span>
         </div>
         <!-- Mobile-friendly tip -->
         <div class="sm:hidden text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-          <span>💡 Tap groups to filter • Long-press to edit • Tap events to assign</span>
+          <span>💡 {{ $t('messages.holdCtrlMobile') }}</span>
         </div>
       </div>
       <div class="flex flex-wrap gap-2 overflow-x-auto">
@@ -28,7 +28,7 @@
               ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
-          :title="activeGroupFilters.length === 0 ? 'Currently showing all events' : 'Click to clear group filters and show all events • Hold Ctrl to select multiple filters'"
+          :title="activeGroupFilters.length === 0 ? $t('messages.currentlyShowingAll') : $t('messages.clickToClearFilters')"
         >
           <span>📋</span>
           <span>{{ t('admin.allEvents') }}</span>
@@ -44,7 +44,7 @@
               ? 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
-          :title="'Filter unassigned events • Hold Ctrl to select multiple filters'"
+          :title="$t('messages.filterUnassigned')"
         >
           <span>❔</span>
           <span>{{ t('admin.unassigned') }}</span>
@@ -63,7 +63,7 @@
               ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700'
               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
           ]"
-          :title="`Filter events by ${group.name} • Hold Ctrl to select multiple filters • Right-click for options`"
+          :title="$t('messages.filterByGroup', { name: group.name })"
         >
           <span v-if="editingGroupId !== group.id" class="truncate max-w-[120px] sm:max-w-none">{{ group.name }}</span>
           <input
@@ -85,7 +85,7 @@
           class="inline-flex items-center gap-2 px-4 py-3 sm:px-3 sm:py-2 rounded-lg text-base sm:text-sm font-medium transition-all duration-200 border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-green-400 hover:text-green-600 dark:hover:text-green-400 min-h-[44px] sm:min-h-0 flex-shrink-0"
         >
           <span>➕</span>
-          <span>Add Group</span>
+          <span>{{ $t('controls.addGroup') }}</span>
         </button>
         
         <!-- Add Group Form -->
@@ -133,7 +133,7 @@
         class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
       >
         <span>✏️</span>
-        <span>Edit Name</span>
+        <span>{{ $t('controls.editName') }}</span>
       </button>
       <button
         @click="deleteGroupFromMenu"
@@ -238,10 +238,10 @@
           </div>
         </div>
         <div class="space-y-2">
-          <div class="font-bold text-sm text-gray-800 dark:text-gray-200">No group actions available</div>
+          <div class="font-bold text-sm text-gray-800 dark:text-gray-200">{{ $t('messages.noGroupActionsAvailable') }}</div>
           <div class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
             This event can't be assigned or removed from any groups right now. 
-            <span class="font-medium text-blue-600 dark:text-blue-400">Create some groups first!</span>
+            <span class="font-medium text-blue-600 dark:text-blue-400">{{ $t('messages.createSomeGroupsFirst') }}</span>
           </div>
         </div>
       </div>
@@ -428,8 +428,8 @@
                 <div v-else class="w-3 h-3 border-2 border-yellow-800 dark:border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
               </div>
               <div class="flex flex-col text-left">
-                <span class="font-semibold text-sm">Unassign All</span>
-                <span class="text-xs opacity-75">Remove from all</span>
+                <span class="font-semibold text-sm">{{ $t('controls.unassignAll') }}</span>
+                <span class="text-xs opacity-75">{{ $t('controls.removeFromAll') }}</span>
               </div>
             </div>
             <div class="text-xs font-bold px-1.5 py-0.5 rounded-full bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200">
@@ -476,7 +476,7 @@
           <input
             v-model="eventSearch"
             type="text"
-            :placeholder="activeGroupFilters.length > 0 ? 'Search in filtered groups...' : 'Search events...'"
+            :placeholder="activeGroupFilters.length > 0 ? $t('placeholders.searchInFilteredGroups') : $t('placeholders.searchEvents')"
             class="w-full px-4 py-3 sm:py-2 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
           />
           

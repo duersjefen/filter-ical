@@ -4,7 +4,7 @@
 # This project uses Docker containers for development to eliminate environment
 # conflicts and ensure consistent behavior across all development machines.
 
-.PHONY: dev test test-unit test-integration test-future test-all build clean help deploy deploy-force status status-detailed health dev-docker stop-docker logs-docker shell-backend shell-frontend reset-docker
+.PHONY: dev test test-unit test-integration test-future test-all build clean help deploy deploy-staging deploy-force status status-detailed health dev-docker stop-docker logs-docker shell-backend shell-frontend reset-docker
 .DEFAULT_GOAL := help
 
 ## Docker Development Commands (Primary Workflow)
@@ -105,8 +105,35 @@ ci-build: ## Build containers in CI environment
 
 ## Deployment Commands (Universal - Work with any language)
 
-deploy: ## Deploy to production with automatic monitoring
+deploy-staging: ## Deploy to staging environment for testing
+	@echo "🎭 Deploying to staging environment..."
+	@echo "💡 Use staging to test features before production!"
+	@echo "📋 Current status:"
+	@git status --porcelain
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "⚠️  You have uncommitted changes. Commit them first:"; \
+		echo "   git add . && git commit -m 'Your commit message'"; \
+		exit 1; \
+	fi
+	@echo "📤 Pushing to remote repository..."
+	@git push origin $$(git branch --show-current)
+	@echo "🎯 Triggering staging deployment..."
+	@gh workflow run deploy.yml 2>/dev/null || echo "⚠️  Failed to trigger deployment - check GitHub CLI setup"
+	@sleep 2
+	@echo "👀 Monitoring staging deployment with GitHub CLI..."
+	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
+	@sleep 3
+	@latest_run=$$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "unknown") && \
+	 if [ "$$latest_run" != "unknown" ]; then \
+		 gh run watch $$latest_run --exit-status 2>/dev/null || echo "📊 Monitoring failed - check status with 'make status'"; \
+	 else \
+		 echo "📊 Could not get run ID - check status with 'make status'"; \
+	 fi
+
+deploy: ## Deploy to production with automatic monitoring  
 	@echo "🚀 Deploying to production..."
+	@echo "⚠️  This deploys to the LIVE website at https://filter-ical.de"
+	@echo "💡 Consider using 'make deploy-staging' first to test!"
 	@echo "📋 Current status:"
 	@git status --porcelain
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -248,4 +275,5 @@ help: ## Show this help message
 	@echo ""
 	@echo "🧪 Testing & Deployment:"
 	@echo "  make test         # Run tests"
+	@echo "  make deploy-staging  # Deploy to staging for testing"
 	@echo "  make deploy       # Deploy to production"

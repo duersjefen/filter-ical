@@ -78,7 +78,7 @@
             v-model="newRule.target_group_id"
             class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
           >
-            <option value="" disabled>Select target group...</option>
+            <option value="" disabled>{{ $t('messages.selectTargetGroup') }}</option>
             <option v-for="group in groups" :key="group.id" :value="group.id">
               {{ group.name }} ({{ getGroupEventCount(group.id) }} events)
             </option>
@@ -139,7 +139,7 @@
               <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse-green"></span>
               <span class="font-medium text-green-700 dark:text-green-300">{{ getLiveMatchingEvents(newRule).length }} events match</span>
               <span v-if="getLiveMatchingEvents(newRule).filter(e => e.willChange).length > 0" class="text-blue-600 dark:text-blue-400">
-                ({{ getLiveMatchingEvents(newRule).filter(e => e.willChange).length }} will be assigned)
+                ({{ getLiveMatchingEvents(newRule).filter(e => e.willChange).length }} {{ $t('messages.willBeAssigned') }})
               </span>
             </span>
             <span v-else class="flex items-center gap-2">
@@ -164,8 +164,8 @@
             :class="{ 'animate-bounce-subtle': isFormValid }"
           >
             <span class="text-lg">⚡</span>
-            <span>Create Rule</span>
-            <span v-if="isFormValid" class="text-xs opacity-75">(Enter)</span>
+            <span>{{ $t('controls.createRule') }}</span>
+            <span v-if="isFormValid" class="text-xs opacity-75">({{ $t('controls.enterKey') }})</span>
           </button>
         </div>
       </div>
@@ -232,13 +232,13 @@
             <!-- Assignment Status -->
             <div class="text-xs text-gray-500 dark:text-gray-400">
               <span v-if="event.willChange" class="text-green-700 dark:text-green-300">
-                <strong>Will add to:</strong> {{ getGroupName(newRule.target_group_id) }}
+                <strong>{{ $t('messages.willAddTo') }}</strong> {{ getGroupName(newRule.target_group_id) }}
                 <span v-if="event.currentGroupName && event.currentGroupName !== t('admin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
                   (currently: {{ event.currentGroupName }}{{ event.allGroupIds?.length > 1 ? ` +${event.allGroupIds.length - 1} more` : '' }})
                 </span>
               </span>
               <span v-else class="text-gray-600 dark:text-gray-400">
-                <strong>Already in:</strong> {{ getGroupName(newRule.target_group_id) }}
+                <strong>{{ $t('messages.alreadyIn') }}</strong> {{ getGroupName(newRule.target_group_id) }}
               </span>
             </div>
           </div>
@@ -247,8 +247,8 @@
           <!-- No Matches State -->
           <div v-if="getLiveMatchingEvents(newRule).length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
             <div class="text-4xl mb-2">🔍</div>
-            <p class="text-sm font-medium">No events match this rule</p>
-            <p class="text-xs mt-1">Try adjusting your search criteria</p>
+            <p class="text-sm font-medium">{{ $t('messages.noEventsMatch') }}</p>
+            <p class="text-xs mt-1">{{ $t('messages.tryAdjustingCriteria') }}</p>
           </div>
         </div>
       </div>
@@ -299,11 +299,11 @@
                 <div v-if="getRuleStatus(rule) !== t('admin.complete')" class="flex items-center gap-6 text-xs">
                   <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span class="text-green-700 dark:text-green-300 font-medium">{{ getLiveMatchingEvents(rule).filter(e => e.willChange).length }} will be assigned</span>
+                    <span class="text-green-700 dark:text-green-300 font-medium">{{ getLiveMatchingEvents(rule).filter(e => e.willChange).length }} {{ $t('messages.willBeAssigned') }}</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
-                    <span class="text-gray-600 dark:text-gray-400">{{ getLiveMatchingEvents(rule).filter(e => !e.willChange).length }} already assigned</span>
+                    <span class="text-gray-600 dark:text-gray-400">{{ getLiveMatchingEvents(rule).filter(e => !e.willChange).length }} {{ $t('messages.alreadyAssigned') }}</span>
                   </div>
                 </div>
               </div>
@@ -313,7 +313,7 @@
             <div class="flex items-center gap-3 flex-shrink-0">
               <!-- Rule Status -->
               <div class="text-right">
-                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Rule Status</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $t('messages.ruleStatus') }}</div>
                 <div :class="getRuleStatusClass(rule)" class="text-xs font-semibold px-2 py-1 rounded-full">
                   {{ getRuleStatus(rule) }}
                 </div>
@@ -369,7 +369,7 @@
                 {{ getLiveMatchingEvents(rule).length }} total matches
               </span>
               <span v-if="getLiveMatchingEvents(rule).filter(e => e.willChange).length > 0" class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 font-semibold">
-                {{ getLiveMatchingEvents(rule).filter(e => e.willChange).length }} will be assigned
+                {{ getLiveMatchingEvents(rule).filter(e => e.willChange).length }} {{ $t('messages.willBeAssigned') }}
               </span>
             </div>
           </div>
@@ -424,13 +424,13 @@
               <!-- Assignment Status -->
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 <span v-if="event.willChange" class="text-green-700 dark:text-green-300">
-                  <strong>Will add to:</strong> {{ getGroupName(rule.target_group_id) }}
+                  <strong>{{ $t('messages.willAddTo') }}</strong> {{ getGroupName(rule.target_group_id) }}
                   <span v-if="event.currentGroupName && event.currentGroupName !== t('admin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
                     (currently: {{ event.currentGroupName }}{{ event.allGroupIds?.length > 1 ? ` +${event.allGroupIds.length - 1} more` : '' }})
                   </span>
                 </span>
                 <span v-else class="text-gray-600 dark:text-gray-400">
-                  <strong>Already in:</strong> {{ getGroupName(rule.target_group_id) }}
+                  <strong>{{ $t('messages.alreadyIn') }}</strong> {{ getGroupName(rule.target_group_id) }}
                 </span>
               </div>
             </div>
@@ -439,7 +439,7 @@
             <div v-if="getLiveMatchingEvents(rule).length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
               <div class="text-4xl mb-2">🔍</div>
               <p class="text-sm font-medium">No events match this rule</p>
-              <p class="text-xs mt-1">The rule might need to be updated</p>
+              <p class="text-xs mt-1">{{ $t('messages.ruleMightNeedUpdate') }}</p>
             </div>
           </div>
         </div>
@@ -452,7 +452,7 @@
         <div class="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
           <span class="text-4xl">⚙️</span>
         </div>
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">No Auto Rules Yet</h3>
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">{{ $t('messages.noAutoRulesYet') }}</h3>
         <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
           Auto rules help you automatically organize events into groups based on their content. 
           Start by creating your first rule above using the form.

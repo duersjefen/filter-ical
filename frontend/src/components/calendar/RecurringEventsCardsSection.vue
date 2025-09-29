@@ -316,7 +316,7 @@
                   :class="expandedRecurringEvents.has(recurringEvent.name) 
                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
                     : 'text-gray-500 dark:text-gray-400'"
-                  :title="expandedRecurringEvents.has(recurringEvent.name) ? 'Hide individual events' : 'Show individual events'"
+                  :title="expandedRecurringEvents.has(recurringEvent.name) ? $t('messages.hideIndividualEvents') : $t('messages.showIndividualEvents')"
                 >
                   <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
                     {{ expandedRecurringEvents.has(recurringEvent.name) ? $t('admin.hide') : $t('admin.show') }}
@@ -355,7 +355,7 @@
                           {{ formatCompactEventDate(event, !!getRecurringEventDayPattern(recurringEvent)) }}
                         </span>
                         <!-- Recurring indicator -->
-                        <span v-if="event.is_recurring" class="text-blue-500" title="Recurring event">🔄</span>
+                        <span v-if="event.is_recurring" class="text-blue-500" :title="$t('messages.recurringEvent')">🔄</span>
                         <!-- Title (only if different) -->
                         <span v-if="event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 truncate">
                           {{ event.title.trim() }}
@@ -396,7 +396,7 @@
           
           <!-- Message -->
           <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-            {{ searchTerm.trim() ? 'No events found' : 'No selected events visible' }}
+            {{ searchTerm.trim() ? $t('messages.noEventsFound') : $t('messages.noSelectedEventsVisible') }}
           </h3>
           
           <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">

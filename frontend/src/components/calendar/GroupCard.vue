@@ -126,7 +126,7 @@
           
           <!-- Button text -->
           <span class="font-semibold text-sm">
-            {{ isBothSubscribedAndSelected ? 'SUBSCRIBED & SELECTED' : 'SUBSCRIBE & SELECT ALL' }}
+            {{ isBothSubscribedAndSelected ? $t('groupCard.subscribedSelected') : $t('groupCard.subscribeSelect') }}
           </span>
         </button>
         
@@ -288,7 +288,7 @@
               
               <!-- Empty State -->
               <div v-else class="px-3 py-2 text-center">
-                <div class="text-xs text-gray-500 dark:text-gray-400">No events found</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $t('messages.noEventsFound') }}</div>
               </div>
             </div>
           </div>

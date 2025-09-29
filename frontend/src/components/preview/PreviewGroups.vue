@@ -8,14 +8,14 @@
           @click="expandAll"
           class="px-2 py-1 font-medium rounded-sm transition-colors bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-800/40 dark:text-blue-400 opacity-75 hover:opacity-100"
         >
-          Expand All
+          {{ $t('controls.expandAll') }}
         </button>
         <button 
           v-if="!allCollapsed"
           @click="collapseAll"
           class="px-2 py-1 font-medium rounded-sm transition-colors bg-gray-50 hover:bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:hover:bg-gray-700/50 dark:text-gray-400 opacity-75 hover:opacity-100"
         >
-          Collapse All
+          {{ $t('controls.collapseAll') }}
         </button>
       </div>
     </div>

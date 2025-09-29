@@ -40,7 +40,7 @@
       <!-- Content area -->
       <div class="p-4">
         <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-          <p class="text-red-800 dark:text-red-200 font-medium mb-2">Error Details:</p>
+          <p class="text-red-800 dark:text-red-200 font-medium mb-2">{{ $t('messages.errorDetails') }}</p>
           <p class="text-red-700 dark:text-red-300 text-sm leading-relaxed">{{ error }}</p>
         </div>
       </div>

@@ -61,10 +61,10 @@
             <span class="text-2xl">🔄</span>
             <div>
               <h4 class="text-md font-medium text-amber-800 dark:text-amber-200">
-                Update Filter: "{{ updateModeCalendar?.name }}"
+                {{ $t('messages.updateFilterFor', { name: updateModeCalendar?.name }) }}
               </h4>
               <p class="text-xs text-amber-700 dark:text-amber-300">
-                You're modifying an existing filtered calendar
+                {{ $t('messages.modifyingExisting') }}
               </p>
             </div>
           </div>
@@ -72,7 +72,7 @@
             @click="exitUpdateMode"
             class="text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 font-medium text-sm"
           >
-            ✕ Cancel Update
+            ✕ {{ $t('messages.cancelUpdate') }}
           </button>
         </div>
         
@@ -90,7 +90,7 @@
               </svg>
             </div>
             <p class="text-amber-800 dark:text-amber-200 text-sm font-medium">
-              Please set a username above to save filters
+              {{ $t('messages.pleaseSetUsernameFilters') }}
             </p>
           </div>
         </div>
@@ -207,7 +207,7 @@
               @click="exitUpdateMode"
               class="px-4 py-3 bg-gray-500 hover:bg-gray-400 text-white rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2 border-gray-400 hover:border-gray-300"
             >
-              Cancel
+              {{ $t('controls.cancel') }}
             </button>
           </div>
         </form>
