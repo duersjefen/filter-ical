@@ -365,7 +365,7 @@ const loadCalendarData = async (calendarId) => {
     
     // For domain calendars, create a system-managed calendar reference
     // Domain calendars are NOT user calendars and should not be mixed with user calendar lists
-    if (props.domainContext && String(calendarId).startsWith('cal_')) {
+    if (String(calendarId).startsWith('cal_domain_') || (props.domainContext && String(calendarId).startsWith('cal_'))) {
       // Domain calendars are system-managed - create reference without API dependency
       selectedCalendar.value = {
         id: calendarId,
@@ -721,7 +721,9 @@ const handleUnsubscribeAllGroups = () => {
 }
 
 onMounted(async () => {
-  console.log('🚀 CalendarView mounted with public-first access - DEBUG MODE ACTIVE')
+  if (import.meta.env.DEV) {
+    console.log('🚀 CalendarView mounted with public-first access - DEBUG MODE')
+  }
   
   // Initialize app state (loads calendars from localStorage)
   appStore.initializeApp()
