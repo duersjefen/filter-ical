@@ -7,7 +7,7 @@
           <!-- Donation Button -->
           <div class="flex justify-center">
             <a 
-              href="https://paypal.me/molthuis"
+              href="https://paypal.me/paissme"
               target="_blank"
               rel="noopener noreferrer"
               class="group inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 text-white px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/30 shadow-lg"

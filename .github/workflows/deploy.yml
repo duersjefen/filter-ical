@@ -232,6 +232,81 @@ jobs:
         source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
         target: '/opt/websites/'
         strip_components: 2
+    
+    - name: 🔍 Validate Infrastructure Sync
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        envs: ECR_REGISTRY,AWS_ACCOUNT_ID,AWS_REGION
+        script: |
+          cd /opt/websites || { echo "❌ Failed to access /opt/websites"; exit 1; }
+          
+          echo "🔍 Validating infrastructure files after sync..."
+          
+          # Check critical files exist with proper permissions
+          if [[ ! -f "docker-compose.production.yml" ]]; then
+            echo "❌ CRITICAL: docker-compose.production.yml not found after sync!"
+            ls -la
+            exit 1
+          fi
+          
+          if [[ ! -f "nginx.conf" ]]; then
+            echo "❌ CRITICAL: nginx.conf not found after sync!"
+            ls -la  
+            exit 1
+          fi
+          
+          echo "✅ Infrastructure files present"
+          
+          # Validate docker-compose file with environment variables
+          export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-310829530903}"
+          export AWS_REGION="${AWS_REGION:-eu-north-1}"
+          export ECR_REGISTRY="${ECR_REGISTRY}"
+          
+          # Create working docker-compose.yml from production file
+          cp docker-compose.production.yml docker-compose.yml
+          
+          # Test docker-compose configuration parsing
+          if ! docker-compose config >/dev/null 2>&1; then
+            echo "❌ CRITICAL: docker-compose.yml configuration invalid after sync!"
+            echo "🔍 Environment variables:"
+            echo "   AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
+            echo "   AWS_REGION: $AWS_REGION"  
+            echo "   ECR_REGISTRY: $ECR_REGISTRY"
+            echo "🔍 Config validation errors:"
+            docker-compose config
+            exit 1
+          fi
+          
+          echo "✅ docker-compose configuration valid"
+          
+          # Validate expected staging services are defined
+          echo "🔍 Validating staging services..."
+          services=$(docker-compose config --services)
+          
+          expected_services="filter-ical-backend-staging filter-ical-frontend-staging"
+          missing_services=""
+          
+          for service in $expected_services; do
+            if echo "$services" | grep -q "^${service}$"; then
+              echo "   ✅ $service defined in compose file"
+            else
+              missing_services="$missing_services $service"
+              echo "   ❌ $service missing from compose file"
+            fi
+          done
+          
+          if [ -n "$missing_services" ]; then
+            echo "❌ CRITICAL: Missing staging services:$missing_services"
+            echo "🔍 Available services:"
+            echo "$services" | sed 's/^/   /'
+            exit 1
+          fi
+          
+          echo "✅ All staging services validated"
+          echo "🎯 Infrastructure sync validation completed successfully"
         
     - name: 🚀 Deploy to Staging Server
       uses: ./.github/actions/execute-remote-docker
@@ -326,6 +401,81 @@ jobs:
         source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
         target: '/opt/websites/'
         strip_components: 2
+    
+    - name: 🔍 Validate Infrastructure Sync
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        envs: ECR_REGISTRY,AWS_ACCOUNT_ID,AWS_REGION
+        script: |
+          cd /opt/websites || { echo "❌ Failed to access /opt/websites"; exit 1; }
+          
+          echo "🔍 Validating infrastructure files after sync..."
+          
+          # Check critical files exist with proper permissions
+          if [[ ! -f "docker-compose.production.yml" ]]; then
+            echo "❌ CRITICAL: docker-compose.production.yml not found after sync!"
+            ls -la
+            exit 1
+          fi
+          
+          if [[ ! -f "nginx.conf" ]]; then
+            echo "❌ CRITICAL: nginx.conf not found after sync!"
+            ls -la  
+            exit 1
+          fi
+          
+          echo "✅ Infrastructure files present"
+          
+          # Validate docker-compose file with environment variables
+          export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-310829530903}"
+          export AWS_REGION="${AWS_REGION:-eu-north-1}"
+          export ECR_REGISTRY="${ECR_REGISTRY}"
+          
+          # Create working docker-compose.yml from production file
+          cp docker-compose.production.yml docker-compose.yml
+          
+          # Test docker-compose configuration parsing
+          if ! docker-compose config >/dev/null 2>&1; then
+            echo "❌ CRITICAL: docker-compose.yml configuration invalid after sync!"
+            echo "🔍 Environment variables:"
+            echo "   AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
+            echo "   AWS_REGION: $AWS_REGION"  
+            echo "   ECR_REGISTRY: $ECR_REGISTRY"
+            echo "🔍 Config validation errors:"
+            docker-compose config
+            exit 1
+          fi
+          
+          echo "✅ docker-compose configuration valid"
+          
+          # Validate expected production services are defined
+          echo "🔍 Validating production services..."
+          services=$(docker-compose config --services)
+          
+          expected_services="filter-ical filter-ical-frontend"
+          missing_services=""
+          
+          for service in $expected_services; do
+            if echo "$services" | grep -q "^${service}$"; then
+              echo "   ✅ $service defined in compose file"
+            else
+              missing_services="$missing_services $service"
+              echo "   ❌ $service missing from compose file"
+            fi
+          done
+          
+          if [ -n "$missing_services" ]; then
+            echo "❌ CRITICAL: Missing production services:$missing_services"
+            echo "🔍 Available services:"
+            echo "$services" | sed 's/^/   /'
+            exit 1
+          fi
+          
+          echo "✅ All production services validated"
+          echo "🎯 Infrastructure sync validation completed successfully"
         
     - name: 🚀 Deploy to Production Server
       uses: ./.github/actions/execute-remote-docker
