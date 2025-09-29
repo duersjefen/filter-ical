@@ -117,9 +117,6 @@ deploy-staging: ## Deploy to staging environment for testing
 	fi
 	@echo "📤 Pushing to remote repository..."
 	@git push origin $$(git branch --show-current)
-	@echo "🎯 Triggering staging deployment..."
-	@gh workflow run deploy.yml 2>/dev/null || echo "⚠️  Failed to trigger deployment - check GitHub CLI setup"
-	@sleep 2
 	@echo "👀 Monitoring staging deployment with GitHub CLI..."
 	@echo "   Use Ctrl+C to stop monitoring (deployment continues)"
 	@sleep 3
