@@ -40,6 +40,7 @@ runs:
         username: ${{ env.EC2_USER }}
         key: ${{ env.EC2_SSH_KEY }}
         debug: true
+        envs: AWS_ACCOUNT_ID,AWS_REGION,ECR_REGISTRY,IMAGE_TAG,BRANCH_NAME
         script: |
           cd /opt/websites
           
