@@ -14,7 +14,7 @@ services:
       - letsencrypt-certs:/etc/letsencrypt:ro
       - certbot-webroot:/var/www/certbot:ro
     depends_on:
-      - ical-viewer
+      - filter-ical
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "nginx", "-t"]
@@ -24,10 +24,10 @@ services:
     networks:
       - websites-network
 
-  # iCal Viewer Frontend - filter-ical.de (PRODUCTION)
-  ical-viewer-frontend:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-frontend:latest
-    container_name: ical-viewer-frontend
+  # Filter iCal Frontend - filter-ical.de (PRODUCTION)
+  filter-ical-frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/filter-ical-frontend:latest
+    container_name: filter-ical-frontend
     expose:
       - "80"
     restart: unless-stopped
@@ -41,12 +41,12 @@ services:
       - websites-network
     labels:
       - "website.domain=filter-ical.de"
-      - "website.service=ical-viewer-frontend"
+      - "website.service=filter-ical-frontend"
 
-  # iCal Viewer Frontend - STAGING Environment
-  ical-viewer-frontend-staging:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-frontend:staging-latest
-    container_name: ical-viewer-frontend-staging
+  # Filter iCal Frontend - STAGING Environment
+  filter-ical-frontend-staging:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/filter-ical-frontend:staging-latest
+    container_name: filter-ical-frontend-staging
     expose:
       - "80"
     restart: unless-stopped
@@ -60,12 +60,12 @@ services:
       - websites-network
     labels:
       - "website.domain=staging.filter-ical.de"
-      - "website.service=ical-viewer-frontend-staging"
+      - "website.service=filter-ical-frontend-staging"
 
-  # iCal Viewer Frontend - DEVELOPMENT Environment
-  ical-viewer-frontend-dev:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-frontend:dev-latest
-    container_name: ical-viewer-frontend-dev
+  # Filter iCal Frontend - DEVELOPMENT Environment
+  filter-ical-frontend-dev:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/filter-ical-frontend:dev-latest
+    container_name: filter-ical-frontend-dev
     expose:
       - "80"
     restart: unless-stopped
@@ -79,12 +79,12 @@ services:
       - websites-network
     labels:
       - "website.domain=dev.filter-ical.de"
-      - "website.service=ical-viewer-frontend-dev"
+      - "website.service=filter-ical-frontend-dev"
 
-  # iCal Viewer Backend - filter-ical.de (PRODUCTION)
-  ical-viewer:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:latest
-    container_name: ical-viewer
+  # Filter iCal Backend - filter-ical.de (PRODUCTION)
+  filter-ical:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/filter-ical-backend:latest
+    container_name: filter-ical
     expose:
       - "3000"
     environment:
@@ -92,7 +92,7 @@ services:
       - PORT=3000
       - DOMAIN=filter-ical.de
     volumes:
-      - ical-viewer-data:/app/data
+      - filter-ical-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -104,12 +104,12 @@ services:
       - websites-network
     labels:
       - "website.domain=filter-ical.de"
-      - "website.service=ical-viewer"
+      - "website.service=filter-ical"
 
-  # iCal Viewer Backend - STAGING Environment
-  ical-viewer-backend-staging:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:staging-latest
-    container_name: ical-viewer-backend-staging
+  # Filter iCal Backend - STAGING Environment
+  filter-ical-backend-staging:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/filter-ical-backend:staging-latest
+    container_name: filter-ical-backend-staging
     expose:
       - "3000"
     environment:
@@ -117,7 +117,7 @@ services:
       - PORT=3000
       - DOMAIN=staging.filter-ical.de
     volumes:
-      - ical-viewer-staging-data:/app/data
+      - filter-ical-staging-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -129,12 +129,12 @@ services:
       - websites-network
     labels:
       - "website.domain=staging.filter-ical.de"
-      - "website.service=ical-viewer-backend-staging"
+      - "website.service=filter-ical-backend-staging"
 
-  # iCal Viewer Backend - DEVELOPMENT Environment
-  ical-viewer-backend-dev:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:dev-latest
-    container_name: ical-viewer-backend-dev
+  # Filter iCal Backend - DEVELOPMENT Environment
+  filter-ical-backend-dev:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/filter-ical-backend:dev-latest
+    container_name: filter-ical-backend-dev
     expose:
       - "3000"
     environment:
@@ -142,7 +142,7 @@ services:
       - PORT=3000
       - DOMAIN=dev.filter-ical.de
     volumes:
-      - ical-viewer-dev-data:/app/data
+      - filter-ical-dev-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -154,7 +154,7 @@ services:
       - websites-network
     labels:
       - "website.domain=dev.filter-ical.de"
-      - "website.service=ical-viewer-backend-dev"
+      - "website.service=filter-ical-backend-dev"
 
   # Future: Gabs Massage - gabs-massage.de
   # gabs-massage:
@@ -205,18 +205,18 @@ networks:
 
 volumes:
   # Application data - Production
-  ical-viewer-data:
-    name: websites-ical-viewer-data
+  filter-ical-data:
+    name: websites-filter-ical-data
     driver: local
   
   # Application data - Staging
-  ical-viewer-staging-data:
-    name: websites-ical-viewer-staging-data
+  filter-ical-staging-data:
+    name: websites-filter-ical-staging-data
     driver: local
     
   # Application data - Development
-  ical-viewer-dev-data:
-    name: websites-ical-viewer-dev-data
+  filter-ical-dev-data:
+    name: websites-filter-ical-dev-data
     driver: local
   
   # gabs-massage-data:

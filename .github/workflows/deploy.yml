@@ -296,7 +296,7 @@ jobs:
     - name: 🚀 Deploy to Production Server
       uses: ./.github/actions/execute-remote-docker
       with:
-        containers: 'ical-viewer ical-viewer-frontend'
+        containers: 'filter-ical filter-ical-frontend'
         operation: 'deploy'
         nginx_restart: 'true'
         nginx_container: 'nginx'
@@ -349,7 +349,7 @@ jobs:
     - name: 🔄 Execute Emergency Rollback
       uses: ./.github/actions/rollback-deployment
       with:
-        containers: 'ical-viewer ical-viewer-frontend'
+        containers: 'filter-ical filter-ical-frontend'
         domain: ${{ vars.DOMAIN_NAME_VAR }}
         nginx_restart: 'true'
         nginx_container: 'nginx'
