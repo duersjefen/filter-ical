@@ -297,7 +297,8 @@ runs:
               fi
               
               echo "✅ Images pulled successfully, updating containers..."
-              if ! docker-compose up -d --no-deps $containers; then
+              # Force recreation to ensure new images are used (not cached images)
+              if ! docker-compose up -d --no-deps --force-recreate $containers; then
                 echo "❌ CRITICAL: Container startup failed!"
                 docker-compose ps $containers || true
                 exit 1
@@ -429,7 +430,7 @@ runs:
               
               # Start containers fresh (will trigger startup scripts)
               echo "🚀 Starting containers with fresh database..."
-              docker-compose up -d --no-deps $containers
+              docker-compose up -d --no-deps --force-recreate $containers
               
               # Intelligent health monitoring with fallback for containers without health checks
               echo "🏥 Monitoring container health..."
@@ -548,7 +549,7 @@ runs:
               fi
               
               echo "🚀 Restarting containers with restored images..."
-              docker-compose up -d --no-deps $containers
+              docker-compose up -d --no-deps --force-recreate $containers
               
               echo "✅ Rollback completed: $rollback_success/$( echo $containers | wc -w) containers restored"
               ;;
