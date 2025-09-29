@@ -42,6 +42,13 @@ runs:
         debug: true
         script: |
           cd /opt/websites
+          
+          # Ensure docker-compose.yml exists (rename from docker-compose.production.yml if needed)
+          if [ -f "docker-compose.production.yml" ] && [ ! -f "docker-compose.yml" ]; then
+            echo "🔄 Using docker-compose.production.yml as docker-compose.yml"
+            cp docker-compose.production.yml docker-compose.yml
+          fi
+          
           operation="${{ inputs.operation }}"
           requested_containers="${{ inputs.containers }}"
           ECR_REGISTRY="$ECR_REGISTRY"
