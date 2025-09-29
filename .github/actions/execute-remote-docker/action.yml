@@ -99,12 +99,28 @@ runs:
               
               # Zero-downtime deployment with proper error detection
               echo "🚀 Executing zero-downtime deployment..."
-              echo "📥 Pulling latest images (MUST succeed)..."
-              if ! docker-compose pull $containers; then
-                echo "❌ CRITICAL: Docker pull failed! ECR authentication or network issue"
-                echo "🔍 Current images before failed pull:"
-                docker-compose images $containers || true
-                exit 1
+              echo "📥 Pulling required images (MUST succeed)..."
+              
+              # Pull images based on environment
+              if [ -n "$IMAGE_TAG" ]; then
+                # Pull specific tagged images for staging/production
+                echo "🏷️  Pulling specific tagged images: $IMAGE_TAG"
+                for container in $containers; do
+                  if ! docker pull "$ECR_REGISTRY/$container:$IMAGE_TAG"; then
+                    echo "❌ CRITICAL: Failed to pull $ECR_REGISTRY/$container:$IMAGE_TAG"
+                    exit 1
+                  fi
+                  # Tag as latest locally for docker-compose compatibility
+                  docker tag "$ECR_REGISTRY/$container:$IMAGE_TAG" "$ECR_REGISTRY/$container:latest"
+                done
+              else
+                # Use docker-compose pull for standard deployment
+                if ! docker-compose pull $containers; then
+                  echo "❌ CRITICAL: Docker pull failed! ECR authentication or network issue"
+                  echo "🔍 Current images before failed pull:"
+                  docker-compose images $containers || true
+                  exit 1
+                fi
               fi
               
               echo "✅ Images pulled successfully, updating containers..."
@@ -120,15 +136,25 @@ runs:
               for container in $containers; do
                 # Get the image ID of the running container
                 running_image=$(docker-compose ps -q "$container" | xargs docker inspect --format='{{.Image}}' 2>/dev/null || echo "")
-                # Get the image ID of the latest pulled image
-                latest_image=$(docker images --format="{{.ID}}" "$ECR_REGISTRY/$container:latest" 2>/dev/null | head -1 || echo "")
                 
-                if [ -n "$running_image" ] && [ -n "$latest_image" ] && [ "$running_image" = "$latest_image" ]; then
-                  echo "✅ $container: Successfully updated to latest image"
+                # Determine expected image tag based on environment
+                if [ -n "$IMAGE_TAG" ]; then
+                  # Use specific image tag (staging/production)
+                  expected_tag="$IMAGE_TAG"
                 else
-                  echo "❌ CRITICAL: $container is NOT running the latest image!"
+                  # Fallback to latest for production
+                  expected_tag="latest"
+                fi
+                
+                # Get the image ID of the expected pulled image
+                expected_image=$(docker images --format="{{.ID}}" "$ECR_REGISTRY/$container:$expected_tag" 2>/dev/null | head -1 || echo "")
+                
+                if [ -n "$running_image" ] && [ -n "$expected_image" ] && [ "$running_image" = "$expected_image" ]; then
+                  echo "✅ $container: Successfully updated to $expected_tag image"
+                else
+                  echo "❌ CRITICAL: $container is NOT running the expected image!"
                   echo "   Running: $running_image"
-                  echo "   Latest:  $latest_image"
+                  echo "   Expected ($expected_tag): $expected_image"
                   exit 1
                 fi
               done
@@ -278,6 +304,7 @@ runs:
         EC2_USER: ${{ env.EC2_USER }}
         EC2_SSH_KEY: ${{ env.EC2_SSH_KEY }}
         ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+        IMAGE_TAG: ${{ env.IMAGE_TAG }}
     
     - name: Handle Operation Success  
       if: success()
