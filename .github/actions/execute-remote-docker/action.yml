@@ -78,6 +78,34 @@ runs:
             exit 1
           fi
           
+          # 🔄 MIGRATION: Handle transition from ical-viewer to filter-ical naming
+          echo "🔄 Checking for legacy containers that need migration..."
+          legacy_containers=""
+          
+          # Check if old containers are running
+          if docker ps -a --filter "name=ical-viewer$" --format "{{.Names}}" | grep -q "ical-viewer"; then
+            legacy_containers="$legacy_containers ical-viewer"
+            echo "   📦 Found legacy container: ical-viewer"
+          fi
+          
+          if docker ps -a --filter "name=ical-viewer-frontend$" --format "{{.Names}}" | grep -q "ical-viewer-frontend"; then
+            legacy_containers="$legacy_containers ical-viewer-frontend"
+            echo "   📦 Found legacy container: ical-viewer-frontend"
+          fi
+          
+          if [ -n "$legacy_containers" ]; then
+            echo "🔄 Migrating legacy containers to new naming scheme..."
+            for container in $legacy_containers; do
+              echo "   🛑 Stopping legacy container: $container"
+              docker stop "$container" 2>/dev/null || echo "   ⚠️  Container $container was already stopped"
+              echo "   🗑️  Removing legacy container: $container"
+              docker rm "$container" 2>/dev/null || echo "   ⚠️  Container $container was already removed"
+            done
+            echo "✅ Legacy container migration completed"
+          else
+            echo "✅ No legacy containers found - migration not needed"
+          fi
+          
           operation="${{ inputs.operation }}"
           requested_containers="${{ inputs.containers }}"
           
