@@ -9,13 +9,11 @@
 ├── workflows/           # CI/CD pipelines (must stay here)
 └── actions/             # Composite actions (must stay here)
 
-.infra/                  # All other infrastructure
+.infra/                  # Infrastructure organization
 ├── terraform/           # Infrastructure as Code
 │   └── github-environments/  # GitHub environment management
-├── docker/              # Container definitions & configs
+├── docker/              # Container configurations & production configs
 ├── hooks/               # Git automation & quality gates
-├── security/            # Security scanning configs
-├── monitoring/          # Monitoring/alerting configs
 └── docs/                # Infrastructure documentation
 ```
 
