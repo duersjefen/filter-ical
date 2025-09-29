@@ -41,4 +41,4 @@ volumes:
 
 networks:
   default:
-    name: ical-viewer-dev
+    name: filter-ical-dev
