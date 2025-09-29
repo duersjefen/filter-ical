@@ -43,85 +43,178 @@ runs:
         script: |
           cd /opt/websites
           
+          # CRITICAL: Export required environment variables for docker-compose
+          export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-310829530903}"
+          export AWS_REGION="${AWS_REGION:-eu-north-1}"
+          export ECR_REGISTRY="${ECR_REGISTRY}"
+          
+          echo "🔍 Environment validation:"
+          echo "   AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
+          echo "   AWS_REGION: $AWS_REGION"
+          echo "   ECR_REGISTRY: $ECR_REGISTRY"
+          
+          # Validate required variables
+          if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$AWS_REGION" ] || [ -z "$ECR_REGISTRY" ]; then
+            echo "❌ CRITICAL: Missing required environment variables"
+            echo "   AWS_ACCOUNT_ID: ${AWS_ACCOUNT_ID:-MISSING}"
+            echo "   AWS_REGION: ${AWS_REGION:-MISSING}"
+            echo "   ECR_REGISTRY: ${ECR_REGISTRY:-MISSING}"
+            exit 1
+          fi
+          
           # Ensure docker-compose.yml exists (rename from docker-compose.production.yml if needed)
           if [ -f "docker-compose.production.yml" ] && [ ! -f "docker-compose.yml" ]; then
             echo "🔄 Using docker-compose.production.yml as docker-compose.yml"
             cp docker-compose.production.yml docker-compose.yml
           fi
           
+          # Validate docker-compose file can be parsed with environment variables
+          echo "🔍 Validating docker-compose configuration..."
+          if ! docker-compose config >/dev/null 2>&1; then
+            echo "❌ CRITICAL: docker-compose.yml configuration is invalid"
+            echo "🔍 Attempting to show docker-compose config errors:"
+            docker-compose config || true
+            exit 1
+          fi
+          
           operation="${{ inputs.operation }}"
           requested_containers="${{ inputs.containers }}"
-          ECR_REGISTRY="$ECR_REGISTRY"
           
           echo "🐳 Executing operation: $operation on requested containers: $requested_containers"
           
-          # Dynamic service name mapping from docker-compose.yml
-          echo "🔍 Mapping requested container names to actual docker-compose services..."
-          actual_containers=""
+          # List available services for debugging
+          echo "🔍 Available docker-compose services:"
+          docker-compose config --services | sed 's/^/   /'
+          
+          # Simple and reliable container validation
+          echo "🔍 Validating requested containers exist in docker-compose..."
+          containers=""
+          invalid_containers=""
           
           for container in $requested_containers; do
-            # Try to find the actual service name that matches the requested container
             if docker-compose config --services | grep -q "^${container}$"; then
-              # Exact match found
-              actual_service="$container"
-              echo "   ✅ $container -> $actual_service (exact match)"
-            elif docker-compose config --services | grep -q "^${container%-*}$"; then
-              # Try without the last suffix (e.g., ical-viewer-backend -> ical-viewer)
-              actual_service="${container%-*}"
-              echo "   🎯 $container -> $actual_service (mapped)"
-            elif docker-compose config --services | grep -q "^${container%%-*}$"; then
-              # Try project name only (e.g., ical-viewer-backend -> ical-viewer from ical-viewer-backend)
-              actual_service="${container%%-*}"
-              echo "   🎯 $container -> $actual_service (project name)"
+              containers="$containers $container"
+              echo "   ✅ $container (valid service)"
             else
-              # Fallback: use original name and let docker-compose handle the error
-              actual_service="$container"
-              echo "   ⚠️  $container -> $actual_service (fallback - may not exist)"
+              invalid_containers="$invalid_containers $container"
+              echo "   ❌ $container (invalid service)"
             fi
-            
-            actual_containers="$actual_containers $actual_service"
           done
           
+          # Exit if any invalid containers found
+          if [ -n "$invalid_containers" ]; then
+            echo "❌ CRITICAL: Invalid container names detected:$invalid_containers"
+            echo "🔍 Available services:"
+            docker-compose config --services | sed 's/^/   /'
+            exit 1
+          fi
+          
           # Clean up extra spaces
-          containers=$(echo $actual_containers | xargs)
-          echo "🔍 Final mapped containers: $containers"
+          containers=$(echo $containers | xargs)
+          echo "🔍 Valid containers to operate on: $containers"
           
           case "$operation" in
             "deploy")
               # Create backup with timestamp
               backup_tag="backup-$(date +%s)"
               echo "💾 Creating backup: $backup_tag"
+              backup_count=0
               
               for container in $containers; do
-                current_image=$(docker-compose images "$container" 2>/dev/null | tail -n 1 | awk '{print $4":"$5}' || echo "")
-                if [ -n "$current_image" ] && [ "$current_image" != ":" ]; then
-                  docker tag "$current_image" "${current_image%:*}:$backup_tag" 2>/dev/null || true
-                  echo "✅ Backup created: $container -> $backup_tag"
+                # Get the currently running image for this container
+                current_image=""
+                
+                # Try multiple methods to get the current image
+                container_id=$(docker-compose ps -q "$container" 2>/dev/null || echo "")
+                if [ -n "$container_id" ]; then
+                  current_image=$(docker inspect --format='{{.Config.Image}}' "$container_id" 2>/dev/null || echo "")
+                fi
+                
+                # Fallback: get from docker-compose images
+                if [ -z "$current_image" ] || [ "$current_image" = ":" ]; then
+                  current_image=$(docker-compose images "$container" 2>/dev/null | tail -n 1 | awk '{print $4":"$5}' || echo "")
+                fi
+                
+                if [ -n "$current_image" ] && [ "$current_image" != ":" ] && [ "$current_image" != "<none>:<none>" ]; then
+                  # Create backup tag
+                  repo_name="${current_image%:*}"
+                  if docker tag "$current_image" "$repo_name:$backup_tag" 2>/dev/null; then
+                    echo "✅ Backup created: $container -> $current_image -> $backup_tag"
+                    backup_count=$((backup_count + 1))
+                  else
+                    echo "⚠️  Failed to create backup for $container ($current_image)"
+                  fi
+                else
+                  echo "⚠️  No current image found for $container, skipping backup"
                 fi
               done
               
-              # ECR Authentication refresh
+              echo "💾 Backup summary: $backup_count/$( echo $containers | wc -w) containers backed up with tag: $backup_tag"
+              
+              # ECR Authentication refresh with validation
               echo "🔑 Refreshing ECR authentication..."
-              aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 310829530903.dkr.ecr.eu-north-1.amazonaws.com
+              echo "   ECR Registry: $ECR_REGISTRY"
+              echo "   AWS Region: $AWS_REGION"
+              
+              # Test AWS credentials first
+              if ! aws sts get-caller-identity >/dev/null 2>&1; then
+                echo "❌ CRITICAL: AWS credentials not available or invalid"
+                echo "🔍 AWS CLI version: $(aws --version 2>&1 || echo 'AWS CLI not found')"
+                exit 1
+              fi
+              
+              # Get ECR login with proper error handling
+              echo "🔐 Getting ECR login token..."
+              if ! aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"; then
+                echo "❌ CRITICAL: ECR authentication failed"
+                echo "🔍 Testing basic AWS access..."
+                aws sts get-caller-identity || true
+                echo "🔍 Testing ECR access..."
+                aws ecr describe-repositories --region "$AWS_REGION" --max-items 1 || true
+                exit 1
+              fi
+              
+              echo "✅ ECR authentication successful"
               
               # Zero-downtime deployment with proper error detection
               echo "🚀 Executing zero-downtime deployment..."
               echo "📥 Pulling required images (MUST succeed)..."
               
-              # Pull images based on environment
+              # Pull images based on environment with validation
               if [ -n "$IMAGE_TAG" ]; then
                 # Pull specific tagged images for staging/production
                 echo "🏷️  Pulling specific tagged images: $IMAGE_TAG"
+                
+                # First, verify all images exist in ECR
+                echo "🔍 Verifying images exist in ECR before pulling..."
                 for container in $containers; do
-                  if ! docker pull "$ECR_REGISTRY/$container:$IMAGE_TAG"; then
-                    echo "❌ CRITICAL: Failed to pull $ECR_REGISTRY/$container:$IMAGE_TAG"
+                  image_uri="$ECR_REGISTRY/$container:$IMAGE_TAG"
+                  echo "   Checking: $image_uri"
+                  if ! aws ecr describe-images --region "$AWS_REGION" --repository-name "$container" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+                    echo "❌ CRITICAL: Image does not exist in ECR: $image_uri"
+                    echo "🔍 Available tags for $container:"
+                    aws ecr describe-images --region "$AWS_REGION" --repository-name "$container" --query 'imageDetails[*].imageTags[0]' --output text 2>/dev/null | head -10 || echo "   Could not list tags"
+                    exit 1
+                  fi
+                  echo "   ✅ $image_uri exists in ECR"
+                done
+                
+                # Now pull the verified images
+                echo "📥 Pulling verified images..."
+                for container in $containers; do
+                  image_uri="$ECR_REGISTRY/$container:$IMAGE_TAG"
+                  echo "   Pulling: $image_uri"
+                  if ! docker pull "$image_uri"; then
+                    echo "❌ CRITICAL: Failed to pull $image_uri"
                     exit 1
                   fi
                   # Tag as latest locally for docker-compose compatibility
-                  docker tag "$ECR_REGISTRY/$container:$IMAGE_TAG" "$ECR_REGISTRY/$container:latest"
+                  docker tag "$image_uri" "$ECR_REGISTRY/$container:latest"
+                  echo "   ✅ $container: pulled and tagged as latest"
                 done
               else
-                # Use docker-compose pull for standard deployment
+                # Use docker-compose pull for standard deployment (fallback to latest tags)
+                echo "📥 Pulling images using docker-compose (latest tags)..."
                 if ! docker-compose pull $containers; then
                   echo "❌ CRITICAL: Docker pull failed! ECR authentication or network issue"
                   echo "🔍 Current images before failed pull:"
@@ -137,34 +230,81 @@ runs:
                 exit 1
               fi
               
-              # Verify containers are actually using new images
-              echo "🔍 Verifying deployment actually updated containers..."
+              # Comprehensive deployment verification
+              echo "🔍 Verifying deployment success..."
               sleep 5  # Give containers time to start
+              
+              deployment_success=0
+              total_containers=$(echo $containers | wc -w)
+              
               for container in $containers; do
-                # Get the image ID of the running container
+                echo "🔍 Checking $container..."
+                
+                # Check if container is running
+                container_status=$(docker-compose ps "$container" 2>/dev/null | grep "$container" | awk '{for(i=5;i<=NF;i++) printf "%s ", $i; print ""}' | sed 's/[[:space:]]*$//' || echo "")
+                
+                if ! echo "$container_status" | grep -q "Up"; then
+                  echo "❌ $container: Container is not running (Status: $container_status)"
+                  echo "🔍 Container logs (last 20 lines):"
+                  docker-compose logs --tail=20 "$container" 2>/dev/null | sed 's/^/   /' || echo "   Could not retrieve logs"
+                  continue
+                fi
+                
+                # Check image consistency
                 running_image=$(docker-compose ps -q "$container" | xargs docker inspect --format='{{.Image}}' 2>/dev/null || echo "")
                 
-                # Determine expected image tag based on environment
+                # Determine expected image tag
                 if [ -n "$IMAGE_TAG" ]; then
-                  # Use specific image tag (staging/production)
                   expected_tag="$IMAGE_TAG"
                 else
-                  # Fallback to latest for production
                   expected_tag="latest"
                 fi
                 
-                # Get the image ID of the expected pulled image
                 expected_image=$(docker images --format="{{.ID}}" "$ECR_REGISTRY/$container:$expected_tag" 2>/dev/null | head -1 || echo "")
                 
                 if [ -n "$running_image" ] && [ -n "$expected_image" ] && [ "$running_image" = "$expected_image" ]; then
-                  echo "✅ $container: Successfully updated to $expected_tag image"
+                  echo "✅ $container: Running correct image ($expected_tag)"
+                  
+                  # Test container health if health check is available
+                  if echo "$container_status" | grep -q "healthy"; then
+                    echo "✅ $container: Health check passing"
+                  elif echo "$container_status" | grep -q "unhealthy"; then
+                    echo "⚠️  $container: Health check failing but container is running"
+                  else
+                    echo "ℹ️  $container: No health check configured"
+                  fi
+                  
+                  deployment_success=$((deployment_success + 1))
                 else
-                  echo "❌ CRITICAL: $container is NOT running the expected image!"
+                  echo "❌ $container: Image mismatch"
                   echo "   Running: $running_image"
                   echo "   Expected ($expected_tag): $expected_image"
-                  exit 1
+                  echo "🔍 Available images for $container:"
+                  docker images | grep "$container" | sed 's/^/   /' || echo "   No images found"
                 fi
               done
+              
+              # Final deployment validation
+              echo ""
+              echo "📊 Deployment Summary:"
+              echo "   Successfully deployed: $deployment_success/$total_containers containers"
+              
+              if [ $deployment_success -eq $total_containers ]; then
+                echo "✅ Deployment completed successfully!"
+                
+                # Optional nginx restart
+                if [ "${{ inputs.nginx_restart }}" = "true" ]; then
+                  echo "🔄 Restarting nginx as requested..."
+                  docker-compose restart "${{ inputs.nginx_container }}"
+                  sleep 3
+                  echo "✅ Nginx restarted"
+                fi
+              else
+                echo "❌ CRITICAL: Deployment failed - $((total_containers - deployment_success)) containers not properly deployed"
+                echo "🔍 Current container status:"
+                docker-compose ps $containers || echo "   Could not get container status"
+                exit 1
+              fi
               ;;
               
             "clean-deploy")
@@ -196,9 +336,13 @@ runs:
               echo "🗄️  Removing database volumes for clean deployment..."
               docker volume ls -q | grep -E "(data|db|database|postgres|mysql|sqlite)" | xargs -r docker volume rm 2>/dev/null || true
               
-              # ECR Authentication refresh
-              echo "🔑 Refreshing ECR authentication..."
-              aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 310829530903.dkr.ecr.eu-north-1.amazonaws.com
+              # ECR Authentication refresh (clean-deploy)
+              echo "🔑 Refreshing ECR authentication for clean deployment..."
+              if ! aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"; then
+                echo "❌ CRITICAL: ECR authentication failed during clean deployment"
+                exit 1
+              fi
+              echo "✅ ECR authentication successful for clean deployment"
               
               # Pull latest images with error detection
               echo "📥 Pulling latest container images (MUST succeed)..."
@@ -278,27 +422,60 @@ runs:
               
             "rollback")
               backup_tag="${{ inputs.backup_tag }}"
+              
+              # Auto-discover the most recent backup if none provided
               if [ -z "$backup_tag" ]; then
-                echo "❌ No backup tag provided for rollback"
-                exit 1
+                echo "🔍 No specific backup tag provided, finding most recent backup..."
+                # Find the most recent backup tag across all containers
+                backup_tag=$(docker images --format "{{.Tag}}" | grep "^backup-" | sort -nr | head -1)
+                if [ -n "$backup_tag" ]; then
+                  echo "✅ Found recent backup: $backup_tag"
+                else
+                  echo "❌ No backup images found! Cannot perform rollback"
+                  echo "🔍 Available images:"
+                  docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}" | grep -E "(backup-|latest)" || echo "   No backup or latest images found"
+                  exit 1
+                fi
               fi
               
               echo "🔄 Rolling back to: $backup_tag"
+              rollback_success=0
+              
               for container in $containers; do
-                # Find the backup image
-                backup_image=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":$backup_tag" | head -1)
-                if [ -n "$backup_image" ]; then
-                  # Tag it as latest
+                # Find backup images for this container
+                backup_images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":$backup_tag" | grep "$container")
+                
+                if [ -n "$backup_images" ]; then
+                  # Use the first matching backup image
+                  backup_image=$(echo "$backup_images" | head -1)
                   repo_name="${backup_image%:*}"
+                  
+                  echo "🔄 Rolling back $container using $backup_image"
                   docker tag "$backup_image" "$repo_name:latest"
                   echo "✅ Restored $container from $backup_tag"
+                  rollback_success=$((rollback_success + 1))
                 else
-                  echo "❌ No backup found for $container with tag $backup_tag"
+                  echo "⚠️  No backup found for $container with tag $backup_tag"
+                  # Try to use the most recent image for this container
+                  recent_image=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "$container" | grep -v ":$backup_tag" | head -1)
+                  if [ -n "$recent_image" ]; then
+                    repo_name="${recent_image%:*}"
+                    docker tag "$recent_image" "$repo_name:latest"
+                    echo "⚠️  Using recent image as fallback: $recent_image"
+                    rollback_success=$((rollback_success + 1))
+                  fi
                 fi
               done
               
-              # Restart containers with restored images
+              if [ $rollback_success -eq 0 ]; then
+                echo "❌ CRITICAL: No containers could be rolled back"
+                exit 1
+              fi
+              
+              echo "🚀 Restarting containers with restored images..."
               docker-compose up -d --no-deps $containers
+              
+              echo "✅ Rollback completed: $rollback_success/$( echo $containers | wc -w) containers restored"
               ;;
               
             *)
