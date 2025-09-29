@@ -8,20 +8,20 @@
           v-if="!allSubscribed"
           @click="$emit('subscribe-to-all')"
           class="flex items-center justify-center gap-2 px-4 py-3 text-sm bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all duration-300 font-semibold shadow-sm hover:shadow-md min-h-[44px] border-2 border-green-400 hover:border-green-500 transform hover:scale-[1.02] active:scale-[0.98]"
-          aria-label="Subscribe to all groups and select them"
+          :aria-label="$t('status.subscribeToAllGroups')"
         >
-          <span class="hidden xs:inline">Subscribe &</span>
-          <span>Select All</span>
+          <span class="hidden xs:inline">{{ $t('controls.subscribeAndSelect') }}</span>
+          <span>{{ $t('controls.selectAll') }}</span>
         </button>
         
         <button
           v-if="hasSelections"
           @click="$emit('unsubscribe-from-all')"
           class="flex items-center justify-center gap-2 px-4 py-3 text-sm bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all duration-300 font-semibold shadow-sm hover:shadow-md min-h-[44px] border-2 border-red-400 hover:border-red-500 transform hover:scale-[1.02] active:scale-[0.98]"
-          aria-label="Unsubscribe from all groups and deselect them"
+          :aria-label="$t('status.unsubscribeFromAllGroups')"
         >
-          <span class="hidden xs:inline">Unsubscribe &</span>
-          <span>Deselect All</span>
+          <span class="hidden xs:inline">{{ $t('controls.unsubscribeAndDeselect') }}</span>
+          <span>{{ $t('controls.deselectAll') }}</span>
         </button>
       </div>
 
@@ -31,18 +31,18 @@
           v-if="!allExpanded"
           @click="$emit('expand-all')"
           class="flex items-center justify-center gap-2 px-4 py-3 text-sm bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl transition-all duration-300 font-semibold shadow-sm hover:shadow-md min-h-[44px] border-2 border-indigo-400 hover:border-indigo-500 transform hover:scale-[1.02] active:scale-[0.98]"
-          aria-label="Expand all group sections to show content"
+          :aria-label="$t('status.expandAllGroups')"
         >
-          <span>Expand All</span>
+          <span>{{ $t('controls.expandAll') }}</span>
         </button>
         
         <button
           v-if="!allCollapsed"
           @click="$emit('collapse-all')"
           class="flex items-center justify-center gap-2 px-4 py-3 text-sm bg-gray-500 hover:bg-gray-400 text-white rounded-xl transition-all duration-300 font-semibold shadow-sm hover:shadow-md min-h-[44px] border-2 border-gray-400 hover:border-gray-300 transform hover:scale-[1.02] active:scale-[0.98]"
-          aria-label="Collapse all group sections to hide content"
+          :aria-label="$t('status.collapseAllGroups')"
         >
-          <span>Collapse All</span>
+          <span>{{ $t('controls.collapseAll') }}</span>
         </button>
       </div>
     </div>
