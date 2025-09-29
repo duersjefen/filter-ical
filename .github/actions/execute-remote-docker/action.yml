@@ -87,15 +87,31 @@ runs:
           echo "🔍 Available docker-compose services:"
           docker-compose config --services | sed 's/^/   /'
           
-          # Simple and reliable container validation
+          # Simple and reliable container validation with ECR repository mapping
           echo "🔍 Validating requested containers exist in docker-compose..."
           containers=""
           invalid_containers=""
+          
+          # Create mapping from service names to ECR repository names
+          # This handles cases where service name != ECR repository name
+          declare -A service_to_repo_map
+          service_to_repo_map["filter-ical"]="filter-ical-backend"
+          service_to_repo_map["filter-ical-frontend"]="filter-ical-frontend"
+          service_to_repo_map["filter-ical-backend-staging"]="filter-ical-backend"
+          service_to_repo_map["filter-ical-frontend-staging"]="filter-ical-frontend"
+          service_to_repo_map["filter-ical-backend-dev"]="filter-ical-backend"
+          service_to_repo_map["filter-ical-frontend-dev"]="filter-ical-frontend"
           
           for container in $requested_containers; do
             if docker-compose config --services | grep -q "^${container}$"; then
               containers="$containers $container"
               echo "   ✅ $container (valid service)"
+              
+              # Show ECR repository mapping
+              repo_name="${service_to_repo_map[$container]:-$container}"
+              if [ "$repo_name" != "$container" ]; then
+                echo "   🔗 $container -> ECR repository: $repo_name"
+              fi
             else
               invalid_containers="$invalid_containers $container"
               echo "   ❌ $container (invalid service)"
@@ -186,15 +202,18 @@ runs:
                 # Pull specific tagged images for staging/production
                 echo "🏷️  Pulling specific tagged images: $IMAGE_TAG"
                 
-                # First, verify all images exist in ECR
+                # First, verify all images exist in ECR using correct repository names
                 echo "🔍 Verifying images exist in ECR before pulling..."
                 for container in $containers; do
-                  image_uri="$ECR_REGISTRY/$container:$IMAGE_TAG"
-                  echo "   Checking: $image_uri"
-                  if ! aws ecr describe-images --region "$AWS_REGION" --repository-name "$container" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+                  # Get correct ECR repository name for this service
+                  repo_name="${service_to_repo_map[$container]:-$container}"
+                  image_uri="$ECR_REGISTRY/$repo_name:$IMAGE_TAG"
+                  echo "   Checking: $image_uri (service: $container)"
+                  
+                  if ! aws ecr describe-images --region "$AWS_REGION" --repository-name "$repo_name" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
                     echo "❌ CRITICAL: Image does not exist in ECR: $image_uri"
-                    echo "🔍 Available tags for $container:"
-                    aws ecr describe-images --region "$AWS_REGION" --repository-name "$container" --query 'imageDetails[*].imageTags[0]' --output text 2>/dev/null | head -10 || echo "   Could not list tags"
+                    echo "🔍 Available tags for repository $repo_name:"
+                    aws ecr describe-images --region "$AWS_REGION" --repository-name "$repo_name" --query 'imageDetails[*].imageTags[0]' --output text 2>/dev/null | head -10 || echo "   Could not list tags"
                     exit 1
                   fi
                   echo "   ✅ $image_uri exists in ECR"
@@ -203,14 +222,19 @@ runs:
                 # Now pull the verified images
                 echo "📥 Pulling verified images..."
                 for container in $containers; do
-                  image_uri="$ECR_REGISTRY/$container:$IMAGE_TAG"
-                  echo "   Pulling: $image_uri"
+                  # Get correct ECR repository name for this service
+                  repo_name="${service_to_repo_map[$container]:-$container}"
+                  image_uri="$ECR_REGISTRY/$repo_name:$IMAGE_TAG"
+                  echo "   Pulling: $image_uri (for service: $container)"
+                  
                   if ! docker pull "$image_uri"; then
                     echo "❌ CRITICAL: Failed to pull $image_uri"
                     exit 1
                   fi
+                  
                   # Tag as latest locally for docker-compose compatibility
-                  docker tag "$image_uri" "$ECR_REGISTRY/$container:latest"
+                  # The docker-compose service expects the repository name in its image reference
+                  docker tag "$image_uri" "$ECR_REGISTRY/$repo_name:latest"
                   echo "   ✅ $container: pulled and tagged as latest"
                 done
               else
@@ -261,7 +285,9 @@ runs:
                   expected_tag="latest"
                 fi
                 
-                expected_image=$(docker images --format="{{.ID}}" "$ECR_REGISTRY/$container:$expected_tag" 2>/dev/null | head -1 || echo "")
+                # Get correct ECR repository name for image verification
+                repo_name="${service_to_repo_map[$container]:-$container}"
+                expected_image=$(docker images --format="{{.ID}}" "$ECR_REGISTRY/$repo_name:$expected_tag" 2>/dev/null | head -1 || echo "")
                 
                 if [ -n "$running_image" ] && [ -n "$expected_image" ] && [ "$running_image" = "$expected_image" ]; then
                   echo "✅ $container: Running correct image ($expected_tag)"
