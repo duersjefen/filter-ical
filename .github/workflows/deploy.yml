@@ -152,6 +152,8 @@ jobs:
         ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
         IMAGE_TAG: dev-${{ github.sha }}
         BRANCH_NAME: ${{ github.ref_name }}
+        AWS_ACCOUNT_ID: "310829530903"
+        AWS_REGION: ${{ env.AWS_REGION }}
         
     - name: 🧪 Validate Branch Preview Deployment
       env:
@@ -244,6 +246,8 @@ jobs:
         EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
         IMAGE_TAG: staging-${{ github.sha }}
+        AWS_ACCOUNT_ID: "310829530903"
+        AWS_REGION: ${{ env.AWS_REGION }}
     
     - name: 🧪 Validate Staging Deployment
       uses: ./.github/actions/validate-endpoints
@@ -336,6 +340,8 @@ jobs:
         EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
         IMAGE_TAG: ${{ github.sha }}
+        AWS_ACCOUNT_ID: "310829530903"
+        AWS_REGION: ${{ env.AWS_REGION }}
     
     - name: 🧪 Validate Production Deployment
       uses: ./.github/actions/validate-endpoints
