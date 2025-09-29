@@ -111,27 +111,27 @@ jobs:
         make ci-build
         
         # Build and push development containers
-        docker build -t "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" \
-          --cache-from "$ECR_REGISTRY/ical-viewer-backend:dev-latest" \
+        docker build -t "$ECR_REGISTRY/filter-ical-backend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/filter-ical-backend:dev-latest" \
           --build-arg BUILDKIT_INLINE_CACHE=1 backend/
-        docker tag "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-backend:dev-latest"
+        docker tag "$ECR_REGISTRY/filter-ical-backend:$IMAGE_TAG" "$ECR_REGISTRY/filter-ical-backend:dev-latest"
         
-        docker build -t "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" \
-          --cache-from "$ECR_REGISTRY/ical-viewer-frontend:dev-latest" \
+        docker build -t "$ECR_REGISTRY/filter-ical-frontend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/filter-ical-frontend:dev-latest" \
           --build-arg BUILDKIT_INLINE_CACHE=1 frontend/
-        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-frontend:dev-latest"
+        docker tag "$ECR_REGISTRY/filter-ical-frontend:$IMAGE_TAG" "$ECR_REGISTRY/filter-ical-frontend:dev-latest"
         
         # Push to ECR
-        docker push "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" &
-        docker push "$ECR_REGISTRY/ical-viewer-backend:dev-latest" &
-        docker push "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" &
-        docker push "$ECR_REGISTRY/ical-viewer-frontend:dev-latest" &
+        docker push "$ECR_REGISTRY/filter-ical-backend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/filter-ical-backend:dev-latest" &
+        docker push "$ECR_REGISTRY/filter-ical-frontend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/filter-ical-frontend:dev-latest" &
         wait
         
     - name: 🚀 Deploy Branch Preview to Development Server
       uses: ./.github/actions/execute-remote-docker
       with:
-        containers: 'ical-viewer-backend-dev ical-viewer-frontend-dev'
+        containers: 'filter-ical-backend-dev filter-ical-frontend-dev'
         operation: 'deploy'
         nginx_restart: 'true'
         nginx_container: 'nginx'
@@ -194,27 +194,27 @@ jobs:
         make ci-build
         
         # Build and push staging containers
-        docker build -t "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" \
-          --cache-from "$ECR_REGISTRY/ical-viewer-backend:staging-latest" \
+        docker build -t "$ECR_REGISTRY/filter-ical-backend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/filter-ical-backend:staging-latest" \
           --build-arg BUILDKIT_INLINE_CACHE=1 backend/
-        docker tag "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-backend:staging-latest"
+        docker tag "$ECR_REGISTRY/filter-ical-backend:$IMAGE_TAG" "$ECR_REGISTRY/filter-ical-backend:staging-latest"
         
-        docker build -t "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" \
-          --cache-from "$ECR_REGISTRY/ical-viewer-frontend:staging-latest" \
+        docker build -t "$ECR_REGISTRY/filter-ical-frontend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/filter-ical-frontend:staging-latest" \
           --build-arg BUILDKIT_INLINE_CACHE=1 frontend/
-        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-frontend:staging-latest"
+        docker tag "$ECR_REGISTRY/filter-ical-frontend:$IMAGE_TAG" "$ECR_REGISTRY/filter-ical-frontend:staging-latest"
         
         # Push to ECR
-        docker push "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" &
-        docker push "$ECR_REGISTRY/ical-viewer-backend:staging-latest" &
-        docker push "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" &
-        docker push "$ECR_REGISTRY/ical-viewer-frontend:staging-latest" &
+        docker push "$ECR_REGISTRY/filter-ical-backend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/filter-ical-backend:staging-latest" &
+        docker push "$ECR_REGISTRY/filter-ical-frontend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/filter-ical-frontend:staging-latest" &
         wait
     
     - name: 🚀 Deploy to Staging Server
       uses: ./.github/actions/execute-remote-docker
       with:
-        containers: 'ical-viewer-backend-staging ical-viewer-frontend-staging'
+        containers: 'filter-ical-backend-staging filter-ical-frontend-staging'
         operation: 'deploy'
         nginx_restart: 'true'
         nginx_container: 'nginx'
@@ -277,20 +277,20 @@ jobs:
         echo "📋 Source: $STAGING_TAG → Target: $PRODUCTION_TAG"
         
         # Pull staging images
-        docker pull "$ECR_REGISTRY/ical-viewer-backend:$STAGING_TAG"
-        docker pull "$ECR_REGISTRY/ical-viewer-frontend:$STAGING_TAG"
+        docker pull "$ECR_REGISTRY/filter-ical-backend:$STAGING_TAG"
+        docker pull "$ECR_REGISTRY/filter-ical-frontend:$STAGING_TAG"
         
         # Tag for production
-        docker tag "$ECR_REGISTRY/ical-viewer-backend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-backend:$PRODUCTION_TAG"
-        docker tag "$ECR_REGISTRY/ical-viewer-backend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-backend:latest"
-        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-frontend:$PRODUCTION_TAG"
-        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-frontend:latest"
+        docker tag "$ECR_REGISTRY/filter-ical-backend:$STAGING_TAG" "$ECR_REGISTRY/filter-ical-backend:$PRODUCTION_TAG"
+        docker tag "$ECR_REGISTRY/filter-ical-backend:$STAGING_TAG" "$ECR_REGISTRY/filter-ical-backend:latest"
+        docker tag "$ECR_REGISTRY/filter-ical-frontend:$STAGING_TAG" "$ECR_REGISTRY/filter-ical-frontend:$PRODUCTION_TAG"
+        docker tag "$ECR_REGISTRY/filter-ical-frontend:$STAGING_TAG" "$ECR_REGISTRY/filter-ical-frontend:latest"
         
         # Push production images
-        docker push "$ECR_REGISTRY/ical-viewer-backend:$PRODUCTION_TAG" &
-        docker push "$ECR_REGISTRY/ical-viewer-backend:latest" &
-        docker push "$ECR_REGISTRY/ical-viewer-frontend:$PRODUCTION_TAG" &
-        docker push "$ECR_REGISTRY/ical-viewer-frontend:latest" &
+        docker push "$ECR_REGISTRY/filter-ical-backend:$PRODUCTION_TAG" &
+        docker push "$ECR_REGISTRY/filter-ical-backend:latest" &
+        docker push "$ECR_REGISTRY/filter-ical-frontend:$PRODUCTION_TAG" &
+        docker push "$ECR_REGISTRY/filter-ical-frontend:latest" &
         wait
     
     - name: 🚀 Deploy to Production Server
