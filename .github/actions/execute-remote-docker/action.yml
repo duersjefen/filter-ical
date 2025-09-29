@@ -273,10 +273,17 @@ runs:
                     exit 1
                   fi
                   
-                  # Tag as latest locally for docker-compose compatibility
-                  # The docker-compose service expects the repository name in its image reference
-                  docker tag "$image_uri" "$ECR_REGISTRY/$repo_name:latest"
-                  echo "   ✅ $container: pulled and tagged as latest"
+                  # Tag with appropriate environment-specific tag for docker-compose compatibility
+                  # Determine correct tag based on IMAGE_TAG prefix and service name
+                  local_tag="latest"  # Default for production
+                  if [[ "$IMAGE_TAG" == staging-* ]]; then
+                    local_tag="staging-latest"
+                  elif [[ "$IMAGE_TAG" == dev-* ]]; then
+                    local_tag="dev-latest"
+                  fi
+                  
+                  docker tag "$image_uri" "$ECR_REGISTRY/$repo_name:$local_tag"
+                  echo "   ✅ $container: pulled $IMAGE_TAG and tagged as $local_tag"
                 done
               else
                 # Use docker-compose pull for standard deployment (fallback to latest tags)
