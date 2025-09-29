@@ -24,7 +24,7 @@ services:
     networks:
       - websites-network
 
-  # iCal Viewer Frontend - filter-ical.de
+  # iCal Viewer Frontend - filter-ical.de (PRODUCTION)
   ical-viewer-frontend:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-frontend:latest
     container_name: ical-viewer-frontend
@@ -43,7 +43,45 @@ services:
       - "website.domain=filter-ical.de"
       - "website.service=ical-viewer-frontend"
 
-  # iCal Viewer Backend - filter-ical.de  
+  # iCal Viewer Frontend - STAGING Environment
+  ical-viewer-frontend-staging:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-frontend:staging-latest
+    container_name: ical-viewer-frontend-staging
+    expose:
+      - "80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - websites-network
+    labels:
+      - "website.domain=staging.filter-ical.de"
+      - "website.service=ical-viewer-frontend-staging"
+
+  # iCal Viewer Frontend - DEVELOPMENT Environment
+  ical-viewer-frontend-dev:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-frontend:dev-latest
+    container_name: ical-viewer-frontend-dev
+    expose:
+      - "80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - websites-network
+    labels:
+      - "website.domain=dev.filter-ical.de"
+      - "website.service=ical-viewer-frontend-dev"
+
+  # iCal Viewer Backend - filter-ical.de (PRODUCTION)
   ical-viewer:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:latest
     container_name: ical-viewer
@@ -67,6 +105,56 @@ services:
     labels:
       - "website.domain=filter-ical.de"
       - "website.service=ical-viewer"
+
+  # iCal Viewer Backend - STAGING Environment
+  ical-viewer-backend-staging:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:staging-latest
+    container_name: ical-viewer-backend-staging
+    expose:
+      - "3000"
+    environment:
+      - ENV=staging
+      - PORT=3000
+      - DOMAIN=staging.filter-ical.de
+    volumes:
+      - ical-viewer-staging-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - websites-network
+    labels:
+      - "website.domain=staging.filter-ical.de"
+      - "website.service=ical-viewer-backend-staging"
+
+  # iCal Viewer Backend - DEVELOPMENT Environment
+  ical-viewer-backend-dev:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ical-viewer-backend:dev-latest
+    container_name: ical-viewer-backend-dev
+    expose:
+      - "3000"
+    environment:
+      - ENV=development
+      - PORT=3000
+      - DOMAIN=dev.filter-ical.de
+    volumes:
+      - ical-viewer-dev-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - websites-network
+    labels:
+      - "website.domain=dev.filter-ical.de"
+      - "website.service=ical-viewer-backend-dev"
 
   # Future: Gabs Massage - gabs-massage.de
   # gabs-massage:
@@ -116,10 +204,21 @@ networks:
     name: websites-network
 
 volumes:
-  # Application data
+  # Application data - Production
   ical-viewer-data:
     name: websites-ical-viewer-data
     driver: local
+  
+  # Application data - Staging
+  ical-viewer-staging-data:
+    name: websites-ical-viewer-staging-data
+    driver: local
+    
+  # Application data - Development
+  ical-viewer-dev-data:
+    name: websites-ical-viewer-dev-data
+    driver: local
+  
   # gabs-massage-data:
   #   name: websites-gabs-massage-data
   #   driver: local
