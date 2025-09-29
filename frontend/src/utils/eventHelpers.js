@@ -57,16 +57,19 @@ export function transformRecurringEventsToArray(recurringEventsData) {
   if (!recurringEventsData) return []
   if (Array.isArray(recurringEventsData)) return recurringEventsData
   
-  return Object.entries(recurringEventsData).map(([name, recurringEventData]) => {
-    const count = recurringEventData.count || 0
-    const typeEvents = recurringEventData.events || []
-    
-    return {
-      name,
-      count,
-      events: typeEvents
-    }
-  }).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  return Object.entries(recurringEventsData)
+    .filter(([name, recurringEventData]) => recurringEventData != null && name != null) // Filter out null entries
+    .map(([name, recurringEventData]) => {
+      const count = recurringEventData.count || 0
+      const typeEvents = recurringEventData.events || []
+      
+      return {
+        name,
+        count,
+        events: typeEvents
+      }
+    })
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
 }
 
 /**
@@ -77,7 +80,7 @@ export function filterRecurringEventsBySearch(recurringEvents, searchTerm) {
   
   const searchLower = searchTerm.toLowerCase()
   return recurringEvents.filter(recurringEvent => 
-    recurringEvent.name.toLowerCase().includes(searchLower)
+    recurringEvent && recurringEvent.name && recurringEvent.name.toLowerCase().includes(searchLower)
   )
 }
 
@@ -85,8 +88,8 @@ export function filterRecurringEventsBySearch(recurringEvents, searchTerm) {
  * Separate recurring events by count (main vs single)
  */
 export function categorizeRecurringEvents(recurringEvents) {
-  const main = recurringEvents.filter(event => event.count > 1)
-  const single = recurringEvents.filter(event => event.count === 1)
+  const main = recurringEvents.filter(event => event && typeof event.count === 'number' && event.count > 1)
+  const single = recurringEvents.filter(event => event && typeof event.count === 'number' && event.count === 1)
   
   return { main, single }
 }
