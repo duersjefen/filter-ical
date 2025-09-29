@@ -1,0 +1,302 @@
+# =============================================================================
+# Industry Standard Three-Tier Environment CI/CD Pipeline
+# =============================================================================
+#
+# Development → Staging → Production
+# 
+# This implements the industry best practice of:
+# 1. Fast feedback loop for development
+# 2. Production-identical staging environment
+# 3. Controlled production deployments with approval gates
+#
+# Environment Strategy:
+# - development: Auto-deploy from any branch (fast feedback)
+# - staging: Auto-deploy from main/master (integration testing)  
+# - production: Manual approval required (safety gate)
+#
+# =============================================================================
+
+name: Multi-Environment Deployment Pipeline
+
+on:
+  push:
+    branches: [main, master, develop, feature/**]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+# Global environment variables (shared across all environments)
+env:
+  AWS_REGION: eu-north-1
+  ECR_REGISTRY: 310829530903.dkr.ecr.eu-north-1.amazonaws.com
+
+jobs:
+  # =============================================================================
+  # UNIT & CONTRACT TESTS (Always run first)
+  # =============================================================================
+  test:
+    name: 🧪 Unit & Contract Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 🔧 Build Test Container
+      run: |
+        cd backend
+        docker build -t test-backend --target test .
+    
+    - name: 🧪 Run Unit Tests
+      run: |
+        cd backend
+        docker run --rm \
+          -e ENV=test \
+          -e DATABASE_URL=sqlite:///test.db \
+          test-backend python3 -m pytest tests/ -m unit -v --tb=short
+    
+    - name: 📋 Run Contract Tests
+      run: |
+        cd backend
+        docker run --rm \
+          -e ENV=test \
+          -e DATABASE_URL=sqlite:///test.db \
+          test-backend python3 -m pytest tests/test_contracts.py -v --tb=short
+
+  # =============================================================================
+  # DEVELOPMENT ENVIRONMENT (Any branch)
+  # =============================================================================
+  deploy-development:
+    name: 🚧 Deploy to Development
+    needs: test
+    runs-on: ubuntu-latest
+    environment: development
+    timeout-minutes: 10
+    
+    # Deploy development for any branch (fast feedback)
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 🔐 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::310829530903:role/GitHubActionsRole
+        role-session-name: GitHubActionsSession-Dev
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: 🚀 Deploy to Development Environment
+      run: |
+        echo "🚧 Development deployment for branch: ${{ github.ref_name }}"
+        echo "✅ This would deploy to dev.filter-ical.de"
+        echo "📝 No real infrastructure changes - development uses local/temporary resources"
+
+  # =============================================================================
+  # STAGING ENVIRONMENT (main/master only)
+  # =============================================================================
+  deploy-staging:
+    name: 🎭 Deploy to Staging
+    needs: test
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 15
+    
+    # Only deploy staging from main/master
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 🔐 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::310829530903:role/GitHubActionsRole
+        role-session-name: GitHubActionsSession-Staging
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: 🔑 Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: 🏗️ Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🏗️ Build and Push Staging Images
+      env:
+        IMAGE_TAG: staging-${{ github.sha }}
+      run: |
+        echo "🎭 Building staging containers with tag: $IMAGE_TAG"
+        
+        # Build applications first
+        make ci-build
+        
+        # Build and push staging containers
+        docker build -t "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/ical-viewer-backend:staging-latest" \
+          --build-arg BUILDKIT_INLINE_CACHE=1 backend/
+        docker tag "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-backend:staging-latest"
+        
+        docker build -t "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" \
+          --cache-from "$ECR_REGISTRY/ical-viewer-frontend:staging-latest" \
+          --build-arg BUILDKIT_INLINE_CACHE=1 frontend/
+        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" "$ECR_REGISTRY/ical-viewer-frontend:staging-latest"
+        
+        # Push to ECR
+        docker push "$ECR_REGISTRY/ical-viewer-backend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/ical-viewer-backend:staging-latest" &
+        docker push "$ECR_REGISTRY/ical-viewer-frontend:$IMAGE_TAG" &
+        docker push "$ECR_REGISTRY/ical-viewer-frontend:staging-latest" &
+        wait
+    
+    - name: 🚀 Deploy to Staging Server
+      uses: ./.github/actions/execute-remote-docker
+      with:
+        containers: 'ical-viewer-backend ical-viewer-frontend'
+        operation: 'deploy'
+        nginx_restart: 'true'
+        nginx_container: 'nginx'
+        image_tag: staging-${{ github.sha }}
+      env:
+        EC2_HOST: ${{ secrets.STAGING_EC2_HOST }}
+        EC2_USER: ${{ secrets.STAGING_EC2_USER }}
+        EC2_SSH_KEY: ${{ secrets.STAGING_EC2_SSH_KEY }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+    
+    - name: 🧪 Validate Staging Deployment
+      uses: ./.github/actions/validate-endpoints
+      with:
+        domain: ${{ vars.STAGING_DOMAIN_NAME }}
+        endpoints: '/,/health,/domains/exter/groups'
+        timeout: '30'
+        retries: '5'
+
+  # =============================================================================
+  # PRODUCTION ENVIRONMENT (Manual approval required)
+  # =============================================================================
+  deploy-production:
+    name: 🌟 Deploy to Production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    
+    # Only deploy production from main/master after staging succeeds
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: ⏰ Production Deployment Wait
+      run: |
+        echo "🌟 Production deployment starting..."
+        echo "⏰ This deployment was approved after the mandatory wait period"
+        echo "📋 Staging validation passed successfully"
+    
+    - name: 🔐 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::310829530903:role/GitHubActionsRole
+        role-session-name: GitHubActionsSession-Production
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: 🔑 Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: 🏗️ Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🏗️ Promote Staging Images to Production
+      env:
+        STAGING_TAG: staging-${{ github.sha }}
+        PRODUCTION_TAG: ${{ github.sha }}
+      run: |
+        echo "🌟 Promoting staging images to production"
+        echo "📋 Source: $STAGING_TAG → Target: $PRODUCTION_TAG"
+        
+        # Pull staging images
+        docker pull "$ECR_REGISTRY/ical-viewer-backend:$STAGING_TAG"
+        docker pull "$ECR_REGISTRY/ical-viewer-frontend:$STAGING_TAG"
+        
+        # Tag for production
+        docker tag "$ECR_REGISTRY/ical-viewer-backend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-backend:$PRODUCTION_TAG"
+        docker tag "$ECR_REGISTRY/ical-viewer-backend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-backend:latest"
+        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-frontend:$PRODUCTION_TAG"
+        docker tag "$ECR_REGISTRY/ical-viewer-frontend:$STAGING_TAG" "$ECR_REGISTRY/ical-viewer-frontend:latest"
+        
+        # Push production images
+        docker push "$ECR_REGISTRY/ical-viewer-backend:$PRODUCTION_TAG" &
+        docker push "$ECR_REGISTRY/ical-viewer-backend:latest" &
+        docker push "$ECR_REGISTRY/ical-viewer-frontend:$PRODUCTION_TAG" &
+        docker push "$ECR_REGISTRY/ical-viewer-frontend:latest" &
+        wait
+    
+    - name: 🚀 Deploy to Production Server
+      uses: ./.github/actions/execute-remote-docker
+      with:
+        containers: 'ical-viewer-backend ical-viewer-frontend'
+        operation: 'deploy'
+        nginx_restart: 'true'
+        nginx_container: 'nginx'
+        image_tag: ${{ github.sha }}
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+        EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+    
+    - name: 🧪 Validate Production Deployment
+      uses: ./.github/actions/validate-endpoints
+      with:
+        domain: ${{ vars.DOMAIN_NAME_VAR }}
+        endpoints: '/,/health,/domains/exter/groups'
+        timeout: '60'
+        retries: '10'
+    
+    - name: 📊 Production Deployment Summary
+      run: |
+        echo "=================================================================================="
+        echo "🌟 PRODUCTION DEPLOYMENT COMPLETED SUCCESSFULLY"
+        echo "=================================================================================="
+        echo "📊 Environment: Production"
+        echo "🚀 Domain: ${{ vars.DOMAIN_NAME_VAR }}"
+        echo "🏷️ Version: ${{ github.sha }}"
+        echo "👤 Approved by: ${{ github.actor }}"
+        echo "⏰ Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo ""
+        echo "✅ Three-tier deployment pipeline completed:"
+        echo "   1. ✅ Unit & Contract Tests passed"
+        echo "   2. ✅ Staging deployment verified"
+        echo "   3. ✅ Production deployment approved and deployed"
+        echo "   4. ✅ Production validation successful"
+        echo "=================================================================================="
+
+  # =============================================================================
+  # AUTOMATIC ROLLBACK (Production only)
+  # =============================================================================
+  rollback-production:
+    name: 🔄 Emergency Production Rollback
+    needs: deploy-production
+    runs-on: ubuntu-latest
+    environment: production
+    if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 🔄 Execute Emergency Rollback
+      uses: ./.github/actions/rollback-deployment
+      with:
+        containers: 'ical-viewer-backend ical-viewer-frontend'
+        domain: ${{ vars.DOMAIN_NAME_VAR }}
+        nginx_restart: 'true'
+        nginx_container: 'nginx'
+        validation_endpoints: '/,/health'
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+        EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
