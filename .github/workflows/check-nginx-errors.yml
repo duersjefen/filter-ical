@@ -1,0 +1,33 @@
+name: Check Nginx Errors
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Check Nginx Error Logs
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🔍 Latest nginx error logs:"
+            docker logs websites-nginx 2>&1 | grep -i "error\|warn\|fail" | tail -30
+
+            echo ""
+            echo "🔍 Recent access attempts:"
+            docker logs websites-nginx 2>&1 | grep "filter-ical.de" | tail -20
+
+            echo ""
+            echo "🔍 Container status:"
+            docker ps --format "table {{.Names}}\t{{.Status}}"
+
+            echo ""
+            echo "🧪 Test from server (HTTP):"
+            curl -v http://localhost 2>&1 | grep -E "(HTTP|filter-ical)" | head -10
+
+            echo ""
+            echo "🧪 Test from server (HTTPS):"
+            curl -v -k https://localhost 2>&1 | grep -E "(HTTP|SSL|filter-ical)" | head -15

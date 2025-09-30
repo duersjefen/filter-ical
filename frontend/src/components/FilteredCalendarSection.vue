@@ -194,33 +194,25 @@
             
             <!-- Enhanced display for Personal Calendars (Non-Group) -->
             <div v-else>
-              <div v-if="selectedRecurringEvents.length > 0" class="space-y-4">
-                <!-- Recurring Events Section - Show all names -->
-                <div v-if="selectedMainRecurringEventNames.length > 0">
-                  <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    🔄 {{ $t('calendar.recurringEvents') }}: {{ selectedMainRecurringEventNames.length }}
-                  </div>
-                  <div class="flex flex-wrap gap-2">
-                    <div
-                      v-for="eventName in selectedMainRecurringEventNames"
-                      :key="eventName"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-lg text-xs font-medium border border-blue-200 dark:border-blue-700 shadow-sm"
-                    >
-                      <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                      </svg>
-                      <span class="truncate max-w-[200px]">{{ eventName }}</span>
-                    </div>
+              <div v-if="selectedRecurringEvents.length > 0" class="space-y-3">
+                <!-- Recurring Events - Show all names as chips -->
+                <div v-if="selectedMainRecurringEventNames.length > 0" class="flex flex-wrap gap-2">
+                  <div
+                    v-for="eventName in selectedMainRecurringEventNames"
+                    :key="eventName"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-lg text-xs font-medium border border-blue-200 dark:border-blue-700 shadow-sm"
+                  >
+                    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="truncate max-w-[200px]">{{ eventName }}</span>
                   </div>
                 </div>
 
-                <!-- Unique Events Section - Summary only -->
+                <!-- Unique Events - Just show count -->
                 <div v-if="selectedSingleRecurringEventNames.length > 0">
-                  <div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 rounded-lg text-sm font-medium border border-emerald-200 dark:border-emerald-700 shadow-sm">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                    </svg>
-                    <span>📄 {{ selectedSingleRecurringEventNames.length }} {{ $t('recurringEvents.uniqueEvents') }}</span>
+                  <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 rounded-lg text-xs font-medium border border-emerald-200 dark:border-emerald-700 shadow-sm">
+                    <span>+ {{ selectedSingleRecurringEventNames.length }} unique {{ selectedSingleRecurringEventNames.length === 1 ? 'event' : 'events' }}</span>
                   </div>
                 </div>
               </div>

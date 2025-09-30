@@ -13,7 +13,7 @@
               📂 <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('calendar.recurringEvents') }}</span>
             </h3>
           </div>
-          <!-- Mobile Switch Button - Enhanced Modern Design -->
+          <!-- Mobile Switch Button - Enhanced Modern Design -->N
           <button
             v-if="hasGroups"
             @click="$emit('switch-to-groups')"
