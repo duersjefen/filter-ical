@@ -109,7 +109,6 @@ jobs:
 
           # Frontend Configuration
           VITE_API_URL=${VITE_API_URL}
-          BACKEND_HOST=filter-ical-backend-production
           EOF
 
           chmod 600 configs/filter-ical/.env.production
