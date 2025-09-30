@@ -32,7 +32,7 @@ permissions:
 # Global environment variables (shared across all environments)
 env:
   AWS_REGION: eu-north-1
-  ECR_REGISTRY: 310829530903.dkr.ecr.eu-north-1.amazonaws.com
+  ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
 
 jobs:
   # =============================================================================
@@ -86,7 +86,7 @@ jobs:
     - name: 🔐 Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::310829530903:role/GitHubActionsRole
+        role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
         role-session-name: GitHubActionsSession-Dev
         aws-region: ${{ env.AWS_REGION }}
     
@@ -188,7 +188,7 @@ jobs:
     - name: 🔐 Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::310829530903:role/GitHubActionsRole
+        role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
         role-session-name: GitHubActionsSession-Staging
         aws-region: ${{ env.AWS_REGION }}
     
@@ -445,7 +445,7 @@ jobs:
     - name: 🔐 Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::310829530903:role/GitHubActionsRole
+        role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
         role-session-name: GitHubActionsSession-Production
         aws-region: ${{ env.AWS_REGION }}
     

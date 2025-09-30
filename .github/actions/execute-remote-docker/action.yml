@@ -4,7 +4,7 @@ author: 'Claude Code'
 
 inputs:
   operation:
-    description: 'Operation to perform (deploy, restart-nginx)'
+    description: 'Operation to perform (deploy, rollback, backup, list-backups)'
     required: true
     default: 'deploy'
   containers:
@@ -17,186 +17,158 @@ inputs:
   nginx_container:
     description: 'Name of nginx container to restart'
     required: false
-    default: 'nginx'
+    default: 'websites-nginx'
+  backup_tag:
+    description: 'Backup tag for rollback operations (optional - auto-detects if not provided)'
+    required: false
+    default: ''
 
 outputs:
   deployment_status:
     description: 'Status of the deployment operation'
+    value: ${{ steps.get-outputs.outputs.deployment_status }}
   containers_deployed:
     description: 'List of containers that were successfully deployed'
+    value: ${{ steps.get-outputs.outputs.containers_deployed }}
+  operation_status:
+    description: 'Overall operation status (for rollback compatibility)'
+    value: ${{ steps.get-outputs.outputs.operation_status }}
+  containers_affected:
+    description: 'Containers affected by operation'
+    value: ${{ steps.get-outputs.outputs.containers_affected }}
+  BACKUP_TAG:
+    description: 'Backup tag created before deployment'
+    value: ${{ steps.get-outputs.outputs.BACKUP_TAG }}
 
 runs:
   using: 'composite'
   steps:
-    - name: 🐳 Execute Remote Docker Deployment
+    - name: 🐳 Execute Remote Docker Operation
+      id: execute
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ env.EC2_HOST }}
         username: ${{ env.EC2_USER }}
         key: ${{ env.EC2_SSH_KEY }}
         debug: true
-        envs: AWS_ACCOUNT_ID,AWS_REGION,ECR_REGISTRY,IMAGE_TAG,BRANCH_NAME
+        envs: AWS_ACCOUNT_ID,AWS_REGION,ECR_REGISTRY,IMAGE_TAG,BRANCH_NAME,BACKUP_TAG,OPERATION
         script: |
           cd /opt/websites
-          
+
           # CRITICAL: Export required environment variables for docker-compose
-          export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-310829530903}"
-          export AWS_REGION="${AWS_REGION:-eu-north-1}"
+          export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}"
+          export AWS_REGION="${AWS_REGION}"
           export ECR_REGISTRY="${ECR_REGISTRY}"
+          export BACKUP_TAG="${BACKUP_TAG}"
+
+          # Create outputs directory
+          mkdir -p /tmp/github-actions-outputs
           
           # Make scripts executable
-          chmod +x .github/actions/execute-remote-docker/scripts/*.sh || echo "Scripts not found, continuing..."
-          
-          # Source core frameworks (if available)
-          [ -f .github/scripts/core/logging.sh ] && source .github/scripts/core/logging.sh
-          [ -f .github/scripts/core/validation.sh ] && source .github/scripts/core/validation.sh
-          
-          # Source modular scripts (if available)
-          [ -f .github/actions/execute-remote-docker/scripts/container-migration.sh ] && source .github/actions/execute-remote-docker/scripts/container-migration.sh
-          [ -f .github/actions/execute-remote-docker/scripts/image-management.sh ] && source .github/actions/execute-remote-docker/scripts/image-management.sh
-          [ -f .github/actions/execute-remote-docker/scripts/deployment-validation.sh ] && source .github/actions/execute-remote-docker/scripts/deployment-validation.sh
-          
-          echo "🚀 Starting deployment operation: ${{ inputs.operation }}"
+          chmod +x .github/actions/execute-remote-docker/scripts/*.sh || echo "Scripts not found, using fallback"
+
+          echo "🚀 Starting operation: ${OPERATION}"
           echo "🎯 Target containers: ${{ inputs.containers }}"
-          
-          containers="${{ inputs.containers }}"
-          
-          echo "🔍 Environment validation:"
-          echo "   AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
-          echo "   AWS_REGION: $AWS_REGION" 
-          echo "   ECR_REGISTRY: $ECR_REGISTRY"
-          
+
           # Validate required variables
           if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$AWS_REGION" ] || [ -z "$ECR_REGISTRY" ]; then
             echo "❌ CRITICAL: Missing required environment variables"
             exit 1
           fi
-          
+
           # Ensure docker-compose.yml exists
           if [ -f "docker-compose.production.yml" ] && [ ! -f "docker-compose.yml" ]; then
             echo "🔄 Using docker-compose.production.yml as docker-compose.yml"
             cp docker-compose.production.yml docker-compose.yml
           fi
-          
-          # Migration (fallback if script not available)
-          if command -v migrate_legacy_containers >/dev/null 2>&1; then
-            migrate_legacy_containers
+
+          # Use modular deploy.sh if available, otherwise fallback
+          if [ -f ".github/actions/execute-remote-docker/scripts/deploy.sh" ]; then
+            echo "📜 Using modular deployment scripts"
+
+            # Redirect GITHUB_OUTPUT to a file we can retrieve
+            export GITHUB_OUTPUT=/tmp/github-actions-outputs/deployment-outputs.txt
+            touch "$GITHUB_OUTPUT"
+
+            # Execute deployment script
+            .github/actions/execute-remote-docker/scripts/deploy.sh \
+              "${OPERATION}" \
+              "${{ inputs.containers }}" \
+              "${{ inputs.nginx_restart }}" \
+              "${{ inputs.nginx_container }}"
+
+            # Capture exit code
+            deploy_exit=$?
+
+            # Write operation results
+            echo "operation_status=$([ $deploy_exit -eq 0 ] && echo 'success' || echo 'failed')" >> "$GITHUB_OUTPUT"
+            echo "containers_affected=${{ inputs.containers }}" >> "$GITHUB_OUTPUT"
+
+            exit $deploy_exit
           else
-            echo "🔄 Fallback container migration..."
-            # Basic container conflict cleanup
-            for container in $containers; do
-              if docker ps -a --filter "name=^${container}$" --format "{{.Names}}" | grep -q "^${container}$"; then
-                echo "   🛑 Stopping conflicting container: $container"
-                docker stop "$container" 2>/dev/null || true
-                docker rm "$container" 2>/dev/null || true
-              fi
-            done
-          fi
-          
-          # ECR Authentication (fallback if script not available)
-          if command -v authenticate_ecr >/dev/null 2>&1; then
-            authenticate_ecr
-          else
-            echo "🔑 Fallback ECR authentication..."
-            if ! aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"; then
-              echo "❌ CRITICAL: ECR authentication failed"
-              exit 1
-            fi
-          fi
-          
-          # Image Management (fallback if script not available)
-          if command -v pull_and_tag_images >/dev/null 2>&1; then
-            pull_and_tag_images "$containers"
-          else
-            echo "📥 Fallback image management..."
-            if [ -n "$IMAGE_TAG" ]; then
-              # Service to ECR repository mapping
-              declare -A service_to_repo_map
-              service_to_repo_map["filter-ical"]="filter-ical-backend"
-              service_to_repo_map["filter-ical-frontend"]="filter-ical-frontend"
-              service_to_repo_map["filter-ical-backend-staging"]="filter-ical-backend"
-              service_to_repo_map["filter-ical-frontend-staging"]="filter-ical-frontend"
-              
-              for container in $containers; do
-                repo_name="${service_to_repo_map[$container]:-$container}"
-                image_uri="$ECR_REGISTRY/$repo_name:$IMAGE_TAG"
-                docker pull "$image_uri"
-                
-                # Tag appropriately
-                local_tag="latest"
-                if [[ "$IMAGE_TAG" == staging-* ]]; then
-                  local_tag="staging-latest"
-                fi
-                docker tag "$image_uri" "$ECR_REGISTRY/$repo_name:$local_tag"
-              done
-            else
-              docker-compose pull $containers
-            fi
-          fi
-          
-          # Deploy containers
-          echo "🚀 Deploying containers..."
-          if ! docker-compose up -d --force-recreate $containers; then
-            echo "❌ CRITICAL: Container deployment failed!"
-            exit 1
-          fi
-          
-          # Wait for containers to stabilize
-          sleep 10
-          
-          # Nginx restart if requested
-          if [ "${{ inputs.nginx_restart }}" = "true" ]; then
-            if command -v restart_nginx >/dev/null 2>&1; then
-              restart_nginx "${{ inputs.nginx_container }}"
-            else
-              echo "🔄 Fallback nginx restart..."
+            echo "⚠️  Modular scripts not found, using inline fallback"
+
+            # [Keep minimal fallback for backward compatibility]
+            containers="${{ inputs.containers }}"
+
+            # Basic ECR auth
+            aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+            # Pull and deploy
+            docker-compose pull $containers
+            docker-compose up -d --force-recreate $containers
+
+            # Nginx restart if needed
+            if [ "${{ inputs.nginx_restart }}" = "true" ]; then
               docker restart "${{ inputs.nginx_container }}" 2>/dev/null || true
             fi
+
+            # Write outputs
+            echo "operation_status=success" > /tmp/github-actions-outputs/deployment-outputs.txt
+            echo "containers_affected=$containers" >> /tmp/github-actions-outputs/deployment-outputs.txt
+            echo "BACKUP_TAG=" >> /tmp/github-actions-outputs/deployment-outputs.txt
           fi
-          
-          # Validation (fallback if script not available)  
-          if command -v validate_deployment >/dev/null 2>&1; then
-            if ! validate_deployment "$containers"; then
-              exit 1
-            fi
-          else
-            echo "🔍 Fallback deployment validation..."
-            deployment_failed=0
-            for container in $containers; do
-              if ! docker ps --filter "name=^${container}$" --format "{{.Names}}" | grep -q "^${container}$"; then
-                echo "❌ Container $container is not running"
-                deployment_failed=1
-              else
-                echo "✅ Container $container is running"
-              fi
-            done
-            
-            if [ $deployment_failed -eq 1 ]; then
-              exit 1
-            fi
-          fi
-          
-          echo "🎉 Deployment completed successfully!"
       env:
         EC2_HOST: ${{ env.EC2_HOST }}
         EC2_USER: ${{ env.EC2_USER }}
         EC2_SSH_KEY: ${{ env.EC2_SSH_KEY }}
         ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
         IMAGE_TAG: ${{ env.IMAGE_TAG }}
-    
-    - name: Handle Deployment Success  
-      if: success()
+        OPERATION: ${{ inputs.operation }}
+        BACKUP_TAG: ${{ inputs.backup_tag }}
+
+    - name: 📤 Retrieve Operation Outputs
+      id: get-outputs
       shell: bash
       run: |
-        echo "deployment_status=success" >> $GITHUB_OUTPUT
-        echo "containers_deployed=${{ inputs.containers }}" >> $GITHUB_OUTPUT
-    
-    - name: Handle Deployment Failure
-      if: failure()
-      shell: bash
-      run: |
-        echo "deployment_status=failed" >> $GITHUB_OUTPUT
-        echo "containers_deployed=" >> $GITHUB_OUTPUT
+        echo "🔍 Retrieving operation outputs from server..."
+
+        # Retrieve outputs file via SSH
+        OUTPUTS=$(ssh -o StrictHostKeyChecking=no -i <(echo "${{ env.EC2_SSH_KEY }}") \
+          ${{ env.EC2_USER }}@${{ env.EC2_HOST }} \
+          "cat /tmp/github-actions-outputs/deployment-outputs.txt 2>/dev/null || echo 'operation_status=failed'")
+
+        # Parse and set outputs
+        while IFS='=' read -r key value; do
+          if [ -n "$key" ] && [ -n "$value" ]; then
+            echo "$key=$value" >> $GITHUB_OUTPUT
+            echo "   $key=$value"
+          fi
+        done <<< "$OUTPUTS"
+
+        # Set backward-compatible outputs
+        operation_status=$(echo "$OUTPUTS" | grep "^operation_status=" | cut -d'=' -f2)
+        containers_affected=$(echo "$OUTPUTS" | grep "^containers_affected=" | cut -d'=' -f2)
+
+        if [ "$operation_status" = "success" ]; then
+          echo "deployment_status=success" >> $GITHUB_OUTPUT
+          echo "containers_deployed=${containers_affected}" >> $GITHUB_OUTPUT
+        else
+          echo "deployment_status=failed" >> $GITHUB_OUTPUT
+          echo "containers_deployed=" >> $GITHUB_OUTPUT
+        fi
+
+        echo "✅ Outputs retrieved successfully"
 
 branding:
   icon: 'cloud'

@@ -76,6 +76,13 @@ create_deployment_backup() {
 
     echo "💾 Creating deployment backup: $backup_tag"
 
+    # Ensure GITHUB_OUTPUT is set (fallback to file)
+    if [ -z "$GITHUB_OUTPUT" ]; then
+        export GITHUB_OUTPUT="/tmp/github-actions-outputs/deployment-outputs.txt"
+        mkdir -p "$(dirname "$GITHUB_OUTPUT")"
+        touch "$GITHUB_OUTPUT"
+    fi
+
     local backed_up_containers=""
     for container in $containers; do
         # Check if container is running

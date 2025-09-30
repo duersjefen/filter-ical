@@ -48,6 +48,13 @@ runs:
         nginx_restart: ${{ inputs.nginx_restart }}
         nginx_container: ${{ inputs.nginx_container }}
         backup_tag: ${{ inputs.backup_tag }}
+      env:
+        EC2_HOST: ${{ env.EC2_HOST }}
+        EC2_USER: ${{ env.EC2_USER }}
+        EC2_SSH_KEY: ${{ env.EC2_SSH_KEY }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+        AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+        AWS_REGION: ${{ env.AWS_REGION }}
       
     - name: ⏳ Wait for Services to Stabilize
       shell: bash
