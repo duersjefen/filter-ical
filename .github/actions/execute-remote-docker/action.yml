@@ -143,10 +143,18 @@ runs:
       run: |
         echo "🔍 Retrieving operation outputs from server..."
 
+        # Write SSH key to temp file (required for SSH)
+        SSH_KEY_FILE=$(mktemp)
+        echo "${{ env.EC2_SSH_KEY }}" > "$SSH_KEY_FILE"
+        chmod 600 "$SSH_KEY_FILE"
+
         # Retrieve outputs file via SSH
-        OUTPUTS=$(ssh -o StrictHostKeyChecking=no -i <(echo "${{ env.EC2_SSH_KEY }}") \
+        OUTPUTS=$(ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" \
           ${{ env.EC2_USER }}@${{ env.EC2_HOST }} \
           "cat /tmp/github-actions-outputs/deployment-outputs.txt 2>/dev/null || echo 'operation_status=failed'")
+
+        # Cleanup SSH key
+        rm -f "$SSH_KEY_FILE"
 
         # Parse and set outputs
         while IFS='=' read -r key value; do
