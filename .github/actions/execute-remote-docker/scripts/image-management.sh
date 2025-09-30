@@ -293,3 +293,68 @@ authenticate_ecr() {
 
     echo "✅ ECR authentication successful"
 }
+
+deploy_containers() {
+    local containers="$1"
+
+    echo "🚀 Deploying containers: $containers"
+
+    # Authenticate with ECR
+    authenticate_ecr
+
+    # Pull and tag images
+    pull_and_tag_images "$containers"
+
+    # Deploy containers using docker-compose
+    echo "📦 Starting containers with docker-compose..."
+    if ! docker-compose up -d --force-recreate $containers; then
+        echo "❌ CRITICAL: Failed to start containers"
+        echo "🔍 Container status:"
+        docker-compose ps $containers || true
+        exit 1
+    fi
+
+    # Wait for containers to be healthy before continuing
+    echo "⏳ Waiting for containers to be healthy..."
+    local max_wait=60
+    local waited=0
+    local all_healthy=false
+
+    while [ $waited -lt $max_wait ]; do
+        all_healthy=true
+
+        for container in $containers; do
+            # Check if container is running
+            if ! docker ps --filter "name=^${container}$" --filter "status=running" --format "{{.Names}}" | grep -q "^${container}$"; then
+                all_healthy=false
+                break
+            fi
+
+            # Check health status if healthcheck is defined
+            local health_status=$(docker inspect --format='{{.State.Health.Status}}' "$container" 2>/dev/null || echo "none")
+            if [ "$health_status" != "none" ] && [ "$health_status" != "healthy" ]; then
+                all_healthy=false
+                break
+            fi
+        done
+
+        if [ "$all_healthy" = true ]; then
+            echo "✅ All containers are healthy and ready"
+            return 0
+        fi
+
+        sleep 2
+        waited=$((waited + 2))
+        echo "   Waiting for health checks... ($waited/$max_wait seconds)"
+    done
+
+    if [ "$all_healthy" = false ]; then
+        echo "⚠️  Warning: Some containers may not be fully healthy yet"
+        echo "🔍 Container status:"
+        docker-compose ps $containers || true
+        echo ""
+        echo "📋 Continuing deployment - nginx will be restarted to pick up new container IPs"
+    fi
+
+    return 0
+}
