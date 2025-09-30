@@ -176,7 +176,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     timeout-minutes: 15
-    
+    outputs:
+      backup_tag: ${{ steps.deploy-staging.outputs.BACKUP_TAG }}
+
     # Only deploy staging from main/master
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
@@ -350,6 +352,7 @@ jobs:
           echo "🎯 Infrastructure sync validation completed successfully"
         
     - name: 🚀 Deploy to Staging Server
+      id: deploy-staging
       uses: ./.github/actions/execute-remote-docker
       with:
         containers: 'filter-ical-backend-staging filter-ical-frontend-staging'
@@ -374,6 +377,48 @@ jobs:
         retries: '5'
 
   # =============================================================================
+  # AUTOMATIC ROLLBACK (Staging)
+  # =============================================================================
+  rollback-staging:
+    name: 🔄 Staging Rollback
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: staging
+    if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: 🔄 Execute Staging Rollback
+      uses: ./.github/actions/rollback-deployment
+      with:
+        containers: 'filter-ical-backend-staging filter-ical-frontend-staging'
+        backup_tag: ${{ needs.deploy-staging.outputs.backup_tag }}
+        domain: 'staging.filter-ical.de'
+        nginx_restart: 'true'
+        nginx_container: 'websites-nginx'
+        validation_endpoints: '/,/health'
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+        EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+        AWS_ACCOUNT_ID: "310829530903"
+        AWS_REGION: ${{ env.AWS_REGION }}
+
+    - name: 📊 Rollback Summary
+      if: always()
+      run: |
+        echo "================================================================================"
+        echo "🔄 STAGING ROLLBACK EXECUTED"
+        echo "================================================================================"
+        echo "⚠️  Staging deployment failed - rolled back to previous version"
+        echo "🏷️  Backup: ${{ needs.deploy-staging.outputs.backup_tag }}"
+        echo "🌐 Domain: staging.filter-ical.de"
+        echo "⏰ Rolled back at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "================================================================================"
+
+  # =============================================================================
   # PRODUCTION ENVIRONMENT (Manual approval required)
   # =============================================================================
   deploy-production:
@@ -382,7 +427,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 20
-    
+    outputs:
+      backup_tag: ${{ steps.deploy-production.outputs.BACKUP_TAG }}
+
     # Only deploy production from main/master after staging succeeds
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
@@ -560,6 +607,7 @@ jobs:
           echo "🎯 Infrastructure sync validation completed successfully"
         
     - name: 🚀 Deploy to Production Server
+      id: deploy-production
       uses: ./.github/actions/execute-remote-docker
       with:
         containers: 'filter-ical filter-ical-frontend'
@@ -618,6 +666,7 @@ jobs:
       uses: ./.github/actions/rollback-deployment
       with:
         containers: 'filter-ical filter-ical-frontend'
+        backup_tag: ${{ needs.deploy-production.outputs.backup_tag }}
         domain: ${{ vars.DOMAIN_NAME_VAR }}
         nginx_restart: 'true'
         nginx_container: 'websites-nginx'
@@ -627,3 +676,22 @@ jobs:
         EC2_USER: ${{ secrets.EC2_USER }}
         EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+        AWS_ACCOUNT_ID: "310829530903"
+        AWS_REGION: ${{ env.AWS_REGION }}
+
+    - name: 📊 Rollback Summary
+      if: always()
+      run: |
+        echo "================================================================================"
+        echo "🚨 PRODUCTION EMERGENCY ROLLBACK EXECUTED"
+        echo "================================================================================"
+        echo "⚠️  Production deployment failed - rolled back to previous version"
+        echo "🏷️  Backup: ${{ needs.deploy-production.outputs.backup_tag }}"
+        echo "🌐 Domain: ${{ vars.DOMAIN_NAME_VAR }}"
+        echo "⏰ Rolled back at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo ""
+        echo "🔔 IMMEDIATE ACTION REQUIRED:"
+        echo "   1. Verify production is stable at: https://${{ vars.DOMAIN_NAME_VAR }}"
+        echo "   2. Review deployment logs for root cause"
+        echo "   3. Fix issues before next deployment attempt"
+        echo "================================================================================"

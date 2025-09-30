@@ -23,18 +23,33 @@ main() {
 
     case "$operation" in
         "deploy")
+            # Create backup before deployment
+            create_deployment_backup "$containers"
+
+            # Proceed with deployment
             migrate_legacy_containers
             deploy_containers "$containers"
             if [ "$nginx_restart" = "true" ]; then
                 restart_nginx "$nginx_container"
             fi
             validate_deployment "$containers"
+
+            # Cleanup old backups to free disk space
+            cleanup_old_backups 3
             ;;
         "rollback")
             rollback_containers "$containers"
             ;;
         "clean")
             clean_deploy_containers "$containers"
+            ;;
+        "backup")
+            # Standalone backup operation
+            create_deployment_backup "$containers"
+            ;;
+        "list-backups")
+            # List available backups
+            list_backups
             ;;
         *)
             echo "❌ Unknown operation: $operation"

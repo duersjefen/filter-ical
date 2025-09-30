@@ -7,8 +7,9 @@ inputs:
     description: 'Space-separated list of containers to rollback'
     required: true
   backup_tag:
-    description: 'Backup tag to restore from (e.g., backup-1726276543)'
-    required: true
+    description: 'Backup tag to restore from (e.g., backup-1726276543). If not provided, most recent backup will be used automatically.'
+    required: false
+    default: ''
   domain:
     description: 'Domain name to validate after rollback'
     required: true

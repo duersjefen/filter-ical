@@ -70,18 +70,201 @@ pull_and_tag_images() {
     fi
 }
 
+create_deployment_backup() {
+    local containers="$1"
+    local backup_tag="backup-$(date +%s)"
+
+    echo "💾 Creating deployment backup: $backup_tag"
+
+    local backed_up_containers=""
+    for container in $containers; do
+        # Check if container is running
+        if ! docker ps --filter "name=^${container}$" --format "{{.Names}}" | grep -q "^${container}$"; then
+            echo "   ⚠️  Container $container not running - skipping backup"
+            continue
+        fi
+
+        # Get current image of running container
+        local current_image=$(docker inspect --format='{{.Image}}' "$container" 2>/dev/null)
+        if [ -z "$current_image" ]; then
+            echo "   ⚠️  Could not get image for $container - skipping"
+            continue
+        fi
+
+        # Get repository name
+        local repo_name="${service_to_repo_map[$container]:-$container}"
+
+        # Tag current image as backup
+        local backup_image="$ECR_REGISTRY/$repo_name:$backup_tag"
+        if docker tag "$current_image" "$backup_image"; then
+            echo "   ✅ Backed up $container: $backup_image"
+            backed_up_containers="$backed_up_containers $container"
+        else
+            echo "   ❌ Failed to backup $container"
+        fi
+    done
+
+    if [ -z "$backed_up_containers" ]; then
+        echo "⚠️  No containers backed up - deployment will proceed without rollback capability"
+        echo "BACKUP_TAG=" >> "$GITHUB_OUTPUT"
+        return 0
+    fi
+
+    # Store backup metadata
+    local backup_metadata="/tmp/backup-${backup_tag}.meta"
+    cat > "$backup_metadata" << EOF
+BACKUP_TAG=$backup_tag
+BACKUP_TIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+BACKED_UP_CONTAINERS=$backed_up_containers
+COMMIT_SHA=${GITHUB_SHA:-unknown}
+IMAGE_TAG=${IMAGE_TAG:-latest}
+EOF
+
+    echo "✅ Backup created successfully: $backup_tag"
+    echo "   Containers backed up:$backed_up_containers"
+    echo "BACKUP_TAG=$backup_tag" >> "$GITHUB_OUTPUT"
+    return 0
+}
+
+list_backups() {
+    echo "📋 Available backups:"
+
+    # List all backup tags from local images
+    local backup_images=$(docker images "$ECR_REGISTRY/filter-ical-*:backup-*" --format "{{.Repository}}:{{.Tag}}" | sort -r)
+
+    if [ -z "$backup_images" ]; then
+        echo "   No backups found"
+        return 0
+    fi
+
+    echo "$backup_images" | while read -r image; do
+        local tag=$(echo "$image" | cut -d: -f2)
+        local timestamp=$(echo "$tag" | sed 's/backup-//')
+        local date_str=$(date -d "@$timestamp" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "unknown")
+
+        if [ -f "/tmp/${tag}.meta" ]; then
+            echo "   🔖 $tag (created: $date_str)"
+            cat "/tmp/${tag}.meta" | grep -E "BACKED_UP_CONTAINERS|COMMIT_SHA" | sed 's/^/      /'
+        else
+            echo "   🔖 $tag (created: $date_str)"
+        fi
+    done
+}
+
+cleanup_old_backups() {
+    local keep_count="${1:-3}"
+
+    echo "🧹 Cleaning up old backups (keeping last $keep_count)..."
+
+    # Get all backup tags sorted by timestamp (newest first)
+    local all_backups=$(docker images "$ECR_REGISTRY/filter-ical-*:backup-*" --format "{{.Tag}}" | sort -u | sort -t- -k2 -rn)
+
+    if [ -z "$all_backups" ]; then
+        echo "   No backups to clean"
+        return 0
+    fi
+
+    local backup_count=$(echo "$all_backups" | wc -l)
+    if [ "$backup_count" -le "$keep_count" ]; then
+        echo "   Current backup count ($backup_count) within limit ($keep_count)"
+        return 0
+    fi
+
+    # Delete old backups
+    local deleted=0
+    echo "$all_backups" | tail -n +$((keep_count + 1)) | while read -r backup_tag; do
+        echo "   🗑️  Removing old backup: $backup_tag"
+
+        # Remove all images with this backup tag
+        docker images "$ECR_REGISTRY/*:$backup_tag" --format "{{.Repository}}:{{.Tag}}" | while read -r image; do
+            docker rmi "$image" 2>/dev/null || echo "      ⚠️  Could not remove $image"
+        done
+
+        # Remove metadata file
+        rm -f "/tmp/${backup_tag}.meta" 2>/dev/null
+
+        deleted=$((deleted + 1))
+    done
+
+    echo "✅ Cleaned up old backups"
+}
+
+restore_from_backup() {
+    local backup_tag="$1"
+    local containers="$2"
+
+    echo "🔄 Restoring from backup: $backup_tag"
+
+    # Verify backup exists
+    local backup_exists=false
+    for container in $containers; do
+        local repo_name="${service_to_repo_map[$container]:-$container}"
+        local backup_image="$ECR_REGISTRY/$repo_name:$backup_tag"
+
+        if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^${backup_image}$"; then
+            backup_exists=true
+            break
+        fi
+    done
+
+    if [ "$backup_exists" = false ]; then
+        echo "❌ CRITICAL: Backup $backup_tag not found!"
+        list_backups
+        return 1
+    fi
+
+    # Restore each container
+    local restored_containers=""
+    for container in $containers; do
+        local repo_name="${service_to_repo_map[$container]:-$container}"
+        local backup_image="$ECR_REGISTRY/$repo_name:$backup_tag"
+
+        # Check if backup exists for this container
+        if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^${backup_image}$"; then
+            echo "   ⚠️  No backup found for $container - skipping"
+            continue
+        fi
+
+        # Determine environment-specific tag
+        local env_tag="latest"
+        if [[ "$container" == *-staging ]]; then
+            env_tag="staging-latest"
+        elif [[ "$container" == *-dev ]]; then
+            env_tag="dev-latest"
+        fi
+
+        # Re-tag backup as current
+        local current_tag="$ECR_REGISTRY/$repo_name:$env_tag"
+        if docker tag "$backup_image" "$current_tag"; then
+            echo "   ✅ Restored $container from backup"
+            restored_containers="$restored_containers $container"
+        else
+            echo "   ❌ Failed to restore $container"
+        fi
+    done
+
+    if [ -z "$restored_containers" ]; then
+        echo "❌ No containers were restored!"
+        return 1
+    fi
+
+    echo "✅ Backup restoration complete"
+    echo "   Restored containers:$restored_containers"
+    return 0
+}
+
 authenticate_ecr() {
     echo "🔑 Refreshing ECR authentication..."
     echo "   ECR Registry: $ECR_REGISTRY"
     echo "   AWS Region: $AWS_REGION"
-    
+
     # Test AWS credentials first
     if ! aws sts get-caller-identity >/dev/null 2>&1; then
         echo "❌ CRITICAL: AWS credentials not available or invalid"
         echo "🔍 AWS CLI version: $(aws --version 2>&1 || echo 'AWS CLI not found')"
         exit 1
     fi
-    
+
     # Get ECR login with proper error handling
     echo "🔐 Getting ECR login token..."
     if ! aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"; then
@@ -92,6 +275,6 @@ authenticate_ecr() {
         aws ecr describe-repositories --region "$AWS_REGION" --max-items 1 || true
         exit 1
     fi
-    
+
     echo "✅ ECR authentication successful"
 }
