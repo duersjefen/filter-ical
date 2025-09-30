@@ -326,16 +326,13 @@ jobs:
           
           echo "✅ docker-compose configuration valid"
 
-          # Cleanup temporary file (not needed after validation)
-          rm -f docker-compose.yml
-
           # Validate expected staging services are defined
           echo "🔍 Validating staging services..."
           services=$(docker-compose config --services)
-          
+
           expected_services="filter-ical-backend-staging filter-ical-frontend-staging"
           missing_services=""
-          
+
           for service in $expected_services; do
             if echo "$services" | grep -q "^${service}$"; then
               echo "   ✅ $service defined in compose file"
@@ -344,16 +341,20 @@ jobs:
               echo "   ❌ $service missing from compose file"
             fi
           done
-          
+
           if [ -n "$missing_services" ]; then
             echo "❌ CRITICAL: Missing staging services:$missing_services"
             echo "🔍 Available services:"
             echo "$services" | sed 's/^/   /'
+            rm -f docker-compose.yml  # Cleanup before exit
             exit 1
           fi
-          
+
           echo "✅ All staging services validated"
           echo "🎯 Infrastructure sync validation completed successfully"
+
+          # Cleanup temporary file after all validation
+          rm -f docker-compose.yml
         
     - name: 🚀 Deploy to Staging Server
       id: deploy-staging
@@ -605,11 +606,15 @@ jobs:
             echo "❌ CRITICAL: Missing production services:$missing_services"
             echo "🔍 Available services:"
             echo "$services" | sed 's/^/   /'
+            rm -f docker-compose.yml  # Cleanup before exit
             exit 1
           fi
-          
+
           echo "✅ All production services validated"
           echo "🎯 Infrastructure sync validation completed successfully"
+
+          # Cleanup temporary file after all validation
+          rm -f docker-compose.yml
         
     - name: 🚀 Deploy to Production Server
       id: deploy-production
