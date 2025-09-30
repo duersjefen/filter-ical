@@ -7,6 +7,10 @@ on:
         description: 'Type "RESTART" to confirm'
         required: true
 
+env:
+  AWS_REGION: eu-north-1
+  ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
+
 jobs:
   restart:
     if: github.event.inputs.confirm == 'RESTART'
@@ -14,19 +18,24 @@ jobs:
     environment: production
     steps:
       - uses: appleboy/ssh-action@v1.0.3
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: AWS_ACCOUNT_ID,AWS_REGION,ECR_REGISTRY
           script: |
             cd /opt/websites
             echo "🔍 Current container status:"
             docker ps -a | grep -E "nginx|filter-ical"
 
             echo "🔄 Restarting all services..."
-            export AWS_ACCOUNT_ID=310829530903
-            export AWS_REGION=eu-north-1
-            export ECR_REGISTRY=310829530903.dkr.ecr.eu-north-1.amazonaws.com
+            export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}"
+            export AWS_REGION="${AWS_REGION}"
+            export ECR_REGISTRY="${ECR_REGISTRY}"
 
             docker-compose down
             docker-compose up -d
