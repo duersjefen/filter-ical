@@ -1,0 +1,58 @@
+name: Emergency Production Recovery
+on:
+  workflow_dispatch:
+
+jobs:
+  recover:
+    name: 🚑 Emergency Recovery
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚑 Recover Production Containers
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/websites
+
+            echo "🚨 EMERGENCY RECOVERY STARTING..."
+            echo "📊 Current status:"
+            docker ps --filter "name=filter-ical" || true
+
+            # Set environment variables
+            export AWS_REGION="eu-north-1"
+            export ECR_REGISTRY="310829530903.dkr.ecr.eu-north-1.amazonaws.com"
+            export AWS_ACCOUNT_ID="310829530903"
+
+            # ECR auth
+            echo "🔑 Authenticating with ECR..."
+            aws ecr get-login-password --region "$AWS_REGION" | \
+              docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+            # Use production compose file
+            if [ -f "docker-compose.production.yml" ] && [ ! -f "docker-compose.yml" ]; then
+              cp docker-compose.production.yml docker-compose.yml
+            fi
+
+            # Pull and restart containers
+            echo "📥 Pulling latest images..."
+            docker-compose pull filter-ical filter-ical-frontend || true
+
+            echo "🔄 Restarting containers..."
+            docker-compose up -d --force-recreate filter-ical filter-ical-frontend
+
+            # Restart nginx
+            echo "🔄 Restarting nginx..."
+            docker restart websites-nginx 2>/dev/null || echo "Nginx not restarted"
+
+            # Wait
+            echo "⏳ Waiting 20 seconds..."
+            sleep 20
+
+            # Check status
+            echo "✅ Final status:"
+            docker ps --filter "name=filter-ical"
+
+            echo "🎯 Testing:"
+            curl -f -s -o /dev/null -w "https://filter-ical.de/: %{http_code}\n" --max-time 10 https://filter-ical.de/ || echo "FAILED"
