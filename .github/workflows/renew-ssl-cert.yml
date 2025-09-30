@@ -1,0 +1,73 @@
+name: Renew SSL Certificate
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_renewal:
+        description: 'Type "YES" to confirm certificate renewal'
+        required: true
+        type: string
+
+jobs:
+  renew-certificate:
+    if: github.event.inputs.confirm_renewal == 'YES'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: 🔐 Renew Let's Encrypt Certificate
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          debug: true
+          script: |
+            echo "🔐 Renewing Let's Encrypt certificate with staging subdomain..."
+
+            cd /opt/websites || { echo "❌ Failed to access /opt/websites"; exit 1; }
+
+            # Check current certificate
+            echo "📋 Current certificate domains:"
+            docker exec nginx openssl x509 -in /etc/letsencrypt/live/filter-ical.de/fullchain.pem -text -noout | grep "DNS:" || true
+
+            # Stop nginx temporarily (certbot needs port 80)
+            echo "🛑 Stopping nginx..."
+            docker-compose stop nginx
+
+            # Run certbot to expand certificate
+            echo "🔄 Running certbot to expand certificate..."
+            docker run --rm \
+              -v websites-letsencrypt-certs:/etc/letsencrypt \
+              -v websites-certbot-webroot:/var/www/certbot \
+              -p 80:80 \
+              certbot/certbot certonly \
+                --standalone \
+                --expand \
+                --non-interactive \
+                --agree-tos \
+                --email martijn@filter-ical.de \
+                -d filter-ical.de \
+                -d www.filter-ical.de \
+                -d staging.filter-ical.de
+
+            # Start nginx
+            echo "🚀 Starting nginx..."
+            docker-compose start nginx
+
+            # Wait for nginx to start
+            sleep 5
+
+            # Verify nginx configuration
+            echo "🔍 Verifying nginx configuration..."
+            docker exec nginx nginx -t
+
+            # Reload nginx to pick up new certificate
+            echo "🔄 Reloading nginx..."
+            docker exec nginx nginx -s reload
+
+            # Check new certificate
+            echo "✅ New certificate domains:"
+            docker exec nginx openssl x509 -in /etc/letsencrypt/live/filter-ical.de/fullchain.pem -text -noout | grep "DNS:"
+
+            echo "✅ Certificate renewal completed!"
