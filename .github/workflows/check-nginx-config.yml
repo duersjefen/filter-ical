@@ -1,0 +1,29 @@
+name: Check Nginx Config
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Check Nginx Config on Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "📁 Checking nginx.conf on server:"
+            ls -lah /opt/websites/nginx.conf 2>&1 || echo "File not found at /opt/websites/nginx.conf"
+
+            echo ""
+            echo "🔍 Line 93 (should be commented upstream):"
+            sed -n '93p' /opt/websites/nginx.conf 2>&1 || echo "Could not read line"
+
+            echo ""
+            echo "🔍 Docker nginx config (actual used config):"
+            docker exec websites-nginx cat /etc/nginx/nginx.conf 2>&1 | grep -A 10 "Development environment"
+
+            echo ""
+            echo "🔍 Last 20 lines of nginx logs:"
+            docker logs --tail 20 websites-nginx 2>&1
