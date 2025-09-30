@@ -39,8 +39,8 @@
           <!-- Progress indicator -->
           <div class="hidden sm:flex items-center gap-1">
             <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
-              <div 
-                class="h-full bg-gray-600 dark:bg-gray-400 transition-all duration-300"
+              <div
+                class="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
                 :style="{ width: `${filteredSingleRecurringEvents.length > 0 ? (selectedSinglesCount / filteredSingleRecurringEvents.length) * 100 : 0}%` }"
               ></div>
             </div>

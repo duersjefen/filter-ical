@@ -384,7 +384,7 @@
                         <!-- Recurring indicator -->
                         <span v-if="event.is_recurring" class="text-blue-500" :title="$t('messages.recurringEvent')">🔄</span>
                         <!-- Title (only if different) -->
-                        <span v-if="event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 truncate">
+                        <span v-if="event.title && event.title !== recurringEvent.name" class="font-medium text-gray-800 dark:text-gray-200 truncate">
                           {{ event.title.trim() }}
                         </span>
                       </div>

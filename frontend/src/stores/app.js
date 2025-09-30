@@ -463,9 +463,40 @@ export const useAppStore = defineStore('app', () => {
 
       // Process events from the new API response format
       if (result.data.events && result.data.events.length > 0) {
+        // Normalize field names: API returns start_time/end_time, but frontend expects start/end
+        const normalizedEvents = result.data.events.map(event => ({
+          ...event,
+          // Map start_time -> start (keep original as fallback)
+          start: event.start_time || event.start,
+          dtstart: event.start_time || event.dtstart,
+          // Map end_time -> end (keep original as fallback)
+          end: event.end_time || event.end,
+          dtend: event.end_time || event.dtend,
+          // Keep original fields for compatibility
+          start_time: event.start_time,
+          end_time: event.end_time
+        }))
+
+        console.log('✅ Personal calendar events normalized:', {
+          eventsCount: normalizedEvents.length,
+          firstEventTitle: normalizedEvents[0].title,
+          beforeNormalization: {
+            start_time: result.data.events[0].start_time,
+            end_time: result.data.events[0].end_time,
+            title: result.data.events[0].title
+          },
+          afterNormalization: {
+            start: normalizedEvents[0].start,
+            end: normalizedEvents[0].end,
+            dtstart: normalizedEvents[0].dtstart,
+            dtend: normalizedEvents[0].dtend,
+            title: normalizedEvents[0].title
+          }
+        })
+
         // Events is an array of individual events, we need to group them by title
         const recurringEventMap = {}
-        result.data.events.forEach(event => {
+        normalizedEvents.forEach(event => {
           const recurringEvent = event.title
           if (!recurringEventMap[recurringEvent]) {
             recurringEventMap[recurringEvent] = {
@@ -477,10 +508,15 @@ export const useAppStore = defineStore('app', () => {
           recurringEventMap[recurringEvent].count++
           recurringEventMap[recurringEvent].events.push(event)
         })
-        
+
         // Store the processed data in reactive variables for CalendarView
         recurringEvents.value = recurringEventMap
-        events.value = result.data.events || []
+        events.value = normalizedEvents
+
+        console.log('✅ Personal calendar data stored in appStore:', {
+          recurringEventsCount: Object.keys(recurringEvents.value).length,
+          eventsCount: events.value.length
+        })
       } else {
         // No events data - clear reactive variables
         recurringEvents.value = {}

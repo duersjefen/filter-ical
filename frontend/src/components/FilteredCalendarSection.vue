@@ -779,12 +779,13 @@ const getFullExportUrl = (calendar) => {
     console.warn('Calendar object missing export_url:', calendar)
     return ''
   }
-  
-  // If we're in development, use localhost backend
+
+  // If we're in development, use Vite proxy (relative URL works through proxy)
   if (import.meta.env.MODE === 'development') {
-    return `http://localhost:3000${calendar.export_url}`
+    // Use current origin (localhost:8000) which proxies to backend
+    return `${window.location.origin}${calendar.export_url}`
   }
-  
+
   // Production URL
   return `https://filter-ical.de${calendar.export_url}`
 }

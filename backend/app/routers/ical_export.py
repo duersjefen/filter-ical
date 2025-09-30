@@ -15,6 +15,7 @@ router = APIRouter()
 
 
 @router.get("/{uuid}.ics")
+@router.head("/{uuid}.ics")
 async def export_filtered_calendar(
     uuid: str,
     db: Session = Depends(get_db)

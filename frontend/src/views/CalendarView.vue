@@ -463,13 +463,50 @@ const loadCalendarData = async (calendarId) => {
         })
       } else {
         // No groups - this is a personal calendar, extract from appStore directly
-        if (appStore.events && appStore.events.length > 0 && appStore.recurringEvents) {
-          // Personal calendar - use data directly from appStore
-          events.value = appStore.events
-          recurringEvents.value = appStore.recurringEvents
+        console.log('📊 Personal calendar - checking appStore data:', {
+          hasEvents: !!appStore.events,
+          eventsLength: appStore.events?.length || 0,
+          hasRecurringEvents: !!appStore.recurringEvents,
+          recurringEventsKeys: appStore.recurringEvents ? Object.keys(appStore.recurringEvents).length : 0,
+          eventsType: Array.isArray(appStore.events) ? 'array' : typeof appStore.events,
+          recurringEventsType: typeof appStore.recurringEvents
+        })
+
+        // Validate and extract personal calendar data with proper checks
+        const hasValidEvents = appStore.events && Array.isArray(appStore.events) && appStore.events.length > 0
+        const hasValidRecurringEvents = appStore.recurringEvents &&
+                                        typeof appStore.recurringEvents === 'object' &&
+                                        Object.keys(appStore.recurringEvents).length > 0
+
+        if (hasValidEvents && hasValidRecurringEvents) {
+          // Create COPIES of the data to avoid reference issues
+          events.value = [...appStore.events]
+          recurringEvents.value = { ...appStore.recurringEvents }
+
+          console.log('✅ Personal calendar data extracted:', {
+            eventsCount: events.value.length,
+            recurringEventsCount: Object.keys(recurringEvents.value).length,
+            recurringEventNames: Object.keys(recurringEvents.value).slice(0, 5),
+            firstEvent: events.value[0]?.title,
+            firstEventStructure: events.value[0] ? Object.keys(events.value[0]) : [],
+            firstEventDates: events.value[0] ? {
+              start: events.value[0].start,
+              dtstart: events.value[0].dtstart,
+              end: events.value[0].end,
+              dtend: events.value[0].dtend
+            } : null
+          })
         } else {
+          // No valid data - clear and log warning
           recurringEvents.value = {}
           events.value = []
+
+          console.warn('⚠️ Personal calendar: No valid events data:', {
+            hasValidEvents,
+            hasValidRecurringEvents,
+            rawEventsLength: appStore.events?.length || 0,
+            rawRecurringEventsKeys: appStore.recurringEvents ? Object.keys(appStore.recurringEvents).length : 0
+          })
         }
       }
     } catch (extractError) {

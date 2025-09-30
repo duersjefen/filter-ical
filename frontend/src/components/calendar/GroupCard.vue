@@ -11,7 +11,7 @@
     :title="$t('ui.clickAnywhereToToggle', { name: group.name })"
   >
     <!-- Enhanced Group Header with gradient pattern for consistency -->
-    <div class="bg-gradient-to-r from-slate-200 to-slate-300 dark:from-gray-700 dark:to-gray-800 px-6 py-5 border-b border-slate-300 dark:border-gray-600 relative overflow-hidden">
+    <div class="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-gray-700 dark:to-gray-800 px-6 py-5 border-b border-slate-200 dark:border-gray-600 relative overflow-hidden">
       <!-- Subscription status indicator stripe -->
       <div 
         class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
@@ -70,7 +70,7 @@
                 {{ Math.round((selectedGroupRecurringEvents.length / recurringEventsCount) * 100) }}%
               </span>
             </div>
-            <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+            <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
               <div 
                 class="h-full transition-all duration-500 ease-out rounded-full"
                 :class="selectedGroupRecurringEvents.length === 0 
@@ -103,7 +103,7 @@
     </div>
     
     <!-- Enhanced Card Content with modern button design -->
-    <div class="p-6 bg-gray-600 dark:bg-gray-800">
+    <div class="p-6 bg-gray-50 dark:bg-gray-800">
       
       <!-- Compact Action Buttons -->
       <div class="space-y-2">

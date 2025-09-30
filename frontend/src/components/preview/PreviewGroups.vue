@@ -3,23 +3,23 @@
     <!-- Ultra-Minimal Toggle Buttons -->
     <div v-if="(viewMode === 'month' || viewMode === 'year') && groups.length > 1" class="flex justify-start mb-4">
       <div class="flex gap-2 text-xs">
-        <button 
+        <button
           v-if="!allExpanded"
           @click="expandAll"
           class="inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-transparent hover:border-blue-200 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:from-blue-900/20 dark:to-blue-800/40 dark:text-blue-300 dark:hover:from-blue-800/40 dark:hover:to-blue-900/60 dark:hover:text-blue-200"
         >
-          <svg class="w-3 h-3 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          <svg class="w-3 h-3 transition-all duration-300 rotate-180" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
           {{ $t('controls.expandAll') }}
         </button>
-        <button 
+        <button
           v-if="!allCollapsed"
           @click="collapseAll"
           class="inline-flex items-center justify-center gap-2 px-2 py-1 text-xs font-medium text-slate-500 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 border border-transparent hover:border-slate-300 rounded-md opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300"
         >
-          <svg class="w-3 h-3 transition-transform duration-200 rotate-90" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          <svg class="w-3 h-3 transition-all duration-300" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
           {{ $t('controls.collapseAll') }}
         </button>
@@ -41,28 +41,31 @@
               class="mb-2"
             >
               <!-- Current Year Month Header (direct, no nesting) -->
-              <div 
+              <div
                 @click="toggleGroupExpansion(month.name)"
-                class="flex items-center gap-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
+                class="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group"
+                :class="{
+                  'bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500': isCurrentMonth(month.name),
+                  'ml-1': !isCurrentMonth(month.name)
+                }"
               >
-                <svg 
-                  class="w-4 h-4 transition-transform duration-200 text-blue-500 dark:text-blue-400" 
-                  :class="{ 'rotate-90': expandedGroups.has(month.name) }"
-                  fill="currentColor" 
+                <svg
+                  class="w-4 h-4 transition-all duration-300 text-blue-500 dark:text-blue-400 flex-shrink-0"
+                  :class="{ 'rotate-180': expandedGroups.has(month.name) }"
+                  fill="currentColor"
                   viewBox="0 0 20 20"
                 >
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
-                
-                <div class="flex-1">
+
+                <div class="flex-1 flex items-baseline gap-2">
                   <span class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
-                    {{ month.name.split(' ')[0] }}
+                    {{ month.name }}
+                  </span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {{ month.events.length }} {{ month.events.length === 1 ? 'event' : 'events' }}
                   </span>
                 </div>
-                
-                <span class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full font-medium">
-                  {{ month.events.length }}
-                </span>
               </div>
               
               <!-- Current Year Events -->
@@ -83,28 +86,27 @@
           <template v-else>
             <div class="mb-2">
               <!-- Year Header (collapsed by default) -->
-              <div 
+              <div
                 @click="toggleGroupExpansion(group.year)"
-                class="flex items-center gap-3 py-2 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
+                class="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-all duration-200 group"
               >
-                <svg 
-                  class="w-4 h-4 transition-transform duration-200 text-purple-500 dark:text-purple-400" 
-                  :class="{ 'rotate-90': expandedGroups.has(group.year) }"
-                  fill="currentColor" 
+                <svg
+                  class="w-4 h-4 transition-all duration-300 text-purple-500 dark:text-purple-400 flex-shrink-0"
+                  :class="{ 'rotate-180': expandedGroups.has(group.year) }"
+                  fill="currentColor"
                   viewBox="0 0 20 20"
                 >
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
-                
-                <div class="flex-1">
+
+                <div class="flex-1 flex items-baseline gap-2">
                   <span class="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
                     📅 {{ group.year }}
                   </span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    {{ group.totalEvents }} {{ group.totalEvents === 1 ? 'event' : 'events' }}
+                  </span>
                 </div>
-                
-                <span class="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full font-medium">
-                  {{ group.totalEvents }}
-                </span>
               </div>
               
               <!-- Other Year Months (when expanded) -->
@@ -114,28 +116,27 @@
                   :key="month.name"
                 >
                   <!-- Month Header -->
-                  <div 
+                  <div
                     @click="toggleGroupExpansion(month.name)"
-                    class="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                    class="flex items-center gap-2 py-2 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 group ml-2"
                   >
-                    <svg 
-                      class="w-3 h-3 transition-transform duration-200 text-gray-500 dark:text-gray-400" 
-                      :class="{ 'rotate-90': expandedGroups.has(month.name) }"
-                      fill="currentColor" 
+                    <svg
+                      class="w-3 h-3 transition-all duration-300 text-gray-500 dark:text-gray-400 flex-shrink-0"
+                      :class="{ 'rotate-180': expandedGroups.has(month.name) }"
+                      fill="currentColor"
                       viewBox="0 0 20 20"
                     >
-                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
-                    
-                    <div class="flex-1">
+
+                    <div class="flex-1 flex items-baseline gap-2">
                       <span class="font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
                         {{ month.name.split(' ')[0] }}
                       </span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">
+                        {{ month.events.length }}
+                      </span>
                     </div>
-                    
-                    <span class="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full font-medium">
-                      {{ month.events.length }}
-                    </span>
                   </div>
                   
                   <!-- Events for this month -->
@@ -157,33 +158,32 @@
 
         <!-- Natural Month Header -->
         <template v-else-if="viewMode === 'month'">
-          <div 
+          <div
             @click="toggleGroupExpansion(group.name)"
-            class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+            class="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 group"
+            :class="{
+              'bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500': isCurrentMonth(group.name),
+              'ml-1': !isCurrentMonth(group.name)
+            }"
           >
             <!-- Minimal expansion icon -->
-            <svg 
-              class="w-4 h-4 transition-transform duration-200 text-gray-400 dark:text-gray-500" 
-              :class="{ 'rotate-90': expandedGroups.has(group.name) }"
-              fill="currentColor" 
+            <svg
+              class="w-4 h-4 transition-all duration-300 text-gray-400 dark:text-gray-500 flex-shrink-0"
+              :class="{ 'rotate-180': expandedGroups.has(group.name) }"
+              fill="currentColor"
               viewBox="0 0 20 20"
             >
-              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
-            
+
             <!-- Clean month title -->
             <div class="flex-1 flex items-baseline gap-2">
               <span class="font-semibold text-gray-900 dark:text-gray-100">
-                {{ getMonthName(group.name) }}
+                {{ group.name }}
               </span>
-              <span class="text-xs text-gray-500 dark:text-gray-400 font-mono opacity-75">
-                {{ getYearFromMonth(group.name) }}
+              <span class="text-sm text-gray-500 dark:text-gray-400">
+                {{ group.events.length }} {{ group.events.length === 1 ? 'event' : 'events' }}
               </span>
-            </div>
-            
-            <!-- Simple event count -->
-            <div class="text-xs text-gray-600 dark:text-gray-400 opacity-75">
-              <span class="font-medium">{{ group.events.length }}</span>
             </div>
           </div>
           
@@ -210,13 +210,13 @@
               :class="getGroupHeaderClass(viewMode)"
             >
               <div class="flex items-center gap-3">
-                <svg 
-                  class="w-4 h-4 transition-transform duration-300" 
-                  :class="{ 'rotate-90': expandedGroups.has(group.name) }"
-                  fill="currentColor" 
+                <svg
+                  class="w-4 h-4 transition-all duration-300 flex-shrink-0"
+                  :class="{ 'rotate-180': expandedGroups.has(group.name) }"
+                  fill="currentColor"
                   viewBox="0 0 20 20"
                 >
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
                 <h4 class="font-semibold text-base m-0">{{ group.name }}</h4>
               </div>
@@ -366,8 +366,16 @@ const getMonthName = (monthString) => {
   return monthString.split(' ')[0]
 }
 
-// Extract year from "Month Year" format  
+// Extract year from "Month Year" format
 const getYearFromMonth = (monthString) => {
   return monthString.split(' ')[1]
+}
+
+// Check if a month string represents the current month
+const isCurrentMonth = (monthString) => {
+  const now = new Date()
+  const currentMonthName = now.toLocaleDateString('en-US', { month: 'long' })
+  const currentYear = now.getFullYear()
+  return monthString === `${currentMonthName} ${currentYear}`
 }
 </script>
