@@ -291,14 +291,14 @@ def apply_filter_to_events(events: List[Dict[str, Any]], filter_data: Dict[str, 
 def transform_events_for_export(events: List[Dict[str, Any]], filter_name: str) -> str:
     """
     Transform events into iCal format for export.
-    
+
     Args:
         events: List of events to export
         filter_name: Name of the filter for iCal metadata
-        
+
     Returns:
         iCal formatted string
-        
+
     Pure function - deterministic text transformation.
     """
     lines = [
@@ -308,17 +308,22 @@ def transform_events_for_export(events: List[Dict[str, Any]], filter_name: str) 
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH"
     ]
-    
+
     for event in events:
         raw_ical = event.get("other_ical_fields", {}).get("raw_ical", "")
-        if raw_ical:
-            # Use original raw iCal if available
+
+        # Check if raw_ical has proper DTSTART field
+        # If not, generate from our parsed data to ensure compliance
+        has_dtstart = raw_ical and "DTSTART" in raw_ical
+
+        if has_dtstart:
+            # Use original raw iCal if it has proper date fields
             lines.append(raw_ical)
         else:
-            # Generate basic VEVENT from event data
+            # Generate proper VEVENT from our parsed data (with DTSTART/DTEND)
             event_lines = _generate_vevent_from_data(event)
             lines.extend(event_lines)
-    
+
     lines.append("END:VCALENDAR")
     return "\n".join(lines)
 

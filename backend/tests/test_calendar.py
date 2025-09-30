@@ -481,7 +481,64 @@ class TestEventExport:
         """Test applying empty filter to events."""
         events = [{"id": 1, "title": "Event 1"}]
         filter_data = {"subscribed_event_ids": []}
-        
+
         result = apply_filter_to_events(events, filter_data)
-        
+
         assert len(result) == 0
+
+    def test_transform_events_with_dtstart_dtend(self):
+        """Test that exported events always have DTSTART and DTEND fields."""
+        events = [
+            {
+                "id": 1,
+                "title": "Test Event",
+                "start_time": datetime(2025, 9, 30, 18, 0, tzinfo=timezone.utc),
+                "end_time": datetime(2025, 9, 30, 19, 0, tzinfo=timezone.utc),
+                "uid": "test-uid-123",
+                "description": "Test description",
+                "location": "Test location",
+                "other_ical_fields": {"raw_ical": ""}
+            }
+        ]
+
+        result = transform_events_for_export(events, "Test Filter")
+
+        # Verify proper iCal structure
+        assert "BEGIN:VCALENDAR" in result
+        assert "END:VCALENDAR" in result
+        assert "BEGIN:VEVENT" in result
+        assert "END:VEVENT" in result
+
+        # CRITICAL: Verify DTSTART and DTEND are present
+        assert "DTSTART:" in result
+        assert "DTEND:" in result
+        assert "SUMMARY:Test Event" in result
+        assert "UID:test-uid-123" in result
+
+    def test_transform_events_malformed_raw_ical(self):
+        """Test that malformed raw_ical without DTSTART gets regenerated."""
+        events = [
+            {
+                "id": 1,
+                "title": "Malformed Event",
+                "start_time": datetime(2025, 9, 30, 18, 0, tzinfo=timezone.utc),
+                "end_time": datetime(2025, 9, 30, 19, 0, tzinfo=timezone.utc),
+                "uid": "malformed-uid",
+                "description": "Local time: tir 30 september 18:00 - 19:00",
+                "location": "Meyenfeld",
+                # Malformed raw_ical - missing DTSTART/DTEND
+                "other_ical_fields": {
+                    "raw_ical": """BEGIN:VEVENT
+SUMMARY:Malformed Event
+DESCRIPTION:Local time: tir 30 september 18:00 - 19:00
+END:VEVENT"""
+                }
+            }
+        ]
+
+        result = transform_events_for_export(events, "Test Filter")
+
+        # Should regenerate with proper DTSTART/DTEND from parsed data
+        assert "DTSTART:20250930T180000Z" in result
+        assert "DTEND:20250930T190000Z" in result
+        assert "SUMMARY:Malformed Event" in result
