@@ -11,16 +11,30 @@ Production-ready Python + Vue 3 web application with comprehensive TDD workflow 
 2. **Make minimum implementation** → Code only what's needed to pass tests
 3. **Refactor safely** → `make test` ensures no regression
 4. **Test & Commit** → Always run `make test` and commit after completing features/fixes
-5. **Deploy** → `make deploy` (with real-time monitoring)
+5. **Deploy** → `make deploy-staging` (auto) or `make deploy-production` (manual approval)
 
-### Commands
+### Quick Reference
 ```bash
 # Development
-make dev                   # Start both backend and frontend  
-make test                  # Unit tests (for commits) - 5 tests
-make test-future           # TDD development tests - 35 tests  
-make test-all             # Complete test suite - 40 tests
-make deploy               # Deploy with real-time monitoring
+make dev                   # Start PostgreSQL + backend + frontend
+make stop                  # Stop all development services
+make health                # Check service status
+make reset-db              # Reset local database
+
+# Testing
+make test                  # Run unit tests
+make test-all              # Run complete test suite (unit + integration + E2E)
+
+# Deployment
+make deploy-staging        # Deploy to staging (auto-deploy on push to master)
+make deploy-production     # Deploy to production (requires manual approval)
+make status                # Check deployment status
+
+# Local Development URLs
+# Frontend:  http://localhost:8000
+# Backend:   http://localhost:3000
+# API Docs:  http://localhost:3000/docs
+# Database:  localhost:5432 (PostgreSQL in Docker)
 
 # NEVER use manual server commands - always use Makefile
 # NOTE: Servers have hot-reloading - no restart needed for code changes
@@ -111,13 +125,22 @@ return { get user() { return appStore.user } }
 
 ---
 
-## 🚢 PRODUCTION INFRASTRUCTURE
+## 🚢 INFRASTRUCTURE
 
-### Stack
+### Local Development (WSL2)
+- **Backend:** Uvicorn on `localhost:3000` (hot reload)
+- **Frontend:** Vite on `localhost:8000` (hot reload)
+- **Database:** PostgreSQL in Docker on `localhost:5432`
+  - Container: `filter-ical-postgres-dev`
+  - Database: `filterical_development`
+  - Managed by: `docker-compose.dev.yml`
+
+### Production Stack
 - **Backend:** Python FastAPI + Uvicorn (port 3000)
 - **Frontend:** Vue 3 SPA with Vite + Pinia (port 8000)
 - **Domain:** https://filter-ical.de
-- **AWS:** EC2 i-01647c3d9af4fe9fc (56.228.25.95)
+- **Staging:** https://staging.filter-ical.de
+- **AWS:** EC2 i-01647c3d9af4fe9fc (13.62.136.72)
 
 ### Database Migrations
 **MANDATORY: Use Alembic for all schema changes**
@@ -160,7 +183,9 @@ alembic upgrade head
 - Manual database schema changes
 
 **PURPOSE:** This architecture ensures 100% testability, zero frontend coupling, fearless refactoring, and production reliability.
-- The dev server is normally already running, no need to start it most of the time.
-- Don't rerun "make dev", when the servers are still running!
-- Always use make deploy instead of manual gh workflow run commands - it includes all the
-  safety mechanisms you need!
+
+### Development Tips
+- Dev servers usually already running - check with `make health` before starting
+- Don't rerun `make dev` when servers are still running
+- Use `make stop` to cleanly stop all services
+- Always use `make deploy-staging` / `make deploy-production` instead of manual GitHub Actions commands

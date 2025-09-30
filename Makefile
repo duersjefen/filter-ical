@@ -43,7 +43,7 @@ dev-backend: ## Run backend natively (hot reload)
 
 dev-frontend: ## Run frontend natively (hot reload)
 	@echo "🎨 Starting frontend with hot reload..."
-	@echo "📍 http://localhost:5173"
+	@echo "📍 http://localhost:8000"
 	@cd frontend && \
 		(test -d node_modules || npm install) && \
 		npm run dev
@@ -135,7 +135,7 @@ health: ## Check application health
 	@echo -n "🐍 Backend:    "
 	@curl -sf http://localhost:3000/health >/dev/null 2>&1 && echo "✅ http://localhost:3000" || echo "❌"
 	@echo -n "🎨 Frontend:   "
-	@curl -sf http://localhost:5173 >/dev/null 2>&1 && echo "✅ http://localhost:5173" || echo "❌"
+	@curl -sf http://localhost:8000 >/dev/null 2>&1 && echo "✅ http://localhost:8000" || echo "❌"
 
 logs-db: ## View PostgreSQL logs
 	@docker logs filter-ical-postgres-dev -f
