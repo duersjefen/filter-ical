@@ -368,7 +368,7 @@ jobs:
     - name: 🧪 Validate Staging Deployment
       uses: ./.github/actions/validate-endpoints
       with:
-        domain: ${{ vars.DOMAIN_NAME_VAR }}  # TODO: Create separate staging domain
+        domain: 'staging.filter-ical.de'  # Staging environment
         endpoints: '/,/health,/domains/exter/groups'
         timeout: '30'
         retries: '5'
