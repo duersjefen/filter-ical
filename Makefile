@@ -13,16 +13,18 @@
 ## 🚀 Development Commands
 ##
 
-dev: dev-db ## Start full development environment
+dev: ## Start full development environment (recommended)
+	@echo "🚀 Starting full development environment..."
 	@echo ""
-	@echo "✅ PostgreSQL is running in Docker"
+	@$(MAKE) dev-db
 	@echo ""
-	@echo "Now start backend and frontend:"
-	@echo "  Terminal 1: make dev-backend"
-	@echo "  Terminal 2: make dev-frontend"
+	@echo "✅ PostgreSQL running on localhost:5432"
 	@echo ""
-	@echo "Or run them in background:"
-	@echo "  make dev-backend & make dev-frontend &"
+	@echo "Starting backend and frontend in parallel..."
+	@bash -c "trap 'kill 0' EXIT; \
+		(cd backend && (test -d venv || python3 -m venv venv) && . venv/bin/activate && pip install -q -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 3000) & \
+		(cd frontend && (test -d node_modules || npm install) && npm run dev) & \
+		wait"
 
 dev-db: ## Start PostgreSQL database only
 	@echo "🐘 Starting PostgreSQL database..."
