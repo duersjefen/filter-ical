@@ -369,8 +369,8 @@ const loadCalendarData = async (calendarId) => {
       // Domain calendars are system-managed - create reference without API dependency
       selectedCalendar.value = {
         id: calendarId,
-        name: props.domainContext.name || `Domain Calendar (${calendarId})`,
-        url: props.domainContext.ical_url || '',
+        name: props.domainContext?.name || `Domain Calendar (${calendarId})`,
+        url: props.domainContext?.ical_url || '',
         user_id: 'system', // Mark as system-managed, not domain user
         source: 'domain',
         system_managed: true // Explicit flag for domain calendars
