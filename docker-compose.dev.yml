@@ -1,44 +1,33 @@
-services:
-  backend-dev:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./backend:/app
-      - /app/venv  # Exclude venv from volume mount
-      - backend-data:/app/data  # Persistent database storage
-    env_file:
-      - .env.development
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    restart: unless-stopped
+version: '3.8'
 
-  frontend-dev:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # Exclude node_modules from volume mount
-    env_file:
-      - .env.development
-    depends_on:
-      backend-dev:
-        condition: service_healthy
+# =============================================================================
+# Local Development Environment - PostgreSQL ONLY
+# =============================================================================
+# This runs ONLY PostgreSQL for local development
+# Run backend and frontend NATIVELY for fastest hot reload:
+#   Backend:  cd backend && uvicorn app.main:app --reload
+#   Frontend: cd frontend && npm run dev
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: filter-ical-postgres-dev
     restart: unless-stopped
+    ports:
+      - "5432:5432"  # Exposed to WSL2 for local dev
+    environment:
+      POSTGRES_USER: filterical_dev
+      POSTGRES_PASSWORD: dev_password_change_me
+      POSTGRES_DB: filterical_development
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filterical_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
-  backend-data:
-    driver: local
-
-networks:
-  default:
-    name: filter-ical-dev
+  postgres-dev-data:
+    name: filter-ical-dev-db
