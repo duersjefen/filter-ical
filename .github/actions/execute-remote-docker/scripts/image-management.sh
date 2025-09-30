@@ -202,6 +202,14 @@ restore_from_backup() {
 
     echo "🔄 Restoring from backup: $backup_tag"
 
+    # Validate backup tag format
+    if [[ ! "$backup_tag" =~ ^backup-[0-9]+$ ]]; then
+        echo "❌ Invalid backup tag format: $backup_tag"
+        echo "   Expected format: backup-<timestamp> (e.g., backup-1234567890)"
+        list_backups
+        return 1
+    fi
+
     # Verify backup exists
     local backup_exists=false
     for container in $containers; do

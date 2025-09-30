@@ -18,6 +18,14 @@ services:
         condition: service_healthy
       filter-ical-frontend:
         condition: service_healthy
+      filter-ical-backend-staging:
+        condition: service_started
+      filter-ical-frontend-staging:
+        condition: service_started
+      filter-ical-backend-dev:
+        condition: service_started
+      filter-ical-frontend-dev:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "nginx", "-t"]

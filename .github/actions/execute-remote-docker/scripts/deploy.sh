@@ -9,8 +9,37 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source all modules
 source "$SCRIPT_DIR/container-migration.sh"
-source "$SCRIPT_DIR/image-management.sh" 
+source "$SCRIPT_DIR/image-management.sh"
 source "$SCRIPT_DIR/deployment-validation.sh"
+
+check_disk_space() {
+    echo "💾 Checking disk space..."
+
+    local available_kb=$(df /opt/websites | awk 'NR==2 {print $4}')
+    local available_gb=$((available_kb / 1024 / 1024))
+    local required_gb=2
+
+    echo "   Available: ${available_gb}GB"
+    echo "   Required: ${required_gb}GB"
+
+    if [ "$available_gb" -lt "$required_gb" ]; then
+        echo "❌ CRITICAL: Insufficient disk space!"
+        echo "   Available: ${available_gb}GB"
+        echo "   Required: ${required_gb}GB minimum"
+        echo ""
+        echo "🔍 Disk usage breakdown:"
+        du -sh /opt/websites/* 2>/dev/null || true
+        echo ""
+        echo "💡 Suggestions:"
+        echo "   1. Run backup cleanup: cleanup_old_backups 1"
+        echo "   2. Remove unused Docker images: docker image prune -a"
+        echo "   3. Check Docker volumes: docker system df"
+        return 1
+    fi
+
+    echo "✅ Sufficient disk space available"
+    return 0
+}
 
 main() {
     local operation="${1}"
@@ -20,6 +49,13 @@ main() {
 
     echo "🐳 Starting deployment operation: $operation"
     echo "🎯 Target containers: $containers"
+
+    # Check disk space before any operation (except list-backups)
+    if [ "$operation" != "list-backups" ]; then
+        if ! check_disk_space; then
+            exit 1
+        fi
+    fi
 
     case "$operation" in
         "deploy")

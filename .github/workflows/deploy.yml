@@ -320,11 +320,15 @@ jobs:
             echo "   ECR_REGISTRY: $ECR_REGISTRY"
             echo "🔍 Config validation errors:"
             docker-compose config
+            rm -f docker-compose.yml  # Cleanup temp file on error
             exit 1
           fi
           
           echo "✅ docker-compose configuration valid"
-          
+
+          # Cleanup temporary file (not needed after validation)
+          rm -f docker-compose.yml
+
           # Validate expected staging services are defined
           echo "🔍 Validating staging services..."
           services=$(docker-compose config --services)
@@ -575,6 +579,7 @@ jobs:
             echo "   ECR_REGISTRY: $ECR_REGISTRY"
             echo "🔍 Config validation errors:"
             docker-compose config
+            rm -f docker-compose.yml  # Cleanup temp file on error
             exit 1
           fi
           
