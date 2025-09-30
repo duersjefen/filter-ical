@@ -266,7 +266,7 @@
     "searchEvents": "Events nach Titel oder Ort suchen...",
     "backToCalendar": "← Zurück zum {domain} Kalender",
     "manageEventsGroups": "Admin Panel: {domain}",
-    "adminPanelSubtitle": "Events, Gruppen und Automatisierungsregeln verwalten",
+    "adminPanelSubtitle": "Gruppen und Automatisierungsregeln verwalten",
     "eventManagement": "Event-Verwaltung",
     "groups": "Gruppen",
     "autoRules": "Auto-Regeln",
@@ -407,11 +407,11 @@
     "matches": "entspricht"
   },
   "titles": {
-    "icalFilterSubscribe": "🗓️ PAISS"
+    "icalFilterSubscribe": "🗓️ Filter iCal"
   },
   "subtitles": {
-    "filterCalendarsCreateFeeds": "Filtern Sie Ihre Kalender und erstellen Sie benutzerdefinierte Feeds",
-    "domainCalendar": "Domain-Kalender"
+    "filterCalendarsCreateFeeds": "Kalender hinzufügen • Events filtern\nGefilterte iCal-Abos exportieren",
+    "domainCalendar": "Events durchsuchen\nGruppen & Events abonnieren\niCal-Link in Kalender-App nutzen"
   },
   "eventManagement": {
     "eventManagementTips": "Event-Management-Tipps",

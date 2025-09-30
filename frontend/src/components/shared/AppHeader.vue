@@ -99,8 +99,10 @@
 
       <!-- Center: Title (perfectly centered) -->
       <div class="text-center justify-self-center">
-        <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white whitespace-nowrap tracking-tight drop-shadow-sm">{{ title }}</h1>
-        <p v-if="subtitle && !hideSubtitle" class="text-sm sm:text-base opacity-85 font-medium text-white/90 whitespace-nowrap mt-1">{{ subtitle }}</p>
+        <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white whitespace-nowrap tracking-tight drop-shadow-lg">{{ title }}</h1>
+        <div v-if="subtitle && !hideSubtitle" class="inline-flex flex-col items-center gap-1 mt-3 px-4 py-2.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg">
+          <p class="text-xs sm:text-sm font-semibold text-white/95 tracking-wide leading-relaxed whitespace-pre-line text-center">{{ subtitle }}</p>
+        </div>
       </div>
 
       <!-- Right Side: Admin, Language & Dark Mode -->
@@ -223,8 +225,10 @@
 
       <!-- Title Section -->
       <div class="text-center mb-4">
-        <h1 class="text-xl font-bold mb-1 tracking-tight drop-shadow-sm">{{ title }}</h1>
-        <p v-if="subtitle && !hideSubtitle" class="text-sm opacity-85 font-medium text-white/90 mt-1">{{ subtitle }}</p>
+        <h1 class="text-xl font-bold mb-3 tracking-tight drop-shadow-lg">{{ title }}</h1>
+        <div v-if="subtitle && !hideSubtitle" class="inline-flex flex-col items-center gap-1 px-4 py-2.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg mb-4">
+          <p class="text-xs font-semibold text-white/95 tracking-wide leading-relaxed whitespace-pre-line text-center">{{ subtitle }}</p>
+        </div>
       </div>
 
       <!-- Username Section - Below title -->

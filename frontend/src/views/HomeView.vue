@@ -7,28 +7,43 @@
     />
 
     <!-- Add Calendar Form -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
-      <h2 class="mb-8 text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $t('home.addNewCalendar') }}</h2>
+    <div class="bg-gradient-to-br from-white via-white to-blue-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-blue-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-8 hover:shadow-2xl hover:border-blue-300/50 dark:hover:border-blue-600/50 transition-all duration-300 backdrop-blur-sm">
+      <div class="flex items-center gap-3 mb-6 sm:mb-8">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $t('home.addNewCalendar') }}</h2>
+      </div>
       
-      <div v-if="appStore.error" class="bg-gradient-to-r from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-800/30 text-red-800 dark:text-red-200 px-6 py-4 rounded-xl mb-6 border-2 border-red-300 dark:border-red-700 relative shadow-lg">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="text-2xl">⚠️</div>
-            <span class="font-semibold">{{ appStore.error }}</span>
+      <div v-if="appStore.error" class="bg-gradient-to-br from-red-50 via-red-100 to-orange-50 dark:from-red-900/30 dark:via-red-800/30 dark:to-orange-900/30 text-red-900 dark:text-red-200 px-6 py-5 rounded-2xl mb-6 border-2 border-red-300 dark:border-red-700 relative shadow-xl backdrop-blur-sm">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 flex-1">
+            <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <span class="font-bold text-sm sm:text-base">{{ appStore.error }}</span>
           </div>
-          <button @click="appStore.clearError()" class="bg-transparent border-none text-red-800 dark:text-red-200 cursor-pointer text-xl font-bold hover:text-red-900 dark:hover:text-red-300 transition-all duration-300 hover:scale-110 p-2 rounded-full hover:bg-red-200 dark:hover:bg-red-800/50">&times;</button>
+          <button @click="appStore.clearError()" class="bg-red-200/50 hover:bg-red-300/70 dark:bg-red-800/50 dark:hover:bg-red-700/70 text-red-800 dark:text-red-200 cursor-pointer w-8 h-8 rounded-xl font-bold hover:scale-110 active:scale-95 transition-all duration-200 shadow-md flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
       </div>
 
       <!-- Login Required Message for Anonymous Users -->
-      <div v-if="!hasCustomUsername()" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4 mb-6">
+      <div v-if="!hasCustomUsername()" class="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-5 mb-6 shadow-xl backdrop-blur-sm">
         <div class="flex items-center gap-3">
-          <div class="text-amber-600 dark:text-amber-400">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 dark:from-amber-600 dark:to-orange-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
             </svg>
           </div>
-          <p class="text-amber-800 dark:text-amber-200 font-medium">
+          <p class="text-amber-900 dark:text-amber-200 font-bold text-sm sm:text-base">
             {{ $t('messages.pleaseSetUsername') }}
           </p>
         </div>
@@ -36,12 +51,12 @@
 
       <form @submit.prevent="handleAddCalendar" class="flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-4 sm:gap-6 lg:items-end" :class="{ 'opacity-50 pointer-events-none': !hasCustomUsername() }">
         <div class="mb-0">
-          <label for="calendar-name" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">{{ $t('home.calendarName') }}</label>
+          <label for="calendar-name" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">{{ $t('home.calendarName') }}</label>
           <input
             id="calendar-name"
             v-model="appStore.newCalendar.name"
             type="text"
-            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm transition-all duration-300 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-500 dark:placeholder-gray-400"
+            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
             :placeholder="$t('home.calendarNamePlaceholder')"
             :disabled="!hasCustomUsername()"
             required
@@ -49,77 +64,112 @@
         </div>
 
         <div class="mb-0">
-          <label for="calendar-url" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">{{ $t('home.icalUrl') }}</label>
+          <label for="calendar-url" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">{{ $t('home.icalUrl') }}</label>
           <input
             id="calendar-url"
             v-model="appStore.newCalendar.url"
             type="url"
-            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm transition-all duration-300 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-500 dark:placeholder-gray-400"
+            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
             :placeholder="$t('home.icalUrlPlaceholder')"
             :disabled="!hasCustomUsername()"
             required
           />
         </div>
 
-        <button type="submit" class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl w-full lg:w-auto mt-4 lg:mt-0" :disabled="appStore.loading || !hasCustomUsername()">
+        <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 sm:px-8 py-3.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg hover:shadow-xl disabled:shadow-sm disabled:transform-none w-full lg:w-auto mt-4 lg:mt-0" :disabled="appStore.loading || !hasCustomUsername()">
           {{ appStore.loading ? $t('home.adding') : $t('home.addCalendar') }}
         </button>
       </form>
     </div>
 
     <!-- Calendar List -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
-      <div class="flex items-center justify-between mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $t('home.yourCalendars') }}</h2>
+    <div class="bg-gradient-to-br from-white via-white to-indigo-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-indigo-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-8 hover:shadow-2xl hover:border-indigo-300/50 dark:hover:border-indigo-600/50 transition-all duration-300 backdrop-blur-sm">
+      <div class="flex items-center justify-between mb-6 sm:mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/>
+            </svg>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $t('home.yourCalendars') }}</h2>
+        </div>
         
         <!-- Read-only Mode Indicator -->
-        <div v-if="!hasCustomUsername()" class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+        <div v-if="!hasCustomUsername()" class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm">
           <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
             <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
           </svg>
-          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $t('ui.readOnlyMode') }}</span>
+          <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $t('ui.readOnlyMode') }}</span>
         </div>
       </div>
       
-      <div v-if="appStore.loading && appStore.calendars.length === 0" class="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-6"></div>
-        <div class="text-blue-800 dark:text-blue-200 font-semibold text-lg">{{ $t('common.loadingEvents') }}</div>
-        <div class="text-blue-600 dark:text-blue-300 text-sm mt-2">{{ $t('common.pleaseWait') }}</div>
+      <div v-if="appStore.loading && appStore.calendars.length === 0" class="text-center py-16 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/30 dark:via-indigo-900/30 dark:to-purple-900/30 rounded-2xl border-2 border-blue-200 dark:border-blue-700 shadow-xl backdrop-blur-sm">
+        <div class="mb-6 inline-block relative">
+          <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-2xl flex items-center justify-center shadow-2xl">
+            <div class="absolute inset-0 rounded-2xl animate-spin border-4 border-transparent border-t-white/50 border-r-white/30"></div>
+            <svg class="w-10 h-10 text-white animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+        </div>
+        <div class="text-gray-800 dark:text-gray-200 font-bold text-xl mb-2">{{ $t('common.loadingEvents') }}</div>
+        <div class="text-gray-600 dark:text-gray-400 text-sm">{{ $t('common.pleaseWait') }}</div>
       </div>
 
-      <div v-else-if="appStore.calendars.length === 0" class="text-center bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border-2 border-yellow-300 dark:border-yellow-600 rounded-xl py-12 px-8 shadow-lg">
-        <div class="text-6xl mb-4">📅</div>
-        <p class="text-yellow-800 dark:text-yellow-200 font-semibold text-lg">{{ $t('home.noCalendarsFound') }}</p>
+      <div v-else-if="appStore.calendars.length === 0" class="text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-2xl py-16 px-8 shadow-xl backdrop-blur-sm">
+        <div class="mb-6 inline-block">
+          <div class="relative">
+            <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-3xl flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300">
+              <svg class="w-14 h-14 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <p class="text-gray-800 dark:text-gray-200 font-bold text-xl mb-2">{{ $t('home.noCalendarsFound') }}</p>
+        <p class="text-gray-600 dark:text-gray-400 text-sm">Add your first calendar above to get started!</p>
       </div>
 
       <div v-else data-testid="calendar-list">
         <!-- Mobile: Card Layout -->
         <div class="sm:hidden space-y-4">
-          <div v-for="calendar in appStore.calendars" :key="calendar.id" :data-testid="`calendar-item-${calendar.id}`" class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm p-4">
-            <div class="flex flex-col space-y-3">
-              <div>
-                <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base">{{ calendar.name }}</h3>
-                <a :href="calendar.source_url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline font-medium transition-colors duration-200 hover:underline text-xs truncate block">
+          <div v-for="calendar in appStore.calendars" :key="calendar.id" :data-testid="`calendar-item-${calendar.id}`" class="bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-700 dark:to-gray-800/50 rounded-2xl border-2 border-gray-200 dark:border-gray-600 shadow-lg hover:shadow-xl p-5 transition-all duration-300 hover:scale-[1.02] active:scale-100">
+            <div class="flex flex-col space-y-4">
+              <div class="space-y-2">
+                <div class="flex items-start gap-2">
+                  <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base flex-1 leading-tight pt-0.5">{{ calendar.name }}</h3>
+                </div>
+                <a :href="calendar.source_url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline font-medium transition-colors duration-200 hover:underline text-xs truncate block ml-10 -mt-1">
                   {{ calendar.source_url?.length > 35 ? calendar.source_url.substring(0, 35) + '...' : calendar.source_url }}
                 </a>
               </div>
               <div class="flex flex-col gap-2">
-                <button @click="viewCalendar(calendar.id)" class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white border-none px-4 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg">
+                <button @click="viewCalendar(calendar.id)" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 text-white border-none px-4 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg">
                   {{ $t('home.viewEvents') }}
                 </button>
-                <button 
-                  v-if="calendar.type === 'user'" 
+                <button
+                  v-if="calendar.type === 'user'"
                   @click="syncCalendar(calendar.id)"
                   :disabled="appStore.loading"
-                  class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                  class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg disabled:shadow-sm disabled:transform-none"
                 >
                   🔄 Sync Events
                 </button>
-                <button 
+                <button
                   v-if="calendar.type === 'user' && hasCustomUsername()"
-                  @click="deleteCalendar(calendar.id)" 
-                  class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                  @click="deleteCalendar(calendar.id)"
+                  class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-red-600 dark:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg disabled:shadow-sm disabled:transform-none"
                   :disabled="appStore.loading"
                 >
                   {{ $t('common.delete') }}
@@ -130,19 +180,40 @@
         </div>
 
         <!-- Desktop: Table Layout -->
-        <div class="hidden sm:block overflow-x-auto">
-          <table class="w-full border-collapse mt-6 bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-sm">
+        <div class="hidden sm:block overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-600 shadow-lg">
+          <table class="w-full border-collapse bg-white dark:bg-gray-700">
             <thead>
-              <tr>
-                <th class="px-6 py-4 text-left border-b-2 border-gray-200 dark:border-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-600 dark:to-gray-700 font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase text-sm">{{ $t('home.name') }}</th>
-                <th class="px-6 py-4 text-left border-b-2 border-gray-200 dark:border-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-600 dark:to-gray-700 font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase text-sm">{{ $t('home.url') }}</th>
-                <th class="px-6 py-4 text-left border-b-2 border-gray-200 dark:border-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-600 dark:to-gray-700 font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase text-sm">{{ $t('home.actions') }}</th>
+              <tr class="bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 dark:from-gray-600 dark:via-gray-700 dark:to-gray-600">
+                <th class="px-6 py-5 text-left border-b-2 border-gray-200 dark:border-gray-500 font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase text-xs">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ $t('home.name') }}
+                  </div>
+                </th>
+                <th class="px-6 py-5 text-left border-b-2 border-gray-200 dark:border-gray-500 font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase text-xs">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ $t('home.url') }}
+                  </div>
+                </th>
+                <th class="px-6 py-5 text-left border-b-2 border-gray-200 dark:border-gray-500 font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase text-xs">{{ $t('home.actions') }}</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="calendar in appStore.calendars" :key="calendar.id" :data-testid="`calendar-item-${calendar.id}`" class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-200 border-b border-gray-100 dark:border-gray-600">
-                <td class="px-6 py-4">
-                  <strong class="text-gray-900 dark:text-gray-100 font-semibold text-base">{{ calendar.name }}</strong>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-600">
+              <tr v-for="calendar in appStore.calendars" :key="calendar.id" :data-testid="`calendar-item-${calendar.id}`" class="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 transition-all duration-200 group">
+                <td class="px-6 py-5">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200">
+                      <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                      </svg>
+                    </div>
+                    <strong class="text-gray-900 dark:text-gray-100 font-bold text-base">{{ calendar.name }}</strong>
+                  </div>
                 </td>
                 <td class="px-6 py-4">
                   <a :href="calendar.source_url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline break-all font-medium transition-colors duration-200 hover:underline">
@@ -151,21 +222,21 @@
                 </td>
                 <td class="px-6 py-4">
                   <div class="flex gap-3">
-                    <button @click="viewCalendar(calendar.id)" class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white border-none px-6 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg whitespace-nowrap">
+                    <button @click="viewCalendar(calendar.id)" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 text-white border-none px-6 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg whitespace-nowrap">
                       {{ $t('home.viewEvents') }}
                     </button>
-                    <button 
+                    <button
                       v-if="calendar.type === 'user'"
                       @click="syncCalendar(calendar.id)"
                       :disabled="appStore.loading"
-                      class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg whitespace-nowrap"
+                      class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg disabled:shadow-sm disabled:transform-none whitespace-nowrap"
                     >
                       🔄 Sync
                     </button>
-                    <button 
+                    <button
                       v-if="calendar.user_id !== 'default' && !String(calendar.id).startsWith('cal_domain_') && hasCustomUsername()"
-                      @click="deleteCalendar(calendar.id)" 
-                      class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 shadow-md hover:shadow-lg whitespace-nowrap"
+                      @click="deleteCalendar(calendar.id)"
+                      class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-red-600 dark:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg disabled:shadow-sm disabled:transform-none whitespace-nowrap"
                       :disabled="appStore.loading"
                     >
                       {{ $t('common.delete') }}

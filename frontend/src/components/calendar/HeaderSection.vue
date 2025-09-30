@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Page Header with Gradient -->
-    <AppHeader 
+    <AppHeader
       :title="domainContext ? `🌐 ${domainContext.name}` : $t('calendar.filterTitle', { name: selectedCalendar?.name || $t('common.loading') })"
       :subtitle="domainContext ? $t('subtitles.domainCalendar') : $t('calendar.subtitle')"
       :show-user-info="false"
@@ -9,7 +9,7 @@
       :back-button-text="domainContext ? $t('domain.goToPersonalCalendars') : $t('navigation.backToCalendars')"
       :domain-context="domainContext"
       page-context="calendar"
-      hide-subtitle
+      :hide-subtitle="!domainContext"
       @navigate-back="domainContext ? $router.push('/home') : $emit('navigate-home')"
     />
 
