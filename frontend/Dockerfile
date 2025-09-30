@@ -22,8 +22,11 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Install gettext for envsubst (environment variable substitution)
+RUN apk add --no-cache gettext
+
+# Copy nginx configuration template
+COPY nginx.conf /etc/nginx/nginx.conf.template
 
 # Copy built app from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
@@ -35,5 +38,7 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start nginx with environment variable substitution
+# Default BACKEND_HOST to 'backend' if not provided
+ENV BACKEND_HOST=backend
+CMD ["/bin/sh", "-c", "envsubst '${BACKEND_HOST}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
