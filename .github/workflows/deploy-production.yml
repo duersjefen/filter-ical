@@ -44,7 +44,7 @@ jobs:
         with:
           repository: duersjefen/multi-tenant-platform
           path: platform
-          token: ${{ secrets.GHCR_TOKEN }}
+          token: ${{ github.token }}
 
       - name: 🔑 Setup SSH
         run: |
