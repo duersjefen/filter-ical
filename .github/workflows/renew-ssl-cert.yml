@@ -60,14 +60,36 @@ jobs:
 
             # Verify nginx configuration
             echo "🔍 Verifying nginx configuration..."
-            docker exec nginx nginx -t
+            docker exec websites-nginx nginx -t || {
+              echo "❌ Nginx config test failed!"
+              exit 1
+            }
 
             # Reload nginx to pick up new certificate
             echo "🔄 Reloading nginx..."
-            docker exec nginx nginx -s reload
+            docker exec websites-nginx nginx -s reload || {
+              echo "❌ Nginx reload failed!"
+              exit 1
+            }
+
+            # Wait for nginx to stabilize
+            sleep 3
 
             # Check new certificate
             echo "✅ New certificate domains:"
-            docker exec nginx openssl x509 -in /etc/letsencrypt/live/filter-ical.de/fullchain.pem -text -noout | grep "DNS:"
+            docker exec websites-nginx openssl x509 -in /etc/letsencrypt/live/filter-ical.de/fullchain.pem -text -noout | grep "DNS:" || {
+              echo "⚠️ Could not read certificate (may still be valid)"
+            }
+
+            # Verify HTTPS works
+            echo "🧪 Testing HTTPS connectivity..."
+            curl -sf --max-time 10 https://filter-ical.de/health || {
+              echo "❌ Production HTTPS not responding!"
+              exit 1
+            }
+            curl -sf --max-time 10 https://staging.filter-ical.de/health || {
+              echo "❌ Staging HTTPS not responding!"
+              exit 1
+            }
 
             echo "✅ Certificate renewal completed!"

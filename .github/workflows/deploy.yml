@@ -144,7 +144,7 @@ jobs:
         containers: 'filter-ical-backend-dev filter-ical-frontend-dev'
         operation: 'deploy'
         nginx_restart: 'true'
-        nginx_container: 'nginx'
+        nginx_container: 'websites-nginx'
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}
         EC2_USER: ${{ secrets.EC2_USER }}
@@ -355,7 +355,7 @@ jobs:
         containers: 'filter-ical-backend-staging filter-ical-frontend-staging'
         operation: 'deploy'
         nginx_restart: 'true'
-        nginx_container: 'nginx'
+        nginx_container: 'websites-nginx'
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}
         EC2_USER: ${{ secrets.EC2_USER }}
@@ -565,7 +565,7 @@ jobs:
         containers: 'filter-ical filter-ical-frontend'
         operation: 'deploy'
         nginx_restart: 'true'
-        nginx_container: 'nginx'
+        nginx_container: 'websites-nginx'
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}
         EC2_USER: ${{ secrets.EC2_USER }}
@@ -620,7 +620,7 @@ jobs:
         containers: 'filter-ical filter-ical-frontend'
         domain: ${{ vars.DOMAIN_NAME_VAR }}
         nginx_restart: 'true'
-        nginx_container: 'nginx'
+        nginx_container: 'websites-nginx'
         validation_endpoints: '/,/health'
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}

@@ -14,7 +14,10 @@ services:
       - letsencrypt-certs:/etc/letsencrypt:ro
       - certbot-webroot:/var/www/certbot:ro
     depends_on:
-      - filter-ical
+      filter-ical:
+        condition: service_healthy
+      filter-ical-frontend:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "nginx", "-t"]
