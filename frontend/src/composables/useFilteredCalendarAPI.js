@@ -136,7 +136,7 @@ export function useFilteredCalendarAPI() {
     }
   }
 
-  const createFilteredCalendar = async (sourceCalendarId, name, selectedGroups, selectedEvents) => {
+  const createFilteredCalendar = async (sourceCalendarId, name, selectedGroups, selectedEvents, includeFutureEvents) => {
     if (!name?.trim()) {
       setError('Name is required')
       return false
@@ -150,19 +150,24 @@ export function useFilteredCalendarAPI() {
     // Check authentication state - only logged-in users can create filtered calendars
     const currentUserId = getUserId()
     const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
-    
+
     if (!hasCustomUsername) {
       setError('Login required to create filtered calendars')
       return false
     }
 
     creating.value = true
-    
+
     // Map to backend filter format - convert recurring event names to subscribed_event_ids
     const payload = {
       name: name.trim(),
       subscribed_group_ids: selectedGroups || [],
       subscribed_event_ids: selectedEvents || []
+    }
+
+    // Add include_future_events only for personal calendars (when defined)
+    if (includeFutureEvents !== undefined) {
+      payload.include_future_events = includeFutureEvents
     }
     
     // Build authenticated endpoint

@@ -233,7 +233,8 @@ async def create_calendar_filter(
             name=filter_data["name"],
             calendar_id=calendar_id,
             username=username,
-            subscribed_event_ids=filter_data.get("subscribed_event_ids", [])
+            subscribed_event_ids=filter_data.get("subscribed_event_ids", []),
+            include_future_events=filter_data.get("include_future_events", False)
         )
         if not success:
             raise HTTPException(status_code=400, detail=error)
@@ -247,12 +248,14 @@ async def create_calendar_filter(
             "username": filter_obj.username,
             "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
             "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
+            "include_future_events": filter_obj.include_future_events,
             "link_uuid": filter_obj.link_uuid,
             "export_url": f"/ical/{filter_obj.link_uuid}.ics",
             # Add filter_config for frontend compatibility
             "filter_config": {
                 "recurring_events": filter_obj.subscribed_event_ids or [],
-                "groups": filter_obj.subscribed_group_ids or []
+                "groups": filter_obj.subscribed_group_ids or [],
+                "include_future_events": filter_obj.include_future_events
             },
             "created_at": filter_obj.created_at.isoformat() if filter_obj.created_at else None,
             "updated_at": filter_obj.updated_at.isoformat() if filter_obj.updated_at else None

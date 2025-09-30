@@ -147,7 +147,10 @@ class Filter(Base):
     # Filter data stored as JSON arrays for flexibility
     subscribed_event_ids = Column(JSON, nullable=True, default=list)  # Array of event IDs
     subscribed_group_ids = Column(JSON, nullable=True, default=list)   # Array of group IDs (domain only)
-    
+
+    # Personal calendar option: include future recurring events
+    include_future_events = Column(Boolean, nullable=True, default=False)  # Personal calendars only
+
     # Dynamic iCal export
     link_uuid = Column(String(36), nullable=False, unique=True, index=True)  # UUID for /ical/{uuid}.ics
     

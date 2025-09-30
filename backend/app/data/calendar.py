@@ -184,13 +184,14 @@ def sort_events_by_start_time(events: List[Dict[str, Any]], reverse: bool = Fals
     return sorted(events, key=get_start_time, reverse=reverse)
 
 
-def create_filter_data(name: str, calendar_id: Optional[int] = None, 
+def create_filter_data(name: str, calendar_id: Optional[int] = None,
                       domain_key: Optional[str] = None, username: Optional[str] = None,
                       subscribed_event_ids: Optional[List[int]] = None,
-                      subscribed_group_ids: Optional[List[int]] = None) -> Dict[str, Any]:
+                      subscribed_group_ids: Optional[List[int]] = None,
+                      include_future_events: Optional[bool] = None) -> Dict[str, Any]:
     """
     Create filter data structure.
-    
+
     Args:
         name: Filter name
         calendar_id: Calendar ID for user filters
@@ -198,15 +199,22 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
         username: Username for user scoping
         subscribed_event_ids: List of event IDs to include
         subscribed_group_ids: List of group IDs to include (domain filters only)
-        
+        include_future_events: Include future recurring events (personal calendars only)
+
     Returns:
         Filter data dictionary
-        
+
     Pure function - creates new data structure.
     """
     now = datetime.now(timezone.utc)
     link_uuid = str(uuid.uuid4())
-    
+
+    # Only set include_future_events for personal calendars
+    if calendar_id and not domain_key:
+        include_future = include_future_events if include_future_events is not None else False
+    else:
+        include_future = None  # Domain filters don't use this
+
     return {
         "name": name.strip(),
         "calendar_id": calendar_id,
@@ -214,6 +222,7 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
         "username": username,
         "subscribed_event_ids": subscribed_event_ids or [],
         "subscribed_group_ids": subscribed_group_ids or [],
+        "include_future_events": include_future,
         "link_uuid": link_uuid,
         "created_at": now,
         "updated_at": now
@@ -223,27 +232,59 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
 def apply_filter_to_events(events: List[Dict[str, Any]], filter_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     Apply filter criteria to events list.
-    
+
+    For PERSONAL CALENDARS:
+      - If include_future_events=True: Include all events matching subscribed titles
+      - If include_future_events=False: Only include events created before filter
+
+    For DOMAIN CALENDARS:
+      - Group subscription logic handles this (existing behavior)
+
     Args:
         events: List of all events
         filter_data: Filter configuration
-        
+
     Returns:
         Filtered list of events
-        
+
     Pure function - returns new filtered list.
     """
     subscribed_event_ids = filter_data.get("subscribed_event_ids", [])
-    
+    include_future = filter_data.get("include_future_events")
+    is_domain_filter = filter_data.get("domain_key") is not None
+
     if not subscribed_event_ids:
         return []
-    
+
+    # Domain filters: use existing logic (groups handle future events)
+    if is_domain_filter:
+        filtered = []
+        for event in events:
+            event_title = event.get("title")
+            if event_title in subscribed_event_ids:
+                filtered.append(event)
+        return filtered
+
+    # Personal calendar filters: apply include_future_events logic
+    filter_created_at = filter_data.get("created_at")
     filtered = []
+
     for event in events:
         event_title = event.get("title")
-        if event_title in subscribed_event_ids:
-            filtered.append(event)
-    
+
+        # Check if event title matches subscribed titles
+        if event_title not in subscribed_event_ids:
+            continue
+
+        # If NOT including future events, filter by creation date
+        if include_future is False and filter_created_at:
+            event_created = event.get("created_at")
+            if event_created and event_created > filter_created_at:
+                # Skip events created after the filter (frozen mode)
+                continue
+
+        filtered.append(event)
+
     return filtered
 
 

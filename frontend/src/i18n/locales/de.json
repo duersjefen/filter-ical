@@ -238,7 +238,9 @@
     "expandSection": "Bereich erweitern",
     "updateFilter": "Filter aktualisieren",
     "updating": "Wird aktualisiert...",
-    "calendarNameUpdated": "Kalendername erfolgreich aktualisiert!"
+    "calendarNameUpdated": "Kalendername erfolgreich aktualisiert!",
+    "includeNewEvents": "Neue wiederkehrende Events automatisch einbeziehen",
+    "includeNewEventsDescription": "Wenn in Zukunft neue wiederkehrende Events zum Quellkalender hinzugefügt werden, erscheinen sie automatisch in diesem gefilterten Kalender"
   },
   "ui": {
     "enterYourName": "Geben Sie Ihren Namen ein",

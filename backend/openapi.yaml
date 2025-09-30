@@ -141,6 +141,10 @@ paths:
                   items:
                     type: integer
                   example: [1, 2, 5]
+                include_future_events:
+                  type: boolean
+                  default: false
+                  description: "Automatically include new recurring events added after filter creation"
       responses:
         '201':
           description: Filter created
@@ -713,6 +717,11 @@ components:
             type: integer
           example: [1, 3]
           description: "Only present for domain calendar filters"
+        include_future_events:
+          type: boolean
+          nullable: true
+          description: "For personal calendars only: If true, automatically include new recurring events added after filter creation. Not applicable to domain calendar filters."
+          example: false
         link_uuid:
           type: string
           format: uuid

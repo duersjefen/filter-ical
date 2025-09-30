@@ -109,6 +109,23 @@
             />
           </div>
 
+          <!-- Include Future Events Checkbox - Personal Calendars Only -->
+          <div v-if="!isDomainCalendar && selectedRecurringEvents.length > 0"
+               class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" v-model="createForm.includeNewEvents"
+                     class="mt-1 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              <div>
+                <div class="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                  ✨ {{ $t('filteredCalendar.includeNewEvents') }}
+                </div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">
+                  {{ $t('filteredCalendar.includeNewEventsDescription') }}
+                </div>
+              </div>
+            </label>
+          </div>
+
           <!-- Enhanced Groups Overview with improved visual design -->
           <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
             <!-- Groups Display for Group-enabled Calendars -->
@@ -488,7 +505,8 @@ const hasEverHadRecurringEvents = ref(false) // Track if user has ever selected 
 const isUpdateMode = ref(false) // Track if user is updating an existing filter
 const updateModeCalendar = ref(null) // Store the calendar being updated
 const createForm = ref({
-  name: ''
+  name: '',
+  includeNewEvents: true  // Default to true for convenience
 })
 const editForm = ref({
   id: '',
@@ -525,6 +543,12 @@ const reactiveGroupBreakdown = computed(() => {
   }
   
   return parts.length > 0 ? parts.join(' • ') : t('preview.noEventsSelected')
+})
+
+// Check if current calendar is a domain calendar
+const isDomainCalendar = computed(() => {
+  return props.selectedCalendar?.domain_key ||
+         String(props.selectedCalendar?.id).startsWith('cal_domain_')
 })
 
 // Show section if there are existing filtered calendars OR if events are selected
@@ -575,7 +599,8 @@ const createFilteredCalendar = async () => {
 
   const filterConfig = {
     recurring_events: props.selectedRecurringEvents,
-    groups: Array.from(props.subscribedGroups || [])
+    groups: Array.from(props.subscribedGroups || []),
+    include_future_events: !isDomainCalendar.value ? createForm.value.includeNewEvents : undefined
   }
 
   let success = false
@@ -584,7 +609,7 @@ const createFilteredCalendar = async () => {
     // Update existing calendar
     success = await apiUpdateFiltered(
       updateModeCalendar.value.id,
-      { 
+      {
         name: createForm.value.name,
         filter_config: filterConfig
       }
@@ -595,7 +620,8 @@ const createFilteredCalendar = async () => {
       props.selectedCalendar.id,
       createForm.value.name,
       filterConfig.groups,
-      filterConfig.recurring_events
+      filterConfig.recurring_events,
+      filterConfig.include_future_events
     )
   }
 

@@ -238,7 +238,9 @@
     "expandSection": "Expand section",
     "updateFilter": "Update Filter",
     "updating": "Updating...",
-    "calendarNameUpdated": "Calendar name updated successfully!"
+    "calendarNameUpdated": "Calendar name updated successfully!",
+    "includeNewEvents": "Automatically include new recurring events",
+    "includeNewEventsDescription": "When new recurring events are added to the source calendar in the future, they will automatically appear in this filtered calendar"
   },
   "ui": {
     "enterYourName": "Enter your name",

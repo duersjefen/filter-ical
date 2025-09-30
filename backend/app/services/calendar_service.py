@@ -279,10 +279,11 @@ def get_calendar_events(db: Session, calendar_id: int) -> List[Event]:
 def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
                  domain_key: Optional[str] = None, username: Optional[str] = None,
                  subscribed_event_ids: Optional[List[int]] = None,
-                 subscribed_group_ids: Optional[List[int]] = None) -> Tuple[bool, Optional[Filter], str]:
+                 subscribed_group_ids: Optional[List[int]] = None,
+                 include_future_events: Optional[bool] = None) -> Tuple[bool, Optional[Filter], str]:
     """
     Create filter in database.
-    
+
     Args:
         db: Database session
         name: Filter name
@@ -291,10 +292,11 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
         username: Username for user scoping
         subscribed_event_ids: Event IDs to include
         subscribed_group_ids: Group IDs to include
-        
+        include_future_events: Include future recurring events (personal calendars only)
+
     Returns:
         Tuple of (success, filter_obj, error_message)
-        
+
     I/O Operation - Database creation with validation.
     """
     # Validate data using pure function
@@ -307,7 +309,7 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
     )
     if not is_valid:
         return False, None, error_msg
-    
+
     try:
         # Create filter data using pure function
         filter_data = create_filter_data(
@@ -316,7 +318,8 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
             domain_key=domain_key,
             username=username,
             subscribed_event_ids=subscribed_event_ids,
-            subscribed_group_ids=subscribed_group_ids
+            subscribed_group_ids=subscribed_group_ids,
+            include_future_events=include_future_events
         )
         
         # Create database object
