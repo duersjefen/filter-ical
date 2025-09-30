@@ -1,0 +1,43 @@
+name: Emergency Server Restart
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "RESTART" to confirm'
+        required: true
+
+jobs:
+  restart:
+    if: github.event.inputs.confirm == 'RESTART'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/websites
+            echo "🔍 Current container status:"
+            docker ps -a | grep -E "nginx|filter-ical"
+
+            echo "🔄 Restarting all services..."
+            export AWS_ACCOUNT_ID=310829530903
+            export AWS_REGION=eu-north-1
+            export ECR_REGISTRY=310829530903.dkr.ecr.eu-north-1.amazonaws.com
+
+            docker-compose down
+            docker-compose up -d
+
+            echo "⏳ Waiting for services to start..."
+            sleep 15
+
+            echo "🔍 New container status:"
+            docker ps
+
+            echo "🧪 Testing nginx config:"
+            docker exec websites-nginx nginx -t
+
+            echo "✅ Restart completed!"
