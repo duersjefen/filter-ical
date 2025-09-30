@@ -1,0 +1,51 @@
+name: Start Nginx
+on:
+  workflow_dispatch:
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📁 Sync Fixed Nginx Config
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: '.infra/docker/nginx.conf'
+          target: '/opt/websites/'
+          strip_components: 2
+
+      - name: 🚀 Start Nginx Container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/websites
+
+            echo "🚀 Starting nginx with correct service name..."
+            docker-compose up -d nginx
+
+            echo "⏳ Waiting 15 seconds for nginx to start..."
+            sleep 15
+
+            echo "📋 All containers:"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+            echo ""
+            echo "🔍 Nginx logs (last 15 lines):"
+            NGINX_CONTAINER=$(docker ps --filter "name=nginx" --format "{{.Names}}" | head -1)
+            if [ -n "$NGINX_CONTAINER" ]; then
+              docker logs --tail 15 "$NGINX_CONTAINER" 2>&1
+            else
+              echo "ERROR: No nginx container found!"
+            fi
+
+            echo ""
+            echo "🧪 Testing endpoints from server:"
+            curl -f -s -o /dev/null -w "Homepage: %{http_code}\n" --max-time 10 https://filter-ical.de/ || echo "Homepage: FAILED"
+            curl -f -s -o /dev/null -w "Health: %{http_code}\n" --max-time 10 https://filter-ical.de/health || echo "Health: FAILED"

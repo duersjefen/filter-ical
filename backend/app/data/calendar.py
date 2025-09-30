@@ -209,13 +209,11 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
     now = datetime.now(timezone.utc)
     link_uuid = str(uuid.uuid4())
 
-    # Temporarily disabled: include_future_events column not yet in database
-    # Will be enabled after database migration
     # Only set include_future_events for personal calendars
-    # if calendar_id and not domain_key:
-    #     include_future = include_future_events if include_future_events is not None else False
-    # else:
-    #     include_future = None  # Domain filters don't use this
+    if calendar_id and not domain_key:
+        include_future = include_future_events if include_future_events is not None else False
+    else:
+        include_future = None  # Domain filters don't use this
 
     return {
         "name": name.strip(),
@@ -224,7 +222,7 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
         "username": username,
         "subscribed_event_ids": subscribed_event_ids or [],
         "subscribed_group_ids": subscribed_group_ids or [],
-        # "include_future_events": include_future,  # Disabled until database migration
+        "include_future_events": include_future,
         "link_uuid": link_uuid,
         "created_at": now,
         "updated_at": now
