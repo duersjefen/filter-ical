@@ -49,15 +49,43 @@ if ! git diff --cached --quiet; then
         fi
     fi
     
-    # Use the clean Makefile interface for testing  
-    echo "🧪 Running unit tests (required for commits)..."
-    
-    if make test >/dev/null 2>&1; then
-        echo "✅ All tests passed"
+    # =========================================================================
+    # SMART TEST EXECUTION
+    # =========================================================================
+    # Skip tests for infrastructure-only changes (no code modified)
+    CHANGED_FILES=$(git diff --cached --name-only)
+    CODE_CHANGED=false
+
+    # Check if any Python/JavaScript code was modified
+    if echo "$CHANGED_FILES" | grep -qE '\.(py|js|vue|ts)$'; then
+        CODE_CHANGED=true
+    fi
+
+    # Infrastructure-only changes that don't require tests
+    if ! $CODE_CHANGED && echo "$CHANGED_FILES" | grep -qE '^(Dockerfile|.*\.yml|.*\.yaml|.*nginx\.conf|Makefile|\.github/)'; then
+        echo "📦 Infrastructure-only changes detected - skipping tests"
     else
-        echo "❌ Tests failed! Commit aborted."
-        echo "💡 Run 'make test' locally to see detailed error output"
-        exit 1
+        echo "🧪 Running unit tests (required for commits)..."
+
+        # Ensure backend dependencies are installed
+        if [ ! -d "backend/venv" ] || [ ! -f "backend/venv/bin/pytest" ]; then
+            echo "🔧 Installing backend dependencies (first time setup)..."
+            cd backend
+            python3 -m venv venv 2>/dev/null || true
+            . venv/bin/activate
+            pip install -q -r requirements.txt
+            deactivate
+            cd ..
+        fi
+
+        if make test >/dev/null 2>&1; then
+            echo "✅ All tests passed"
+        else
+            echo "❌ Tests failed! Commit aborted."
+            echo "💡 Run 'make test' locally to see detailed error output"
+            echo "💡 Or use 'git commit --no-verify' to bypass (use with caution)"
+            exit 1
+        fi
     fi
 else
     echo "📋 No changes staged for commit"

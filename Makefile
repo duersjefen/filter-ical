@@ -5,9 +5,33 @@
 # See DEV_WORKFLOW.md for complete guide
 # =============================================================================
 
-.PHONY: help dev dev-db dev-backend dev-frontend stop test deploy-staging deploy-production status clean
+.PHONY: help setup dev dev-db dev-backend dev-frontend stop test deploy-staging deploy-production status clean
 
 .DEFAULT_GOAL := help
+
+##
+## 🚀 Development Commands
+##
+
+setup: ## Install all dependencies (run this first!)
+	@echo "📦 Setting up development environment..."
+	@echo ""
+	@echo "🐍 Installing backend dependencies..."
+	@cd backend && \
+		(test -d venv || python3 -m venv venv) && \
+		. venv/bin/activate && \
+		pip install --upgrade pip && \
+		pip install -r requirements.txt
+	@echo "✅ Backend dependencies installed"
+	@echo ""
+	@echo "🎨 Installing frontend dependencies..."
+	@cd frontend && npm install
+	@echo "✅ Frontend dependencies installed"
+	@echo ""
+	@echo "🐘 Starting PostgreSQL database..."
+	@$(MAKE) dev-db
+	@echo ""
+	@echo "✅ Setup complete! Use 'make dev' to start development"
 
 ##
 ## 🚀 Development Commands
