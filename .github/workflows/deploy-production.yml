@@ -115,7 +115,7 @@ jobs:
 
           # Verify database connectivity before deploying
           echo "🔍 Verifying database connectivity..."
-          if docker exec postgres-filterical psql -U filterical_user -d filterical -c "SELECT 1;" > /dev/null 2>&1; then
+          if docker exec postgres-platform psql -U filterical_user -d filterical_production -c "SELECT 1;" > /dev/null 2>&1; then
             echo "✅ Database is accessible"
           else
             echo "❌ Database connection failed"
@@ -145,7 +145,7 @@ jobs:
           MAX_RETRIES=6
           RETRY_COUNT=0
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if docker exec filter-ical-backend curl -f http://localhost:3000/health 2>/dev/null; then
+            if docker exec filter-ical-backend-production curl -f http://localhost:3000/health 2>/dev/null; then
               echo "✅ Backend is healthy"
               break
             else
@@ -160,7 +160,7 @@ jobs:
           done
 
           # Check frontend health
-          if docker exec filter-ical-frontend curl -f http://127.0.0.1:80/ > /dev/null 2>&1; then
+          if docker exec filter-ical-frontend-production curl -f http://127.0.0.1:80/ > /dev/null 2>&1; then
             echo "✅ Frontend is healthy"
           else
             echo "❌ Frontend health check failed"
@@ -169,7 +169,7 @@ jobs:
 
           # Check no errors in recent logs
           echo "🔍 Checking for errors in logs..."
-          if docker logs filter-ical-backend --since 2m 2>&1 | grep -i "error\|exception\|failed" | grep -v "0 errors"; then
+          if docker logs filter-ical-backend-production --since 2m 2>&1 | grep -i "error\|exception\|failed" | grep -v "0 errors"; then
             echo "⚠️  Found errors in backend logs (review recommended)"
           else
             echo "✅ No errors in backend logs"
@@ -197,15 +197,15 @@ jobs:
 
           # Test backend API health endpoint
           ssh ${EC2_USER}@${EC2_HOST} \
-            'docker exec filter-ical-backend curl -f http://localhost:3000/health' || exit 1
+            'docker exec filter-ical-backend-production curl -f http://localhost:3000/health' || exit 1
 
           # Test frontend
           ssh ${EC2_USER}@${EC2_HOST} \
-            'docker exec filter-ical-frontend curl -f http://127.0.0.1:80/ > /dev/null' || exit 1
+            'docker exec filter-ical-frontend-production curl -f http://127.0.0.1:80/ > /dev/null' || exit 1
 
           # Check container status
           ssh ${EC2_USER}@${EC2_HOST} \
-            'docker ps --filter "name=filter-ical-backend" --format "{{.Status}}" | grep -q "healthy"' || exit 1
+            'docker ps --filter "name=filter-ical-backend-production" --format "{{.Status}}" | grep -q "healthy"' || exit 1
 
           echo "✅ All production smoke tests passed"
 
@@ -253,7 +253,7 @@ jobs:
           # Verify rolled back version is healthy
           sleep 10
           ssh ${EC2_USER}@${EC2_HOST} \
-            'docker exec filter-ical-backend curl -f http://localhost:3000/health' && \
+            'docker exec filter-ical-backend-production curl -f http://localhost:3000/health' && \
             echo "✅ Rolled back version is healthy" || \
             echo "⚠️  Manual verification required"
 
