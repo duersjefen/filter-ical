@@ -192,11 +192,45 @@
               </div>
             </div>
             
-            <!-- Enhanced fallback for Non-Group Calendars -->
-            <div v-else class="text-center py-4">
-              <div class="text-gray-500 dark:text-gray-400 text-lg mb-2">📂</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                {{ reactiveGroupBreakdown || $t('preview.noEventsSelected') }}
+            <!-- Enhanced display for Personal Calendars (Non-Group) -->
+            <div v-else>
+              <div v-if="selectedRecurringEvents.length > 0" class="space-y-4">
+                <!-- Recurring Events Section - Show all names -->
+                <div v-if="selectedMainRecurringEventNames.length > 0">
+                  <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    🔄 {{ $t('calendar.recurringEvents') }}: {{ selectedMainRecurringEventNames.length }}
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <div
+                      v-for="eventName in selectedMainRecurringEventNames"
+                      :key="eventName"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-lg text-xs font-medium border border-blue-200 dark:border-blue-700 shadow-sm"
+                    >
+                      <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                      <span class="truncate max-w-[200px]">{{ eventName }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unique Events Section - Summary only -->
+                <div v-if="selectedSingleRecurringEventNames.length > 0">
+                  <div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 rounded-lg text-sm font-medium border border-emerald-200 dark:border-emerald-700 shadow-sm">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                    </svg>
+                    <span>📄 {{ selectedSingleRecurringEventNames.length }} {{ $t('recurringEvents.uniqueEvents') }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty state -->
+              <div v-else class="text-center py-4">
+                <div class="text-gray-500 dark:text-gray-400 text-lg mb-2">📂</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                  {{ $t('preview.noEventsSelected') }}
+                </div>
               </div>
             </div>
           </div>
@@ -551,6 +585,17 @@ const isDomainCalendar = computed(() => {
          String(props.selectedCalendar?.id).startsWith('cal_domain_')
 })
 
+// Separate selected events into recurring and unique for display
+const selectedMainRecurringEventNames = computed(() => {
+  const mainEventNames = props.mainRecurringEvents.map(event => event.name)
+  return props.selectedRecurringEvents.filter(name => mainEventNames.includes(name))
+})
+
+const selectedSingleRecurringEventNames = computed(() => {
+  const singleEventNames = props.singleRecurringEvents.map(event => event.name)
+  return props.selectedRecurringEvents.filter(name => singleEventNames.includes(name))
+})
+
 // Show section if there are existing filtered calendars OR if events are selected
 // OR if user has ever interacted with events (to prevent disappearing during search/filter workflows)
 const shouldShowSection = computed(() => {
@@ -593,7 +638,16 @@ const toggleExpanded = () => {
 const createFilteredCalendar = async () => {
   // Guard clause: Ensure we have a selected calendar
   if (!props.selectedCalendar?.id) {
-    console.error('Cannot create filtered calendar: No calendar selected')
+    console.error('Cannot create filtered calendar: No calendar selected', {
+      selectedCalendar: props.selectedCalendar,
+      hasId: !!props.selectedCalendar?.id
+    })
+    return false
+  }
+
+  // Guard clause: Ensure we have something to filter
+  if (props.selectedRecurringEvents.length === 0 && props.subscribedGroups.size === 0) {
+    console.error('Cannot create filtered calendar: No events or groups selected')
     return false
   }
 

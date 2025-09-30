@@ -800,4 +800,24 @@ watch([() => unifiedSelectedRecurringEvents.value, () => showSelectedOnly.value]
     showSelectedOnly.value = false
   }
 }, { immediate: true })
+
+// Auto-expand unique events section when searching and matches are found
+watch(() => recurringEventSearch.value, (newSearchTerm) => {
+  // Only auto-expand if search term is not empty
+  if (newSearchTerm && newSearchTerm.trim()) {
+    const searchLower = newSearchTerm.toLowerCase()
+
+    // Check if any single/unique events match the search
+    const hasUniqueMatches = singleRecurringEvents.value.some(event =>
+      event && event.name && event.name.toLowerCase().includes(searchLower)
+    )
+
+    // Auto-expand if there are unique event matches and section is currently collapsed
+    if (hasUniqueMatches && !showSingleEvents.value) {
+      showSingleEvents.value = true
+    }
+  }
+  // Note: We intentionally don't auto-collapse when search is cleared
+  // to avoid jarring UX - let users manually collapse if desired
+}, { immediate: false })
 </script>

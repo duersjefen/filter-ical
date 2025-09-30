@@ -165,9 +165,10 @@ export function useFilteredCalendarAPI() {
       subscribed_event_ids: selectedEvents || []
     }
 
-    // Add include_future_events only for personal calendars (when defined)
-    if (includeFutureEvents !== undefined) {
-      payload.include_future_events = includeFutureEvents
+    // Only add include_future_events for personal calendars when explicitly set to true
+    // Don't send it at all for domain calendars or when false/undefined
+    if (includeFutureEvents === true) {
+      payload.include_future_events = true
     }
     
     // Build authenticated endpoint
