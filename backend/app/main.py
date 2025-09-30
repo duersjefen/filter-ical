@@ -37,7 +37,7 @@ def load_openapi_spec() -> Optional[Dict[str, Any]]:
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup - Rapid development approach
-    print("🚀 Starting iCal Viewer API...")
+    print("🚀 Starting Filter iCal...")
     print(f"🌍 Environment: {settings.environment.value}")
     print("📋 Contract-first development active")
     
@@ -115,7 +115,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     if settings.should_enable_background_tasks:
         stop_scheduler()
-    print("🛑 Shutting down iCal Viewer API")
+    print("🛑 Shutting down Filter iCal")
 
 
 def create_application() -> FastAPI:

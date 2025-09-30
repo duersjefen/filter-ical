@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ical-viewer-backend"
 version = "1.0.0"
-description = "Contract-first iCal Viewer API with FastAPI"
+description = "Contract-first Filter iCal with FastAPI"
 authors = [{name = "iCal Viewer Team"}]
 license = {text = "MIT"}
 dependencies = [

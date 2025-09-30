@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     debug: bool = False
     
     # Application settings
-    app_name: str = "iCal Viewer API"
+    app_name: str = "Filter iCal"
     
     # Database settings
     database_url: str = "sqlite:///./data/icalviewer.db"

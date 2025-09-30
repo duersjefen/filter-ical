@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: iCal Viewer API
+  title: Filter iCal
   version: 1.0.0
   description: Contract-first API for iCal calendar management with domain support
   servers:

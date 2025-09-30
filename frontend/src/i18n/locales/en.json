@@ -410,8 +410,8 @@
     "icalFilterSubscribe": "🗓️ Filter iCal"
   },
   "subtitles": {
-    "filterCalendarsCreateFeeds": "Add calendars • Filter events\nExport filtered iCal subscriptions",
-    "domainCalendar": "Browse events\nSubscribe to groups & events\nUse iCal link in your calendar app"
+    "filterCalendarsCreateFeeds": "Add calendars • Filter events • Export filtered iCal subscriptions",
+    "domainCalendar": "Browse events • Subscribe to groups & events • Use iCal link in your calendar app"
   },
   "eventManagement": {
     "eventManagementTips": "Event Management Tips",

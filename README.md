@@ -1,107 +1,344 @@
-# iCal Viewer - Professional CI/CD Template
+# Filter-iCal
 
-A production-ready full-stack web application template with automated CI/CD pipeline, designed for zero-downtime deployment.
+Web application for filtering and customizing iCalendar feeds. Subscribe to calendars, apply custom filters, and get a personalized iCal feed URL.
 
-## 🚀 Live Application
-
-**Production**: https://filter-ical.de
-
-## 📋 Template Features
-
-This project serves as a **reusable template** for professional web applications:
-
-- ✅ **Zero-downtime CI/CD** with GitHub Actions
-- ✅ **Automated testing** with pre-commit hooks  
-- ✅ **Multi-domain SSL** with Let's Encrypt auto-renewal
-- ✅ **Docker containerization** with optimized builds
-- ✅ **AWS infrastructure** with intelligent change detection
-- ✅ **Professional monitoring** with health checks
-
-## 🎯 Quick Replication
-
-### For Claude Code Users
-Simply ask: *"Set up a new website using this template"*
-
-Claude Code will automatically:
-1. Copy all template files
-2. Configure project-specific settings
-3. Set up automated testing and deployment
-4. Provide AWS setup commands
-
-### Manual Setup
-```bash
-./scripts/setup-new-project.sh
-```
-
-## 📚 Documentation
-
-- **[Development Guide](docs/DEVELOPMENT.md)** - Local development workflow
-- **[Deployment Template](docs/DEPLOYMENT_TEMPLATE.md)** - Step-by-step replication
-- **[Architecture](docs/ARCHITECTURE.md)** - Technical architecture details
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-
-## 🏗️ Current Project - iCal Viewer
-
-### Tech Stack
-- **Backend**: Python + FastAPI + Uvicorn
-- **Frontend**: Vue 3 + TypeScript + Vite
-- **Build**: Modern ESM with Vite hot reload
-- **Infrastructure**: Docker + nginx + AWS EC2
-
-### Quick Start
-```bash
-# Start development environment (Docker - Recommended)
-make dev
-
-# Run tests
-make test
-
-# Deploy to production
-git push origin main  # Automated pipeline
-```
-
-**Docker-First Development:**
-- `make dev` - Start both frontend and backend with hot reloading
-- `make stop` - Stop development environment  
-- `make logs` - View development logs
-- `make reset` - Reset environment (clean slate)
-
-All development uses Docker containers for consistency and zero conflicts.
-
-## 🚢 Production Infrastructure
-
-### AWS Resources
-- **Account**: 310829530903 (eu-north-1)
-- **EC2**: i-01647c3d9af4fe9fc (56.228.25.95)
-- **Domain**: filter-ical.de with auto-renewing SSL
-
-### Multi-Project Architecture
-The infrastructure supports multiple projects on the same server:
-```
-nginx (reverse proxy) → Multiple domains → Individual containers
-├── filter-ical.de → ical-viewer
-├── example.com → future-project-1
-└── [your-domain] → your-new-project
-```
-
-## 🎯 Template Success Record
-
-**Proven Production Template**:
-- ✅ Zero-downtime deployments working
-- ✅ Automated testing preventing broken code
-- ✅ SSL certificates auto-renewing
-- ✅ Multi-container architecture stable
-- ✅ Change detection optimizing deployment speed
-- ✅ Professional development workflow
-
-## 🤖 Claude Code Integration
-
-This project includes comprehensive instructions for Claude Code to automatically replicate the architecture to new projects without any debugging or configuration.
-
-**Result**: Professional web applications deployable in minutes instead of days.
+**Live Application**: https://filter-ical.de
 
 ---
 
-*Template last updated: September 11, 2025*  
-*Status: Migrated to Python + Vue 3 - Even more maintainable!*
-# Git Hooks Fixed
+## 🎯 What It Does
+
+Filter-iCal allows users to:
+- Subscribe to existing iCalendar feeds
+- Apply custom filters to events (by keyword, date range, category, etc.)
+- Generate a new filtered iCal feed URL
+- Subscribe to the filtered feed in any calendar application
+
+**Use Case**: Remove unwanted events, focus on specific categories, or customize shared calendars without modifying the source.
+
+---
+
+## 🏗️ Tech Stack
+
+**Backend**
+- Python 3.11+ with FastAPI
+- PostgreSQL 16 (user data, filters, subscriptions)
+- Uvicorn ASGI server with hot reload
+- Alembic for database migrations
+
+**Frontend**
+- Vue 3 with Composition API
+- Pinia for state management
+- Tailwind CSS v4
+- Vite build tool with hot reload
+- Vue DevTools integration
+
+**Infrastructure**
+- AWS EC2 (eu-north-1)
+- Docker containerization
+- Nginx reverse proxy with Let's Encrypt SSL
+- GitHub Actions CI/CD
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.11+
+- Node.js 20+
+- Docker (for PostgreSQL)
+- WSL2 (if on Windows)
+
+### Local Development
+
+```bash
+# Clone repository
+git clone https://github.com/duersjefen/filter-ical.git
+cd filter-ical
+
+# Start full environment (PostgreSQL + Backend + Frontend)
+make dev
+```
+
+**Access:**
+- Frontend: http://localhost:8000
+- Backend API: http://localhost:3000
+- API Docs: http://localhost:3000/docs
+- PostgreSQL: localhost:5432
+
+**Development Features:**
+- ✅ Hot reload for both frontend and backend
+- ✅ Vue DevTools automatically available
+- ✅ PostgreSQL in Docker (no local install needed)
+- ✅ Automatic dependency installation
+
+### Available Commands
+
+```bash
+# Development
+make dev                   # Start all services
+make stop                  # Stop all services
+make health                # Check service status
+make reset-db              # Reset local database
+
+# Testing
+make test                  # Run unit tests
+make test-all              # Run complete test suite
+
+# Deployment
+make deploy-staging        # Deploy to staging
+make deploy-production     # Deploy to production (requires approval)
+make status                # Check deployment status
+
+# Database
+make reset-db              # Reset local database
+make logs-db               # View PostgreSQL logs
+```
+
+---
+
+## 📐 Architecture
+
+### Development (Native + Docker Hybrid)
+
+**Why Native?** Maximum performance with instant hot reload.
+
+- **Backend**: Native Python with uvicorn (hot reload on .py changes)
+- **Frontend**: Native Node.js with Vite (hot reload on .vue/.js changes)
+- **Database**: Docker PostgreSQL (consistent, isolated, disposable)
+
+This hybrid approach combines the speed of native development with the consistency of containerized databases.
+
+### Project Structure
+
+```
+filter-ical/
+├── backend/
+│   ├── app/
+│   │   ├── data/          # Pure functions (business logic)
+│   │   ├── main.py        # FastAPI app (I/O orchestration)
+│   │   └── core/          # Configuration, middleware
+│   ├── tests/             # pytest unit + integration tests
+│   └── alembic/           # Database migrations
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/    # Vue 3 components
+│   │   ├── composables/   # Pure functions (data transformations)
+│   │   ├── stores/        # Pinia stores (state + I/O)
+│   │   └── views/         # Page-level components
+│   └── tests/             # Vitest + Playwright E2E tests
+│
+└── docker-compose.dev.yml # PostgreSQL only (for local dev)
+```
+
+### Design Principles
+
+**1. Functional Core, Imperative Shell**
+- Pure functions in `/data/` and `/composables/`
+- Side effects isolated in `main.py` and stores
+- 100% testable business logic
+
+**2. Contract-Driven Development**
+- OpenAPI specifications define API contracts
+- Contract tests ensure compliance
+- Frontend and backend develop independently
+
+**3. Test-First Development (TDD)**
+- Write failing tests first (`@pytest.mark.future`)
+- Implement minimum code to pass
+- Refactor safely with test coverage
+
+---
+
+## 🚢 Deployment
+
+### Environments
+
+| Environment | URL | Database | Trigger |
+|-------------|-----|----------|---------|
+| **Local** | http://localhost:8000 | `filterical_development` | `make dev` |
+| **Staging** | https://staging.filter-ical.de | `filterical_staging` | Push to `master` |
+| **Production** | https://filter-ical.de | `filterical_production` | Manual approval |
+
+### Deployment Workflow
+
+```bash
+# 1. Develop locally
+make dev
+
+# 2. Run tests
+make test
+
+# 3. Commit changes
+git add .
+git commit -m "Add feature X"
+
+# 4. Push to master (triggers staging deployment)
+git push origin master
+
+# 5. Verify on staging
+curl https://staging.filter-ical.de/health
+
+# 6. Deploy to production
+make deploy-production
+# → Opens GitHub Actions for manual approval
+```
+
+### Infrastructure
+
+**AWS EC2**: i-01647c3d9af4fe9fc (13.62.136.72)
+- **Region**: eu-north-1
+- **OS**: Amazon Linux 2
+- **Services**: Docker, nginx, certbot
+
+**GitHub Actions CI/CD**:
+- Automated builds on push
+- Docker image publishing to GHCR
+- Zero-downtime deployments
+- Automatic health checks and rollback
+
+---
+
+## 🗄️ Database
+
+### Local Development
+
+PostgreSQL runs in Docker (no local installation needed):
+
+```bash
+# Connection details
+Host: localhost
+Port: 5432
+Database: filterical_development
+User: filterical_dev
+Password: dev_password_change_me
+```
+
+### Migrations
+
+**ALWAYS use Alembic for schema changes:**
+
+```bash
+cd backend
+
+# Create migration
+alembic revision --autogenerate -m "Add user preferences table"
+
+# Apply migration
+alembic upgrade head
+
+# Rollback migration
+alembic downgrade -1
+```
+
+---
+
+## 🧪 Testing
+
+### Test Structure
+
+- **Unit Tests**: Pure functions, business logic (`tests/unit/`)
+- **Integration Tests**: API endpoints, database interactions (`tests/integration/`)
+- **E2E Tests**: Full user workflows with Playwright (headless only)
+- **Contract Tests**: OpenAPI specification compliance
+
+### Running Tests
+
+```bash
+# Fast unit tests (for commits)
+make test
+
+# Complete test suite
+make test-all
+
+# Frontend tests
+cd frontend && npm test
+
+# E2E tests (headless)
+cd frontend && npm run test:e2e
+```
+
+---
+
+## 🔧 Development Tips
+
+### Hot Reload
+
+Both servers automatically reload on file changes:
+- **Backend**: Changes to `.py` files trigger uvicorn reload
+- **Frontend**: Changes to `.vue`/`.js` files trigger Vite HMR
+
+No manual restarts needed!
+
+### Checking Service Health
+
+```bash
+make health
+```
+
+Shows status of:
+- PostgreSQL container
+- Backend API
+- Frontend dev server
+
+### Debugging
+
+**Frontend**: Vue DevTools available at http://localhost:8000
+**Backend**: Interactive API docs at http://localhost:3000/docs
+
+### Common Issues
+
+**Port 5432 already in use:**
+```bash
+docker ps -a | grep postgres
+docker stop <container-name>
+```
+
+**Services won't start:**
+```bash
+make stop
+make dev
+```
+
+**Database needs reset:**
+```bash
+make reset-db
+cd backend && alembic upgrade head
+```
+
+---
+
+## 📚 Additional Documentation
+
+- **[CLAUDE.md](CLAUDE.md)** - AI assistant instructions (architecture principles, TDD workflow)
+---
+
+## 🤝 Contributing
+
+1. Create feature branch: `git checkout -b feature/your-feature`
+2. Write tests first (TDD workflow)
+3. Implement feature
+4. Run tests: `make test`
+5. Commit: `git commit -m "Add feature X"`
+6. Push: `git push origin feature/your-feature`
+7. Create Pull Request
+
+**Code Review Checklist:**
+- ✅ Tests pass (`make test-all`)
+- ✅ Pure functions have no side effects
+- ✅ API changes documented in OpenAPI spec
+- ✅ Database migrations included (if schema changed)
+- ✅ No console.log statements
+- ✅ Follows naming conventions (no "New", "Updated", etc.)
+
+---
+
+## 📄 License
+
+[Your License Here]
+
+---
+
+**Maintained by**: [Your Name/Team]
+**Production Status**: ✅ Live at https://filter-ical.de

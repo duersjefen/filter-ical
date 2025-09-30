@@ -410,8 +410,8 @@
     "icalFilterSubscribe": "🗓️ Filter iCal"
   },
   "subtitles": {
-    "filterCalendarsCreateFeeds": "Kalender hinzufügen • Events filtern\nGefilterte iCal-Abos exportieren",
-    "domainCalendar": "Events durchsuchen\nGruppen & Events abonnieren\niCal-Link in Kalender-App nutzen"
+    "filterCalendarsCreateFeeds": "Kalender hinzufügen • Events filtern • Gefilterte iCal-Abos exportieren",
+    "domainCalendar": "Events durchsuchen • Gruppen & Events abonnieren • iCal-Link in Kalender-App nutzen"
   },
   "eventManagement": {
     "eventManagementTips": "Event-Management-Tipps",
