@@ -134,10 +134,20 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf,.github/actions/execute-remote-docker/scripts/'
+        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
         target: '/opt/websites/'
         strip_components: 2
-        
+
+    - name: 📜 Sync Deployment Scripts to Development Server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: '.github/actions/execute-remote-docker/scripts/'
+        target: '/opt/websites/'
+        strip_components: 0
+
     - name: 🚀 Deploy Branch Preview to Development Server
       uses: ./.github/actions/execute-remote-docker
       with:
@@ -247,10 +257,20 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf,.github/actions/execute-remote-docker/scripts/'
+        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
         target: '/opt/websites/'
         strip_components: 2
-    
+
+    - name: 📜 Sync Deployment Scripts to Staging Server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: '.github/actions/execute-remote-docker/scripts/'
+        target: '/opt/websites/'
+        strip_components: 0
+
     - name: 🔍 Validate Infrastructure Sync
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -507,10 +527,20 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf,.github/actions/execute-remote-docker/scripts/'
+        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
         target: '/opt/websites/'
         strip_components: 2
-    
+
+    - name: 📜 Sync Deployment Scripts to Production Server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: '.github/actions/execute-remote-docker/scripts/'
+        target: '/opt/websites/'
+        strip_components: 0
+
     - name: 🔍 Validate Infrastructure Sync
       uses: appleboy/ssh-action@v1.0.3
       with:
