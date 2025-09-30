@@ -134,7 +134,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
+        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf,.github/actions/execute-remote-docker/scripts/'
         target: '/opt/websites/'
         strip_components: 2
         
@@ -241,13 +241,13 @@ jobs:
         echo "EXPECTED_COMPOSE_CHECKSUM=$(cat .tmp/compose-checksum.txt | cut -d' ' -f1)" >> $GITHUB_ENV
         echo "EXPECTED_NGINX_CHECKSUM=$(cat .tmp/nginx-checksum.txt | cut -d' ' -f1)" >> $GITHUB_ENV
 
-    - name: 📁 Sync Infrastructure to Staging Server  
+    - name: 📁 Sync Infrastructure to Staging Server
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
+        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf,.github/actions/execute-remote-docker/scripts/'
         target: '/opt/websites/'
         strip_components: 2
     
@@ -507,7 +507,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf'
+        source: '.infra/docker/docker-compose.production.yml,.infra/docker/nginx.conf,.github/actions/execute-remote-docker/scripts/'
         target: '/opt/websites/'
         strip_components: 2
     
