@@ -53,7 +53,7 @@ export function useAdmin(domain) {
     
     loadingStates.groups = true
     try {
-      const result = await get(`/domains/${domain}/groups`)
+      const result = await get(`/api/domains/${domain}/groups`)
       // Extract the array data from the HTTP response
       const groupsData = result.success ? (result.data || []) : []
       groups.value = Array.isArray(groupsData) ? groupsData : []
@@ -78,7 +78,7 @@ export function useAdmin(domain) {
     }
     
     try {
-      const result = await post(`/domains/${domain}/groups`, { name: name.trim() })
+      const result = await post(`/api/domains/${domain}/groups`, { name: name.trim() })
       await loadGroups() // Refresh groups list
       return { success: true, data: result }
     } catch (err) {
@@ -98,7 +98,7 @@ export function useAdmin(domain) {
     }
     
     try {
-      const result = await put(`/domains/${domain}/groups/${groupId}`, { name: name.trim() })
+      const result = await put(`/api/domains/${domain}/groups/${groupId}`, { name: name.trim() })
       await loadGroups() // Refresh groups list
       return { success: true, data: result }
     } catch (err) {
@@ -109,7 +109,7 @@ export function useAdmin(domain) {
 
   const deleteGroup = async (groupId) => {
     try {
-      await del(`/domains/${domain}/groups/${groupId}`)
+      await del(`/api/domains/${domain}/groups/${groupId}`)
       await loadGroups() // Refresh groups list
       return { success: true }
     } catch (err) {
@@ -121,7 +121,7 @@ export function useAdmin(domain) {
   // API Functions - Recurring Events
   const loadRecurringEvents = async () => {
     try {
-      const result = await get(`/domains/${domain}/recurring-events`)
+      const result = await get(`/api/domains/${domain}/recurring-events`)
       // Extract the array data from the HTTP response
       const eventsData = result.success ? (result.data || []) : []
       recurringEvents.value = Array.isArray(eventsData) ? eventsData : []
@@ -140,7 +140,7 @@ export function useAdmin(domain) {
     
     loadingStates.events = true
     try {
-      const result = await get(`/domains/${domain}/recurring-events-with-assignments`)
+      const result = await get(`/api/domains/${domain}/recurring-events-with-assignments`)
       // Extract the array data from the HTTP response
       const eventsData = result.success ? (result.data?.data || []) : []
       recurringEvents.value = Array.isArray(eventsData) ? eventsData : []
@@ -156,7 +156,7 @@ export function useAdmin(domain) {
 
   const assignEventsToGroup = async (groupId, eventTitles) => {
     try {
-      const result = await put(`/domains/${domain}/groups/${groupId}/assign-recurring-events`, {
+      const result = await put(`/api/domains/${domain}/groups/${groupId}/assign-recurring-events`, {
         recurring_event_titles: Array.isArray(eventTitles) ? eventTitles : [eventTitles]
       })
       // Refresh both groups and events after assignment
@@ -195,7 +195,7 @@ export function useAdmin(domain) {
 
   const bulkAssignEventsToGroup = async (groupId, eventTitles) => {
     try {
-      const result = await put(`/domains/${domain}/bulk-assign-events`, {
+      const result = await put(`/api/domains/${domain}/bulk-assign-events`, {
         group_id: groupId,
         recurring_event_titles: eventTitles
       })
@@ -210,7 +210,7 @@ export function useAdmin(domain) {
 
   const bulkUnassignEvents = async (eventTitles) => {
     try {
-      const result = await put(`/domains/${domain}/bulk-unassign-events`, {
+      const result = await put(`/api/domains/${domain}/bulk-unassign-events`, {
         recurring_event_titles: eventTitles
       })
       // Refresh events after bulk unassignment
@@ -223,7 +223,7 @@ export function useAdmin(domain) {
   }
 
   const removeEventsFromGroup = async (groupId, eventTitles) => {
-    const result = await put(`/domains/${domain}/groups/${groupId}/remove-events`, {
+    const result = await put(`/api/domains/${domain}/groups/${groupId}/remove-events`, {
       recurring_event_titles: Array.isArray(eventTitles) ? eventTitles : [eventTitles]
     })
     
@@ -239,7 +239,7 @@ export function useAdmin(domain) {
 
   const unassignEventFromGroup = async (eventTitle) => {
     try {
-      const result = await put(`/domains/${domain}/unassign-event`, {
+      const result = await put(`/api/domains/${domain}/unassign-event`, {
         recurring_event_title: eventTitle
       })
       // Refresh events after unassignment
@@ -259,7 +259,7 @@ export function useAdmin(domain) {
     
     loadingStates.rules = true
     try {
-      const result = await get(`/domains/${domain}/assignment-rules`)
+      const result = await get(`/api/domains/${domain}/assignment-rules`)
       // Extract the array data from the HTTP response
       const rulesData = result.success ? (result.data || []) : []
       assignmentRules.value = Array.isArray(rulesData) ? rulesData : []
@@ -275,7 +275,7 @@ export function useAdmin(domain) {
 
   const createAssignmentRule = async (ruleType, ruleValue, targetGroupId) => {
     try {
-      const result = await post(`/domains/${domain}/assignment-rules`, {
+      const result = await post(`/api/domains/${domain}/assignment-rules`, {
         rule_type: ruleType,
         rule_value: ruleValue.trim(),
         target_group_id: parseInt(targetGroupId)
@@ -290,7 +290,7 @@ export function useAdmin(domain) {
 
   const deleteAssignmentRule = async (ruleId) => {
     try {
-      await del(`/domains/${domain}/assignment-rules/${ruleId}`)
+      await del(`/api/domains/${domain}/assignment-rules/${ruleId}`)
       await loadAssignmentRules() // Refresh rules list
       return { success: true }
     } catch (err) {

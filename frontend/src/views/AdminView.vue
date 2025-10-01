@@ -330,7 +330,7 @@ export default {
         const formData = new FormData()
         formData.append('config_file', file)
 
-        const result = await post(`/domains/${props.domain}/import-config`, formData, {
+        const result = await post(`/api/domains/${props.domain}/import-config`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
 
@@ -355,7 +355,7 @@ export default {
 
     const resetConfiguration = async () => {
       try {
-        const result = await post(`/domains/${props.domain}/reset-config`)
+        const result = await post(`/api/domains/${props.domain}/reset-config`)
 
         if (result.success) {
           showNotification(t('admin.configurationResetSuccessfully'), 'success')
@@ -390,7 +390,7 @@ export default {
     // Backup Management
     const loadBackups = async () => {
       try {
-        const result = await get(`/domains/${props.domain}/backups`)
+        const result = await get(`/api/domains/${props.domain}/backups`)
         if (result.success) {
           backups.value = result.data || []
         }
@@ -402,7 +402,7 @@ export default {
     const createBackup = async (description = '') => {
       try {
         const payload = description ? { description } : {}
-        const result = await post(`/domains/${props.domain}/backups`, payload)
+        const result = await post(`/api/domains/${props.domain}/backups`, payload)
 
         if (result.success) {
           showNotification(t('admin.backupCreatedSuccessfully'), 'success')
@@ -422,7 +422,7 @@ export default {
 
     const restoreBackup = async (backupId) => {
       try {
-        const result = await post(`/domains/${props.domain}/backups/${backupId}/restore`)
+        const result = await post(`/api/domains/${props.domain}/backups/${backupId}/restore`)
 
         if (result.success) {
           showNotification(t('admin.backupRestoredSuccessfully'), 'success')
@@ -472,7 +472,7 @@ export default {
 
     const deleteBackup = async (backupId) => {
       try {
-        const result = await del(`/domains/${props.domain}/backups/${backupId}`)
+        const result = await del(`/api/domains/${props.domain}/backups/${backupId}`)
 
         if (result.success) {
           showNotification(t('admin.backupDeletedSuccessfully'), 'success')

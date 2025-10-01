@@ -159,7 +159,7 @@ export default {
     const loadDomainData = async () => {
       try {
         // Load domain configuration
-        const domainResult = await get(`/domains/${props.domain}`)
+        const domainResult = await get(`/api/domains/${props.domain}`)
         if (domainResult.success) {
           domainConfig.value = domainResult.data
           

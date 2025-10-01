@@ -459,7 +459,7 @@ export const useAppStore = defineStore('app', () => {
 
   const loadDomainGroups = async (domainName) => {
     // Use the domain events endpoint which provides the full hierarchical structure
-    const result = await get(`/domains/${domainName}/events`)
+    const result = await get(`/api/domains/${domainName}/events`)
 
     if (result.success) {
       // Use backend format directly - no complex conversion needed
@@ -513,7 +513,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Still fetch even for anonymous users in case they log in later
     try {
-      const result = await get(`/filters?username=${currentUserId}`)
+      const result = await get(`/api/filters?username=${currentUserId}`)
 
       if (result.success) {
         // useHTTP wraps response in { success: true, data: [...] }
