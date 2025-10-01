@@ -43,11 +43,7 @@
               <!-- Current Year Month Header (direct, no nesting) -->
               <div
                 @click="toggleGroupExpansion(month.name)"
-                class="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group"
-                :class="{
-                  'bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500': isCurrentMonth(month.name),
-                  'ml-1': !isCurrentMonth(month.name)
-                }"
+                class="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group"
               >
                 <svg
                   class="w-4 h-4 transition-all duration-300 text-blue-500 dark:text-blue-400 flex-shrink-0"
@@ -161,10 +157,6 @@
           <div
             @click="toggleGroupExpansion(group.name)"
             class="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 group"
-            :class="{
-              'bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500': isCurrentMonth(group.name),
-              'ml-1': !isCurrentMonth(group.name)
-            }"
           >
             <!-- Minimal expansion icon -->
             <svg

@@ -1,6 +1,6 @@
 <template>
-  <div 
-    class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
+  <div
+    class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors duration-200"
     :class="isExpanded ? 'rounded-t-xl' : 'rounded-xl'"
     @click="$emit('toggle')"
   >
@@ -17,11 +17,11 @@
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
         
-        <h3 class="text-2xl font-black text-gray-900 dark:text-gray-100 flex-1 tracking-tight">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 flex-1 tracking-tight">
           🔍 <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('preview.eventPreview') }}</span>
         </h3>
       </div>
-      <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center mt-2">
+      <p class="text-xs font-medium text-gray-700 dark:text-gray-300 text-center mt-1.5">
         {{ $t(`preview.${eventCountInfo.mobileMessage}`, { count: eventCountInfo.count }) }}
       </p>
     </div>
@@ -39,10 +39,10 @@
       </svg>
       
       <div class="flex-1">
-        <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 tracking-tight">
           🔍 <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('preview.eventPreview') }}</span>
         </h3>
-        <p class="text-base font-medium text-gray-700 dark:text-gray-300">
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
           {{ $t(`preview.${eventCountInfo.desktopMessage}`, { count: eventCountInfo.count }) }}
         </p>
       </div>

@@ -3,7 +3,7 @@
     <!-- Email-Style Single-Line Layout -->
     <div class="flex items-baseline gap-3">
       <!-- Time: Fixed left column -->
-      <div class="text-xs text-gray-500 dark:text-gray-400 font-mono whitespace-nowrap flex-shrink-0 w-24">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-mono whitespace-nowrap flex-shrink-0 w-32">
         {{ formatCompactDate(event) }}
       </div>
 
@@ -156,7 +156,7 @@ const formatCompactDate = (event) => {
   } else if (diffDays >= -7 && diffDays < 0) {
     return `${startDate.toLocaleDateString(locale, { weekday: 'short' })}·${timeStr}`
   } else {
-    // For dates further away, show month/day with year if needed
+    // For dates further away, show month/day and year only if different from current year
     const monthDay = startDate.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
     const currentYear = now.getFullYear()
     const eventYear = startDate.getFullYear()
