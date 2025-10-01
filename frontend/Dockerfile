@@ -20,7 +20,8 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+# Using nginx-brotli image for better compression (20-30% smaller than gzip)
+FROM fholzer/nginx-brotli:alpine
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf

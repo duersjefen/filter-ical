@@ -58,6 +58,23 @@ VueDevTools is now excluded from production builds:
 
 ## Server Configuration (✅ IMPLEMENTED)
 
+### Brotli-Enabled Nginx Docker Image
+
+**File:** `frontend/Dockerfile`
+
+The production stage now uses a Brotli-enabled nginx base image:
+```dockerfile
+FROM fholzer/nginx-brotli:alpine
+```
+
+**Why this matters:**
+- Standard `nginx:alpine` doesn't include Brotli compression module
+- Brotli achieves 20-30% better compression than gzip alone
+- The `fholzer/nginx-brotli` image includes both Brotli and standard nginx features
+- No runtime installation needed - module is pre-compiled
+
+**Impact:** Smaller file transfers, faster page loads, reduced bandwidth costs.
+
 ### Nginx Configuration for Static Assets
 
 **File:** `frontend/nginx.conf`
@@ -170,9 +187,12 @@ cssCodeSplit: true
 
 ### 5. Future Recommendations
 
-#### Enable HTTP/2 or HTTP/3
-HTTP/2 multiplexing improves loading of multiple small chunks:
+#### Enable HTTP/2 or HTTP/3 (✅ HTTP/2 Already Enabled)
+HTTP/2 is already enabled on the platform nginx layer, providing multiplexing benefits for loading multiple chunks efficiently.
+
+For further improvement, consider HTTP/3:
 ```nginx
+listen 443 quic reuseport;
 listen 443 ssl http2;
 ```
 
@@ -227,11 +247,12 @@ With these optimizations + server config:
 - [x] Async component loading optimized
 
 ### Server Configuration
+- [x] Brotli-enabled nginx Docker image (fholzer/nginx-brotli:alpine)
 - [x] Server compression enabled (Brotli + Gzip)
 - [x] Cache headers configured
 - [x] Security headers added
 - [x] Preconnect/DNS prefetch added
-- [ ] HTTP/2 enabled (requires production server update)
+- [x] HTTP/2 enabled (already active on platform nginx)
 - [ ] Performance tested with Lighthouse (after deployment)
 
 ### Expected Improvements
