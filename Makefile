@@ -161,7 +161,8 @@ approve-production: ## Approve pending production deployment
 	read -p "🤔 Approve production deployment? (yes/no): " confirm; \
 	if [ "$$confirm" = "yes" ]; then \
 		echo "✅ Approving deployment..."; \
-		gh run approve $$PENDING; \
+		ENV_ID=$$(gh api repos/duersjefen/filter-ical/actions/runs/$$PENDING/pending_deployments --jq '.[0].environment.id'); \
+		gh api repos/duersjefen/filter-ical/actions/runs/$$PENDING/pending_deployments -X POST --input - <<< "{\"environment_ids\":[$$ENV_ID],\"state\":\"approved\",\"comment\":\"Approved via make approve-production\"}"; \
 		echo ""; \
 		echo "👀 Watching deployment progress..."; \
 		gh run watch $$PENDING; \
@@ -196,7 +197,8 @@ deploy-production-auto: ## Deploy to production and auto-approve (use with cauti
 	echo "⏳ Waiting for approval gate..."; \
 	sleep 3; \
 	echo "✅ Auto-approving..."; \
-	gh run approve $$RUN_ID; \
+	ENV_ID=$$(gh api repos/duersjefen/filter-ical/actions/runs/$$RUN_ID/pending_deployments --jq '.[0].environment.id'); \
+	gh api repos/duersjefen/filter-ical/actions/runs/$$RUN_ID/pending_deployments -X POST --input - <<< "{\"environment_ids\":[$$ENV_ID],\"state\":\"approved\",\"comment\":\"Auto-approved via make deploy-production-auto\"}"; \
 	echo ""; \
 	echo "👀 Watching deployment progress..."; \
 	gh run watch $$RUN_ID
