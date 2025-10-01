@@ -1,9 +1,9 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
     <AppHeader 
-      :title="$t('admin.manageEventsGroups', { domain })"
-      :subtitle="$t('admin.adminPanelSubtitle')"
-      :back-button-text="$t('admin.backToCalendar', { domain })"
+      :title="$t('domainAdmin.manageEventsGroups', { domain })"
+      :subtitle="$t('domainAdmin.adminPanelSubtitle')"
+      :back-button-text="$t('domainAdmin.backToCalendar', { domain })"
       :show-back-button="true"
       page-context="admin"
       @navigate-back="$router.push(`/${domain}`)"
@@ -15,10 +15,10 @@
         <div class="text-2xl flex-shrink-0">💻</div>
         <div class="min-w-0 flex-1">
           <h3 class="font-semibold text-amber-800 dark:text-amber-200 text-base mb-2">
-            {{ $t('admin.mobileNotOptimized') }}
+            {{ $t('domainAdmin.mobileNotOptimized') }}
           </h3>
           <p class="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">
-            {{ $t('admin.mobileUseDesktop') }}
+            {{ $t('domainAdmin.mobileUseDesktop') }}
           </p>
         </div>
       </div>
@@ -96,7 +96,7 @@
   <!-- Confirmation Dialog -->
   <div v-if="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('admin.confirmAction') }}</h3>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('domainAdmin.confirmAction') }}</h3>
       <p class="text-gray-700 dark:text-gray-300 mb-6">{{ confirmDialog.message }}</p>
       <div class="flex gap-3 justify-end">
         <button
@@ -109,7 +109,7 @@
           @click="confirmDialog.onConfirm(); closeConfirm()"
           class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
         >
-          {{ $t('admin.confirm') }}
+          {{ $t('domainAdmin.confirm') }}
         </button>
       </div>
     </div>
@@ -218,7 +218,7 @@ export default {
     const handleCreateGroup = async (groupName) => {
       const result = await createGroupAPI(groupName)
       showNotification(
-        result.success ? t('admin.groupCreatedSuccessfully') : t('admin.failedToCreateGroup', { error: result.error }),
+        result.success ? t('domainAdmin.groupCreatedSuccessfully') : t('domainAdmin.failedToCreateGroup', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -226,7 +226,7 @@ export default {
     const handleUpdateGroup = async (groupId, newName) => {
       const result = await updateGroup(groupId, newName)
       showNotification(
-        result.success ? t('admin.groupUpdatedSuccessfully') : t('admin.failedToUpdateGroup', { error: result.error }),
+        result.success ? t('domainAdmin.groupUpdatedSuccessfully') : t('domainAdmin.failedToUpdateGroup', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -242,7 +242,7 @@ export default {
       } else {
         const result = await addEventsToGroup(groupId, eventTitles)
         if (result.success) {
-          const groupName = groups.value.find(g => g.id === groupId)?.name || t('admin.unknownGroup')
+          const groupName = groups.value.find(g => g.id === groupId)?.name || t('domainAdmin.unknownGroup')
           showNotification(`Successfully added ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} to ${groupName}!`, 'success')
         } else {
           showNotification(`Failed to add events: ${result.error}`, 'error')
@@ -254,7 +254,7 @@ export default {
     const handleCreateRule = async (ruleData) => {
       const result = await createAssignmentRule(ruleData.rule_type, ruleData.rule_value, ruleData.target_group_id)
       showNotification(
-        result.success ? t('admin.assignmentRuleCreatedSuccessfully') : t('admin.failedToCreateAssignmentRule', { error: result.error }),
+        result.success ? t('domainAdmin.assignmentRuleCreatedSuccessfully') : t('domainAdmin.failedToCreateAssignmentRule', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -278,14 +278,14 @@ export default {
     }
 
     const deleteRuleConfirm = (rule) => {
-      const message = t('admin.confirmDeleteRule', { ruleType: rule.rule_type, ruleValue: rule.rule_value })
+      const message = t('domainAdmin.confirmDeleteRule', { ruleType: rule.rule_type, ruleValue: rule.rule_value })
       showConfirmDialog(message, () => deleteRule(rule.id))
     }
 
     const deleteRule = async (ruleId) => {
       const result = await deleteAssignmentRule(ruleId)
       if (result.success) {
-        showNotification(t('admin.assignmentRuleDeletedSuccessfully'), 'success')
+        showNotification(t('domainAdmin.assignmentRuleDeletedSuccessfully'), 'success')
       } else {
         showNotification(`Failed to delete assignment rule: ${result.error}`, 'error')
       }
@@ -316,7 +316,7 @@ export default {
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
 
-        showNotification(t('admin.configurationExportedSuccessfully'), 'success')
+        showNotification(t('domainAdmin.configurationExportedSuccessfully'), 'success')
       } catch (error) {
         showNotification(`Failed to export configuration: ${error.message}`, 'error')
       }
@@ -335,7 +335,7 @@ export default {
         })
 
         if (result.success) {
-          showNotification(t('admin.configurationImportedSuccessfully'), 'success')
+          showNotification(t('domainAdmin.configurationImportedSuccessfully'), 'success')
           loadAllAdminData() // Reload data
         } else {
           showNotification(`Failed to import configuration: ${result.error}`, 'error')
@@ -349,7 +349,7 @@ export default {
     }
 
     const resetConfigurationConfirm = () => {
-      const message = t('admin.confirmResetConfiguration')
+      const message = t('domainAdmin.confirmResetConfiguration')
       showConfirmDialog(message, resetConfiguration)
     }
 
@@ -358,7 +358,7 @@ export default {
         const result = await post(`/api/domains/${props.domain}/reset-config`)
 
         if (result.success) {
-          showNotification(t('admin.configurationResetSuccessfully'), 'success')
+          showNotification(t('domainAdmin.configurationResetSuccessfully'), 'success')
           loadAllAdminData() // Reload data
         } else {
           showNotification(`Failed to reset configuration: ${result.error}`, 'error')
@@ -372,7 +372,7 @@ export default {
     const handleDeleteGroup = async (groupId) => {
       const result = await deleteGroup(groupId)
       showNotification(
-        result.success ? t('admin.groupDeletedSuccessfully') : t('admin.failedToDeleteGroup', { error: result.error }),
+        result.success ? t('domainAdmin.groupDeletedSuccessfully') : t('domainAdmin.failedToDeleteGroup', { error: result.error }),
         result.success ? 'success' : 'error'
       )
     }
@@ -380,7 +380,7 @@ export default {
     const handleRemoveFromGroup = async (groupId, eventTitles) => {
       const result = await removeEventsFromGroup(groupId, eventTitles)
       if (result.success) {
-        const groupName = groups.value.find(g => g.id === parseInt(groupId))?.name || t('admin.unknownGroup')
+        const groupName = groups.value.find(g => g.id === parseInt(groupId))?.name || t('domainAdmin.unknownGroup')
         showNotification(`Successfully removed ${eventTitles.length} event${eventTitles.length > 1 ? 's' : ''} from ${groupName}!`, 'success')
       } else {
         showNotification(`Failed to remove events from group: ${result.error}`, 'error')
@@ -405,7 +405,7 @@ export default {
         const result = await post(`/api/domains/${props.domain}/backups`, payload)
 
         if (result.success) {
-          showNotification(t('admin.backupCreatedSuccessfully'), 'success')
+          showNotification(t('domainAdmin.backupCreatedSuccessfully'), 'success')
           loadBackups() // Reload backup list
         } else {
           showNotification(`Failed to create backup: ${result.error}`, 'error')
@@ -416,7 +416,7 @@ export default {
     }
 
     const restoreBackupConfirm = (backupId) => {
-      const message = t('admin.confirmRestoreBackup')
+      const message = t('domainAdmin.confirmRestoreBackup')
       showConfirmDialog(message, () => restoreBackup(backupId))
     }
 
@@ -425,7 +425,7 @@ export default {
         const result = await post(`/api/domains/${props.domain}/backups/${backupId}/restore`)
 
         if (result.success) {
-          showNotification(t('admin.backupRestoredSuccessfully'), 'success')
+          showNotification(t('domainAdmin.backupRestoredSuccessfully'), 'success')
           loadAllAdminData() // Reload all admin data
           loadBackups() // Reload backup list
         } else {
@@ -466,7 +466,7 @@ export default {
     }
 
     const deleteBackupConfirm = (backupId) => {
-      const message = t('admin.confirmDeleteBackup')
+      const message = t('domainAdmin.confirmDeleteBackup')
       showConfirmDialog(message, () => deleteBackup(backupId))
     }
 
@@ -475,7 +475,7 @@ export default {
         const result = await del(`/api/domains/${props.domain}/backups/${backupId}`)
 
         if (result.success) {
-          showNotification(t('admin.backupDeletedSuccessfully'), 'success')
+          showNotification(t('domainAdmin.backupDeletedSuccessfully'), 'success')
           loadBackups() // Reload backup list
         } else {
           showNotification(`Failed to delete backup: ${result.error}`, 'error')

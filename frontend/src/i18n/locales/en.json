@@ -260,7 +260,7 @@
     "subscribeAndSelect": "Subscribe to group and select all event types",
     "unsubscribeAndDeselect": "Unsubscribe and deselect this group"
   },
-  "admin": {
+  "domainAdmin": {
     "adminPanel": "Admin Panel",
     "loadingPanel": "Loading Admin Panel...",
     "pleaseWait": "Please wait",

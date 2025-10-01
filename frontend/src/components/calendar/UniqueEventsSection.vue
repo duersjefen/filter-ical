@@ -101,7 +101,7 @@
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400 shadow-lg ring-2 ring-blue-200 dark:ring-blue-700/50 scale-[1.01]' 
               : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-25 dark:hover:bg-blue-950/10'"
             @click="handleCardClick(recurringEvent.name, $event)"
-            :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? $t('status.deselectEvent') : $t('status.selectEvent')} ${recurringEvent.name} • ${$t('admin.dragToSelectMultiple')}`"
+            :title="`${selectedRecurringEvents.includes(recurringEvent.name) ? $t('status.deselectEvent') : $t('status.selectEvent')} ${recurringEvent.name} • ${$t('domainAdmin.dragToSelectMultiple')}`"
           >
             <!-- Selection Indicator -->
             <div 

@@ -260,7 +260,7 @@
     "subscribeAndSelect": "Gruppe abonnieren und alle Events auswählen",
     "unsubscribeAndDeselect": "Gruppe abbestellen und abwählen"
   },
-  "admin": {
+  "domainAdmin": {
     "adminPanel": "Admin-Panel",
     "loadingPanel": "Admin-Panel wird geladen...",
     "pleaseWait": "Bitte warten",

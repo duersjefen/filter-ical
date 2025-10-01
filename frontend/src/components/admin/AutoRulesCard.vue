@@ -1,7 +1,7 @@
 <template>
   <AdminCardWrapper
-    :title="$t('admin.autoRules')"
-    :subtitle="`${assignmentRules.length} rules • ${$t('admin.automaticEventAssignmentRules')}`"
+    :title="$t('domainAdmin.autoRules')"
+    :subtitle="`${assignmentRules.length} rules • ${$t('domainAdmin.automaticEventAssignmentRules')}`"
     icon="⚙️"
     :expanded="expanded"
     @toggle="$emit('toggle')"
@@ -14,15 +14,15 @@
           <span class="text-blue-600 dark:text-blue-400 text-xl">⚡</span>
         </div>
         <div class="flex-1">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">{{ $t('admin.createNewAutoRule') }}</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ $t('admin.autoRuleDescription') }}</p>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">{{ $t('domainAdmin.createNewAutoRule') }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ $t('domainAdmin.autoRuleDescription') }}</p>
         </div>
       </div>
       
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Rule Type -->
         <div class="space-y-3">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('admin.ruleType') }}</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('domainAdmin.ruleType') }}</label>
           <div class="flex gap-2">
             <button
               v-for="type in ruleTypes"
@@ -46,7 +46,7 @@
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <span class="flex items-center gap-2">
               <span class="text-green-600 dark:text-green-400">🔍</span>
-              {{ $t('admin.searchValue') }}
+              {{ $t('domainAdmin.searchValue') }}
             </span>
           </label>
           <div class="relative">
@@ -71,7 +71,7 @@
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <span class="flex items-center gap-2">
               <span class="text-purple-600 dark:text-purple-400">📁</span>
-              {{ $t('admin.targetGroup') }}
+              {{ $t('domainAdmin.targetGroup') }}
             </span>
           </label>
           <select 
@@ -99,7 +99,7 @@
             </span>
             <span v-else class="flex items-center gap-2">
               <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
-              {{ $t('admin.fillAllFieldsForPreview') }}
+              {{ $t('domainAdmin.fillAllFieldsForPreview') }}
             </span>
           </div>
         </div>
@@ -181,7 +181,7 @@
                     class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help" 
                     :title="event.description"
                   >
-                    <span class="font-medium">{{ t('admin.description') }}:</span> {{ event.description }}
+                    <span class="font-medium">{{ t('domainAdmin.description') }}:</span> {{ event.description }}
                   </div>
                   <!-- Show categories for category rules -->
                   <div 
@@ -189,7 +189,7 @@
                     class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help" 
                     :title="event.categories.join(', ')"
                   >
-                    <span class="font-medium">{{ t('admin.categories') }}:</span> {{ event.categories.join(', ') }}
+                    <span class="font-medium">{{ t('domainAdmin.categories') }}:</span> {{ event.categories.join(', ') }}
                   </div>
                 </div>
               </div>
@@ -199,7 +199,7 @@
             <div class="text-xs text-gray-500 dark:text-gray-400">
               <span v-if="event.willChange" class="text-green-700 dark:text-green-300">
                 <strong>{{ $t('messages.willAddTo') }}</strong> {{ getGroupName(newRule.target_group_id) }}
-                <span v-if="event.currentGroupName && event.currentGroupName !== t('admin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
+                <span v-if="event.currentGroupName && event.currentGroupName !== t('domainAdmin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
                   (currently: {{ event.currentGroupName }}{{ event.allGroupIds?.length > 1 ? ` +${event.allGroupIds.length - 1} more` : '' }})
                 </span>
               </span>
@@ -226,7 +226,7 @@
       <div v-if="assignmentRules.length > 0" class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <span class="text-2xl">🎯</span>
-          {{ $t('admin.activeRules') }} ({{ assignmentRules.length }})
+          {{ $t('domainAdmin.activeRules') }} ({{ assignmentRules.length }})
         </h3>
       </div>
       
@@ -260,10 +260,10 @@
                   </span>
                 </div>
                 <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
-                  {{ $t('admin.when') }} <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span> 
-                  → {{ $t('admin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
+                  {{ $t('domainAdmin.when') }} <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span> 
+                  → {{ $t('domainAdmin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
                 </p>
-                <div v-if="getRuleStatus(rule) !== t('admin.complete')" class="flex items-center gap-6 text-xs">
+                <div v-if="getRuleStatus(rule) !== t('domainAdmin.complete')" class="flex items-center gap-6 text-xs">
                   <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span class="text-green-700 dark:text-green-300 font-medium">{{ getLiveMatchingEvents(rule).filter(e => e.willChange).length }} {{ $t('messages.willBeAssigned') }}</span>
@@ -310,7 +310,7 @@
                 >
                   <span v-if="applyLoading" class="text-base">⏳</span>
                   <span v-else class="text-base">⚡</span>
-                  <span>{{ t('admin.apply') }}</span>
+                  <span>{{ t('domainAdmin.apply') }}</span>
                 </button>
                 <button
                   @click.stop="deleteRuleConfirm(rule)"
@@ -385,7 +385,7 @@
                       class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help" 
                       :title="event.description"
                     >
-                      <span class="font-medium">{{ t('admin.description') }}:</span> {{ event.description }}
+                      <span class="font-medium">{{ t('domainAdmin.description') }}:</span> {{ event.description }}
                     </div>
                     <!-- Show categories for category rules -->
                     <div 
@@ -393,7 +393,7 @@
                       class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help" 
                       :title="event.categories.join(', ')"
                     >
-                      <span class="font-medium">{{ t('admin.categories') }}:</span> {{ event.categories.join(', ') }}
+                      <span class="font-medium">{{ t('domainAdmin.categories') }}:</span> {{ event.categories.join(', ') }}
                     </div>
                   </div>
                 </div>
@@ -403,7 +403,7 @@
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 <span v-if="event.willChange" class="text-green-700 dark:text-green-300">
                   <strong>{{ $t('messages.willAddTo') }}</strong> {{ getGroupName(rule.target_group_id) }}
-                  <span v-if="event.currentGroupName && event.currentGroupName !== t('admin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
+                  <span v-if="event.currentGroupName && event.currentGroupName !== t('domainAdmin.unassigned')" class="text-gray-500 dark:text-gray-400 ml-1">
                     (currently: {{ event.currentGroupName }}{{ event.allGroupIds?.length > 1 ? ` +${event.allGroupIds.length - 1} more` : '' }})
                   </span>
                 </span>
@@ -439,11 +439,11 @@
           <div class="flex items-start gap-3 text-sm text-blue-800 dark:text-blue-200">
             <span class="text-lg flex-shrink-0">💡</span>
             <div class="text-left">
-              <p class="font-semibold mb-1">{{ t('admin.proTips') }}</p>
+              <p class="font-semibold mb-1">{{ t('domainAdmin.proTips') }}</p>
               <ul class="space-y-1 text-xs">
-                <li>• {{ t('admin.useMeetingInTitleRules') }}</li>
-                <li>• {{ t('admin.descriptionRulesForProjects') }}</li>
-                <li>• {{ t('admin.categoryRulesForOrganization') }}</li>
+                <li>• {{ t('domainAdmin.useMeetingInTitleRules') }}</li>
+                <li>• {{ t('domainAdmin.descriptionRulesForProjects') }}</li>
+                <li>• {{ t('domainAdmin.categoryRulesForOrganization') }}</li>
               </ul>
             </div>
           </div>
@@ -503,17 +503,17 @@ export default {
     const ruleTypes = computed(() => [
       {
         value: 'title_contains',
-        label: t('admin.title'),
+        label: t('domainAdmin.title'),
         icon: '📄'
       },
       {
         value: 'description_contains',
-        label: t('admin.description'),
+        label: t('domainAdmin.description'),
         icon: '📝'
       },
       {
         value: 'category_contains',
-        label: t('admin.category'),
+        label: t('domainAdmin.category'),
         icon: '🏷️'
       }
     ])
@@ -636,9 +636,9 @@ export default {
     const getRuleStatus = (rule) => {
       const willChangeCount = getLiveMatchingEvents(rule).filter(e => e.willChange).length
       if (willChangeCount === 0) {
-        return t('admin.complete')
+        return t('domainAdmin.complete')
       } else if (willChangeCount < 5) {
-        return t('admin.ready')
+        return t('domainAdmin.ready')
       } else {
         return t('status.pending')
       }
@@ -647,9 +647,9 @@ export default {
     const getRuleStatusClass = (rule) => {
       const status = getRuleStatus(rule)
       switch (status) {
-        case t('admin.complete'):
+        case t('domainAdmin.complete'):
           return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-        case t('admin.ready'):
+        case t('domainAdmin.ready'):
           return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
         case t('status.pending'):
           return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200'
@@ -660,20 +660,20 @@ export default {
     
     const getRuleTypeLabel = (ruleType) => {
       const labels = {
-        title_contains: t('admin.titleContains'),
-        description_contains: t('admin.descriptionContains'), 
-        category_contains: t('admin.categoryContains')
+        title_contains: t('domainAdmin.titleContains'),
+        description_contains: t('domainAdmin.descriptionContains'), 
+        category_contains: t('domainAdmin.categoryContains')
       }
       return labels[ruleType] || ruleType
     }
     
     const getRuleTypeDescription = (ruleType) => {
       const descriptions = {
-        title_contains: t('admin.titleContainsDesc'),
-        description_contains: t('admin.descriptionContainsDesc'),
-        category_contains: t('admin.categoryContainsDesc')
+        title_contains: t('domainAdmin.titleContainsDesc'),
+        description_contains: t('domainAdmin.descriptionContainsDesc'),
+        category_contains: t('domainAdmin.categoryContainsDesc')
       }
-      return descriptions[ruleType] || t('admin.matches')
+      return descriptions[ruleType] || t('domainAdmin.matches')
     }
     
     const getRuleTypeIcon = (ruleType) => {
@@ -696,11 +696,11 @@ export default {
     
     const getRulePlaceholder = (ruleType) => {
       const placeholders = {
-        title_contains: t('admin.ruleTypePlaceholders.title_contains'),
-        description_contains: t('admin.ruleTypePlaceholders.description_contains'),
-        category_contains: t('admin.ruleTypePlaceholders.category_contains')
+        title_contains: t('domainAdmin.ruleTypePlaceholders.title_contains'),
+        description_contains: t('domainAdmin.ruleTypePlaceholders.description_contains'),
+        category_contains: t('domainAdmin.ruleTypePlaceholders.category_contains')
       }
-      return placeholders[ruleType] || t('admin.enterSearchValue')
+      return placeholders[ruleType] || t('domainAdmin.enterSearchValue')
     }
     
     const getGroupName = (groupId) => {
@@ -820,7 +820,7 @@ export default {
             description: description,
             categories: categories,
             currentGroupId: primaryGroupId,
-            currentGroupName: primaryGroupId ? getGroupName(primaryGroupId) : t('admin.unassigned'),
+            currentGroupName: primaryGroupId ? getGroupName(primaryGroupId) : t('domainAdmin.unassigned'),
             allGroupIds: assignedGroupIds,
             willChange
           })

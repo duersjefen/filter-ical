@@ -1,6 +1,6 @@
 <template>
   <AdminCardWrapper
-    :title="$t('admin.eventManagement')"
+    :title="$t('domainAdmin.eventManagement')"
     :subtitle="`${recurringEvents.length} events • ${assignedEventsCount} assigned • Assign events to groups`"
     icon="📅"
     :expanded="expanded"
@@ -9,7 +9,7 @@
     <!-- Group Filter Bar -->
     <div class="space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h3 class="text-base sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.filterByGroup') }}</h3>
+        <h3 class="text-base sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('domainAdmin.filterByGroup') }}</h3>
         <div class="hidden sm:flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <span>💡 {{ $t('messages.holdCtrlMultipleGroups') }}</span>
         </div>
@@ -31,7 +31,7 @@
           :title="activeGroupFilters.length === 0 ? $t('messages.currentlyShowingAll') : $t('messages.clickToClearFilters')"
         >
           <span>📋</span>
-          <span>{{ t('admin.allEvents') }}</span>
+          <span>{{ t('domainAdmin.allEvents') }}</span>
           <span class="text-xs opacity-75">({{ recurringEvents.length }})</span>
         </button>
         
@@ -47,7 +47,7 @@
           :title="$t('messages.filterUnassigned')"
         >
           <span>❔</span>
-          <span>{{ t('admin.unassigned') }}</span>
+          <span>{{ t('domainAdmin.unassigned') }}</span>
           <span class="text-xs opacity-75">({{ unassignedEventsCount }})</span>
         </button>
         
@@ -95,7 +95,7 @@
             @keyup.enter="createGroup"
             @keyup.escape="cancelAddGroup"
             @blur="handleAddGroupBlur"
-            :placeholder="t('admin.groupNamePlaceholder')"
+            :placeholder="t('domainAdmin.groupNamePlaceholder')"
             class="px-4 py-3 sm:px-3 sm:py-2 border border-green-300 dark:border-green-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 text-base sm:text-sm min-w-32 flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
             ref="newGroupInput"
           />
@@ -140,7 +140,7 @@
         class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
       >
         <span>🗑️</span>
-        <span>{{ t('admin.deleteGroup') }}</span>
+        <span>{{ t('domainAdmin.deleteGroup') }}</span>
       </button>
     </div>
     
@@ -260,7 +260,7 @@
       <div v-if="isUpdatingGroups" class="absolute top-3 right-3 z-10">
         <div class="flex items-center gap-2 bg-white dark:bg-gray-800 px-2 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
           <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ $t('admin.updating') }}</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ $t('domainAdmin.updating') }}</span>
         </div>
       </div>
       <div class="flex items-center justify-center mb-3">
@@ -289,9 +289,9 @@
                    ? 'text-gray-600 dark:text-gray-400' 
                    : 'text-gray-400 dark:text-gray-500'
                ]">
-              {{ selectedEvents.length === 0 ? $t('admin.noEventsSelected') : 
-                 selectedEvents.length === 1 ? $t('admin.oneEventSelected') : 
-                 $t('admin.eventsSelected', { count: selectedEvents.length }) }}
+              {{ selectedEvents.length === 0 ? $t('domainAdmin.noEventsSelected') : 
+                 selectedEvents.length === 1 ? $t('domainAdmin.oneEventSelected') : 
+                 $t('domainAdmin.eventsSelected', { count: selectedEvents.length }) }}
             </p>
           </div>
         </div>
@@ -354,7 +354,7 @@
               <div class="px-3 py-1 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-500 flex-shrink-0">
                 <div class="flex items-center justify-between">
                   <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">{{ group.name }}</span>
-                  <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse" :title="t('admin.mixedState')"></div>
+                  <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse" :title="t('domainAdmin.mixedState')"></div>
                 </div>
               </div>
               
@@ -396,7 +396,7 @@
                       ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:text-green-200 dark:hover:from-green-800/30 dark:hover:to-emerald-800/30'
                       : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-800 hover:from-red-100 hover:to-rose-100 dark:from-red-900/20 dark:to-rose-900/20 dark:text-red-200 dark:hover:from-red-800/30 dark:hover:to-rose-800/30'
                   ]"
-                  :title="`${getSmartGroupAction(group.id).secondaryAction === 'add' ? t('admin.add') : t('admin.remove')} ${getSmartGroupAction(group.id).secondaryCount} ${t('admin.events')} ${getSmartGroupAction(group.id).secondaryAction === 'add' ? t('admin.to') : t('admin.from')} ${group.name}`"
+                  :title="`${getSmartGroupAction(group.id).secondaryAction === 'add' ? t('domainAdmin.add') : t('domainAdmin.remove')} ${getSmartGroupAction(group.id).secondaryCount} ${t('domainAdmin.events')} ${getSmartGroupAction(group.id).secondaryAction === 'add' ? t('domainAdmin.to') : t('domainAdmin.from')} ${group.name}`"
                 >
                   <div class="flex items-center justify-center gap-2">
                     <div v-if="!isGroupUpdating(group.id)" :class="[
@@ -463,7 +463,7 @@
         @click="showSelectedOnly = false"
         class="px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-800 dark:text-blue-200 rounded-md text-xs font-medium transition-colors"
       >
-        {{ t('admin.showAllEvents') }}
+        {{ t('domainAdmin.showAllEvents') }}
       </button>
     </div>
     
@@ -485,7 +485,7 @@
             v-if="eventSearch.trim()"
             @click="eventSearch = ''; showSelectedOnly = false"
             class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-            :title="t('admin.clearSearch')"
+            :title="t('domainAdmin.clearSearch')"
           >
             <span class="text-base sm:text-sm font-bold">×</span>
           </button>
@@ -532,9 +532,9 @@
             @click="clearEventSelection"
             :disabled="selectedEvents.length === 0"
             class="px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-xs font-medium rounded-lg sm:rounded-md transition-all duration-200 border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] sm:min-h-0"
-            :title="selectedEvents.length === 0 ? $t('admin.noEventsSelected') : $t('admin.clearSelection', { count: selectedEvents.length })"
+            :title="selectedEvents.length === 0 ? $t('domainAdmin.noEventsSelected') : $t('domainAdmin.clearSelection', { count: selectedEvents.length })"
           >
-            {{ $t('admin.clearSelectionButton') }}
+            {{ $t('domainAdmin.clearSelectionButton') }}
           </button>
           <button
             v-if="hasHiddenSelectedEvents || showSelectedOnly"
@@ -648,7 +648,7 @@
                     {{ event.event_count }}
                   </span>
                   <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
-                    ❔ {{ t('admin.unassigned') }}
+                    ❔ {{ t('domainAdmin.unassigned') }}
                   </span>
                 </div>
               </div>
@@ -658,7 +658,7 @@
       
       <div v-if="filteredEvents.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
         <div class="text-4xl mb-2">📅</div>
-        <p>{{ t('admin.noEventsFound') }}</p>
+        <p>{{ t('domainAdmin.noEventsFound') }}</p>
       </div>
     </div>
   </AdminCardWrapper>
@@ -666,10 +666,10 @@
   <!-- Delete Group Confirmation Dialog -->
   <ConfirmDialog
     ref="deleteConfirmDialog"
-    :title="t('admin.deleteGroup')"
+    :title="t('domainAdmin.deleteGroup')"
     :message="deleteConfirmMessage"
-    :confirm-text="t('admin.deleteGroup')"
-    :cancel-text="t('admin.cancel')"
+    :confirm-text="t('domainAdmin.deleteGroup')"
+    :cancel-text="t('domainAdmin.cancel')"
     @confirm="confirmDeleteGroup"
     @cancel="cancelDeleteGroup"
   />
@@ -1106,7 +1106,7 @@ export default {
     
     const deleteGroupConfirm = (group) => {
       groupToDelete.value = group
-      deleteConfirmMessage.value = t('admin.confirmDeleteGroup', { name: group.name })
+      deleteConfirmMessage.value = t('domainAdmin.confirmDeleteGroup', { name: group.name })
       deleteConfirmDialog.value.open()
     }
     

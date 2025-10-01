@@ -210,7 +210,7 @@
                   :title="isRecurringEventExpanded(recurringEvent.title) ? $t('status.hideIndividualEvents') : $t('status.showIndividualEvents')"
                 >
                   <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
-                    {{ isRecurringEventExpanded(recurringEvent.title) ? $t('admin.hide') : $t('admin.show') }}
+                    {{ isRecurringEventExpanded(recurringEvent.title) ? $t('domainAdmin.hide') : $t('domainAdmin.show') }}
                   </span>
                   <svg 
                     class="w-3 h-3 transition-transform duration-300" 

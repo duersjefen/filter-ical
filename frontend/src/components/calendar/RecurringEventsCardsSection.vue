@@ -346,7 +346,7 @@
                   :title="expandedRecurringEvents.has(recurringEvent.name) ? $t('messages.hideIndividualEvents') : $t('messages.showIndividualEvents')"
                 >
                   <span class="text-xs font-medium group-hover/expand:text-blue-600 dark:group-hover/expand:text-blue-400 transition-colors">
-                    {{ expandedRecurringEvents.has(recurringEvent.name) ? $t('admin.hide') : $t('admin.show') }}
+                    {{ expandedRecurringEvents.has(recurringEvent.name) ? $t('domainAdmin.hide') : $t('domainAdmin.show') }}
                   </span>
                   <svg 
                     class="w-3 h-3 transition-transform duration-300" 

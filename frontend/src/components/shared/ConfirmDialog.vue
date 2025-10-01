@@ -77,9 +77,9 @@ const emit = defineEmits(['confirm', 'cancel'])
 const show = ref(false)
 
 // Computed properties for defaults
-const displayTitle = computed(() => props.title || t('admin.confirmAction'))
-const displayConfirmText = computed(() => props.confirmText || t('admin.delete'))
-const displayCancelText = computed(() => props.cancelText || t('admin.cancel'))
+const displayTitle = computed(() => props.title || t('domainAdmin.confirmAction'))
+const displayConfirmText = computed(() => props.confirmText || t('domainAdmin.delete'))
+const displayCancelText = computed(() => props.cancelText || t('domainAdmin.cancel'))
 
 // Methods
 const open = () => {

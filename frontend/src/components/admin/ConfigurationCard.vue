@@ -1,7 +1,7 @@
 <template>
   <AdminCardWrapper
-    :title="$t('admin.configuration')"
-    :subtitle="$t('admin.configurationSubtitle')"
+    :title="$t('domainAdmin.configuration')"
+    :subtitle="$t('domainAdmin.configurationSubtitle')"
     icon="💾"
     :expanded="expanded"
     @toggle="$emit('toggle')"
@@ -11,17 +11,17 @@
       <div class="bg-blue-50 dark:bg-blue-900/30 p-4 sm:p-6 rounded-xl border border-blue-200 dark:border-blue-700">
         <div class="flex items-center mb-3 sm:mb-4">
           <div class="text-2xl mr-3 flex-shrink-0">📤</div>
-          <h3 class="text-base sm:text-lg font-semibold text-blue-900 dark:text-blue-100">{{ $t('admin.export') }}</h3>
+          <h3 class="text-base sm:text-lg font-semibold text-blue-900 dark:text-blue-100">{{ $t('domainAdmin.export') }}</h3>
         </div>
         <p class="text-blue-700 dark:text-blue-200 text-sm mb-4 leading-relaxed">
-          {{ $t('admin.exportDescription') }}
+          {{ $t('domainAdmin.exportDescription') }}
         </p>
         <button
           @click="$emit('export-configuration')"
           :disabled="loading"
           class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 sm:px-4 sm:py-2 rounded-lg font-medium transition-colors duration-200 text-base sm:text-sm min-h-[44px] sm:min-h-0"
         >
-          {{ $t('admin.exportConfiguration') }}
+          {{ $t('domainAdmin.exportConfiguration') }}
         </button>
       </div>
 
@@ -29,10 +29,10 @@
       <div class="bg-green-50 dark:bg-green-900/30 p-4 sm:p-6 rounded-xl border border-green-200 dark:border-green-700">
         <div class="flex items-center mb-3 sm:mb-4">
           <div class="text-2xl mr-3 flex-shrink-0">📥</div>
-          <h3 class="text-base sm:text-lg font-semibold text-green-900 dark:text-green-100">{{ $t('admin.import') }}</h3>
+          <h3 class="text-base sm:text-lg font-semibold text-green-900 dark:text-green-100">{{ $t('domainAdmin.import') }}</h3>
         </div>
         <p class="text-green-700 dark:text-green-200 text-sm mb-4 leading-relaxed">
-          {{ $t('admin.importDescription') }}
+          {{ $t('domainAdmin.importDescription') }}
         </p>
         <div class="space-y-3">
           <input
@@ -49,17 +49,17 @@
       <div class="bg-red-50 dark:bg-red-900/30 p-4 sm:p-6 rounded-xl border border-red-200 dark:border-red-700 sm:col-span-2 lg:col-span-1">
         <div class="flex items-center mb-3 sm:mb-4">
           <div class="text-2xl mr-3 flex-shrink-0">🔄</div>
-          <h3 class="text-base sm:text-lg font-semibold text-red-900 dark:text-red-100">{{ $t('admin.reset') }}</h3>
+          <h3 class="text-base sm:text-lg font-semibold text-red-900 dark:text-red-100">{{ $t('domainAdmin.reset') }}</h3>
         </div>
         <p class="text-red-700 dark:text-red-200 text-sm mb-4 leading-relaxed">
-          {{ $t('admin.resetDescription') }}
+          {{ $t('domainAdmin.resetDescription') }}
         </p>
         <button
           @click="$emit('reset-configuration-confirm')"
           :disabled="loading"
           class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-3 sm:px-4 sm:py-2 rounded-lg font-medium transition-colors duration-200 text-base sm:text-sm min-h-[44px] sm:min-h-0"
         >
-          {{ $t('admin.resetConfiguration') }}
+          {{ $t('domainAdmin.resetConfiguration') }}
         </button>
       </div>
     </div>
