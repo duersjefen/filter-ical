@@ -149,7 +149,7 @@ const submitRequest = async () => {
   successMessage.value = null
 
   try {
-    const result = await post('/domain-requests', {
+    const result = await post('/api/domain-requests', {
       username: username.value,
       calendar_url: formData.value.calendar_url,
       description: formData.value.description

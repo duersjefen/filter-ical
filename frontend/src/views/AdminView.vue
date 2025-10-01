@@ -298,7 +298,7 @@ export default {
         const { rawRequest } = useHTTP()
         const response = await rawRequest({
           method: 'GET',
-          url: `${API_BASE_URL}/domains/${props.domain}/export-config`,
+          url: `${API_BASE_URL}/api/domains/${props.domain}/export-config`,
           responseType: 'blob',
           headers: {
             'Accept': 'application/x-yaml'
@@ -441,7 +441,7 @@ export default {
         const { rawRequest } = useHTTP()
         const response = await rawRequest({
           method: 'GET',
-          url: `${API_BASE_URL}/domains/${props.domain}/backups/${backupId}/download`,
+          url: `${API_BASE_URL}/api/domains/${props.domain}/backups/${backupId}/download`,
           responseType: 'blob',
           headers: {
             'Accept': 'application/x-yaml'

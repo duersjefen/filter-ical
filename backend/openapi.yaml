@@ -9,7 +9,7 @@ info:
 
 paths:
   # Regular calendar management (user-added calendars)
-  /calendars:
+  /api/calendars:
     post:
       summary: Add a user calendar
       parameters:
@@ -65,7 +65,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Calendar'
 
-  /calendars/{calendarId}:
+  /api/calendars/{calendarId}:
     delete:
       summary: Delete a user calendar
       parameters:
@@ -84,7 +84,7 @@ paths:
         '404':
           description: Calendar not found
 
-  /calendars/{calendarId}/events:
+  /api/calendars/{calendarId}/events:
     get:
       summary: Get calendar events (flat structure for user calendars)
       parameters:
@@ -112,7 +112,7 @@ paths:
         '404':
           description: Calendar not found
 
-  /calendars/{calendarId}/filters:
+  /api/calendars/{calendarId}/filters:
     post:
       summary: Create filter for user calendar
       parameters:
@@ -181,7 +181,7 @@ paths:
         '404':
           description: Calendar not found
 
-  /calendars/{calendarId}/filters/{filterId}:
+  /api/calendars/{calendarId}/filters/{filterId}:
     delete:
       summary: Delete filter for user calendar
       parameters:
@@ -206,7 +206,7 @@ paths:
           description: Filter or calendar not found
 
   # User-level filter management (all filters for a user)
-  /filters:
+  /api/filters:
     get:
       summary: List all filters for a user (both calendar and domain filters)
       parameters:
@@ -229,7 +229,7 @@ paths:
           description: Invalid request
 
   # Domain-specific endpoints (auto-created from domains.yaml)
-  /domains/{domain}/events:
+  /api/domains/{domain}/events:
     get:
       summary: Get domain calendar events (grouped structure)
       parameters:
@@ -253,7 +253,7 @@ paths:
         '404':
           description: Domain not found
 
-  /domains/{domain}/groups:
+  /api/domains/{domain}/groups:
     get:
       summary: Get groups for domain calendar
       parameters:
@@ -305,7 +305,7 @@ paths:
         '404':
           description: Domain not found
 
-  /domains/{domain}/groups/{groupId}/assign-recurring-events:
+  /api/domains/{domain}/groups/{groupId}/assign-recurring-events:
     put:
       summary: Manually assign recurring events to group (admin)
       parameters:
@@ -345,7 +345,7 @@ paths:
         '404':
           description: Domain or group not found
 
-  /domains/{domain}/groups/{groupId}/remove-events:
+  /api/domains/{domain}/groups/{groupId}/remove-events:
     put:
       summary: Remove events from specific group (admin)
       description: Remove recurring events from a specific group while preserving assignments to other groups
@@ -392,7 +392,7 @@ paths:
         '404':
           description: Domain or group not found
 
-  /domains/{domain}/assignment-rules:
+  /api/domains/{domain}/assignment-rules:
     post:
       summary: Create auto-assignment rule (admin)
       parameters:
@@ -449,7 +449,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/AssignmentRule'
 
-  /domains/{domain}/filters:
+  /api/domains/{domain}/filters:
     post:
       summary: Create filter for domain calendar
       parameters:
@@ -519,7 +519,7 @@ paths:
         '404':
           description: Domain not found
 
-  /domains/{domain}/filters/{filterId}:
+  /api/domains/{domain}/filters/{filterId}:
     delete:
       summary: Delete filter for domain calendar
       parameters:
@@ -544,7 +544,7 @@ paths:
           description: Filter or domain not found
 
   # Domain Configuration Backups
-  /domains/{domain}/backups:
+  /api/domains/{domain}/backups:
     post:
       summary: Create a backup of current domain configuration
       description: Creates a snapshot of all groups, assignments, and rules for the domain
@@ -595,7 +595,7 @@ paths:
         '404':
           description: Domain not found
 
-  /domains/{domain}/backups/{backupId}:
+  /api/domains/{domain}/backups/{backupId}:
     delete:
       summary: Delete a backup
       description: Permanently deletes a backup snapshot
@@ -629,7 +629,7 @@ paths:
         '404':
           description: Backup or domain not found
 
-  /domains/{domain}/backups/{backupId}/restore:
+  /api/domains/{domain}/backups/{backupId}/restore:
     post:
       summary: Restore domain from a backup
       description: Restores all groups, assignments, and rules from a backup snapshot. Current configuration is automatically backed up first.
@@ -669,7 +669,7 @@ paths:
         '500':
           description: Restore failed
 
-  /domains/{domain}/backups/{backupId}/download:
+  /api/domains/{domain}/backups/{backupId}/download:
     get:
       summary: Download a backup as YAML file
       description: Downloads the backup configuration as a YAML file
@@ -738,7 +738,7 @@ paths:
           description: Filter not found
 
   # Domain Requests (User-facing)
-  /domain-requests:
+  /api/domain-requests:
     post:
       summary: Submit a custom domain request
       description: Users can request their own custom domain calendar to be set up
@@ -763,7 +763,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # Admin Panel (Password-Protected)
-  /admin/domain-requests:
+  /api/admin/domain-requests:
     get:
       summary: List all domain requests (admin only)
       description: Get all domain requests with optional status filtering
@@ -792,7 +792,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /admin/domain-requests/{requestId}/approve:
+  /api/admin/domain-requests/{requestId}/approve:
     patch:
       summary: Approve a domain request (admin only)
       description: Approve the request and automatically create domain calendar
@@ -842,7 +842,7 @@ paths:
         '409':
           description: Domain key already exists
 
-  /admin/domain-requests/{requestId}/reject:
+  /api/admin/domain-requests/{requestId}/reject:
     patch:
       summary: Reject a domain request (admin only)
       description: Reject the domain request with optional reason

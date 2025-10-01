@@ -222,7 +222,7 @@ const authenticate = async () => {
 
   try {
     // Test authentication by fetching requests
-    const response = await axios.get(`${API_BASE_URL}/admin/domain-requests`, {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/domain-requests`, {
       auth: {
         username: 'admin',
         password: password.value
@@ -241,7 +241,7 @@ const authenticate = async () => {
 const loadRequests = async () => {
   loading.value = true
   try {
-    const response = await axios.get(`${API_BASE_URL}/admin/domain-requests`, {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/domain-requests`, {
       auth: {
         username: 'admin',
         password: password.value
@@ -259,7 +259,7 @@ const approveRequest = async (requestId) => {
   processing.value = true
   try {
     await axios.patch(
-      `${API_BASE_URL}/admin/domain-requests/${requestId}/approve`,
+      `${API_BASE_URL}/api/admin/domain-requests/${requestId}/approve`,
       {},
       {
         auth: {
@@ -283,7 +283,7 @@ const rejectRequest = async (requestId) => {
   processing.value = true
   try {
     await axios.patch(
-      `${API_BASE_URL}/admin/domain-requests/${requestId}/reject`,
+      `${API_BASE_URL}/api/admin/domain-requests/${requestId}/reject`,
       { reason },
       {
         auth: {
