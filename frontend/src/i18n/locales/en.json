@@ -245,6 +245,13 @@
     "updateFilter": "Update Filter",
     "updating": "Updating...",
     "calendarNameUpdated": "Calendar name updated successfully!",
+    "filterCreatedSuccessfully": "Filter created successfully!",
+    "filterUpdatedSuccessfully": "Filter updated successfully!",
+    "filterNameUpdated": "Filter name updated successfully!",
+    "filterDeletedSuccessfully": "Filter deleted successfully!",
+    "failedToSaveFilter": "Failed to save filter. Please try again.",
+    "failedToUpdateFilterName": "Failed to update filter name",
+    "failedToDeleteFilter": "Failed to delete filter",
     "includeNewEvents": "Automatically include new recurring events",
     "includeNewEventsDescription": "When new recurring events are added to the source calendar in the future, they will automatically appear in this filtered calendar"
   },
@@ -682,7 +689,9 @@
       "approve": "Approve",
       "reject": "Reject",
       "rejectionReason": "Reason for rejection (optional):",
+      "approvalSuccess": "Request approved successfully",
       "approvalFailed": "Failed to approve request",
+      "rejectionSuccess": "Request rejected successfully",
       "rejectionFailed": "Failed to reject request",
       "status": {
         "pending": "Pending",

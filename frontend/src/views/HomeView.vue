@@ -326,9 +326,11 @@ import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import DomainRequestCard from '../components/home/DomainRequestCard.vue'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useUsername } from '../composables/useUsername'
+import { useNotification } from '../composables/useNotification'
 
 const appStore = useAppStore()
 const router = useRouter()
+const notify = useNotification()
 
 // Initialize dark mode and username
 const { isDarkMode, toggleDarkMode } = useDarkMode()
@@ -352,12 +354,13 @@ onMounted(() => {
 const handleAddCalendar = async () => {
   const result = await appStore.addCalendar()
   if (!result.success && result.error) {
-    // Set error in app store for display
-    appStore.setError(result.error)
+    notify.error(result.error)
   } else if (result.success && result.warnings && result.warnings.length > 0) {
     // Show warnings to user - calendar created but with issues
-    const warningMessage = `Calendar added successfully, but with issues:\n• ${result.warnings.join('\n• ')}`
-    appStore.setError(warningMessage)
+    const warningMessage = `Calendar added with issues: ${result.warnings.join(', ')}`
+    notify.warning(warningMessage, { duration: 7000 })
+  } else if (result.success) {
+    notify.success('Calendar added successfully!')
   }
 }
 
@@ -369,12 +372,9 @@ const syncCalendar = async (calendarId) => {
   const result = await appStore.syncCalendar(calendarId)
 
   if (result.success) {
-    // Show success message
-    appStore.setError(`✅ Calendar synced! ${result.data.event_count} events processed.`)
-    // Clear the "error" after a few seconds since it's actually success
-    setTimeout(() => appStore.clearError(), 3000)
+    notify.success(`Calendar synced! ${result.data.event_count} events processed.`)
   } else {
-    appStore.setError(`❌ Sync failed: ${result.error}`)
+    notify.error(`Sync failed: ${result.error}`)
   }
 }
 
@@ -395,14 +395,16 @@ const deleteCalendar = async (calendarId) => {
 // Handle confirmation
 const confirmDelete = async () => {
   if (!calendarToDelete.value) return
-  
+
+  const calendarName = calendarToDelete.value.name
   const result = await appStore.deleteCalendar(calendarToDelete.value.id)
-  
-  if (!result.success && result.error) {
-    // Show error message to user
-    appStore.setError(result.error)
+
+  if (result.success) {
+    notify.success(`Calendar "${calendarName}" deleted successfully!`)
+  } else if (result.error) {
+    notify.error(result.error)
   }
-  
+
   calendarToDelete.value = null
 }
 

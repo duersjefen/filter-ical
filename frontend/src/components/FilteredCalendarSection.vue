@@ -468,6 +468,7 @@ import { useI18n } from 'vue-i18n'
 import { formatDateTime as formatDateTimeUtil, formatDateRange as formatDateRangeUtil } from '@/utils/dateFormatting'
 import { useFilteredCalendarAPI } from '@/composables/useFilteredCalendarAPI'
 import { useUsername } from '@/composables/useUsername'
+import { useNotification } from '@/composables/useNotification'
 import { API_ENDPOINTS } from '@/constants/api'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 
@@ -514,10 +515,11 @@ const emit = defineEmits(['navigate-to-calendar', 'load-filter'])
 // Composables
 const { t, locale } = useI18n()
 const { hasCustomUsername, getUserId } = useUsername()
-const { 
-  filteredCalendars, 
-  loading, 
-  creating, 
+const notify = useNotification()
+const {
+  filteredCalendars,
+  loading,
+  creating,
   updating,
   createFilteredCalendar: apiCreateFiltered,
   updateFilteredCalendar: apiUpdateFiltered,
@@ -672,10 +674,20 @@ const createFilteredCalendar = async () => {
   }
 
   if (success) {
+    // Show success notification
+    if (isUpdateMode.value) {
+      notify.success(t('filteredCalendar.filterUpdatedSuccessfully') || 'Filter updated successfully!')
+    } else {
+      notify.success(t('filteredCalendar.filterCreatedSuccessfully') || 'Filter created successfully!')
+    }
+
     clearCreateForm()
     if (isUpdateMode.value) {
       exitUpdateMode()
     }
+  } else {
+    // Show error notification
+    notify.error(t('filteredCalendar.failedToSaveFilter') || 'Failed to save filter. Please try again.')
   }
 }
 
@@ -719,14 +731,17 @@ const updateFilteredCalendar = async () => {
     )
 
     if (success) {
+      notify.success(t('filteredCalendar.filterNameUpdated') || 'Filter name updated successfully!')
       // Close inline editor immediately
       cancelInlineEdit()
       emit('navigate-to-calendar')
     } else {
+      notify.error(t('filteredCalendar.failedToUpdateFilterName') || 'Failed to update filter name')
       console.error('Failed to update calendar name - API returned false')
       // Keep inline editor open for retry
     }
   } catch (error) {
+    notify.error(t('filteredCalendar.failedToUpdateFilterName') || 'Failed to update filter name')
     console.error('Error updating calendar:', error)
     // Keep inline editor open for retry
   }
@@ -739,7 +754,12 @@ const deleteFilteredCalendar = async (id) => {
 
 const handleDeleteConfirm = async () => {
   if (deleteCalendarId.value) {
-    await apiDeleteFiltered(deleteCalendarId.value)
+    const success = await apiDeleteFiltered(deleteCalendarId.value)
+    if (success) {
+      notify.success(t('filteredCalendar.filterDeletedSuccessfully') || 'Filter deleted successfully!')
+    } else {
+      notify.error(t('filteredCalendar.failedToDeleteFilter') || 'Failed to delete filter')
+    }
     deleteCalendarId.value = null
   }
 }

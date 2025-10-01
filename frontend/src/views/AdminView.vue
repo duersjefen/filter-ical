@@ -70,28 +70,6 @@
     </div>
   </div>
 
-  <!-- Notification Toast -->
-  <div v-if="notification" class="fixed top-4 right-4 z-50 max-w-md">
-    <div :class="[
-      'rounded-xl shadow-lg border-2 px-6 py-4 transition-all duration-300',
-      notification.type === 'success' 
-        ? 'bg-gradient-to-r from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/30 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700'
-        : 'bg-gradient-to-r from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-800/30 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700'
-    ]">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="text-2xl">{{ notification.type === 'success' ? '✅' : '❌' }}</div>
-          <span class="font-semibold">{{ notification.message }}</span>
-        </div>
-        <button 
-          @click="notification = null" 
-          class="text-xl hover:scale-110 transition-transform duration-200"
-        >
-          &times;
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- Confirmation Dialog -->
   <div v-if="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
@@ -122,6 +100,7 @@ import { ref, onMounted } from 'vue'
 import { useAdmin } from '../composables/useAdmin'
 import { useHTTP } from '../composables/useHTTP'
 import { useMobileDetection } from '../composables/useMobileDetection'
+import { useNotification } from '../composables/useNotification'
 import { API_BASE_URL } from '../constants/api'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '../components/shared/AppHeader.vue'
@@ -146,9 +125,12 @@ export default {
   setup(props) {
     // Mobile detection
     const { isMobile } = useMobileDetection()
-    
+
     // i18n
     const { t } = useI18n()
+
+    // Global notification system
+    const notify = useNotification()
 
     // Use the admin composable for all data and functionality
     const {
@@ -189,8 +171,7 @@ export default {
     // Loading states
     const applyLoading = ref(false)
 
-    // Notification State
-    const notification = ref(null)
+    // Confirmation Dialog State
     const confirmDialog = ref(null)
 
     // Card Management
@@ -198,12 +179,13 @@ export default {
       expandedCards.value[cardName] = !expandedCards.value[cardName]
     }
 
-    // Notification Helpers
+    // Notification Helpers (wrapper for global notification system)
     const showNotification = (message, type = 'success') => {
-      notification.value = { message, type }
-      setTimeout(() => {
-        notification.value = null
-      }, 5000)
+      if (type === 'success') {
+        notify.success(message)
+      } else {
+        notify.error(message)
+      }
     }
 
     const closeConfirm = () => {
@@ -498,15 +480,14 @@ export default {
     return {
       // Mobile detection
       isMobile,
-      
+
       // UI State
       expandedCards,
       loading,
       error,
       applyLoading,
 
-      // Notification States
-      notification,
+      // Confirmation Dialog State
       confirmDialog,
       closeConfirm,
 

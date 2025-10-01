@@ -245,6 +245,13 @@
     "updateFilter": "Filter aktualisieren",
     "updating": "Wird aktualisiert...",
     "calendarNameUpdated": "Kalendername erfolgreich aktualisiert!",
+    "filterCreatedSuccessfully": "Filter erfolgreich erstellt!",
+    "filterUpdatedSuccessfully": "Filter erfolgreich aktualisiert!",
+    "filterNameUpdated": "Filtername erfolgreich aktualisiert!",
+    "filterDeletedSuccessfully": "Filter erfolgreich gelöscht!",
+    "failedToSaveFilter": "Filter konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+    "failedToUpdateFilterName": "Filtername konnte nicht aktualisiert werden",
+    "failedToDeleteFilter": "Filter konnte nicht gelöscht werden",
     "includeNewEvents": "Neue wiederkehrende Events automatisch einbeziehen",
     "includeNewEventsDescription": "Wenn in Zukunft neue wiederkehrende Events zum Quellkalender hinzugefügt werden, erscheinen sie automatisch in diesem gefilterten Kalender"
   },
@@ -694,7 +701,9 @@
       "approve": "Genehmigen",
       "reject": "Ablehnen",
       "rejectionReason": "Grund für Ablehnung (optional):",
+      "approvalSuccess": "Anfrage erfolgreich genehmigt",
       "approvalFailed": "Genehmigung fehlgeschlagen",
+      "rejectionSuccess": "Anfrage erfolgreich abgelehnt",
       "rejectionFailed": "Ablehnung fehlgeschlagen",
       "status": {
         "pending": "Ausstehend",

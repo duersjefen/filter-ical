@@ -7,6 +7,9 @@
       </main>
       <AppFooter />
     </div>
+
+    <!-- Global Notification Toast -->
+    <NotificationToast />
   </div>
 </template>
 
@@ -16,6 +19,8 @@ import { useAppStore } from './stores/app'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from './composables/useDarkMode'
 import AppFooter from './components/shared/AppFooter.vue'
+import NotificationToast from './components/shared/NotificationToast.vue'
+
 const appStore = useAppStore()
 const router = useRouter()
 

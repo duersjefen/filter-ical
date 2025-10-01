@@ -197,8 +197,10 @@ import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
+import { useNotification } from '../composables/useNotification'
 
 const { t } = useI18n()
+const notify = useNotification()
 
 // Authentication
 const isAuthenticated = ref(false)
@@ -269,8 +271,9 @@ const approveRequest = async (requestId) => {
       }
     )
     await loadRequests()
+    notify.success(t('admin.panel.approvalSuccess') || 'Request approved successfully')
   } catch (error) {
-    alert(t('admin.panel.approvalFailed'))
+    notify.error(t('admin.panel.approvalFailed'))
   } finally {
     processing.value = false
   }
@@ -293,8 +296,9 @@ const rejectRequest = async (requestId) => {
       }
     )
     await loadRequests()
+    notify.success(t('admin.panel.rejectionSuccess') || 'Request rejected successfully')
   } catch (error) {
-    alert(t('admin.panel.rejectionFailed'))
+    notify.error(t('admin.panel.rejectionFailed'))
   } finally {
     processing.value = false
   }
