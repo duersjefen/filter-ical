@@ -1,7 +1,7 @@
 <template>
   <AdminCardWrapper
     :title="$t('admin.configuration')"
-    subtitle="Export, import, and reset domain configuration"
+    :subtitle="$t('admin.configurationSubtitle')"
     icon="💾"
     :expanded="expanded"
     @toggle="$emit('toggle')"

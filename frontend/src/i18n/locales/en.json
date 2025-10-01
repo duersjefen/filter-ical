@@ -64,6 +64,7 @@
   "calendar": {
     "filterTitle": "Calendar: {name}",
     "subtitle": "Select events to filter and create custom subscriptions",
+    "groups": "Groups",
     "events": "Events",
     "recurringEvents": "Events",
     "eventCount": "{count} event | {count} events",
@@ -276,6 +277,7 @@
     "groups": "Groups",
     "autoRules": "Auto Rules",
     "configuration": "Configuration",
+    "configurationSubtitle": "Export, import, or reset configuration",
     "assignmentRules": "Assignment Rules",
     "createRule": "+ Create Rule",
     "domainConfiguration": "Domain Configuration",
@@ -311,6 +313,7 @@
     "mobileNotOptimized": "Admin panel is optimized for desktop devices",
     "mobileUseDesktop": "For the best experience managing events and groups, please use a desktop or tablet device.",
     "backupRestore": "Backup & Restore",
+    "backupRestoreSubtitle": "Create, restore, or export backups",
     "createBackup": "Create Backup Now",
     "exportToFile": "Export to File",
     "backupHistory": "Backup History",

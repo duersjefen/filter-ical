@@ -64,6 +64,7 @@
   "calendar": {
     "filterTitle": "Kalender: {name}",
     "subtitle": "Events auswählen, um zu filtern und benutzerdefinierte Abonnements zu erstellen",
+    "groups": "Gruppen",
     "events": "Events",
     "recurringEvents": "Events",
     "eventCount": "{count} Event | {count} Events",
@@ -276,6 +277,7 @@
     "groups": "Gruppen",
     "autoRules": "Auto-Regeln",
     "configuration": "Konfiguration",
+    "configurationSubtitle": "Konfiguration exportieren, importieren oder zurücksetzen",
     "assignmentRules": "Zuweisungsregeln",
     "createRule": "+ Regel erstellen",
     "domainConfiguration": "Domain-Konfiguration",
@@ -311,6 +313,7 @@
     "mobileNotOptimized": "Das Admin-Panel ist für Desktop-Geräte optimiert",
     "mobileUseDesktop": "Für die beste Erfahrung beim Verwalten von Events und Gruppen verwenden Sie bitte ein Desktop- oder Tablet-Gerät.",
     "backupRestore": "Backup & Wiederherstellung",
+    "backupRestoreSubtitle": "Backups erstellen, wiederherstellen oder exportieren",
     "createBackup": "Backup Erstellen",
     "exportToFile": "Als Datei Exportieren",
     "backupHistory": "Backup-Verlauf",

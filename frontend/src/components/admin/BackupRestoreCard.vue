@@ -1,7 +1,7 @@
 <template>
   <AdminCardWrapper
     :title="$t('admin.backupRestore')"
-    subtitle="Create backups, restore previous configurations, or export to file"
+    :subtitle="$t('admin.backupRestoreSubtitle')"
     icon="💾"
     :expanded="expanded"
     @toggle="$emit('toggle')"
