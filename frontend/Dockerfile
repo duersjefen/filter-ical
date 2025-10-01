@@ -21,7 +21,8 @@ RUN npm run build
 
 # Production stage
 # Using nginx-brotli image for better compression (20-30% smaller than gzip)
-FROM fholzer/nginx-brotli:alpine
+# v1.28.0 is based on nginx 1.28.0 stable + brotli module
+FROM fholzer/nginx-brotli:v1.28.0
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf

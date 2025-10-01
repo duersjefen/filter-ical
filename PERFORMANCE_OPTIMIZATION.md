@@ -187,14 +187,12 @@ cssCodeSplit: true
 
 ### 5. Future Recommendations
 
-#### Enable HTTP/2 or HTTP/3 (✅ HTTP/2 Already Enabled)
-HTTP/2 is already enabled on the platform nginx layer, providing multiplexing benefits for loading multiple chunks efficiently.
+#### HTTP/2 & HTTP/3 (✅ Enabled Platform-Wide)
+Both HTTP/2 and HTTP/3 are enabled on the multi-tenant platform nginx layer:
+- **HTTP/2:** Multiplexing for efficient chunk loading
+- **HTTP/3 (QUIC):** Better mobile performance, 0-RTT connection resumption
 
-For further improvement, consider HTTP/3:
-```nginx
-listen 443 quic reuseport;
-listen 443 ssl http2;
-```
+No application-level changes needed - the platform handles protocol negotiation automatically.
 
 #### Consider CDN
 For global users, serve static assets from a CDN:
