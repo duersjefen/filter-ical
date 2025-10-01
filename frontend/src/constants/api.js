@@ -18,9 +18,17 @@ export const API_ENDPOINTS = {
   DOMAINS: '/api/domains',
   DOMAIN_EVENTS: (domain) => `/api/domains/${domain}/events`,
   DOMAIN_GROUPS: (domain) => `/api/domains/${domain}/groups`,
+  DOMAIN_GROUP: (domain, groupId) => `/api/domains/${domain}/groups/${groupId}`,
   DOMAIN_FILTERS: (domain) => `/api/domains/${domain}/filters`,
+  DOMAIN_RECURRING_EVENTS: (domain) => `/api/domains/${domain}/recurring-events`,
+  DOMAIN_RECURRING_EVENTS_WITH_ASSIGNMENTS: (domain) => `/api/domains/${domain}/recurring-events-with-assignments`,
   DOMAIN_ASSIGNMENT_RULES: (domain) => `/api/domains/${domain}/assignment-rules`,
+  DOMAIN_ASSIGNMENT_RULE: (domain, ruleId) => `/api/domains/${domain}/assignment-rules/${ruleId}`,
   DOMAIN_ASSIGN_RECURRING_EVENTS: (domain, groupId) => `/api/domains/${domain}/groups/${groupId}/assign-recurring-events`,
+  DOMAIN_BULK_ASSIGN_EVENTS: (domain) => `/api/domains/${domain}/bulk-assign-events`,
+  DOMAIN_BULK_UNASSIGN_EVENTS: (domain) => `/api/domains/${domain}/bulk-unassign-events`,
+  DOMAIN_REMOVE_EVENTS_FROM_GROUP: (domain, groupId) => `/api/domains/${domain}/groups/${groupId}/remove-events`,
+  DOMAIN_UNASSIGN_EVENT: (domain) => `/api/domains/${domain}/unassign-event`,
 
   // Dynamic iCal Export
   ICAL_EXPORT: (uuid) => `/ical/${uuid}.ics`,

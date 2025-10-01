@@ -100,8 +100,8 @@
       <!-- Center: Title (perfectly centered) -->
       <div class="text-center justify-self-center">
         <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white whitespace-nowrap tracking-tight drop-shadow-lg">{{ title }}</h1>
-        <div v-if="subtitle && !hideSubtitle" class="inline-block mt-3 px-5 py-2.5 bg-white/15 backdrop-blur-md rounded-2xl border border-white/30 shadow-lg">
-          <p class="text-xs sm:text-sm font-medium text-white/95 tracking-wide leading-relaxed whitespace-pre-line text-center max-w-2xl">{{ subtitle }}</p>
+        <div v-if="subtitle && !hideSubtitle" class="inline-block mt-2 px-4 py-1.5 bg-white/15 backdrop-blur-md rounded-xl border border-white/30 shadow-lg">
+          <p class="text-[10px] sm:text-xs font-medium text-white/95 tracking-normal leading-snug whitespace-pre-line text-center max-w-2xl">{{ subtitle }}</p>
         </div>
       </div>
 
@@ -226,8 +226,8 @@
       <!-- Title Section -->
       <div class="text-center mb-4">
         <h1 class="text-xl font-bold tracking-tight drop-shadow-lg">{{ title }}</h1>
-        <div v-if="subtitle && !hideSubtitle" class="inline-block mt-3 mb-4 px-5 py-2.5 bg-white/15 backdrop-blur-md rounded-2xl border border-white/30 shadow-lg">
-          <p class="text-sm font-medium text-white/95 tracking-wide leading-relaxed whitespace-pre-line text-center max-w-md">{{ subtitle }}</p>
+        <div v-if="subtitle && !hideSubtitle" class="inline-block mt-2 mb-4 px-4 py-1.5 bg-white/15 backdrop-blur-md rounded-xl border border-white/30 shadow-lg">
+          <p class="text-xs font-medium text-white/95 tracking-normal leading-snug whitespace-pre-line text-center max-w-md">{{ subtitle }}</p>
         </div>
       </div>
 
