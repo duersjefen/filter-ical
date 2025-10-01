@@ -19,6 +19,10 @@ COPY app/ ./app/
 COPY openapi.yaml ./
 COPY domains/ ./domains/
 
+# Copy Alembic migration files
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+
 # Test stage
 FROM base AS test
 COPY tests/ ./tests/
