@@ -161,6 +161,9 @@ approve-production: ## Approve pending production deployment
 	read -p "🤔 Approve production deployment? (yes/no): " confirm; \
 	if [ "$$confirm" = "yes" ]; then \
 		echo "✅ Approving deployment..."; \
+		gh run approve $$PENDING; \
+		echo ""; \
+		echo "👀 Watching deployment progress..."; \
 		gh run watch $$PENDING; \
 	else \
 		echo "❌ Approval cancelled"; \
@@ -188,8 +191,14 @@ deploy-production-auto: ## Deploy to production and auto-approve (use with cauti
 		echo "❌ Could not find workflow run"; \
 		exit 1; \
 	fi; \
-	echo "✅ Watching deployment: $$RUN_ID"; \
+	echo "✅ Found deployment: $$RUN_ID"; \
 	echo ""; \
+	echo "⏳ Waiting for approval gate..."; \
+	sleep 3; \
+	echo "✅ Auto-approving..."; \
+	gh run approve $$RUN_ID; \
+	echo ""; \
+	echo "👀 Watching deployment progress..."; \
 	gh run watch $$RUN_ID
 
 status: ## Check deployment status
