@@ -5,34 +5,30 @@ import App from './App.vue'
 import i18n from './i18n'
 import './styles/tailwind.css'
 
-import HomeView from './views/HomeView.vue'
-import CalendarView from './views/CalendarView.vue'
-import DomainView from './views/DomainView.vue'
-import AdminView from './views/AdminView.vue'
-
+// Use dynamic imports for code splitting - each route becomes a separate chunk
 const routes = [
-  { 
-    path: '/', 
+  {
+    path: '/',
     redirect: '/home'
   },
-  { 
-    path: '/home', 
-    component: HomeView
+  {
+    path: '/home',
+    component: () => import('./views/HomeView.vue')
   },
-  { 
-    path: '/calendar/:id', 
-    component: CalendarView, 
+  {
+    path: '/calendar/:id',
+    component: () => import('./views/CalendarView.vue'),
     props: true
   },
   // More specific routes MUST come before general ones
-  { 
-    path: '/:domain/admin', 
-    component: AdminView, 
+  {
+    path: '/:domain/admin',
+    component: () => import('./views/AdminView.vue'),
     props: (route) => ({ domain: route.params.domain })
   },
-  { 
-    path: '/:domain', 
-    component: DomainView, 
+  {
+    path: '/:domain',
+    component: () => import('./views/DomainView.vue'),
     props: (route) => ({ domain: route.params.domain })
   }
 ]

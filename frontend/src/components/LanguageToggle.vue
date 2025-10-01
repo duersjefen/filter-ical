@@ -33,8 +33,8 @@ const currentLanguageLabel = computed(() => {
   return locale.value === 'en' ? 'EN' : 'DE'
 })
 
-const toggleLanguage = () => {
+const toggleLanguage = async () => {
   const newLocale = locale.value === 'en' ? 'de' : 'en'
-  setLocale(newLocale)
+  await setLocale(newLocale)
 }
 </script>

@@ -8,7 +8,8 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
-    VueDevTools()
+    // Only include VueDevTools in development mode
+    ...(process.env.NODE_ENV !== 'production' ? [VueDevTools()] : [])
   ],
   build: {
     minify: 'terser',
@@ -16,6 +17,16 @@ export default defineConfig({
       compress: {
         drop_console: true,  // Remove all console.* calls in production
         drop_debugger: true   // Remove debugger statements
+      }
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor chunks for better caching
+          'vue-core': ['vue', 'vue-router'],
+          'vue-libs': ['pinia', 'vue-i18n'],
+          'http': ['axios']
+        }
       }
     }
   },
