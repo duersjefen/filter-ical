@@ -631,5 +631,61 @@
   "placeholders": {
     "searchInFilteredGroups": "Search in filtered groups...",
     "searchEvents": "Search events..."
+  },
+  "domainRequest": {
+    "title": "Want Your Own Custom Domain Calendar?",
+    "subtitle": "Request a personalized calendar with custom groups and filters",
+    "features": {
+      "title": "What you get:",
+      "groups": "Organize events into custom groups",
+      "filters": "Create multiple filtered calendar exports",
+      "sharing": "Share specific event groups with others"
+    },
+    "form": {
+      "calendarUrl": "Calendar URL (iCal)",
+      "calendarUrlPlaceholder": "https://example.com/calendar.ics",
+      "description": "Tell us what you want to do",
+      "descriptionPlaceholder": "I would like to set up a calendar for my soccer club with groups for training, matches, and social events...",
+      "characters": "characters",
+      "submit": "Submit Request",
+      "submitting": "Submitting..."
+    },
+    "success": "Request submitted! We'll review it and get back to you soon.",
+    "errors": {
+      "loginRequired": "Please set a username to submit a request",
+      "descriptionTooShort": "Description must be at least 10 characters",
+      "submissionFailed": "Failed to submit request. Please try again."
+    }
+  },
+  "admin": {
+    "panel": {
+      "title": "Admin Panel",
+      "subtitle": "Password required to access admin features",
+      "password": "Admin Password",
+      "passwordPlaceholder": "Enter admin password",
+      "login": "Login",
+      "authenticating": "Authenticating...",
+      "invalidPassword": "Invalid admin password",
+      "domainRequests": "Domain Requests",
+      "manageRequests": "Review and manage custom domain requests",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "allRequests": "All Requests",
+      "noRequests": "No domain requests yet",
+      "calendarUrl": "Calendar URL",
+      "submitted": "Submitted",
+      "domainKey": "Domain Key",
+      "approve": "Approve",
+      "reject": "Reject",
+      "rejectionReason": "Reason for rejection (optional):",
+      "approvalFailed": "Failed to approve request",
+      "rejectionFailed": "Failed to reject request",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      }
+    }
   }
 }

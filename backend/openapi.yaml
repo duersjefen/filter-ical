@@ -737,8 +737,229 @@ paths:
         '404':
           description: Filter not found
 
+  # Domain Requests (User-facing)
+  /domain-requests:
+    post:
+      summary: Submit a custom domain request
+      description: Users can request their own custom domain calendar to be set up
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DomainRequestCreate'
+      responses:
+        '201':
+          description: Domain request submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainRequest'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Admin Panel (Password-Protected)
+  /admin/domain-requests:
+    get:
+      summary: List all domain requests (admin only)
+      description: Get all domain requests with optional status filtering
+      security:
+        - AdminPassword: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+          description: Filter by request status
+      responses:
+        '200':
+          description: List of domain requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DomainRequest'
+        '401':
+          description: Unauthorized - invalid admin password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/domain-requests/{requestId}/approve:
+    patch:
+      summary: Approve a domain request (admin only)
+      description: Approve the request and automatically create domain calendar
+      security:
+        - AdminPassword: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain_key:
+                  type: string
+                  description: Custom domain key to use (auto-generated from username if not provided)
+                  example: "johns_calendar"
+      responses:
+        '200':
+          description: Domain request approved and calendar created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Domain request approved and calendar created"
+                  domain_key:
+                    type: string
+                    example: "johns_calendar"
+                  calendar_id:
+                    type: integer
+                    example: 42
+        '401':
+          description: Unauthorized - invalid admin password
+        '404':
+          description: Request not found
+        '409':
+          description: Domain key already exists
+
+  /admin/domain-requests/{requestId}/reject:
+    patch:
+      summary: Reject a domain request (admin only)
+      description: Reject the domain request with optional reason
+      security:
+        - AdminPassword: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  example: "Calendar URL is not accessible"
+      responses:
+        '200':
+          description: Domain request rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Domain request rejected"
+        '401':
+          description: Unauthorized - invalid admin password
+        '404':
+          description: Request not found
+
 components:
+  securitySchemes:
+    AdminPassword:
+      type: http
+      scheme: basic
+      description: Admin password authentication (username is ignored, only password is validated)
+
   schemas:
+    DomainRequestCreate:
+      type: object
+      required: [username, calendar_url, description]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "john_doe"
+          description: "Username of the person requesting the domain"
+        calendar_url:
+          type: string
+          format: uri
+          example: "https://example.com/calendar.ics"
+          description: "iCal URL for the custom domain calendar"
+        description:
+          type: string
+          minLength: 10
+          maxLength: 500
+          example: "I would like to set up a calendar for my soccer club events with custom groups and filters"
+          description: "Explanation of what the user wants to do with the custom domain"
+
+    DomainRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: "Unique request ID"
+        username:
+          type: string
+          example: "john_doe"
+          description: "Username of the requester"
+        calendar_url:
+          type: string
+          format: uri
+          example: "https://example.com/calendar.ics"
+          description: "iCal URL for the custom domain"
+        description:
+          type: string
+          example: "I would like to set up a calendar for my soccer club events"
+          description: "User's explanation of their use case"
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          example: "pending"
+          description: "Current status of the request"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-10T14:23:15Z"
+          description: "When the request was submitted"
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-11T09:15:30Z"
+          description: "When the request was reviewed (approved/rejected)"
+        rejection_reason:
+          type: string
+          nullable: true
+          example: "Calendar URL is not accessible"
+          description: "Reason for rejection (if applicable)"
+        domain_key:
+          type: string
+          nullable: true
+          example: "johns_calendar"
+          description: "Generated domain key (set after approval)"
+
     Calendar:
       type: object
       properties:

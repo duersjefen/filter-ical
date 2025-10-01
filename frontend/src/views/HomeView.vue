@@ -301,6 +301,9 @@
       </div>
     </div>
     
+    <!-- Custom Domain Request Card -->
+    <DomainRequestCard />
+
     <!-- Confirmation Dialog -->
     <ConfirmDialog
       ref="confirmDialog"
@@ -320,6 +323,7 @@ import { useRouter } from 'vue-router'
 import { onMounted, watch, ref, nextTick } from 'vue'
 import AppHeader from '../components/shared/AppHeader.vue'
 import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
+import DomainRequestCard from '../components/home/DomainRequestCard.vue'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useUsername } from '../composables/useUsername'
 

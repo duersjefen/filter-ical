@@ -44,9 +44,25 @@ dev: ## Start full development environment (recommended)
 	@echo ""
 	@echo "✅ PostgreSQL running on localhost:5432"
 	@echo ""
-	@echo "Starting backend and frontend in parallel..."
+	@echo "⬆️  Applying database migrations..."
+	@cd backend && \
+		. venv/bin/activate && \
+		alembic upgrade head 2>&1 | grep -E "(Running upgrade|Already at head|ERROR)" || true
+	@echo "✅ Migrations applied"
+	@echo ""
+	@echo "🐍 Starting backend..."
 	@bash -c "trap 'kill 0' EXIT; \
 		(cd backend && (test -d venv || python3 -m venv venv) && . venv/bin/activate && pip install -q -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 3000) & \
+		BACKEND_PID=$$!; \
+		echo '⏳ Waiting for backend to be ready...'; \
+		for i in {1..30}; do \
+			if curl -sf http://localhost:3000/health >/dev/null 2>&1; then \
+				echo '✅ Backend ready on http://localhost:3000'; \
+				break; \
+			fi; \
+			sleep 1; \
+		done; \
+		echo '🎨 Starting frontend...'; \
 		(cd frontend && (test -d node_modules || npm install) && npm run dev) & \
 		wait"
 

@@ -643,5 +643,61 @@
   "placeholders": {
     "searchInFilteredGroups": "In gefilterten Gruppen suchen...",
     "searchEvents": "Events suchen..."
+  },
+  "domainRequest": {
+    "title": "Möchten Sie Ihren eigenen Domain-Kalender?",
+    "subtitle": "Fordern Sie einen personalisierten Kalender mit benutzerdefinierten Gruppen und Filtern an",
+    "features": {
+      "title": "Was Sie bekommen:",
+      "groups": "Ereignisse in benutzerdefinierte Gruppen organisieren",
+      "filters": "Mehrere gefilterte Kalender-Exporte erstellen",
+      "sharing": "Bestimmte Ereignisgruppen mit anderen teilen"
+    },
+    "form": {
+      "calendarUrl": "Kalender-URL (iCal)",
+      "calendarUrlPlaceholder": "https://beispiel.de/kalender.ics",
+      "description": "Sagen Sie uns, was Sie tun möchten",
+      "descriptionPlaceholder": "Ich möchte einen Kalender für meinen Fußballverein mit Gruppen für Training, Spiele und soziale Veranstaltungen einrichten...",
+      "characters": "Zeichen",
+      "submit": "Anfrage senden",
+      "submitting": "Wird gesendet..."
+    },
+    "success": "Anfrage eingereicht! Wir werden sie prüfen und uns bald bei Ihnen melden.",
+    "errors": {
+      "loginRequired": "Bitte legen Sie einen Benutzernamen fest, um eine Anfrage zu senden",
+      "descriptionTooShort": "Beschreibung muss mindestens 10 Zeichen enthalten",
+      "submissionFailed": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    }
+  },
+  "admin": {
+    "panel": {
+      "title": "Admin-Panel",
+      "subtitle": "Passwort erforderlich für Admin-Funktionen",
+      "password": "Admin-Passwort",
+      "passwordPlaceholder": "Admin-Passwort eingeben",
+      "login": "Anmelden",
+      "authenticating": "Authentifizierung...",
+      "invalidPassword": "Ungültiges Admin-Passwort",
+      "domainRequests": "Domain-Anfragen",
+      "manageRequests": "Benutzerdefinierte Domain-Anfragen überprüfen und verwalten",
+      "pending": "Ausstehend",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt",
+      "allRequests": "Alle Anfragen",
+      "noRequests": "Noch keine Domain-Anfragen",
+      "calendarUrl": "Kalender-URL",
+      "submitted": "Eingereicht",
+      "domainKey": "Domain-Schlüssel",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "rejectionReason": "Grund für Ablehnung (optional):",
+      "approvalFailed": "Genehmigung fehlgeschlagen",
+      "rejectionFailed": "Ablehnung fehlgeschlagen",
+      "status": {
+        "pending": "Ausstehend",
+        "approved": "Genehmigt",
+        "rejected": "Abgelehnt"
+      }
+    }
   }
 }

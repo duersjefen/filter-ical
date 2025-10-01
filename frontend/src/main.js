@@ -20,6 +20,10 @@ const routes = [
     component: () => import('./views/CalendarView.vue'),
     props: true
   },
+  {
+    path: '/admin',
+    component: () => import('./views/AdminPanelView.vue')
+  },
   // More specific routes MUST come before general ones
   {
     path: '/:domain/admin',

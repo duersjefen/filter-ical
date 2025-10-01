@@ -47,9 +47,20 @@ class Settings(BaseSettings):
     # Redis cache settings
     redis_url: str = "redis://localhost:6379"
     cache_ttl_seconds: int = 300  # 5 minutes
-    
+
     # Development settings
     verbose_logging: bool = False  # Extra logging in development
+
+    # Admin authentication
+    admin_password: str = "change-me-in-production"  # Override via ADMIN_PASSWORD env var
+
+    # Email settings (for domain request notifications)
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = ""  # Set via SMTP_USERNAME env var
+    smtp_password: str = ""  # Set via SMTP_PASSWORD env var
+    smtp_from_email: str = "noreply@filter-ical.de"
+    admin_email: str = ""  # Set via ADMIN_EMAIL env var - receives domain request notifications
     
     # Paths
     base_dir: Path = Path(__file__).parent.parent.parent
