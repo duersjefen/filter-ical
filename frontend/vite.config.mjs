@@ -85,6 +85,12 @@ export default defineConfig({
           ? 'http://backend-dev:3000'  // Docker container communication
           : 'http://localhost:3000',   // Native development
         changeOrigin: true
+      },
+      '/admin': {
+        target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV
+          ? 'http://backend-dev:3000'  // Docker container communication
+          : 'http://localhost:3000',   // Native development
+        changeOrigin: true
       }
     }
   }
