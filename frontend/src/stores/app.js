@@ -23,14 +23,12 @@ export const useAppStore = defineStore('app', () => {
   const initializeApp = () => {
     // Set up username change detection for data source switching
     onUsernameChange((newUsername, oldUsername) => {
-      console.log('🔄 App store detected username change - triggering data reload')
-      
       // Clear current calendars to prevent confusion
       calendars.value = []
-      
+
       // Clear filtered calendars to prevent showing stale data
       filteredCalendars.value = []
-      
+
       // Reload calendars with new authentication state
       fetchCalendars()
     })
@@ -55,57 +53,32 @@ export const useAppStore = defineStore('app', () => {
 
 
   const fetchCalendars = async () => {
-    console.log('🔄 fetchCalendars called with username:', getUserId())
-    
     const currentUserId = getUserId()
     const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
-    
-    console.log('🔍 Authentication state:', {
-      currentUserId,
-      hasCustomUsername,
-      isLoggedIn: hasCustomUsername
-    })
-    
+
     if (hasCustomUsername) {
       // LOGGED IN: Load from server only
-      console.log('🔐 User is logged in - loading from server only')
-      
       try {
-        console.log('🌐 Making API call to /calendars?username=' + currentUserId)
         const result = await get(`/calendars?username=${currentUserId}`)
-        console.log('🌐 Server API result:', { 
-          success: result.success, 
-          calendarsLength: result.data?.length || 0
-        })
-        
+
         if (result.success) {
           // New API returns direct array, not wrapped in object
           calendars.value = result.data || []
-          
-          console.log('✅ Server calendars loaded:', { 
-            length: calendars.value.length,
-            firstCalendarName: calendars.value[0]?.name
-          })
-          
           return { success: true, data: calendars.value }
         } else {
-          console.error('❌ Server load failed for logged in user:', result.error)
           calendars.value = []
           return { success: false, error: result.error }
         }
       } catch (error) {
-        console.error('❌ Server connection failed for logged in user:', error)
         calendars.value = []
         return { success: false, error: 'Failed to connect to server' }
       }
-      
+
     } else {
       // LOGGED OUT: Read-only mode - no calendar management
-      console.log('👤 User is anonymous - read-only mode (login required for calendar management)')
-      
       calendars.value = []
-      return { 
-        success: true, 
+      return {
+        success: true,
         data: [],
         message: 'Login required for calendar management'
       }
@@ -125,54 +98,43 @@ export const useAppStore = defineStore('app', () => {
       source_url: newCalendar.value.url.trim()
     }
 
-    console.log('📅 Adding calendar:', { calendarData, hasCustomUsername })
-
     if (hasCustomUsername) {
       // LOGGED IN: Create on server immediately, wait for response
-      console.log('🔐 User logged in - creating calendar on server')
-      
       try {
         const result = await post(`/calendars?username=${currentUserId}`, calendarData)
-        
+
         if (result.success) {
-          console.log('✅ Calendar created on server:', result.data)
-          
           // Add to local calendars list
           calendars.value.push(result.data)
-          
+
           // Reset form
           newCalendar.value = { name: '', url: '' }
-          
+
           // Check for warnings and modify result to include them
           if (result.data.warnings && result.data.warnings.length > 0) {
-            console.warn('⚠️ Calendar created with warnings:', result.data.warnings)
             return {
               success: true,
               data: result.data,
               warnings: result.data.warnings
             }
           }
-          
+
           return result
         } else {
-          console.error('❌ Server calendar creation failed:', result.error)
-          return { 
-            success: false, 
+          return {
+            success: false,
             error: result.error || 'Failed to create calendar on server'
           }
         }
       } catch (error) {
-        console.error('❌ Server request failed:', error)
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: 'Failed to connect to server. Please check your connection.'
         }
       }
       
     } else {
       // LOGGED OUT: Create locally only
-      console.log('👤 User anonymous - creating calendar locally')
-      
       const localCalendar = {
         id: generateLocalCalendarId(),
         name: calendarData.name,
@@ -204,53 +166,42 @@ export const useAppStore = defineStore('app', () => {
     
     const calendarIndex = calendars.value.findIndex(cal => cal.id === numericCalendarId)
     if (calendarIndex === -1) {
-      const availableIds = calendars.value.map(c => c.id).join(', ')
-      console.error(`Calendar ${calendarId} not found. Available: ${availableIds}`)
       return { success: false, error: 'Calendar not found. It may have already been deleted.' }
     }
-    
+
     const calendarToDelete = calendars.value[calendarIndex]
-    console.log('🗑️ Deleting calendar:', { calendarId, hasCustomUsername, source: calendarToDelete.source })
 
     if (hasCustomUsername) {
       // LOGGED IN: Delete from server first, then update local list
-      console.log('🔐 User logged in - deleting from server first')
-      
       try {
         const result = await del(`/calendars/${numericCalendarId}?username=${currentUserId}`)
-        
+
         if (result.success) {
           // Server deletion succeeded - remove from local list
           calendars.value.splice(calendarIndex, 1)
-          console.log('✅ Calendar deleted from server and local list')
           return { success: true }
         } else {
-          console.error('❌ Server deletion failed:', result.error)
           // Check if it's a 404 (calendar already deleted)
           if (result.status === 404 || result.error?.includes('not found') || result.error?.includes('404')) {
             // Calendar doesn't exist on server anymore - remove from local list anyway
             calendars.value.splice(calendarIndex, 1)
-            console.log('✅ Calendar was already deleted from server - removed from local list')
             return { success: true }
           } else {
-            return { 
-              success: false, 
+            return {
+              success: false,
               error: result.error || 'Failed to delete calendar from server'
             }
           }
         }
       } catch (error) {
-        console.error('❌ Server request failed:', error)
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: 'Failed to connect to server. Please try again.'
         }
       }
-      
+
     } else {
       // LOGGED OUT: Read-only mode
-      console.log('👤 User anonymous - read-only mode')
-      
       // Prevent calendar deletion for anonymous users
       return { success: false, error: 'Login required to delete calendars' }
     }
@@ -265,34 +216,29 @@ export const useAppStore = defineStore('app', () => {
     
     if (hasCustomUsername) {
       // LOGGED IN: Call server sync endpoint
-      console.log('🔄 Syncing calendar from server')
-      
       try {
         const result = await post(`/calendars/${numericCalendarId}/sync?username=${currentUserId}`)
-        
+
         if (result.success) {
-          console.log('✅ Calendar sync succeeded:', result.data)
-          return { 
-            success: true, 
-            data: result.data 
+          return {
+            success: true,
+            data: result.data
           }
         } else {
-          return { 
-            success: false, 
+          return {
+            success: false,
             error: result.error || 'Failed to sync calendar'
           }
         }
       } catch (error) {
-        console.error('❌ Server sync request failed:', error)
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: 'Failed to connect to server. Please try again.'
         }
       }
-      
+
     } else {
       // LOGGED OUT: Read-only mode
-      console.log('👤 User anonymous - cannot sync calendars')
       return { success: false, error: 'Login required to sync calendars' }
     }
   }
@@ -477,23 +423,6 @@ export const useAppStore = defineStore('app', () => {
           end_time: event.end_time
         }))
 
-        console.log('✅ Personal calendar events normalized:', {
-          eventsCount: normalizedEvents.length,
-          firstEventTitle: normalizedEvents[0].title,
-          beforeNormalization: {
-            start_time: result.data.events[0].start_time,
-            end_time: result.data.events[0].end_time,
-            title: result.data.events[0].title
-          },
-          afterNormalization: {
-            start: normalizedEvents[0].start,
-            end: normalizedEvents[0].end,
-            dtstart: normalizedEvents[0].dtstart,
-            dtend: normalizedEvents[0].dtend,
-            title: normalizedEvents[0].title
-          }
-        })
-
         // Events is an array of individual events, we need to group them by title
         const recurringEventMap = {}
         normalizedEvents.forEach(event => {
@@ -512,11 +441,6 @@ export const useAppStore = defineStore('app', () => {
         // Store the processed data in reactive variables for CalendarView
         recurringEvents.value = recurringEventMap
         events.value = normalizedEvents
-
-        console.log('✅ Personal calendar data stored in appStore:', {
-          recurringEventsCount: Object.keys(recurringEvents.value).length,
-          eventsCount: events.value.length
-        })
       } else {
         // No events data - clear reactive variables
         recurringEvents.value = {}
@@ -552,13 +476,6 @@ export const useAppStore = defineStore('app', () => {
       }
       
 
-      
-      console.log('📊 Domain groups data loaded (simplified):', {
-        domainName,
-        hasGroups: hasGroups.value,
-        groupsCount: Object.keys(groups.value).length,
-        groupNames: Object.values(groups.value).map(g => g.name)
-      })
     }
 
     return result

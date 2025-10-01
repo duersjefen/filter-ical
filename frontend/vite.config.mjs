@@ -10,6 +10,15 @@ export default defineConfig({
     tailwindcss(),
     VueDevTools()
   ],
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,  // Remove all console.* calls in production
+        drop_debugger: true   // Remove debugger statements
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': resolve('./src')

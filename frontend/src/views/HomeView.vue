@@ -284,27 +284,10 @@ const confirmDialog = ref(null)
 const calendarToDelete = ref(null)
 
 onMounted(() => {
-  console.log('HomeView mounted in public-first mode')
-  console.log('📊 Initial appStore.calendars:', {
-    length: appStore.calendars.length,
-    isReactive: !!appStore.calendars,
-    firstCalendar: appStore.calendars[0]?.name
-  })
-  
   // Public-first access - always try to initialize and fetch calendars
   appStore.initializeApp()
   appStore.fetchCalendars()
 })
-
-// Watch for reactivity debugging
-watch(() => appStore.calendars, (newCalendars, oldCalendars) => {
-  console.log('🔄 appStore.calendars changed:', {
-    oldLength: oldCalendars?.length || 0,
-    newLength: newCalendars?.length || 0,
-    firstNewCalendar: newCalendars[0]?.name,
-    timestamp: new Date().toISOString()
-  })
-}, { immediate: true, deep: true })
 
 const handleAddCalendar = async () => {
   const result = await appStore.addCalendar()
@@ -319,40 +302,32 @@ const handleAddCalendar = async () => {
 }
 
 const viewCalendar = async (calendarId) => {
-  console.log('viewCalendar called with ID:', calendarId)
   router.push(`/calendar/${calendarId}`)
 }
 
 const syncCalendar = async (calendarId) => {
-  console.log('Sync calendar called with ID:', calendarId)
-  
   const result = await appStore.syncCalendar(calendarId)
-  
+
   if (result.success) {
-    console.log('✅ Calendar synced successfully:', result.data)
     // Show success message
     appStore.setError(`✅ Calendar synced! ${result.data.event_count} events processed.`)
     // Clear the "error" after a few seconds since it's actually success
     setTimeout(() => appStore.clearError(), 3000)
   } else {
-    console.error('❌ Calendar sync failed:', result.error)
     appStore.setError(`❌ Sync failed: ${result.error}`)
   }
 }
 
 const deleteCalendar = async (calendarId) => {
-  console.log('Delete calendar called with ID:', calendarId)
-  
   // Find the calendar to show its name in the confirmation
   const calendar = appStore.calendars.find(c => c.id === calendarId)
   if (!calendar) {
-    console.error('Calendar not found for deletion')
     return
   }
-  
+
   // Store the calendar for the confirmation dialog
   calendarToDelete.value = calendar
-  
+
   // Open the beautiful confirmation dialog
   confirmDialog.value?.open()
 }
