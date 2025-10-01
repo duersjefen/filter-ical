@@ -852,14 +852,8 @@ const getFullExportUrl = (calendar) => {
     return ''
   }
 
-  // If we're in development, use Vite proxy (relative URL works through proxy)
-  if (import.meta.env.MODE === 'development') {
-    // Use current origin (localhost:8000) which proxies to backend
-    return `${window.location.origin}${calendar.export_url}`
-  }
-
-  // Production URL
-  return `https://filter-ical.de${calendar.export_url}`
+  // Use current environment's origin (works for dev, staging, and production)
+  return `${window.location.origin}${calendar.export_url}`
 }
 
 const getGroupRecurringEvents = (group) => {
