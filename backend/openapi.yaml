@@ -520,6 +520,168 @@ paths:
         '404':
           description: Filter or domain not found
 
+  # Domain Configuration Backups
+  /domains/{domain}/backups:
+    post:
+      summary: Create a backup of current domain configuration
+      description: Creates a snapshot of all groups, assignments, and rules for the domain
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+        - name: description
+          in: query
+          schema:
+            type: string
+          description: Optional description for the backup
+          example: "Before major restructuring"
+      responses:
+        '201':
+          description: Backup created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainBackup'
+        '404':
+          description: Domain not found
+        '500':
+          description: Backup creation failed
+
+    get:
+      summary: List all backups for a domain
+      description: Returns all configuration snapshots ordered by creation date (newest first)
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      responses:
+        '200':
+          description: List of backups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DomainBackup'
+        '404':
+          description: Domain not found
+
+  /domains/{domain}/backups/{backupId}:
+    delete:
+      summary: Delete a backup
+      description: Permanently deletes a backup snapshot
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+        - name: backupId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      responses:
+        '200':
+          description: Backup deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Backup deleted successfully"
+        '404':
+          description: Backup or domain not found
+
+  /domains/{domain}/backups/{backupId}/restore:
+    post:
+      summary: Restore domain from a backup
+      description: Restores all groups, assignments, and rules from a backup snapshot. Current configuration is automatically backed up first.
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+        - name: backupId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      responses:
+        '200':
+          description: Configuration restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Domain restored from backup"
+                  auto_backup_id:
+                    type: integer
+                    description: ID of the auto-created backup before restore
+                    example: 43
+        '404':
+          description: Backup or domain not found
+        '500':
+          description: Restore failed
+
+  /domains/{domain}/backups/{backupId}/download:
+    get:
+      summary: Download a backup as YAML file
+      description: Downloads the backup configuration as a YAML file
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+        - name: backupId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      responses:
+        '200':
+          description: YAML configuration file
+          content:
+            application/x-yaml:
+              schema:
+                type: string
+                example: |
+                  domain: exter
+                  calendars:
+                    - name: "Exter Event Calendar"
+                      url: "https://example.com/calendar.ics"
+                  groups:
+                    - id: "fussball"
+                      name: "⚽ Fußball"
+                      description: "Football activities"
+        '404':
+          description: Backup or domain not found
+
   # Dynamic iCal Export
   /ical/{uuid}.ics:
     get:
@@ -582,6 +744,51 @@ components:
           type: string
           format: date-time
           example: "2024-01-15T10:30:00Z"
+
+    DomainBackup:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+          description: "Unique backup ID"
+        domain_key:
+          type: string
+          example: "exter"
+          description: "Domain this backup belongs to"
+        config_snapshot:
+          type: object
+          description: "Full domain configuration snapshot in YAML-compatible format"
+          example:
+            domain: "exter"
+            groups:
+              - id: "fussball"
+                name: "⚽ Fußball"
+                description: "Football activities"
+            assignments:
+              fussball:
+                - "Football Training"
+                - "Match Day"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-10T14:23:15Z"
+          description: "When the backup was created"
+        created_by:
+          type: string
+          example: "admin"
+          description: "User who created the backup (optional)"
+          nullable: true
+        description:
+          type: string
+          example: "Before major restructuring"
+          description: "Optional backup description"
+          nullable: true
+        backup_type:
+          type: string
+          enum: [manual, auto_pre_reset, auto_pre_import, auto_pre_restore]
+          example: "manual"
+          description: "Type of backup: manual (user-initiated) or automatic"
 
     DomainEventsResponse:
       type: object

@@ -25,6 +25,9 @@ from ..services.domain_service import (
 from ..services.domain_config_service import (
     export_domain_configuration, import_domain_configuration
 )
+from ..services.backup_service import (
+    create_backup, list_backups, get_backup, delete_backup, restore_backup
+)
 from ..services.calendar_service import get_filters, create_filter, delete_filter, get_filter_by_id
 from ..services.cache_service import get_or_build_domain_events
 
@@ -951,7 +954,215 @@ async def reset_domain_config(
             "success": True,
             "message": f"Domain '{domain}' reset to baseline configuration"
         }
-        
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# Domain Configuration Backup/Restore Endpoints
+
+@router.post("/{domain}/backups")
+async def create_domain_backup(
+    domain: str,
+    description: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Create a backup snapshot of current domain configuration."""
+    try:
+        # Verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+
+        # Create backup
+        backup_success, backup, backup_error = create_backup(
+            db=db,
+            domain_key=domain,
+            description=description,
+            backup_type='manual'
+        )
+
+        if not backup_success:
+            raise HTTPException(status_code=500, detail=backup_error)
+
+        # Return backup data matching OpenAPI schema
+        return {
+            "id": backup.id,
+            "domain_key": backup.domain_key,
+            "config_snapshot": backup.config_snapshot,
+            "created_at": backup.created_at.isoformat() if backup.created_at else None,
+            "created_by": backup.created_by,
+            "description": backup.description,
+            "backup_type": backup.backup_type
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/{domain}/backups")
+async def get_domain_backups(
+    domain: str,
+    db: Session = Depends(get_db)
+):
+    """List all backups for a domain, ordered by creation date (newest first)."""
+    try:
+        # Verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+
+        # Get backups
+        list_success, backups, list_error = list_backups(db=db, domain_key=domain)
+
+        if not list_success:
+            raise HTTPException(status_code=500, detail=list_error)
+
+        # Transform to OpenAPI schema format
+        backups_response = []
+        for backup in backups:
+            backups_response.append({
+                "id": backup.id,
+                "domain_key": backup.domain_key,
+                "config_snapshot": backup.config_snapshot,
+                "created_at": backup.created_at.isoformat() if backup.created_at else None,
+                "created_by": backup.created_by,
+                "description": backup.description,
+                "backup_type": backup.backup_type
+            })
+
+        return backups_response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/{domain}/backups/{backup_id}")
+async def delete_domain_backup(
+    domain: str,
+    backup_id: int,
+    db: Session = Depends(get_db)
+):
+    """Delete a backup snapshot."""
+    try:
+        # Verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+
+        # Delete backup
+        delete_success, delete_error = delete_backup(
+            db=db,
+            domain_key=domain,
+            backup_id=backup_id
+        )
+
+        if not delete_success:
+            if "not found" in delete_error.lower():
+                raise HTTPException(status_code=404, detail=delete_error)
+            raise HTTPException(status_code=500, detail=delete_error)
+
+        return {
+            "success": True,
+            "message": "Backup deleted successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/{domain}/backups/{backup_id}/restore")
+async def restore_domain_backup(
+    domain: str,
+    backup_id: int,
+    db: Session = Depends(get_db)
+):
+    """Restore domain from a backup snapshot. Automatically creates a backup of current state first."""
+    try:
+        # Verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+
+        # Restore from backup
+        restore_success, auto_backup_id, restore_error = restore_backup(
+            db=db,
+            domain_key=domain,
+            backup_id=backup_id
+        )
+
+        if not restore_success:
+            if "not found" in restore_error.lower():
+                raise HTTPException(status_code=404, detail=restore_error)
+            raise HTTPException(status_code=500, detail=restore_error)
+
+        return {
+            "success": True,
+            "message": "Domain restored from backup",
+            "auto_backup_id": auto_backup_id
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/{domain}/backups/{backup_id}/download")
+async def download_domain_backup(
+    domain: str,
+    backup_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Download a backup as YAML file."""
+    try:
+        # Verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+
+        # Get backup
+        get_success, backup, get_error = get_backup(
+            db=db,
+            domain_key=domain,
+            backup_id=backup_id
+        )
+
+        if not get_success:
+            if "not found" in get_error.lower():
+                raise HTTPException(status_code=404, detail=get_error)
+            raise HTTPException(status_code=500, detail=get_error)
+
+        # Convert to YAML
+        yaml_content = yaml.dump(backup.config_snapshot, default_flow_style=False, indent=2,
+                                allow_unicode=True, encoding=None)
+
+        return Response(content=yaml_content, media_type="application/x-yaml")
+
     except HTTPException:
         raise
     except Exception as e:

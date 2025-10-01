@@ -166,3 +166,36 @@ class Filter(Base):
         if 'link_uuid' not in kwargs:
             kwargs['link_uuid'] = str(uuid.uuid4())
         super().__init__(**kwargs)
+
+
+class DomainBackup(Base):
+    """
+    Domain configuration backup model for snapshot/restore functionality.
+
+    Stores complete domain configuration snapshots to enable:
+    - Manual backups by administrators
+    - Automatic backups before destructive operations
+    - Point-in-time restoration
+    - Configuration history and audit trail
+
+    Corresponds to DomainBackup schema in OpenAPI spec.
+    """
+    __tablename__ = "domain_backups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    domain_key = Column(String(100), nullable=False, index=True)
+
+    # Full configuration snapshot stored as JSON (compatible with YAML format)
+    config_snapshot = Column(JSON, nullable=False)
+
+    # Metadata
+    created_at = Column(DateTime, default=func.now(), nullable=False, index=True)
+    created_by = Column(String(100), nullable=True)  # Username who created backup
+    description = Column(Text, nullable=True)  # User-provided description
+
+    # Backup type for filtering and UX
+    backup_type = Column(
+        String(50),
+        nullable=False,
+        default='manual'
+    )  # 'manual', 'auto_pre_reset', 'auto_pre_import', 'auto_pre_restore'

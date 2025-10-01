@@ -55,7 +55,8 @@
       "WebFetch(domain:localhost)",
       "WebFetch(domain:vitejs.dev)",
       "WebFetch(domain:vite.dev)",
-      "WebFetch(domain:devtools.vuejs.org)"
+      "WebFetch(domain:devtools.vuejs.org)",
+      "WebFetch(domain:www.googleapis.com)"
     ],
     "deny": [],
     "ask": []

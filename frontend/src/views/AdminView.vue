@@ -54,14 +54,17 @@
         @remove-from-group="handleRemoveFromGroup"
       />
       
-      <!-- 💾 Configuration Card (Third Position) -->
-      <ConfigurationCard
+      <!-- 💾 Backup & Restore Card (Third Position) -->
+      <BackupRestoreCard
         :expanded="expandedCards.config"
         :loading="loading"
+        :backups="backups"
         @toggle="toggleCard('config')"
+        @create-backup="createBackup"
         @export-configuration="exportConfiguration"
-        @handle-file-upload="handleFileUpload"
-        @reset-configuration-confirm="resetConfigurationConfirm"
+        @restore-backup="restoreBackupConfirm"
+        @download-backup="downloadBackup"
+        @delete-backup="deleteBackupConfirm"
       />
       
     </div>
@@ -124,7 +127,7 @@ import { useI18n } from 'vue-i18n'
 import AppHeader from '../components/shared/AppHeader.vue'
 import AutoRulesCard from '../components/admin/AutoRulesCard.vue'
 import EventManagementCard from '../components/admin/EventManagementCard.vue'
-import ConfigurationCard from '../components/admin/ConfigurationCard.vue'
+import BackupRestoreCard from '../components/admin/BackupRestoreCard.vue'
 
 export default {
   name: 'AdminView',
@@ -132,7 +135,7 @@ export default {
     AppHeader,
     AutoRulesCard,
     EventManagementCard,
-    ConfigurationCard
+    BackupRestoreCard
   },
   props: {
     domain: {
@@ -170,7 +173,10 @@ export default {
     } = useAdmin(props.domain)
 
     // HTTP functions for configuration management
-    const { post } = useHTTP()
+    const { post, get, del } = useHTTP()
+
+    // Backup state
+    const backups = ref([])
 
     // UI State - Expandable Cards
     const expandedCards = ref({
@@ -381,12 +387,110 @@ export default {
       }
     }
 
+    // Backup Management
+    const loadBackups = async () => {
+      try {
+        const result = await get(`/domains/${props.domain}/backups`)
+        if (result.success) {
+          backups.value = result.data || []
+        }
+      } catch (error) {
+        console.error('Failed to load backups:', error)
+      }
+    }
+
+    const createBackup = async () => {
+      try {
+        const result = await post(`/domains/${props.domain}/backups`)
+
+        if (result.success) {
+          showNotification(t('admin.backupCreatedSuccessfully'), 'success')
+          loadBackups() // Reload backup list
+        } else {
+          showNotification(`Failed to create backup: ${result.error}`, 'error')
+        }
+      } catch (error) {
+        showNotification(`Failed to create backup: ${error.message}`, 'error')
+      }
+    }
+
+    const restoreBackupConfirm = (backupId) => {
+      const message = t('admin.confirmRestoreBackup')
+      showConfirmDialog(message, () => restoreBackup(backupId))
+    }
+
+    const restoreBackup = async (backupId) => {
+      try {
+        const result = await post(`/domains/${props.domain}/backups/${backupId}/restore`)
+
+        if (result.success) {
+          showNotification(t('admin.backupRestoredSuccessfully'), 'success')
+          loadAllAdminData() // Reload all admin data
+          loadBackups() // Reload backup list
+        } else {
+          showNotification(`Failed to restore backup: ${result.error}`, 'error')
+        }
+      } catch (error) {
+        showNotification(`Failed to restore backup: ${error.message}`, 'error')
+      }
+    }
+
+    const downloadBackup = async (backupId) => {
+      try {
+        const { rawRequest } = useHTTP()
+        const response = await rawRequest({
+          method: 'GET',
+          url: `${API_BASE_URL}/domains/${props.domain}/backups/${backupId}/download`,
+          responseType: 'blob',
+          headers: {
+            'Accept': 'application/x-yaml'
+          }
+        })
+
+        // Create download
+        const blob = new Blob([response.data], { type: 'application/x-yaml' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${props.domain}_backup_${backupId}.yaml`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+
+        showNotification('Backup downloaded successfully', 'success')
+      } catch (error) {
+        showNotification(`Failed to download backup: ${error.message}`, 'error')
+      }
+    }
+
+    const deleteBackupConfirm = (backupId) => {
+      const message = t('admin.confirmDeleteBackup')
+      showConfirmDialog(message, () => deleteBackup(backupId))
+    }
+
+    const deleteBackup = async (backupId) => {
+      try {
+        const result = await del(`/domains/${props.domain}/backups/${backupId}`)
+
+        if (result.success) {
+          showNotification(t('admin.backupDeletedSuccessfully'), 'success')
+          loadBackups() // Reload backup list
+        } else {
+          showNotification(`Failed to delete backup: ${result.error}`, 'error')
+        }
+      } catch (error) {
+        showNotification(`Failed to delete backup: ${error.message}`, 'error')
+      }
+    }
+
     // Load data on mount
     let hasInitiallyLoaded = false
     onMounted(async () => {
       if (!hasInitiallyLoaded) {
         hasInitiallyLoaded = true
         loadAllAdminData()
+        loadBackups()
       }
     })
 
@@ -423,7 +527,12 @@ export default {
       exportConfiguration,
       handleFileUpload,
       resetConfigurationConfirm,
-      
+
+      // Backup Management
+      backups,
+      createBackup,
+      downloadBackup,
+
       // Group management
       handleDeleteGroup,
       handleRemoveFromGroup
