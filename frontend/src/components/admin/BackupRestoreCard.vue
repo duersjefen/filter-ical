@@ -8,25 +8,34 @@
   >
     <div class="space-y-6">
 
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap gap-3">
-        <button
-          @click="$emit('create-backup')"
-          :disabled="loading"
-          class="flex-1 min-w-[200px] bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
-        >
-          <span>💾</span>
-          <span>{{ $t('admin.createBackup') }}</span>
-        </button>
+      <!-- Create Backup Section -->
+      <div class="space-y-3">
+        <input
+          v-model="backupDescription"
+          type="text"
+          :placeholder="$t('admin.backupDescriptionPlaceholder')"
+          class="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 placeholder-gray-400 dark:placeholder-gray-500"
+        />
 
-        <button
-          @click="$emit('export-configuration')"
-          :disabled="loading"
-          class="flex-1 min-w-[200px] bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
-        >
-          <span>📤</span>
-          <span>{{ $t('admin.exportToFile') }}</span>
-        </button>
+        <div class="flex flex-wrap gap-3">
+          <button
+            @click="handleCreateBackup"
+            :disabled="loading"
+            class="flex-1 min-w-[200px] bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <span>💾</span>
+            <span>{{ $t('admin.createBackup') }}</span>
+          </button>
+
+          <button
+            @click="$emit('export-configuration')"
+            :disabled="loading"
+            class="flex-1 min-w-[200px] bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <span>📤</span>
+            <span>{{ $t('admin.exportToFile') }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- Backup History -->
@@ -61,15 +70,12 @@
                   </span>
                 </div>
 
-                <!-- Description -->
+                <!-- Description (only show if exists) -->
                 <p
                   v-if="backup.description"
                   class="text-sm text-gray-600 dark:text-gray-400 truncate"
                 >
                   {{ backup.description }}
-                </p>
-                <p v-else class="text-sm text-gray-400 dark:text-gray-500 italic">
-                  {{ $t('admin.noDescription') }}
                 </p>
               </div>
 
@@ -128,6 +134,7 @@
 <script>
 import AdminCardWrapper from './AdminCardWrapper.vue'
 import { useI18n } from 'vue-i18n'
+import { ref } from 'vue'
 
 export default {
   name: 'BackupRestoreCard',
@@ -156,18 +163,28 @@ export default {
     'download-backup',
     'delete-backup'
   ],
-  setup() {
+  setup(props, { emit }) {
     const { t } = useI18n()
+
+    // Backup description state
+    const backupDescription = ref('')
 
     const formatDate = (dateString) => {
       if (!dateString) return ''
       const date = new Date(dateString)
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) return dateString
+
+      // Format in user's local timezone
       return new Intl.DateTimeFormat('default', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
       }).format(date)
     }
 
@@ -185,10 +202,17 @@ export default {
       return t(`admin.backupType.${type}`)
     }
 
+    const handleCreateBackup = () => {
+      emit('create-backup', backupDescription.value.trim())
+      backupDescription.value = '' // Clear after creating
+    }
+
     return {
       formatDate,
       getBackupTypeIcon,
-      getBackupTypeLabel
+      getBackupTypeLabel,
+      backupDescription,
+      handleCreateBackup
     }
   }
 }

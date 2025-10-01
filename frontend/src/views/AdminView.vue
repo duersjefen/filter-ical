@@ -94,7 +94,7 @@
   </div>
 
   <!-- Confirmation Dialog -->
-  <div v-if="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div v-if="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md w-full mx-4">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('admin.confirmAction') }}</h3>
       <p class="text-gray-700 dark:text-gray-300 mb-6">{{ confirmDialog.message }}</p>
@@ -399,9 +399,10 @@ export default {
       }
     }
 
-    const createBackup = async () => {
+    const createBackup = async (description = '') => {
       try {
-        const result = await post(`/domains/${props.domain}/backups`)
+        const payload = description ? { description } : {}
+        const result = await post(`/domains/${props.domain}/backups`, payload)
 
         if (result.success) {
           showNotification(t('admin.backupCreatedSuccessfully'), 'success')
@@ -531,6 +532,8 @@ export default {
       // Backup Management
       backups,
       createBackup,
+      restoreBackupConfirm,
+      deleteBackupConfirm,
       downloadBackup,
 
       // Group management

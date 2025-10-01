@@ -5,7 +5,7 @@ Implements domain-specific endpoints from OpenAPI specification.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -966,7 +966,7 @@ async def reset_domain_config(
 @router.post("/{domain}/backups")
 async def create_domain_backup(
     domain: str,
-    description: Optional[str] = Query(None),
+    body: Optional[dict] = Body(None),
     db: Session = Depends(get_db)
 ):
     """Create a backup snapshot of current domain configuration."""
@@ -978,6 +978,9 @@ async def create_domain_backup(
 
         if domain not in config.get('domains', {}):
             raise HTTPException(status_code=404, detail="Domain not found")
+
+        # Extract description from body if provided
+        description = body.get('description') if body else None
 
         # Create backup
         backup_success, backup, backup_error = create_backup(
@@ -995,7 +998,7 @@ async def create_domain_backup(
             "id": backup.id,
             "domain_key": backup.domain_key,
             "config_snapshot": backup.config_snapshot,
-            "created_at": backup.created_at.isoformat() if backup.created_at else None,
+            "created_at": backup.created_at.isoformat() + 'Z' if backup.created_at else None,
             "created_by": backup.created_by,
             "description": backup.description,
             "backup_type": backup.backup_type
@@ -1035,7 +1038,7 @@ async def get_domain_backups(
                 "id": backup.id,
                 "domain_key": backup.domain_key,
                 "config_snapshot": backup.config_snapshot,
-                "created_at": backup.created_at.isoformat() if backup.created_at else None,
+                "created_at": backup.created_at.isoformat() + 'Z' if backup.created_at else None,
                 "created_by": backup.created_by,
                 "description": backup.description,
                 "backup_type": backup.backup_type

@@ -322,6 +322,9 @@
     "deleteBackup": "Delete this backup",
     "noDescription": "No description",
     "loading": "Loading...",
+    "backupDescription": "Description (optional)",
+    "backupDescriptionPlaceholder": "e.g., 'Before major update' or 'Stable configuration'",
+    "createBackupWithDescription": "Create Backup",
     "backupType": {
       "manual": "Manual backup",
       "auto_pre_reset": "Auto-backup before reset",
