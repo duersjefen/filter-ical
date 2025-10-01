@@ -19,6 +19,9 @@ export default defineConfig({
         drop_debugger: true   // Remove debugger statements
       }
     },
+    // Increase chunk size warning limit (we're code-splitting intentionally)
+    chunkSizeWarningLimit: 600,
+    cssCodeSplit: true,  // Split CSS into separate files per chunk
     rollupOptions: {
       output: {
         manualChunks: {
@@ -26,6 +29,14 @@ export default defineConfig({
           'vue-core': ['vue', 'vue-router'],
           'vue-libs': ['pinia', 'vue-i18n'],
           'http': ['axios']
+        },
+        // Optimize asset naming for better caching
+        assetFileNames: (assetInfo) => {
+          // CSS files get their own naming pattern
+          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+            return 'assets/css/[name]-[hash][extname]'
+          }
+          return 'assets/[name]-[hash][extname]'
         }
       }
     }

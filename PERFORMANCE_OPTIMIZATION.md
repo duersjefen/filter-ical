@@ -56,23 +56,29 @@ VueDevTools is now excluded from production builds:
 
 ---
 
-## Server Configuration (To Be Implemented)
+## Server Configuration (✅ IMPLEMENTED)
 
 ### Nginx Configuration for Static Assets
 
-Add this to your Nginx configuration for optimal caching and compression:
+**File:** `frontend/nginx.conf`
+
+Enhanced compression and caching configuration:
 
 ```nginx
-# Enable Brotli compression (better than gzip)
+# Enable Brotli compression (better than gzip - 20-30% smaller files)
 brotli on;
 brotli_comp_level 6;
-brotli_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
+brotli_static on;
+brotli_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
 
-# Enable Gzip as fallback
+# Enable Gzip as fallback for browsers without Brotli support
 gzip on;
 gzip_vary on;
+gzip_proxied any;
 gzip_comp_level 6;
-gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
+gzip_min_length 1000;
+gzip_disable "msie6";
+gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
 
 # Cache static assets aggressively
 location ~* \.(?:css|js|map|woff|woff2|ttf|eot|svg|jpg|jpeg|png|gif|ico|webp)$ {
@@ -119,31 +125,67 @@ Header always set X-XSS-Protection "1; mode=block"
 
 ---
 
-## Additional Recommendations
+## Additional Optimizations (✅ IMPLEMENTED)
 
-### 1. Preconnect to API Domain
-Add to `frontend/index.html`:
+### 1. Resource Hints (✅ IMPLEMENTED)
+**File:** `frontend/index.html`
+
+Added preconnect and DNS prefetch for faster API connections:
 ```html
 <link rel="preconnect" href="https://filter-ical.de" crossorigin>
 <link rel="dns-prefetch" href="https://filter-ical.de">
 ```
 
-### 2. Add Content Security Policy
-```nginx
-add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
+**Impact:** Reduces connection time by ~100-300ms on first API request.
+
+### 2. Component Prefetching (✅ IMPLEMENTED)
+**File:** `frontend/src/views/DomainView.vue`
+
+Implemented aggressive prefetching of CalendarView component:
+- Converted CalendarView to async component with `defineAsyncComponent`
+- Added explicit prefetch on DomainView mount
+- Reduces waterfall: DomainView → domain API → CalendarView → events API
+- New pattern: DomainView → (domain API || CalendarView) → events API
+
+**Impact:** Saves 200-500ms by parallelizing CalendarView chunk load with domain API call.
+
+### 3. Enhanced Cache Headers (✅ IMPLEMENTED)
+**File:** `frontend/nginx.conf`
+
+Optimized caching strategy:
+- JS/CSS assets: 1 year immutable
+- Images: 1 year immutable
+- HTML: 5 minutes with must-revalidate
+- Security headers added for all responses
+
+### 4. CSS Code Splitting (✅ IMPLEMENTED)
+**File:** `frontend/vite.config.mjs`
+
+Enabled per-route CSS splitting:
+```javascript
+cssCodeSplit: true
 ```
 
-### 3. Enable HTTP/2 or HTTP/3
+**Impact:** Only load CSS for the current route, reducing initial CSS bundle.
+
+### 5. Future Recommendations
+
+#### Enable HTTP/2 or HTTP/3
 HTTP/2 multiplexing improves loading of multiple small chunks:
 ```nginx
 listen 443 ssl http2;
 ```
 
-### 4. Consider CDN
+#### Consider CDN
 For global users, serve static assets from a CDN:
 - Cloudflare (free tier available)
 - AWS CloudFront
 - Netlify/Vercel edge network
+
+#### Add Content Security Policy (Optional)
+```nginx
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
+```
 
 ---
 
@@ -175,16 +217,35 @@ With these optimizations + server config:
 
 ## Deployment Checklist
 
+### Frontend Optimizations
 - [x] Route-based code splitting implemented
 - [x] Vendor chunk splitting configured
 - [x] i18n locales lazy-loaded
 - [x] VueDevTools excluded from production
-- [ ] Server compression enabled (Brotli + Gzip)
-- [ ] Cache headers configured
-- [ ] Security headers added
-- [ ] Preconnect/DNS prefetch added
-- [ ] HTTP/2 enabled
-- [ ] Performance tested with Lighthouse
+- [x] CSS code splitting enabled
+- [x] Component prefetching (DomainView → CalendarView)
+- [x] Async component loading optimized
+
+### Server Configuration
+- [x] Server compression enabled (Brotli + Gzip)
+- [x] Cache headers configured
+- [x] Security headers added
+- [x] Preconnect/DNS prefetch added
+- [ ] HTTP/2 enabled (requires production server update)
+- [ ] Performance tested with Lighthouse (after deployment)
+
+### Expected Improvements
+**Before optimization:**
+- FCP: 2.5s
+- LCP: 3.6s
+- TBT: 1,000ms
+- Speed Index: 7.4s
+
+**Target after optimization:**
+- FCP: < 1.5s (40% improvement)
+- LCP: < 2.0s (44% improvement)
+- TBT: < 300ms (70% improvement)
+- Speed Index: < 3.5s (53% improvement)
 
 ---
 

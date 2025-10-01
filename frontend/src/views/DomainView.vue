@@ -120,11 +120,14 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
-import CalendarView from './CalendarView.vue'
 import { useHTTP } from '../composables/useHTTP'
 import { API_ENDPOINTS } from '../constants/api'
+
+// Preload CalendarView chunk immediately when DomainView loads
+// This reduces the waterfall effect and improves LCP
+const CalendarView = defineAsyncComponent(() => import('./CalendarView.vue'))
 
 export default {
   name: 'DomainView',
@@ -171,6 +174,13 @@ export default {
 
     // Load data on mount
     onMounted(() => {
+      // Start prefetching CalendarView chunk immediately in parallel with domain data
+      // This reduces waterfall: DomainView -> domain API -> CalendarView load -> events API
+      // to: DomainView -> (domain API || CalendarView load) -> events API
+      import('./CalendarView.vue').catch(() => {
+        // Prefetch failed, but component will load on demand anyway
+      })
+
       loadDomainData()
     })
 
