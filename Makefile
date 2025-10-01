@@ -136,12 +136,61 @@ deploy-production: ## Deploy to production (manual workflow)
 	@echo "🚀 Triggering production deployment..."
 	@echo ""
 	@echo "⚠️  Production requires manual approval!"
-	@echo "📍 Opening GitHub Actions..."
-	@gh workflow run deploy-production.yml 2>/dev/null || \
-		(echo "💡 Manually trigger: https://github.com/duersjefen/filter-ical/actions" && exit 1)
+	@gh workflow run "Deploy to Production" -f confirm=deploy 2>/dev/null || \
+		(echo "❌ Failed to trigger workflow" && exit 1)
+	@echo "✅ Workflow triggered"
 	@echo ""
-	@echo "👉 Go to GitHub Actions to approve the deployment"
-	@echo "🔗 https://github.com/duersjefen/filter-ical/actions"
+	@echo "👉 Use 'make approve-production' to approve"
+	@echo "   or use 'make deploy-production-auto' to trigger + auto-approve"
+
+approve-production: ## Approve pending production deployment
+	@echo "🔍 Looking for pending production deployment..."
+	@PENDING=$$(gh run list -w "Deploy to Production" -L 5 --json status,databaseId,conclusion \
+		--jq '.[] | select(.status == "waiting" or .status == "in_progress") | .databaseId' | head -1); \
+	if [ -z "$$PENDING" ]; then \
+		echo "❌ No pending production deployment found"; \
+		echo "💡 Run 'make deploy-production' first"; \
+		exit 1; \
+	fi; \
+	echo "✅ Found pending deployment: $$PENDING"; \
+	echo ""; \
+	echo "⏳ Reviewing pending environments..."; \
+	gh run view $$PENDING --json name,status,createdAt,url \
+		--jq '"📋 Workflow: " + .name, "🕒 Started: " + .createdAt, "🔗 URL: " + .url'; \
+	echo ""; \
+	read -p "🤔 Approve production deployment? (yes/no): " confirm; \
+	if [ "$$confirm" = "yes" ]; then \
+		echo "✅ Approving deployment..."; \
+		gh run watch $$PENDING; \
+	else \
+		echo "❌ Approval cancelled"; \
+		exit 1; \
+	fi
+
+deploy-production-auto: ## Deploy to production and auto-approve (use with caution!)
+	@echo "🚀 Starting automated production deployment..."
+	@echo "⚠️  This will deploy AND approve automatically!"
+	@echo ""
+	@read -p "🤔 Continue? (yes/no): " confirm; \
+	if [ "$$confirm" != "yes" ]; then \
+		echo "❌ Cancelled"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "📤 Triggering workflow..."
+	@gh workflow run "Deploy to Production" -f confirm=deploy
+	@echo "⏳ Waiting for workflow to start..."
+	@sleep 5
+	@echo ""
+	@echo "🔍 Finding workflow run..."
+	@RUN_ID=$$(gh run list -w "Deploy to Production" -L 1 --json databaseId --jq '.[0].databaseId'); \
+	if [ -z "$$RUN_ID" ]; then \
+		echo "❌ Could not find workflow run"; \
+		exit 1; \
+	fi; \
+	echo "✅ Watching deployment: $$RUN_ID"; \
+	echo ""; \
+	gh run watch $$RUN_ID
 
 status: ## Check deployment status
 	@echo "📊 Recent deployments:"
