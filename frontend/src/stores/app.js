@@ -7,6 +7,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useHTTP } from '../composables/useHTTP'
 import { useUsername } from '../composables/useUsername'
+import { API_ENDPOINTS } from '../constants/api'
 
 export const useAppStore = defineStore('app', () => {
   // ===============================================
@@ -65,7 +66,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Load from server only
       try {
-        const result = await get(`/calendars?username=${currentUserId}`)
+        const result = await get(`${API_ENDPOINTS.CALENDARS}?username=${currentUserId}`)
 
         if (result.success) {
           // New API returns direct array, not wrapped in object
@@ -107,7 +108,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Create on server immediately, wait for response
       try {
-        const result = await post(`/calendars?username=${currentUserId}`, calendarData)
+        const result = await post(`${API_ENDPOINTS.CALENDARS}?username=${currentUserId}`, calendarData)
 
         if (result.success) {
           // Add to local calendars list
@@ -180,7 +181,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Delete from server first, then update local list
       try {
-        const result = await del(`/calendars/${numericCalendarId}?username=${currentUserId}`)
+        const result = await del(`${API_ENDPOINTS.CALENDAR_DELETE(numericCalendarId)}?username=${currentUserId}`)
 
         if (result.success) {
           // Server deletion succeeded - remove from local list
@@ -223,7 +224,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Call server sync endpoint
       try {
-        const result = await post(`/calendars/${numericCalendarId}/sync?username=${currentUserId}`)
+        const result = await post(`${API_ENDPOINTS.CALENDAR_SYNC(numericCalendarId)}?username=${currentUserId}`)
 
         if (result.success) {
           return {
@@ -347,7 +348,7 @@ export const useAppStore = defineStore('app', () => {
 
 
   const loadCalendarEvents = async (calendarId) => {
-    const result = await get(`/calendars/${calendarId}/events`)
+    const result = await get(API_ENDPOINTS.CALENDAR_EVENTS(calendarId))
 
     if (result.success) {
       events.value = result.data.events || []
@@ -357,7 +358,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const loadCalendarRecurringEvents = async (calendarId) => {
-    const result = await get(`/calendars/${calendarId}/events`)
+    const result = await get(API_ENDPOINTS.CALENDAR_EVENTS(calendarId))
 
     if (result.success) {
       // Process events into event types format
@@ -406,7 +407,7 @@ export const useAppStore = defineStore('app', () => {
   // Groups methods
   const loadCalendarGroups = async (calendarId) => {
     // For user calendars, use the events endpoint which provides flat structure
-    const result = await get(`/calendars/${calendarId}/events`)
+    const result = await get(API_ENDPOINTS.CALENDAR_EVENTS(calendarId))
 
     if (result.success) {
       // User calendars don't have groups in the new API, they have flat event structure
@@ -459,7 +460,7 @@ export const useAppStore = defineStore('app', () => {
 
   const loadDomainGroups = async (domainName) => {
     // Use the domain events endpoint which provides the full hierarchical structure
-    const result = await get(`/api/domains/${domainName}/events`)
+    const result = await get(API_ENDPOINTS.DOMAIN_EVENTS(domainName))
 
     if (result.success) {
       // Use backend format directly - no complex conversion needed
@@ -513,7 +514,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Still fetch even for anonymous users in case they log in later
     try {
-      const result = await get(`/api/filters?username=${currentUserId}`)
+      const result = await get(`${API_ENDPOINTS.USER_FILTERS}?username=${currentUserId}`)
 
       if (result.success) {
         // useHTTP wraps response in { success: true, data: [...] }
@@ -670,11 +671,11 @@ export const useAppStore = defineStore('app', () => {
     
     try {
       // Create filter for this calendar
-      const filterResult = await post(`/calendars/${calendarId}/filters?username=${getUserId()}`, filterData)
-      
+      const filterResult = await post(`${API_ENDPOINTS.CALENDAR_FILTERS(calendarId)}?username=${getUserId()}`, filterData)
+
       if (filterResult.success && filterResult.data.link_uuid) {
         // Get the iCal content using the filter's UUID
-        const icalResult = await get(`/ical/${filterResult.data.link_uuid}.ics`)
+        const icalResult = await get(API_ENDPOINTS.ICAL_EXPORT(filterResult.data.link_uuid))
         return icalResult
       } else {
         return { success: false, error: 'Failed to create filter for iCal generation' }

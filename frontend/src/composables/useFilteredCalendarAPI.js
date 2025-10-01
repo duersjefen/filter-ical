@@ -7,6 +7,7 @@ import { ref } from 'vue'
 import { useHTTP } from './useHTTP'
 import { useAppStore } from '../stores/app'
 import { useUsername } from './useUsername'
+import { API_ENDPOINTS } from '../constants/api'
 
 export function useFilteredCalendarAPI() {
   // HTTP client
@@ -26,16 +27,16 @@ export function useFilteredCalendarAPI() {
    */
   const buildFilterEndpoint = (calendarIdOrDomain, filterId = null) => {
     const currentUserId = getUserId()
-    
+
     if (typeof calendarIdOrDomain === 'string' && calendarIdOrDomain.startsWith('cal_domain_')) {
       // Domain calendar: extract domain from cal_domain_exter -> exter
       const domain = calendarIdOrDomain.replace('cal_domain_', '')
-      const base = `/domains/${domain}/filters`
+      const base = API_ENDPOINTS.DOMAIN_FILTERS(domain)
       const withId = filterId ? `${base}/${filterId}` : base
       return `${withId}?username=${currentUserId}`
     } else {
       // Regular calendar
-      const base = `/calendars/${calendarIdOrDomain}/filters`
+      const base = API_ENDPOINTS.CALENDAR_FILTERS(calendarIdOrDomain)
       const withId = filterId ? `${base}/${filterId}` : base
       return `${withId}?username=${currentUserId}`
     }
@@ -123,7 +124,7 @@ export function useFilteredCalendarAPI() {
         subscribed_event_ids: filter.subscribed_event_ids || [],
         subscribed_group_ids: filter.subscribed_group_ids || [],
         link_uuid: filter.link_uuid,
-        export_url: filter.export_url || `/ical/${filter.link_uuid}.ics`,
+        export_url: filter.export_url || API_ENDPOINTS.ICAL_EXPORT(filter.link_uuid),
         filter_config: filter.filter_config || {
           recurring_events: filter.subscribed_event_ids || [],
           groups: filter.subscribed_group_ids || []
@@ -187,7 +188,7 @@ export function useFilteredCalendarAPI() {
         subscribed_event_ids: result.data.subscribed_event_ids || [],
         subscribed_group_ids: result.data.subscribed_group_ids || [],
         link_uuid: result.data.link_uuid,
-        export_url: result.data.export_url || `/ical/${result.data.link_uuid}.ics`,
+        export_url: result.data.export_url || API_ENDPOINTS.ICAL_EXPORT(result.data.link_uuid),
         filter_config: result.data.filter_config || {
           recurring_events: result.data.subscribed_event_ids || [],
           groups: result.data.subscribed_group_ids || []
@@ -318,8 +319,8 @@ export function useFilteredCalendarAPI() {
   }
 
   const getPublicCalendar = async (token) => {
-    const result = await get(`/cal/${token}`)
-    
+    const result = await get(API_ENDPOINTS.PUBLIC_CALENDAR(token))
+
     if (result.success) {
       return result.data
     } else {

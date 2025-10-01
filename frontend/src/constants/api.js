@@ -9,10 +9,17 @@ export const API_ENDPOINTS = {
   CALENDARS: '/api/calendars',
   CALENDAR_DELETE: (id) => `/api/calendars/${id}`,
   CALENDAR_EVENTS: (id) => `/api/calendars/${id}/events`,
+  CALENDAR_SYNC: (id) => `/api/calendars/${id}/sync`,
 
   // Calendar filters
   CALENDAR_FILTERS: (id) => `/api/calendars/${id}/filters`,
   CALENDAR_FILTER_DELETE: (calId, filterId) => `/api/calendars/${calId}/filters/${filterId}`,
+
+  // User filters across all domains
+  USER_FILTERS: '/api/filters',
+
+  // Public calendar view
+  PUBLIC_CALENDAR: (token) => `/api/cal/${token}`,
 
   // Domain-specific endpoints (auto-created from domains.yaml)
   DOMAINS: '/api/domains',
