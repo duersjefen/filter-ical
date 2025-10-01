@@ -40,9 +40,12 @@ if ! git diff --cached --quiet; then
     if [ -f "backend/requirements.txt" ]; then
         if git diff --cached --name-only | grep -q "backend/requirements.txt"; then
             echo "🔍 Validating backend requirements.txt format..."
-            if grep -E '.*#.*[^[:space:]]' backend/requirements.txt >/dev/null 2>&1; then
+            # Check for comments without space after # (e.g., #comment instead of # comment)
+            if grep -E '#[^[:space:]]' backend/requirements.txt >/dev/null 2>&1; then
                 echo "❌ Malformed requirements.txt detected - comments must have space after #"
                 echo "🔧 Fix by ensuring all comments have proper spacing: # comment"
+                echo "🔍 Found:"
+                grep -E '#[^[:space:]]' backend/requirements.txt
                 exit 1
             fi
             echo "✅ Backend requirements.txt format is valid"
