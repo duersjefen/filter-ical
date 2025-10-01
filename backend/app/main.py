@@ -36,14 +36,15 @@ def load_openapi_spec() -> Optional[Dict[str, Any]]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
-    # Startup - Rapid development approach
+    # Startup
     print("🚀 Starting Filter iCal...")
     print(f"🌍 Environment: {settings.environment.value}")
     print("📋 Contract-first development active")
-    
-    # Create tables directly for rapid development (no Alembic complexity)
-    Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created")
+
+    # Database migrations are managed by Alembic
+    # Run migrations via: make migrate-up (dev) or deploy.sh (production)
+    # Base.metadata.create_all(bind=engine)  # Disabled - using Alembic migrations
+    print("✅ Using Alembic for database migrations")
     
     # Ensure domain calendars exist (from domains.yaml configuration)
     from .services.domain_service import load_domains_config, ensure_domain_calendar_exists

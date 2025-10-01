@@ -5,7 +5,7 @@
 # See DEV_WORKFLOW.md for complete guide
 # =============================================================================
 
-.PHONY: help setup dev dev-db dev-backend dev-frontend stop test deploy-staging deploy-production status clean
+.PHONY: help setup dev dev-db dev-backend dev-frontend stop test deploy-staging deploy-production approve-production deploy-production-auto status clean migrate-create migrate-up migrate-down migrate-history migrate-current migrate-stamp
 
 .DEFAULT_GOAL := help
 
@@ -109,6 +109,55 @@ test-all: ## Run all tests (unit + integration + E2E)
 		. venv/bin/activate && \
 		python -m pytest tests/ -v
 	@cd frontend && npm run test
+
+##
+## 🗄️  Database Migration Commands
+##
+
+migrate-create: ## Create a new migration (usage: make migrate-create name="add_user_table")
+	@echo "📝 Creating new migration..."
+	@if [ -z "$(name)" ]; then \
+		echo "❌ Error: Please provide a name"; \
+		echo "   Usage: make migrate-create name=\"add_user_table\""; \
+		exit 1; \
+	fi
+	@cd backend && \
+		. venv/bin/activate && \
+		alembic revision --autogenerate -m "$(name)"
+	@echo "✅ Migration created! Review it in backend/alembic/versions/"
+
+migrate-up: ## Apply all pending migrations
+	@echo "⬆️  Applying database migrations..."
+	@cd backend && \
+		. venv/bin/activate && \
+		alembic upgrade head
+	@echo "✅ Migrations applied"
+
+migrate-down: ## Revert last migration
+	@echo "⬇️  Reverting last migration..."
+	@cd backend && \
+		. venv/bin/activate && \
+		alembic downgrade -1
+	@echo "✅ Migration reverted"
+
+migrate-history: ## Show migration history
+	@echo "📚 Migration history:"
+	@cd backend && \
+		. venv/bin/activate && \
+		alembic history --verbose
+
+migrate-current: ## Show current migration version
+	@echo "📍 Current migration:"
+	@cd backend && \
+		. venv/bin/activate && \
+		alembic current --verbose
+
+migrate-stamp: ## Mark database as being at specific version (usage: make migrate-stamp version="head")
+	@echo "🏷️  Stamping database to $(version)..."
+	@cd backend && \
+		. venv/bin/activate && \
+		alembic stamp $(version)
+	@echo "✅ Database stamped to $(version)"
 
 ##
 ## 🚀 Deployment Commands
