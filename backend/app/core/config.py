@@ -55,10 +55,13 @@ class Settings(BaseSettings):
     base_dir: Path = Path(__file__).parent.parent.parent
     domains_config_path: Path = base_dir / "domains" / "domains.yaml"
     openapi_spec_path: Path = base_dir / "openapi.yaml"
-    
+
     class Config:
-        env_file = ".env"
+        # Default to .env.development for local development (in project root)
+        # Production will override via environment variables
+        env_file = str(Path(__file__).parent.parent.parent / ".." / ".env.development")
         case_sensitive = False
+        extra = "ignore"  # Ignore extra env vars (e.g., frontend-specific vars)
     
     @property
     def is_development(self) -> bool:
