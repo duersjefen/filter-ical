@@ -1,10 +1,61 @@
 <template>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-    <AppHeader 
+    <AppHeader
       :title="$t('titles.icalFilterSubscribe')"
       :subtitle="$t('subtitles.filterCalendarsCreateFeeds')"
       page-context="home"
     />
+
+    <!-- Domain Calendars Section -->
+    <div v-if="appStore.domainsWithFilters.length > 0" class="bg-gradient-to-br from-white via-white to-purple-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-purple-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-8 hover:shadow-2xl hover:border-purple-300/50 dark:hover:border-purple-600/50 transition-all duration-300 backdrop-blur-sm">
+      <div class="flex items-center justify-between mb-6 sm:mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $t('home.domainCalendars.title') }}</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{{ $t('home.domainCalendars.description') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <router-link
+          v-for="domainInfo in appStore.domainsWithFilters"
+          :key="domainInfo.domain_key"
+          :to="`/${domainInfo.domain_key}`"
+          class="group relative bg-gradient-to-br from-white to-purple-50/50 dark:from-gray-700 dark:to-purple-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-700 shadow-lg hover:shadow-2xl p-6 transition-all duration-300 hover:scale-[1.03] hover:border-purple-400 dark:hover:border-purple-500 active:scale-[0.98] no-underline overflow-hidden"
+        >
+          <!-- Animated background gradient on hover -->
+          <div class="absolute inset-0 bg-gradient-to-br from-purple-400/0 to-purple-600/0 group-hover:from-purple-400/10 group-hover:to-purple-600/10 transition-all duration-300 rounded-2xl"></div>
+
+          <div class="relative flex items-center gap-4">
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
+              <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors capitalize truncate">
+                {{ domainInfo.domain_key }}
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{ $t('home.domainCalendars.filterCount', { count: domainInfo.filter_count }) }}</span>
+              </p>
+            </div>
+            <svg class="w-6 h-6 text-purple-500 dark:text-purple-400 group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </router-link>
+      </div>
+    </div>
 
     <!-- Add Calendar Form -->
     <div class="bg-gradient-to-br from-white via-white to-blue-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-blue-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-8 hover:shadow-2xl hover:border-blue-300/50 dark:hover:border-blue-600/50 transition-all duration-300 backdrop-blur-sm">
@@ -266,7 +317,7 @@
 <script setup>
 import { useAppStore } from '../stores/app'
 import { useRouter } from 'vue-router'
-import { onMounted, watch, ref } from 'vue'
+import { onMounted, watch, ref, nextTick } from 'vue'
 import AppHeader from '../components/shared/AppHeader.vue'
 import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import { useDarkMode } from '../composables/useDarkMode'
@@ -287,6 +338,11 @@ onMounted(() => {
   // Public-first access - always try to initialize and fetch calendars
   appStore.initializeApp()
   appStore.fetchCalendars()
+
+  // Fetch user filters after nextTick to ensure username is initialized from localStorage
+  nextTick(() => {
+    appStore.fetchUserFilters()
+  })
 })
 
 const handleAddCalendar = async () => {

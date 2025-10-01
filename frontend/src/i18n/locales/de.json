@@ -182,6 +182,11 @@
     "adding": "Wird hinzugefügt...",
     "addCalendar": "Kalender hinzufügen",
     "yourCalendars": "Ihre Kalender",
+    "domainCalendars": {
+      "title": "Ihre Domänen-Kalender",
+      "description": "Schnellzugriff auf geteilte Kalender mit Ihren aktiven Filtern",
+      "filterCount": "{count} aktiver Filter | {count} aktive Filter"
+    },
     "noCalendarsFound": "Keine Kalender gefunden. Fügen Sie oben Ihren ersten Kalender hinzu!",
     "viewEvents": "Events anzeigen",
     "name": "Name",

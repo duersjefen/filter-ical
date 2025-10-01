@@ -21,6 +21,9 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   
   const initializeApp = () => {
+    // Force username initialization from localStorage
+    getUserId() // This triggers the username composable initialization
+
     // Set up username change detection for data source switching
     onUsernameChange((newUsername, oldUsername) => {
       // Clear current calendars to prevent confusion
@@ -31,6 +34,9 @@ export const useAppStore = defineStore('app', () => {
 
       // Reload calendars with new authentication state
       fetchCalendars()
+
+      // Reload filters with new username
+      fetchUserFilters()
     })
   }
 
@@ -489,13 +495,69 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   // SAVED FILTERS SECTION
   // ===============================================
-  
+
   const savedFilters = ref([])
+  const userDomainFilters = ref([])
 
   const fetchFilters = async () => {
     // Note: Saved filters functionality not implemented in new backend yet
     return { success: true, data: { filters: [] } }
   }
+
+  const fetchUserFilters = async () => {
+    const currentUserId = getUserId()
+
+    // Always fetch filters if we have any user ID (including anon)
+    // But only store/display domain filters for logged-in users
+    const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
+
+    // Still fetch even for anonymous users in case they log in later
+    try {
+      const result = await get(`/filters?username=${currentUserId}`)
+
+      if (result.success) {
+        // useHTTP wraps response in { success: true, data: [...] }
+        const filters = result.data || []
+
+        // Store filters only if user is logged in
+        if (hasCustomUsername) {
+          userDomainFilters.value = filters
+        } else {
+          userDomainFilters.value = []
+        }
+
+        return { success: true, data: filters }
+      } else {
+        userDomainFilters.value = []
+        return { success: false, error: result.error || 'Failed to fetch filters' }
+      }
+    } catch (error) {
+      userDomainFilters.value = []
+      return { success: false, error: 'Failed to connect to server' }
+    }
+  }
+
+  // Computed property to extract unique domains where user has filters
+  const domainsWithFilters = computed(() => {
+    // Ensure we have an array to work with
+    const filters = Array.isArray(userDomainFilters.value) ? userDomainFilters.value : []
+    const domainMap = new Map()
+
+    filters.forEach(filter => {
+      if (filter.domain_key && !domainMap.has(filter.domain_key)) {
+        domainMap.set(filter.domain_key, {
+          domain_key: filter.domain_key,
+          filter_count: 0
+        })
+      }
+
+      if (filter.domain_key) {
+        domainMap.get(filter.domain_key).filter_count++
+      }
+    })
+
+    return Array.from(domainMap.values())
+  })
 
   const saveFilter = async (name, config) => {
     const filterName = name || `Filter ${config.selectedRecurringEvents?.length || 0} types`
@@ -671,7 +733,10 @@ export const useAppStore = defineStore('app', () => {
     // SAVED FILTERS
     // ===============================================
     savedFilters,
+    userDomainFilters,
+    domainsWithFilters,
     fetchFilters,
+    fetchUserFilters,
     saveFilter,
     deleteFilter,
 

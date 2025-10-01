@@ -182,6 +182,11 @@
     "adding": "Adding...",
     "addCalendar": "Add Calendar",
     "yourCalendars": "Your Calendars",
+    "domainCalendars": {
+      "title": "Your Domain Calendars",
+      "description": "Quick access to shared calendars with your active filters",
+      "filterCount": "{count} active filter | {count} active filters"
+    },
     "noCalendarsFound": "No calendars found. Add your first calendar above!",
     "viewEvents": "View Events",
     "name": "Name",

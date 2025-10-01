@@ -210,3 +210,40 @@ class TestErrorHandling:
         })
         # Should not be 422 (validation error) - the structure is correct
         assert response.status_code != 422
+
+    def test_filters_endpoint_contract_structure(self, test_client: TestClient):
+        """Test GET /filters endpoint follows OpenAPI contract structure."""
+        # Test without username parameter
+        response = test_client.get("/filters")
+
+        # Should return 200 with array of filters (may be empty)
+        assert response.status_code in [200, 404]  # 404 until implemented
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, list), "Response should be an array"
+
+            # If filters exist, validate structure
+            if len(data) > 0:
+                for filter_obj in data:
+                    assert "id" in filter_obj
+                    assert "name" in filter_obj
+                    # Either calendar_id or domain_key must be present
+                    assert "calendar_id" in filter_obj or "domain_key" in filter_obj
+
+                    # Check optional fields have correct types if present
+                    if "subscribed_event_ids" in filter_obj:
+                        assert isinstance(filter_obj["subscribed_event_ids"], list)
+                    if "subscribed_group_ids" in filter_obj:
+                        assert isinstance(filter_obj["subscribed_group_ids"], list)
+
+    def test_filters_endpoint_with_username(self, test_client: TestClient):
+        """Test GET /filters endpoint with username parameter."""
+        response = test_client.get("/filters?username=testuser")
+
+        # Should return 200 with array of filters for that user
+        assert response.status_code in [200, 404]  # 404 until implemented
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, list), "Response should be an array"

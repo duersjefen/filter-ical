@@ -205,6 +205,29 @@ paths:
         '404':
           description: Filter or calendar not found
 
+  # User-level filter management (all filters for a user)
+  /filters:
+    get:
+      summary: List all filters for a user (both calendar and domain filters)
+      parameters:
+        - name: username
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Username to filter by (if omitted, returns all filters)
+      responses:
+        '200':
+          description: List of filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Filter'
+        '400':
+          description: Invalid request
+
   # Domain-specific endpoints (auto-created from domains.yaml)
   /domains/{domain}/events:
     get:

@@ -155,10 +155,11 @@ def create_application() -> FastAPI:
         print("📋 Contract loaded: OpenAPI specification overrides auto-generation")
     
     # Import and include routers
-    from .routers import calendars, domains, ical_export, test
+    from .routers import calendars, domains, ical_export, test, filters
     app.include_router(calendars.router, prefix="/calendars", tags=["calendars"])
     app.include_router(domains.router, prefix="/domains", tags=["domains"])
     app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
+    app.include_router(filters.router, prefix="/filters", tags=["filters"])
     app.include_router(test.router, prefix="/test", tags=["test"])
     
     # Health check endpoint
