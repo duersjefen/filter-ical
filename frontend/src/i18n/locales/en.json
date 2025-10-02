@@ -698,6 +698,100 @@
         "approved": "Approved",
         "rejected": "Rejected"
       }
+    },
+    "domainAuth": {
+      "adminGate": {
+        "title": "Admin Access Required",
+        "subtitle": "Enter admin password to manage {domain}",
+        "passwordPlaceholder": "Admin password",
+        "loginButton": "Login as Admin",
+        "authenticating": "Authenticating...",
+        "invalidPassword": "Invalid admin password",
+        "backToHome": "Back to home"
+      },
+      "userGate": {
+        "title": "Password Protected",
+        "subtitle": "Enter password to view {domain} calendar",
+        "passwordPlaceholder": "Enter password",
+        "loginButton": "Access Calendar",
+        "authenticating": "Authenticating...",
+        "invalidPassword": "Invalid password",
+        "backToHome": "Back to home"
+      },
+      "passwordSettings": {
+        "title": "Password Protection",
+        "subtitle": "Manage password protection for this domain",
+        "adminPassword": {
+          "title": "Admin Password",
+          "description": "Protects admin panel access (/{domain}/admin)",
+          "setPassword": "Set Admin Password",
+          "changePassword": "Change Admin Password",
+          "removePassword": "Remove Admin Password",
+          "placeholder": "Enter admin password (min. 4 characters)",
+          "confirmPlaceholder": "Confirm admin password",
+          "currentStatus": "Current Status",
+          "enabled": "Enabled",
+          "disabled": "No Password Set"
+        },
+        "userPassword": {
+          "title": "User Password",
+          "description": "Protects public calendar access (/{domain})",
+          "setPassword": "Set User Password",
+          "changePassword": "Change User Password",
+          "removePassword": "Remove User Password",
+          "placeholder": "Enter user password (min. 4 characters)",
+          "confirmPlaceholder": "Confirm user password",
+          "currentStatus": "Current Status",
+          "enabled": "Enabled",
+          "disabled": "No Password Set"
+        },
+        "passwordRequirements": "Password must be at least 8 characters",
+        "passwordMismatch": "Passwords do not match",
+        "success": {
+          "adminSet": "Admin password set successfully",
+          "adminRemoved": "Admin password removed successfully",
+          "userSet": "User password set successfully",
+          "userRemoved": "User password removed successfully"
+        },
+        "error": {
+          "adminSet": "Failed to set admin password",
+          "adminRemoved": "Failed to remove admin password",
+          "userSet": "Failed to set user password",
+          "userRemoved": "Failed to remove user password",
+          "tooShort": "Password must be at least 8 characters"
+        },
+        "confirm": {
+          "removeAdmin": "Are you sure you want to remove the admin password? Anyone will be able to access the admin panel.",
+          "removeUser": "Are you sure you want to remove the user password? The calendar will be publicly accessible."
+        }
+      },
+      "globalAdmin": {
+        "title": "Domain Password Management",
+        "subtitle": "Manage passwords for all domains",
+        "domain": "Domain",
+        "adminPassword": "Admin Password",
+        "userPassword": "User Password",
+        "actions": "Actions",
+        "passwordSet": "Set",
+        "noPassword": "None",
+        "setPasswords": "Set Passwords",
+        "editPasswords": "Edit Passwords",
+        "noDomains": "No domains found",
+        "modal": {
+          "title": "Set Passwords for {domain}",
+          "adminPassword": "Admin Password",
+          "userPassword": "User Password",
+          "adminPlaceholder": "Enter admin password (min. 4 characters)",
+          "userPlaceholder": "Enter user password (min. 4 characters)",
+          "removeAdmin": "Remove admin password",
+          "removeUser": "Remove user password",
+          "leaveBlank": "Leave blank to keep existing password",
+          "save": "Save Changes",
+          "cancel": "Cancel"
+        },
+        "success": "Passwords updated successfully",
+        "error": "Failed to update passwords"
+      }
     }
   }
 }

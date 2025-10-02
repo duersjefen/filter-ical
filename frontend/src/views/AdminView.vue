@@ -1,5 +1,19 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
+  <!-- Password Gate - Show if admin authentication required and not authenticated -->
+  <PasswordGate
+    v-if="requiresAdminAuth && !isAdminAuthenticated"
+    :domain="domain"
+    access-level="admin"
+    :title="$t('admin.domainAuth.adminGate.title')"
+    :subtitle="$t('admin.domainAuth.adminGate.subtitle', { domain })"
+    :password-placeholder="$t('admin.domainAuth.adminGate.passwordPlaceholder')"
+    :submit-button-text="$t('admin.domainAuth.adminGate.loginButton')"
+    :show-back-button="true"
+    @authenticated="onAdminAuthenticated"
+    @back="$router.push(`/${domain}`)"
+  />
+
+  <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
     <AppHeader 
       :title="$t('domainAdmin.manageEventsGroups', { domain })"
       :subtitle="$t('domainAdmin.adminPanelSubtitle')"
@@ -66,7 +80,14 @@
         @download-backup="downloadBackup"
         @delete-backup="deleteBackupConfirm"
       />
-      
+
+      <!-- 🔐 Password Settings Card (Fourth Position) -->
+      <PasswordSettingsCard
+        :domain="domain"
+        :expanded="expandedCards.password"
+        @toggle="toggleCard('password')"
+      />
+
     </div>
   </div>
 
@@ -101,12 +122,15 @@ import { useAdmin } from '../composables/useAdmin'
 import { useHTTP } from '../composables/useHTTP'
 import { useMobileDetection } from '../composables/useMobileDetection'
 import { useNotification } from '../composables/useNotification'
+import { useDomainAuth } from '../composables/useDomainAuth'
 import { API_BASE_URL } from '../constants/api'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '../components/shared/AppHeader.vue'
 import AutoRulesCard from '../components/admin/AutoRulesCard.vue'
 import EventManagementCard from '../components/admin/EventManagementCard.vue'
 import BackupRestoreCard from '../components/admin/BackupRestoreCard.vue'
+import PasswordSettingsCard from '../components/admin/PasswordSettingsCard.vue'
+import PasswordGate from '../components/auth/PasswordGate.vue'
 
 export default {
   name: 'AdminView',
@@ -114,7 +138,9 @@ export default {
     AppHeader,
     AutoRulesCard,
     EventManagementCard,
-    BackupRestoreCard
+    BackupRestoreCard,
+    PasswordSettingsCard,
+    PasswordGate
   },
   props: {
     domain: {
@@ -131,6 +157,10 @@ export default {
 
     // Global notification system
     const notify = useNotification()
+
+    // Domain authentication
+    const { isAdminAuthenticated, getPasswordStatus, checkAuth } = useDomainAuth(props.domain)
+    const requiresAdminAuth = ref(false)
 
     // Use the admin composable for all data and functionality
     const {
@@ -162,9 +192,10 @@ export default {
 
     // UI State - Expandable Cards
     const expandedCards = ref({
-      rules: false,   // Auto Rules card starts collapsed
-      events: true,   // Events card starts expanded
-      config: false   // Configuration card starts collapsed
+      rules: false,    // Auto Rules card starts collapsed
+      events: true,    // Events card starts expanded
+      config: false,   // Configuration card starts collapsed
+      password: false  // Password Settings card starts collapsed
     })
     // HMR trigger
 
@@ -467,19 +498,42 @@ export default {
       }
     }
 
+    // Check if domain requires admin authentication
+    const checkPasswordProtection = async () => {
+      const status = await getPasswordStatus()
+      requiresAdminAuth.value = status.admin_password_set
+    }
+
+    // Handle successful admin authentication
+    const onAdminAuthenticated = () => {
+      checkAuth()
+      loadAllAdminData()
+      loadBackups()
+    }
+
     // Load data on mount
     let hasInitiallyLoaded = false
     onMounted(async () => {
       if (!hasInitiallyLoaded) {
         hasInitiallyLoaded = true
-        loadAllAdminData()
-        loadBackups()
+        await checkPasswordProtection()
+
+        // Only load data if authenticated or no password required
+        if (!requiresAdminAuth.value || isAdminAuthenticated.value) {
+          loadAllAdminData()
+          loadBackups()
+        }
       }
     })
 
     return {
       // Mobile detection
       isMobile,
+
+      // Authentication
+      requiresAdminAuth,
+      isAdminAuthenticated,
+      onAdminAuthenticated,
 
       // UI State
       expandedCards,

@@ -705,6 +705,335 @@ paths:
         '404':
           description: Backup or domain not found
 
+  # Domain Authentication
+  /api/domains/{domain}/auth/verify-admin:
+    post:
+      summary: Verify admin password and get JWT token
+      description: Authenticate with admin password and receive JWT token with 30-day expiry
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  example: "admin_password_123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                    description: JWT token for authentication
+                  message:
+                    type: string
+        '401':
+          description: Invalid password
+
+  /api/domains/{domain}/auth/verify-user:
+    post:
+      summary: Verify user password and get JWT token
+      description: Authenticate with user password and receive JWT token with 30-day expiry
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  example: "user_password_123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                    description: JWT token for authentication
+                  message:
+                    type: string
+        '401':
+          description: Invalid password
+
+  /api/domains/{domain}/auth/set-admin-password:
+    patch:
+      summary: Set admin password for domain
+      description: Set or change admin password (requires admin JWT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  minLength: 8
+                  example: "new_admin_password"
+      responses:
+        '200':
+          description: Password set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid password format
+        '401':
+          description: Unauthorized
+
+  /api/domains/{domain}/auth/set-user-password:
+    patch:
+      summary: Set user password for domain
+      description: Set or change user password (requires admin JWT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  minLength: 8
+                  example: "new_user_password"
+      responses:
+        '200':
+          description: Password set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid password format
+        '401':
+          description: Unauthorized
+
+  /api/domains/{domain}/auth/remove-admin-password:
+    delete:
+      summary: Remove admin password for domain
+      description: Remove admin password protection (requires admin JWT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      responses:
+        '200':
+          description: Password removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+
+  /api/domains/{domain}/auth/remove-user-password:
+    delete:
+      summary: Remove user password for domain
+      description: Remove user password protection (requires admin JWT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      responses:
+        '200':
+          description: Password removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+
+  /api/domains/{domain}/auth/status:
+    get:
+      summary: Check password status for domain
+      description: Check if domain has passwords set (no authentication required)
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      responses:
+        '200':
+          description: Password status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin_password_set:
+                    type: boolean
+                  user_password_set:
+                    type: boolean
+
+  /api/admin/domains-auth:
+    get:
+      summary: Get auth status for all domains
+      description: List password status for all domains (requires global admin password)
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: List of domain auth statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    domain_key:
+                      type: string
+                    admin_password_set:
+                      type: boolean
+                    user_password_set:
+                      type: boolean
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized
+
+  /api/admin/domains/{domain}/passwords:
+    patch:
+      summary: Set domain passwords (global admin only)
+      description: Set or remove domain passwords (requires global admin password)
+      security:
+        - basicAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                admin_password:
+                  type: string
+                  minLength: 8
+                user_password:
+                  type: string
+                  minLength: 8
+                remove_admin_password:
+                  type: boolean
+                  default: false
+                remove_user_password:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Passwords updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+
   # Dynamic iCal Export
   /ical/{uuid}.ics:
     get:
@@ -889,6 +1218,17 @@ components:
       type: http
       scheme: basic
       description: Admin password authentication (username is ignored, only password is validated)
+
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic Authentication for global admin access
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token for domain-level authentication
 
   schemas:
     DomainRequestCreate:

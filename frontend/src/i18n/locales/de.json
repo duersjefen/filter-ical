@@ -710,6 +710,100 @@
         "approved": "Genehmigt",
         "rejected": "Abgelehnt"
       }
+    },
+    "domainAuth": {
+      "adminGate": {
+        "title": "Admin-Zugriff erforderlich",
+        "subtitle": "Admin-Passwort eingeben, um {domain} zu verwalten",
+        "passwordPlaceholder": "Admin-Passwort",
+        "loginButton": "Als Admin anmelden",
+        "authenticating": "Authentifizierung...",
+        "invalidPassword": "Ungültiges Admin-Passwort",
+        "backToHome": "Zurück zur Startseite"
+      },
+      "userGate": {
+        "title": "Passwortgeschützt",
+        "subtitle": "Passwort eingeben, um {domain} Kalender anzuzeigen",
+        "passwordPlaceholder": "Passwort eingeben",
+        "loginButton": "Kalender aufrufen",
+        "authenticating": "Authentifizierung...",
+        "invalidPassword": "Ungültiges Passwort",
+        "backToHome": "Zurück zur Startseite"
+      },
+      "passwordSettings": {
+        "title": "Passwortschutz",
+        "subtitle": "Passwortschutz für diese Domain verwalten",
+        "adminPassword": {
+          "title": "Admin-Passwort",
+          "description": "Schützt den Admin-Panel-Zugriff (/{domain}/admin)",
+          "setPassword": "Admin-Passwort festlegen",
+          "changePassword": "Admin-Passwort ändern",
+          "removePassword": "Admin-Passwort entfernen",
+          "placeholder": "Admin-Passwort eingeben (mind. 8 Zeichen)",
+          "confirmPlaceholder": "Admin-Passwort bestätigen",
+          "currentStatus": "Aktueller Status",
+          "enabled": "Aktiviert",
+          "disabled": "Kein Passwort festgelegt"
+        },
+        "userPassword": {
+          "title": "Benutzer-Passwort",
+          "description": "Schützt den öffentlichen Kalenderzugriff (/{domain})",
+          "setPassword": "Benutzer-Passwort festlegen",
+          "changePassword": "Benutzer-Passwort ändern",
+          "removePassword": "Benutzer-Passwort entfernen",
+          "placeholder": "Benutzer-Passwort eingeben (mind. 8 Zeichen)",
+          "confirmPlaceholder": "Benutzer-Passwort bestätigen",
+          "currentStatus": "Aktueller Status",
+          "enabled": "Aktiviert",
+          "disabled": "Kein Passwort festgelegt"
+        },
+        "passwordRequirements": "Passwort muss mindestens 8 Zeichen lang sein",
+        "passwordMismatch": "Passwörter stimmen nicht überein",
+        "success": {
+          "adminSet": "Admin-Passwort erfolgreich festgelegt",
+          "adminRemoved": "Admin-Passwort erfolgreich entfernt",
+          "userSet": "Benutzer-Passwort erfolgreich festgelegt",
+          "userRemoved": "Benutzer-Passwort erfolgreich entfernt"
+        },
+        "error": {
+          "adminSet": "Admin-Passwort konnte nicht festgelegt werden",
+          "adminRemoved": "Admin-Passwort konnte nicht entfernt werden",
+          "userSet": "Benutzer-Passwort konnte nicht festgelegt werden",
+          "userRemoved": "Benutzer-Passwort konnte nicht entfernt werden",
+          "tooShort": "Passwort muss mindestens 8 Zeichen lang sein"
+        },
+        "confirm": {
+          "removeAdmin": "Möchten Sie das Admin-Passwort wirklich entfernen? Jeder kann dann auf das Admin-Panel zugreifen.",
+          "removeUser": "Möchten Sie das Benutzer-Passwort wirklich entfernen? Der Kalender wird dann öffentlich zugänglich sein."
+        }
+      },
+      "globalAdmin": {
+        "title": "Domain-Passwortverwaltung",
+        "subtitle": "Passwörter für alle Domains verwalten",
+        "domain": "Domain",
+        "adminPassword": "Admin-Passwort",
+        "userPassword": "Benutzer-Passwort",
+        "actions": "Aktionen",
+        "passwordSet": "Festgelegt",
+        "noPassword": "Keins",
+        "setPasswords": "Passwörter festlegen",
+        "editPasswords": "Passwörter bearbeiten",
+        "noDomains": "Keine Domains gefunden",
+        "modal": {
+          "title": "Passwörter für {domain} festlegen",
+          "adminPassword": "Admin-Passwort",
+          "userPassword": "Benutzer-Passwort",
+          "adminPlaceholder": "Admin-Passwort eingeben (mind. 8 Zeichen)",
+          "userPlaceholder": "Benutzer-Passwort eingeben (mind. 8 Zeichen)",
+          "removeAdmin": "Admin-Passwort entfernen",
+          "removeUser": "Benutzer-Passwort entfernen",
+          "leaveBlank": "Leer lassen, um bestehendes Passwort beizubehalten",
+          "save": "Änderungen speichern",
+          "cancel": "Abbrechen"
+        },
+        "success": "Passwörter erfolgreich aktualisiert",
+        "error": "Passwörter konnten nicht aktualisiert werden"
+      }
     }
   }
 }

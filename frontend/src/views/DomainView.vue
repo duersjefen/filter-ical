@@ -1,6 +1,20 @@
 <template>
+  <!-- Password Gate - Show if user authentication required and not authenticated -->
+  <PasswordGate
+    v-if="requiresUserAuth && !isUserAuthenticated"
+    :domain="domain"
+    access-level="user"
+    :title="$t('admin.domainAuth.userGate.title')"
+    :subtitle="$t('admin.domainAuth.userGate.subtitle', { domain })"
+    :password-placeholder="$t('admin.domainAuth.userGate.passwordPlaceholder')"
+    :submit-button-text="$t('admin.domainAuth.userGate.loginButton')"
+    :show-back-button="true"
+    @authenticated="onUserAuthenticated"
+    @back="$router.push('/home')"
+  />
+
   <!-- Loading State -->
-  <div v-if="loading" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+  <div v-else-if="loading" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       <!-- Header with gradient background matching admin cards -->
       <div class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800 px-4 sm:px-4 lg:px-6 py-4 sm:py-4 border-b border-gray-200 dark:border-gray-700">
@@ -123,7 +137,9 @@
 import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHTTP } from '../composables/useHTTP'
+import { useDomainAuth } from '../composables/useDomainAuth'
 import { API_ENDPOINTS } from '../constants/api'
+import PasswordGate from '../components/auth/PasswordGate.vue'
 
 // Preload CalendarView chunk immediately when DomainView loads
 // This reduces the waterfall effect and improves LCP
@@ -132,7 +148,8 @@ const CalendarView = defineAsyncComponent(() => import('./CalendarView.vue'))
 export default {
   name: 'DomainView',
   components: {
-    CalendarView
+    CalendarView,
+    PasswordGate
   },
   props: {
     domain: {
@@ -142,9 +159,11 @@ export default {
   },
   setup(props) {
     const { get, post, loading, error } = useHTTP()
+    const { isUserAuthenticated, getPasswordStatus, checkAuth } = useDomainAuth(props.domain)
 
     const domainConfig = ref(null)
     const calendarId = ref(null)
+    const requiresUserAuth = ref(false)
 
     // Domain calendars use direct endpoints - no need to search in user calendar lists
     const findDomainCalendar = async (domainConfig) => {
@@ -155,14 +174,28 @@ export default {
       return domainCalendarId
     }
 
+    // Check if domain requires authentication
+    const checkPasswordProtection = async () => {
+      const status = await getPasswordStatus()
+      requiresUserAuth.value = status.user_password_set
+    }
+
     // Load domain configuration and find calendar
     const loadDomainData = async () => {
       try {
+        // Check password protection status first
+        await checkPasswordProtection()
+
+        // If authentication required and not authenticated, stop here
+        if (requiresUserAuth.value && !isUserAuthenticated.value) {
+          return
+        }
+
         // Load domain configuration
         const domainResult = await get(`/api/domains/${props.domain}`)
         if (domainResult.success) {
           domainConfig.value = domainResult.data
-          
+
           // Find domain calendar (system-managed)
           const foundCalendarId = await findDomainCalendar(domainConfig.value)
           calendarId.value = foundCalendarId
@@ -170,6 +203,12 @@ export default {
       } catch (err) {
         console.error('Failed to load domain data:', err)
       }
+    }
+
+    // Handle successful authentication
+    const onUserAuthenticated = () => {
+      checkAuth()
+      loadDomainData()
     }
 
     // Load data on mount
@@ -189,7 +228,10 @@ export default {
       calendarId,
       loading,
       error,
-      domain: props.domain
+      domain: props.domain,
+      requiresUserAuth,
+      isUserAuthenticated,
+      onUserAuthenticated
     }
   }
 }

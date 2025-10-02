@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     # Admin authentication
     admin_password: str = "change-me-in-production"  # Override via ADMIN_PASSWORD env var
 
+    # JWT authentication for domain access
+    jwt_secret_key: str = "change-me-in-production-use-strong-random-key"  # Override via JWT_SECRET_KEY env var
+    jwt_algorithm: str = "HS256"  # HMAC-SHA256
+
     # Email settings (for domain request notifications)
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
