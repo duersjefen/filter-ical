@@ -56,7 +56,9 @@
       "WebFetch(domain:vitejs.dev)",
       "WebFetch(domain:vite.dev)",
       "WebFetch(domain:devtools.vuejs.org)",
-      "WebFetch(domain:www.googleapis.com)"
+      "WebFetch(domain:www.googleapis.com)",
+      "Read(//tmp/platform/lib/**)",
+      "Read(//tmp/platform/configs/filter-ical/**)"
     ],
     "deny": [],
     "ask": []
