@@ -160,11 +160,11 @@ async def approve_domain_request(
             detail=f"Request already {domain_request.status.value}"
         )
 
-    # Generate or use provided domain key
+    # Use requested domain key or allow admin override
     if body and body.domain_key:
         domain_key = body.domain_key
     else:
-        domain_key = generate_domain_key(domain_request.username, db)
+        domain_key = domain_request.requested_domain_key
 
     # Check if domain key already exists
     existing_calendar = db.query(Calendar).filter(Calendar.domain_key == domain_key).first()
@@ -185,6 +185,15 @@ async def approve_domain_request(
         )
         db.add(calendar)
 
+        # Set up domain authentication with the default password from the request
+        from ..models.domain_auth import DomainAuth
+        domain_auth = DomainAuth(
+            domain_key=domain_key,
+            admin_password_hash=domain_request.default_password,  # Already encrypted
+            user_password_hash=None
+        )
+        db.add(domain_auth)
+
         # Update request status
         domain_request.status = RequestStatus.APPROVED
         domain_request.reviewed_at = func.now()
@@ -195,7 +204,7 @@ async def approve_domain_request(
 
         return {
             "success": True,
-            "message": "Domain request approved and calendar created",
+            "message": "Domain request approved and domain created with password",
             "domain_key": domain_key,
             "calendar_id": calendar.id
         }

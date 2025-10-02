@@ -30,8 +30,11 @@ class DomainRequest(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), nullable=False, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    requested_domain_key = Column(String(100), nullable=False, index=True)  # Requested by user
     calendar_url = Column(Text, nullable=False)
     description = Column(Text, nullable=False)
+    default_password = Column(String(255), nullable=False)  # Encrypted password for domain
 
     # Status tracking
     status = Column(
@@ -47,7 +50,7 @@ class DomainRequest(Base):
 
     # Review details
     rejection_reason = Column(Text, nullable=True)
-    domain_key = Column(String(100), nullable=True, index=True)  # Set after approval
+    domain_key = Column(String(100), nullable=True, index=True)  # Final domain_key after approval (may differ from requested)
 
     def __repr__(self):
         return f"<DomainRequest(id={self.id}, username='{self.username}', status='{self.status.value}')>"

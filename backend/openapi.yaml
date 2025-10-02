@@ -1233,7 +1233,7 @@ components:
   schemas:
     DomainRequestCreate:
       type: object
-      required: [username, calendar_url, description]
+      required: [username, email, requested_domain_key, calendar_url, description, default_password]
       properties:
         username:
           type: string
@@ -1241,6 +1241,20 @@ components:
           maxLength: 50
           example: "john_doe"
           description: "Username of the person requesting the domain"
+        email:
+          type: string
+          format: email
+          minLength: 5
+          maxLength: 255
+          example: "john@example.com"
+          description: "Email address for communication about the domain"
+        requested_domain_key:
+          type: string
+          minLength: 3
+          maxLength: 100
+          pattern: '^[a-z0-9-]+$'
+          example: "soccer-club"
+          description: "Desired domain key (lowercase letters, numbers, hyphens only)"
         calendar_url:
           type: string
           format: uri
@@ -1252,6 +1266,12 @@ components:
           maxLength: 500
           example: "I would like to set up a calendar for my soccer club events with custom groups and filters"
           description: "Explanation of what the user wants to do with the custom domain"
+        default_password:
+          type: string
+          minLength: 4
+          maxLength: 100
+          example: "MySecurePass123"
+          description: "Default admin password for the domain"
 
     DomainRequest:
       type: object
@@ -1264,6 +1284,15 @@ components:
           type: string
           example: "john_doe"
           description: "Username of the requester"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+          description: "Email address of the requester"
+        requested_domain_key:
+          type: string
+          example: "soccer-club"
+          description: "Requested domain key"
         calendar_url:
           type: string
           format: uri
@@ -1297,8 +1326,8 @@ components:
         domain_key:
           type: string
           nullable: true
-          example: "johns_calendar"
-          description: "Generated domain key (set after approval)"
+          example: "soccer-club"
+          description: "Final domain key after approval (may differ from requested)"
 
     Calendar:
       type: object
