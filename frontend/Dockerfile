@@ -36,9 +36,9 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Expose port
 EXPOSE 80
 
-# Health check - use dedicated /health endpoint with longer start period for nginx initialization
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
+# Note: Docker HEALTHCHECK removed - platform deploy script handles health checks
+# The platform's health check validation doesn't properly handle Docker's "starting" state
+# which was causing false negatives during deployment
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
