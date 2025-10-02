@@ -119,15 +119,22 @@ def get_domain_events(db: Session, domain_key: str) -> List[Dict[str, Any]]:
             "id": f"evt_{event.id}",
             "calendar_id": f"domain_{domain_key}",
             "title": event.title,
-            "start": event.start_time.isoformat() if event.start_time else None,
-            "end": event.end_time.isoformat() if event.end_time else None,
+            "start_time": event.start_time,  # Fixed: use start_time for export compatibility
+            "end_time": event.end_time,      # Fixed: use end_time for export compatibility
             "description": event.description or "",
             "location": event.location,
+            "uid": event.uid,
+            "other_ical_fields": {           # Fixed: nest raw_ical for export compatibility
+                "raw_ical": event.other_ical_fields.get("raw_ical", "") if event.other_ical_fields else ""
+            },
+            # Keep legacy format for domain UI compatibility
+            "start": event.start_time.isoformat() if event.start_time else None,
+            "end": event.end_time.isoformat() if event.end_time else None,
             "is_recurring": False,  # Will be determined by grouping
             "raw_ical": event.other_ical_fields.get("raw_ical", "") if event.other_ical_fields else ""
         }
         event_dicts.append(event_dict)
-    
+
     return event_dicts
 
 
