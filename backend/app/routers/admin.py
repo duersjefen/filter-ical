@@ -13,12 +13,24 @@ from datetime import datetime
 import re
 
 from ..core.database import get_db
-from ..core.auth import verify_admin_password
+from ..core.auth import verify_admin_password, create_admin_token, verify_admin_auth
 from ..models.domain_request import DomainRequest, RequestStatus
 from ..models.calendar import Calendar
 from ..routers.domain_requests import DomainRequestResponse
+import secrets
 
 router = APIRouter()
+
+
+class AdminLoginRequest(BaseModel):
+    """Request body for admin login."""
+    password: str
+
+
+class AdminLoginResponse(BaseModel):
+    """Response for successful admin login."""
+    token: str
+    expires_in_days: int
 
 
 class ApproveRequestBody(BaseModel):
@@ -55,6 +67,41 @@ def generate_domain_key(username: str, db: Session) -> str:
     return domain_key
 
 
+@router.post(
+    "/admin/login",
+    response_model=AdminLoginResponse,
+    summary="Admin login to get JWT token",
+    description="Authenticate with admin password and receive a JWT token valid for 30 days"
+)
+async def admin_login(request: AdminLoginRequest):
+    """
+    Authenticate with admin password and get a JWT token.
+
+    Returns a token that can be used for 30 days without re-entering the password.
+    """
+    from ..core.config import settings
+
+    # Verify password using constant-time comparison
+    is_password_correct = secrets.compare_digest(
+        request.password.encode("utf-8"),
+        settings.admin_password.encode("utf-8")
+    )
+
+    if not is_password_correct:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin password"
+        )
+
+    # Generate JWT token with 30-day expiry
+    token = create_admin_token(expiry_days=30)
+
+    return AdminLoginResponse(
+        token=token,
+        expires_in_days=30
+    )
+
+
 @router.get(
     "/admin/domain-requests",
     response_model=List[DomainRequestResponse],
@@ -64,12 +111,12 @@ def generate_domain_key(username: str, db: Session) -> str:
 async def list_domain_requests(
     status_filter: Optional[RequestStatus] = Query(None, alias="status"),
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_password)
+    _: bool = Depends(verify_admin_auth)
 ) -> List[DomainRequest]:
     """
     List all domain requests (admin only).
 
-    Requires admin password authentication.
+    Requires JWT token or password authentication.
     """
     query = db.query(DomainRequest)
 
@@ -91,7 +138,7 @@ async def approve_domain_request(
     request_id: int,
     body: Optional[ApproveRequestBody] = None,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_password)
+    _: bool = Depends(verify_admin_auth)
 ):
     """
     Approve a domain request and create the domain calendar.
@@ -170,7 +217,7 @@ async def reject_domain_request(
     request_id: int,
     body: Optional[RejectRequestBody] = None,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_password)
+    _: bool = Depends(verify_admin_auth)
 ):
     """
     Reject a domain request.

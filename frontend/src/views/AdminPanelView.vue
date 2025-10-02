@@ -68,6 +68,134 @@
         @navigate-back="$router.push('/')"
       />
 
+      <!-- Domains Overview (at top) -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-gray-700 dark:to-gray-800">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">📋 All Domains</h2>
+        </div>
+
+        <div v-if="domainsLoading" class="p-8 text-center">
+          <div class="inline-block w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
+        <div v-else-if="domains.length === 0" class="p-8 text-center">
+          <p class="text-gray-600 dark:text-gray-400 text-sm">No domains found</p>
+        </div>
+
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+              <tr>
+                <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Domain</th>
+                <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Admin Password</th>
+                <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">User Password</th>
+                <th class="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+              <tr v-for="domain in domains" :key="domain.domain_key" class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <!-- Domain Name -->
+                <td class="px-4 py-3">
+                  <div class="font-semibold text-gray-900 dark:text-gray-100">{{ domain.domain_key }}</div>
+                  <a :href="`/${domain.domain_key}`" target="_blank" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">
+                    View Calendar →
+                  </a>
+                </td>
+
+                <!-- Admin Password -->
+                <td class="px-4 py-3">
+                  <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'">
+                    <span v-if="domain.admin_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
+                      🔐 Protected
+                    </span>
+                    <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                      No password
+                    </span>
+                    <button
+                      @click="startEditing(domain.domain_key, 'admin', domain.admin_password_set)"
+                      class="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {{ domain.admin_password_set ? 'Change' : 'Set' }}
+                    </button>
+                  </div>
+                  <div v-else class="flex gap-2">
+                    <input
+                      v-model="newPassword"
+                      type="password"
+                      placeholder="New password"
+                      class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                    />
+                    <button @click="savePassword(domain.domain_key, 'admin')" class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
+                      Save
+                    </button>
+                    <button @click="cancelEditing" class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600">
+                      Cancel
+                    </button>
+                  </div>
+                  <button
+                    v-if="domain.admin_password_set && editingDomain !== domain.domain_key"
+                    @click="removePassword(domain.domain_key, 'admin')"
+                    class="ml-2 text-xs text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    Remove
+                  </button>
+                </td>
+
+                <!-- User Password -->
+                <td class="px-4 py-3">
+                  <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'">
+                    <span v-if="domain.user_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                      👤 Protected
+                    </span>
+                    <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                      No password
+                    </span>
+                    <button
+                      @click="startEditing(domain.domain_key, 'user', domain.user_password_set)"
+                      class="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {{ domain.user_password_set ? 'Change' : 'Set' }}
+                    </button>
+                  </div>
+                  <div v-else class="flex gap-2">
+                    <input
+                      v-model="newPassword"
+                      type="password"
+                      placeholder="New password"
+                      class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                    />
+                    <button @click="savePassword(domain.domain_key, 'user')" class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
+                      Save
+                    </button>
+                    <button @click="cancelEditing" class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600">
+                      Cancel
+                    </button>
+                  </div>
+                  <button
+                    v-if="domain.user_password_set && editingDomain !== domain.domain_key"
+                    @click="removePassword(domain.domain_key, 'user')"
+                    class="ml-2 text-xs text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    Remove
+                  </button>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3 text-center">
+                  <a
+                    :href="`/${domain.domain_key}/admin`"
+                    target="_blank"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-medium transition-colors"
+                  >
+                    ⚙️ Manage
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-6 border-2 border-yellow-200 dark:border-yellow-700">
@@ -213,6 +341,15 @@ const requests = ref([])
 const loading = ref(false)
 const processing = ref(false)
 
+// Domains data
+const domains = ref([])
+const domainsLoading = ref(false)
+
+// Password editing state
+const editingDomain = ref(null)
+const editingType = ref(null)  // 'admin' or 'user'
+const newPassword = ref('')
+
 // Computed stats
 const pendingCount = computed(() => requests.value.filter(r => r.status === 'pending').length)
 const approvedCount = computed(() => requests.value.filter(r => r.status === 'approved').length)
@@ -223,16 +360,20 @@ const authenticate = async () => {
   authError.value = null
 
   try {
-    // Test authentication by fetching requests
-    const response = await axios.get(`${API_BASE_URL}/api/admin/domain-requests`, {
-      auth: {
-        username: 'admin',
-        password: password.value
-      }
+    // Login to get JWT token
+    const response = await axios.post(`${API_BASE_URL}/api/admin/login`, {
+      password: password.value
     })
 
+    // Store token in localStorage (30-day expiry)
+    const token = response.data.token
+    localStorage.setItem('admin_token', token)
+    localStorage.setItem('admin_token_expires', Date.now() + (30 * 24 * 60 * 60 * 1000))
+
     isAuthenticated.value = true
-    requests.value = response.data
+
+    // Load data after successful authentication
+    await Promise.all([loadRequests(), loadDomains()])
   } catch (error) {
     authError.value = t('admin.panel.invalidPassword')
   } finally {
@@ -240,20 +381,104 @@ const authenticate = async () => {
   }
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('admin_token')
+  return token ? { 'Authorization': `Bearer ${token}` } : {}
+}
+
 const loadRequests = async () => {
   loading.value = true
   try {
     const response = await axios.get(`${API_BASE_URL}/api/admin/domain-requests`, {
-      auth: {
-        username: 'admin',
-        password: password.value
-      }
+      headers: getAuthHeaders()
     })
     requests.value = response.data
   } catch (error) {
     console.error('Failed to load requests:', error)
+    // Token might be expired, logout
+    if (error.response?.status === 401) {
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_token_expires')
+      isAuthenticated.value = false
+    }
   } finally {
     loading.value = false
+  }
+}
+
+const loadDomains = async () => {
+  domainsLoading.value = true
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/domains-auth`, {
+      headers: getAuthHeaders()
+    })
+    domains.value = response.data
+  } catch (error) {
+    console.error('Failed to load domains:', error)
+  } finally {
+    domainsLoading.value = false
+  }
+}
+
+const startEditing = (domainKey, type) => {
+  editingDomain.value = domainKey
+  editingType.value = type
+  newPassword.value = ''
+}
+
+const cancelEditing = () => {
+  editingDomain.value = null
+  editingType.value = null
+  newPassword.value = ''
+}
+
+const savePassword = async (domainKey, type) => {
+  if (!newPassword.value || newPassword.value.length < 4) {
+    notify.error(t('admin.domainAuth.passwordSettings.error.minLength') || 'Password must be at least 4 characters')
+    return
+  }
+
+  try {
+    const endpoint = type === 'admin'
+      ? `/api/admin/domains/${domainKey}/passwords`
+      : `/api/admin/domains/${domainKey}/passwords`
+
+    const payload = type === 'admin'
+      ? { admin_password: newPassword.value }
+      : { user_password: newPassword.value }
+
+    await axios.patch(`${API_BASE_URL}${endpoint}`, payload, {
+      headers: getAuthHeaders()
+    })
+
+    notify.success(t(`admin.domainAuth.passwordSettings.success.${type}Set`) || `${type === 'admin' ? 'Admin' : 'User'} password updated successfully`)
+    cancelEditing()
+    await loadDomains()  // Refresh the list
+  } catch (error) {
+    notify.error(t(`admin.domainAuth.passwordSettings.error.${type}Set`) || `Failed to set password: ${error.message}`)
+  }
+}
+
+const removePassword = async (domainKey, type) => {
+  if (!confirm(t('admin.domainAuth.passwordSettings.confirm.remove' + (type === 'admin' ? 'Admin' : 'User')) || `Remove ${type} password for ${domainKey}?`)) {
+    return
+  }
+
+  try {
+    const endpoint = `/api/admin/domains/${domainKey}/passwords`
+
+    const payload = type === 'admin'
+      ? { remove_admin_password: true }
+      : { remove_user_password: true }
+
+    await axios.patch(`${API_BASE_URL}${endpoint}`, payload, {
+      headers: getAuthHeaders()
+    })
+
+    notify.success(t(`admin.domainAuth.passwordSettings.success.${type}Removed`) || `${type === 'admin' ? 'Admin' : 'User'} password removed successfully`)
+    await loadDomains()  // Refresh the list
+  } catch (error) {
+    notify.error(t(`admin.domainAuth.passwordSettings.error.${type}Removed`) || `Failed to remove password: ${error.message}`)
   }
 }
 
@@ -264,10 +489,7 @@ const approveRequest = async (requestId) => {
       `${API_BASE_URL}/api/admin/domain-requests/${requestId}/approve`,
       {},
       {
-        auth: {
-          username: 'admin',
-          password: password.value
-        }
+        headers: getAuthHeaders()
       }
     )
     await loadRequests()
@@ -289,10 +511,7 @@ const rejectRequest = async (requestId) => {
       `${API_BASE_URL}/api/admin/domain-requests/${requestId}/reject`,
       { reason },
       {
-        auth: {
-          username: 'admin',
-          password: password.value
-        }
+        headers: getAuthHeaders()
       }
     )
     await loadRequests()
@@ -307,4 +526,20 @@ const rejectRequest = async (requestId) => {
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString()
 }
+
+// Check for existing token on mount
+onMounted(async () => {
+  const token = localStorage.getItem('admin_token')
+  const tokenExpires = localStorage.getItem('admin_token_expires')
+
+  if (token && tokenExpires && Date.now() < parseInt(tokenExpires)) {
+    // Token exists and hasn't expired
+    isAuthenticated.value = true
+    await Promise.all([loadRequests(), loadDomains()])
+  } else if (token) {
+    // Token exists but has expired
+    localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_token_expires')
+  }
+})
 </script>

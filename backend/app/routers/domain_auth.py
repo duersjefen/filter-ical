@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 from ..core.database import get_db
-from ..core.auth import verify_admin_password
+from ..core.auth import verify_admin_password, verify_admin_auth
 from ..services.domain_auth_service import (
     verify_domain_password,
     set_admin_password,
@@ -310,7 +310,7 @@ async def get_password_status_endpoint(
 )
 async def get_all_domains_auth_endpoint(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_password)
+    _: bool = Depends(verify_admin_auth)
 ):
     """
     Get password status for all domains.
@@ -329,7 +329,7 @@ async def set_domain_passwords_endpoint(
     domain: str,
     request: SetDomainPasswordsRequest,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_password)
+    _: bool = Depends(verify_admin_auth)
 ):
     """
     Set or remove domain passwords (global admin access).
