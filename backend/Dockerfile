@@ -8,6 +8,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Create backward compatibility symlink for platform deploy.sh
+# Platform script uses: cd /app/backend && alembic upgrade head
+# This symlink makes /app/backend resolve to /app
+RUN ln -s /app /app/backend
+
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
