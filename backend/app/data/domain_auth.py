@@ -5,65 +5,102 @@ FUNCTIONAL CORE - All functions are pure and deterministic.
 No I/O operations, no side effects - only data transformations.
 
 Security:
-- bcrypt for password hashing (cost factor 12)
+- Fernet (AES) for password encryption (two-way, retrievable)
 - JWT with HS256 for session tokens
-- Constant-time password comparison
 - 30-day token expiry with sliding window
+
+NOTE: Passwords are encrypted (not hashed) to allow admin retrieval.
+This is a security trade-off for admin convenience.
 """
 
-import bcrypt
+from cryptography.fernet import Fernet, InvalidToken
 import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 
 
-# Password Hashing Functions
+# Password Encryption Functions
 
-def hash_password(password: str, cost_factor: int = 12) -> str:
+def encrypt_password(password: str, encryption_key: str) -> str:
     """
-    Hash a password using bcrypt.
+    Encrypt a password using Fernet (AES encryption).
 
     Args:
         password: Plain text password
-        cost_factor: bcrypt cost factor (default: 12)
+        encryption_key: Fernet encryption key (base64-encoded 32-byte key)
 
     Returns:
-        Password hash as string
+        Encrypted password as string
 
-    Pure function - deterministic given same salt (handled internally by bcrypt).
+    Pure function - encryption with key.
     """
     if not password:
         raise ValueError("Password cannot be empty")
 
-    salt = bcrypt.gensalt(rounds=cost_factor)
-    password_bytes = password.encode('utf-8')
-    hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode('utf-8')
+    if not encryption_key:
+        raise ValueError("Encryption key cannot be empty")
+
+    try:
+        fernet = Fernet(encryption_key.encode())
+        password_bytes = password.encode('utf-8')
+        encrypted = fernet.encrypt(password_bytes)
+        return encrypted.decode('utf-8')
+    except Exception as e:
+        raise ValueError(f"Failed to encrypt password: {str(e)}")
 
 
-def verify_password(password: str, password_hash: str) -> bool:
+def decrypt_password(encrypted_password: str, encryption_key: str) -> str:
     """
-    Verify a password against a hash using constant-time comparison.
+    Decrypt a password using Fernet (AES encryption).
+
+    Args:
+        encrypted_password: Encrypted password string
+        encryption_key: Fernet encryption key (base64-encoded 32-byte key)
+
+    Returns:
+        Decrypted password as plain text
+
+    Pure function - decryption with key.
+    """
+    if not encrypted_password:
+        raise ValueError("Encrypted password cannot be empty")
+
+    if not encryption_key:
+        raise ValueError("Encryption key cannot be empty")
+
+    try:
+        fernet = Fernet(encryption_key.encode())
+        encrypted_bytes = encrypted_password.encode('utf-8')
+        decrypted = fernet.decrypt(encrypted_bytes)
+        return decrypted.decode('utf-8')
+    except InvalidToken:
+        raise ValueError("Invalid encrypted password or wrong encryption key")
+    except Exception as e:
+        raise ValueError(f"Failed to decrypt password: {str(e)}")
+
+
+def verify_password(password: str, encrypted_password: str, encryption_key: str) -> bool:
+    """
+    Verify a password against an encrypted password.
 
     Args:
         password: Plain text password to verify
-        password_hash: bcrypt hash to compare against
+        encrypted_password: Encrypted password to compare against
+        encryption_key: Fernet encryption key
 
     Returns:
-        True if password matches hash
+        True if password matches
 
-    Pure function - deterministic comparison.
-    Security: Uses bcrypt's constant-time comparison to prevent timing attacks.
+    Pure function - decryption and comparison.
     """
-    if not password or not password_hash:
+    if not password or not encrypted_password:
         return False
 
     try:
-        password_bytes = password.encode('utf-8')
-        hash_bytes = password_hash.encode('utf-8')
-        return bcrypt.checkpw(password_bytes, hash_bytes)
+        decrypted = decrypt_password(encrypted_password, encryption_key)
+        return password == decrypted
     except Exception:
-        # Invalid hash format or other bcrypt errors
+        # Invalid encrypted password or decryption failed
         return False
 
 

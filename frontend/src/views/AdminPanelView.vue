@@ -106,11 +106,18 @@
                 <td class="px-4 py-3">
                   <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'">
                     <span v-if="domain.admin_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
-                      🔐 Protected
+                      🔐 {{ viewingPassword === `${domain.domain_key}-admin` && viewedPassword ? viewedPassword : 'Protected' }}
                     </span>
                     <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                       No password
                     </span>
+                    <button
+                      v-if="domain.admin_password_set"
+                      @click="viewPassword(domain.domain_key, 'admin')"
+                      class="ml-2 text-xs text-green-600 dark:text-green-400 hover:underline"
+                    >
+                      {{ viewingPassword === `${domain.domain_key}-admin` ? 'Hide' : 'View' }}
+                    </button>
                     <button
                       @click="startEditing(domain.domain_key, 'admin', domain.admin_password_set)"
                       class="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
@@ -119,12 +126,21 @@
                     </button>
                   </div>
                   <div v-else class="flex gap-2">
-                    <input
-                      v-model="newPassword"
-                      type="password"
-                      placeholder="New password"
-                      class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
-                    />
+                    <div class="flex-1 flex gap-1">
+                      <input
+                        v-model="newPassword"
+                        :type="showPassword ? 'text' : 'password'"
+                        placeholder="New password"
+                        class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                      />
+                      <button
+                        @click="showPassword = !showPassword"
+                        class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                        :title="showPassword ? 'Hide password' : 'Show password'"
+                      >
+                        {{ showPassword ? '🙈' : '👁️' }}
+                      </button>
+                    </div>
                     <button @click="savePassword(domain.domain_key, 'admin')" class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
                       Save
                     </button>
@@ -145,11 +161,18 @@
                 <td class="px-4 py-3">
                   <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'">
                     <span v-if="domain.user_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
-                      👤 Protected
+                      👤 {{ viewingPassword === `${domain.domain_key}-user` && viewedPassword ? viewedPassword : 'Protected' }}
                     </span>
                     <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                       No password
                     </span>
+                    <button
+                      v-if="domain.user_password_set"
+                      @click="viewPassword(domain.domain_key, 'user')"
+                      class="ml-2 text-xs text-green-600 dark:text-green-400 hover:underline"
+                    >
+                      {{ viewingPassword === `${domain.domain_key}-user` ? 'Hide' : 'View' }}
+                    </button>
                     <button
                       @click="startEditing(domain.domain_key, 'user', domain.user_password_set)"
                       class="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
@@ -158,12 +181,21 @@
                     </button>
                   </div>
                   <div v-else class="flex gap-2">
-                    <input
-                      v-model="newPassword"
-                      type="password"
-                      placeholder="New password"
-                      class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
-                    />
+                    <div class="flex-1 flex gap-1">
+                      <input
+                        v-model="newPassword"
+                        :type="showPassword ? 'text' : 'password'"
+                        placeholder="New password"
+                        class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                      />
+                      <button
+                        @click="showPassword = !showPassword"
+                        class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                        :title="showPassword ? 'Hide password' : 'Show password'"
+                      >
+                        {{ showPassword ? '🙈' : '👁️' }}
+                      </button>
+                    </div>
                     <button @click="savePassword(domain.domain_key, 'user')" class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
                       Save
                     </button>
@@ -349,6 +381,11 @@ const domainsLoading = ref(false)
 const editingDomain = ref(null)
 const editingType = ref(null)  // 'admin' or 'user'
 const newPassword = ref('')
+const showPassword = ref(false)
+
+// Password viewing state
+const viewingPassword = ref(null)  // Format: 'domainKey-type'
+const viewedPassword = ref('')
 
 // Computed stats
 const pendingCount = computed(() => requests.value.filter(r => r.status === 'pending').length)
@@ -424,12 +461,14 @@ const startEditing = (domainKey, type) => {
   editingDomain.value = domainKey
   editingType.value = type
   newPassword.value = ''
+  showPassword.value = false
 }
 
 const cancelEditing = () => {
   editingDomain.value = null
   editingType.value = null
   newPassword.value = ''
+  showPassword.value = false
 }
 
 const savePassword = async (domainKey, type) => {
@@ -479,6 +518,29 @@ const removePassword = async (domainKey, type) => {
     await loadDomains()  // Refresh the list
   } catch (error) {
     notify.error(t(`admin.domainAuth.passwordSettings.error.${type}Removed`) || `Failed to remove password: ${error.message}`)
+  }
+}
+
+const viewPassword = async (domainKey, type) => {
+  const key = `${domainKey}-${type}`
+
+  // If already viewing this password, hide it
+  if (viewingPassword.value === key) {
+    viewingPassword.value = null
+    viewedPassword.value = ''
+    return
+  }
+
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/admin/domains/${domainKey}/password/${type}`,
+      { headers: getAuthHeaders() }
+    )
+
+    viewingPassword.value = key
+    viewedPassword.value = response.data.password
+  } catch (error) {
+    notify.error(`Failed to retrieve password: ${error.response?.data?.detail || error.message}`)
   }
 }
 

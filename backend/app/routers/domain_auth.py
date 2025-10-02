@@ -19,7 +19,8 @@ from ..services.domain_auth_service import (
     remove_user_password,
     check_password_status,
     verify_token,
-    get_all_domains_auth_status
+    get_all_domains_auth_status,
+    get_decrypted_password
 )
 
 router = APIRouter()
@@ -367,3 +368,27 @@ async def set_domain_passwords_endpoint(
         return {"success": True, "message": "No changes requested"}
 
     return {"success": True, "message": ", ".join(results)}
+
+
+@router.get(
+    "/api/admin/domains/{domain}/password/{password_type}",
+    summary="Get decrypted password for domain (global admin only)"
+)
+async def get_domain_password_endpoint(
+    domain: str,
+    password_type: str,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_admin_auth)
+):
+    """
+    Get decrypted password for a domain.
+
+    Requires global admin password authentication.
+    password_type must be 'admin' or 'user'.
+    """
+    success, result = get_decrypted_password(db, domain, password_type)
+
+    if success:
+        return {"success": True, "password": result}
+    else:
+        raise HTTPException(status_code=400, detail=result)

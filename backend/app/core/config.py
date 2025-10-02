@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-me-in-production-use-strong-random-key"  # Override via JWT_SECRET_KEY env var
     jwt_algorithm: str = "HS256"  # HMAC-SHA256
 
+    # Password encryption (Fernet/AES)
+    password_encryption_key: str = "P-EOqzNBZhEg8QVf2pWq9xY7tR5uKmN3oJlHbFcGdVw="  # Override via PASSWORD_ENCRYPTION_KEY env var (base64-encoded 32-byte key)
+
     # Email settings (for domain request notifications)
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
