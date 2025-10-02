@@ -104,26 +104,46 @@
 
                 <!-- Admin Password -->
                 <td class="px-4 py-3">
-                  <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'">
-                    <span v-if="domain.admin_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
-                      🔐 {{ viewingPassword === `${domain.domain_key}-admin` && viewedPassword ? viewedPassword : 'Protected' }}
-                    </span>
-                    <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                      No password
-                    </span>
-                    <button
-                      v-if="domain.admin_password_set"
-                      @click="viewPassword(domain.domain_key, 'admin')"
-                      class="ml-2 text-xs text-green-600 dark:text-green-400 hover:underline"
-                    >
-                      {{ viewingPassword === `${domain.domain_key}-admin` ? 'Hide' : 'View' }}
-                    </button>
-                    <button
-                      @click="startEditing(domain.domain_key, 'admin', domain.admin_password_set)"
-                      class="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      {{ domain.admin_password_set ? 'Change' : 'Set' }}
-                    </button>
+                  <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'" class="space-y-2">
+                    <!-- Password display -->
+                    <div>
+                      <span v-if="domain.admin_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
+                        🔐 Protected
+                      </span>
+                      <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                        No password
+                      </span>
+                    </div>
+
+                    <!-- Revealed password -->
+                    <div v-if="viewingPassword === `${domain.domain_key}-admin` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded border border-green-300 dark:border-green-700">
+                      <code class="text-sm font-mono text-green-900 dark:text-green-100">{{ viewedPassword }}</code>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="flex gap-2 flex-wrap">
+                      <button
+                        v-if="domain.admin_password_set"
+                        @click="viewPassword(domain.domain_key, 'admin')"
+                        class="px-2 py-1 text-xs rounded transition-colors"
+                        :class="viewingPassword === `${domain.domain_key}-admin` ? 'bg-gray-500 hover:bg-gray-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'"
+                      >
+                        {{ viewingPassword === `${domain.domain_key}-admin` ? '🙈 Hide' : '👁️ View' }}
+                      </button>
+                      <button
+                        @click="startEditing(domain.domain_key, 'admin', domain.admin_password_set)"
+                        class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                      >
+                        {{ domain.admin_password_set ? '✏️ Change' : '➕ Set' }}
+                      </button>
+                      <button
+                        v-if="domain.admin_password_set"
+                        @click="removePassword(domain.domain_key, 'admin')"
+                        class="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
                   </div>
                   <div v-else class="flex gap-2">
                     <div class="flex-1 flex gap-1">
@@ -148,37 +168,50 @@
                       Cancel
                     </button>
                   </div>
-                  <button
-                    v-if="domain.admin_password_set && editingDomain !== domain.domain_key"
-                    @click="removePassword(domain.domain_key, 'admin')"
-                    class="ml-2 text-xs text-red-600 dark:text-red-400 hover:underline"
-                  >
-                    Remove
-                  </button>
                 </td>
 
                 <!-- User Password -->
                 <td class="px-4 py-3">
-                  <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'">
-                    <span v-if="domain.user_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
-                      👤 {{ viewingPassword === `${domain.domain_key}-user` && viewedPassword ? viewedPassword : 'Protected' }}
-                    </span>
-                    <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                      No password
-                    </span>
-                    <button
-                      v-if="domain.user_password_set"
-                      @click="viewPassword(domain.domain_key, 'user')"
-                      class="ml-2 text-xs text-green-600 dark:text-green-400 hover:underline"
-                    >
-                      {{ viewingPassword === `${domain.domain_key}-user` ? 'Hide' : 'View' }}
-                    </button>
-                    <button
-                      @click="startEditing(domain.domain_key, 'user', domain.user_password_set)"
-                      class="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      {{ domain.user_password_set ? 'Change' : 'Set' }}
-                    </button>
+                  <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'" class="space-y-2">
+                    <!-- Password display -->
+                    <div>
+                      <span v-if="domain.user_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                        👤 Protected
+                      </span>
+                      <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                        No password
+                      </span>
+                    </div>
+
+                    <!-- Revealed password -->
+                    <div v-if="viewingPassword === `${domain.domain_key}-user` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded border border-green-300 dark:border-green-700">
+                      <code class="text-sm font-mono text-green-900 dark:text-green-100">{{ viewedPassword }}</code>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="flex gap-2 flex-wrap">
+                      <button
+                        v-if="domain.user_password_set"
+                        @click="viewPassword(domain.domain_key, 'user')"
+                        class="px-2 py-1 text-xs rounded transition-colors"
+                        :class="viewingPassword === `${domain.domain_key}-user` ? 'bg-gray-500 hover:bg-gray-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'"
+                      >
+                        {{ viewingPassword === `${domain.domain_key}-user` ? '🙈 Hide' : '👁️ View' }}
+                      </button>
+                      <button
+                        @click="startEditing(domain.domain_key, 'user', domain.user_password_set)"
+                        class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                      >
+                        {{ domain.user_password_set ? '✏️ Change' : '➕ Set' }}
+                      </button>
+                      <button
+                        v-if="domain.user_password_set"
+                        @click="removePassword(domain.domain_key, 'user')"
+                        class="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
                   </div>
                   <div v-else class="flex gap-2">
                     <div class="flex-1 flex gap-1">
@@ -203,13 +236,6 @@
                       Cancel
                     </button>
                   </div>
-                  <button
-                    v-if="domain.user_password_set && editingDomain !== domain.domain_key"
-                    @click="removePassword(domain.domain_key, 'user')"
-                    class="ml-2 text-xs text-red-600 dark:text-red-400 hover:underline"
-                  >
-                    Remove
-                  </button>
                 </td>
 
                 <!-- Actions -->
