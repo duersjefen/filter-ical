@@ -24,6 +24,9 @@ RUN npm run build
 # v1.28.0 is based on nginx 1.28.0 stable + brotli module
 FROM fholzer/nginx-brotli:v1.28.0
 
+# Install curl for health checks (Alpine doesn't include it by default)
+RUN apk add --no-cache curl
+
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
