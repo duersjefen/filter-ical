@@ -302,7 +302,7 @@
     </div>
     
     <!-- Custom Domain Request Card -->
-    <DomainRequestCard />
+    <DomainRequestCard v-if="showDomainRequest" />
 
     <!-- Confirmation Dialog -->
     <ConfirmDialog
@@ -321,6 +321,8 @@
 import { useAppStore } from '../stores/app'
 import { useRouter } from 'vue-router'
 import { onMounted, watch, ref, nextTick } from 'vue'
+import axios from 'axios'
+import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
 import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import DomainRequestCard from '../components/home/DomainRequestCard.vue'
@@ -340,7 +342,10 @@ const { hasCustomUsername } = useUsername()
 const confirmDialog = ref(null)
 const calendarToDelete = ref(null)
 
-onMounted(() => {
+// App settings
+const showDomainRequest = ref(true)
+
+onMounted(async () => {
   // Public-first access - always try to initialize and fetch calendars
   appStore.initializeApp()
   appStore.fetchCalendars()
@@ -349,6 +354,16 @@ onMounted(() => {
   nextTick(() => {
     appStore.fetchUserFilters()
   })
+
+  // Load app settings to check if domain request card should be shown
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/app-settings`)
+    showDomainRequest.value = response.data.show_domain_request
+  } catch (error) {
+    console.error('Failed to load app settings:', error)
+    // Default to showing the domain request card on error
+    showDomainRequest.value = true
+  }
 })
 
 const handleAddCalendar = async () => {

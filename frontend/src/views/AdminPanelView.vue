@@ -382,6 +382,68 @@
           </div>
         </div>
       </div>
+
+      <!-- App Settings -->
+      <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">⚙️ App Settings</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Configure global application behavior</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Footer Visibility -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+              👣 Footer Visibility
+            </label>
+            <select
+              v-model="appSettings.footer_visibility"
+              class="w-full px-4 py-3 text-base border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl transition-all duration-200 focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-4 focus:ring-purple-100 dark:focus:ring-purple-900/50"
+            >
+              <option value="everywhere">🌍 Show Everywhere</option>
+              <option value="admin_only">🔐 Admin Only</option>
+              <option value="nowhere">🚫 Hide Completely</option>
+            </select>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Control where the footer with PayPal donation link is displayed
+            </p>
+          </div>
+
+          <!-- Show Domain Request -->
+          <div>
+            <label class="flex items-center justify-between cursor-pointer group">
+              <div class="flex-1">
+                <div class="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  ➕ Show "Add Your Own Domain" Card
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Allow users to request their own custom domains
+                </p>
+              </div>
+              <div class="relative ml-4">
+                <input
+                  type="checkbox"
+                  v-model="appSettings.show_domain_request"
+                  class="sr-only peer"
+                />
+                <div class="w-14 h-8 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 transition-colors peer-focus:ring-4 peer-focus:ring-purple-200 dark:peer-focus:ring-purple-900/50"></div>
+                <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform peer-checked:translate-x-6 shadow-md"></div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Save Button -->
+          <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              @click="saveAppSettings"
+              :disabled="settingsSaving"
+              class="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 dark:from-purple-600 dark:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-100 shadow-lg disabled:shadow-sm disabled:transform-none"
+            >
+              {{ settingsSaving ? '💾 Saving...' : '💾 Save Settings' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -421,6 +483,13 @@ const showPassword = ref(false)
 // Password viewing state
 const viewingPassword = ref(null)  // Format: 'domainKey-type'
 const viewedPassword = ref('')
+
+// App settings state
+const appSettings = ref({
+  footer_visibility: 'everywhere',
+  show_domain_request: true
+})
+const settingsSaving = ref(false)
 
 // Computed stats
 const pendingCount = computed(() => requests.value.filter(r => r.status === 'pending').length)
@@ -624,6 +693,33 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString()
 }
 
+const loadAppSettings = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/app-settings`)
+    appSettings.value = response.data
+  } catch (error) {
+    console.error('Failed to load app settings:', error)
+  }
+}
+
+const saveAppSettings = async () => {
+  settingsSaving.value = true
+  try {
+    await axios.patch(
+      `${API_BASE_URL}/api/admin/app-settings`,
+      appSettings.value,
+      {
+        headers: getAuthHeaders()
+      }
+    )
+    notify.success('App settings updated successfully')
+  } catch (error) {
+    notify.error(`Failed to update settings: ${error.response?.data?.detail || error.message}`)
+  } finally {
+    settingsSaving.value = false
+  }
+}
+
 // Check for existing token on mount
 onMounted(async () => {
   const token = localStorage.getItem('admin_token')
@@ -632,7 +728,7 @@ onMounted(async () => {
   if (token && tokenExpires && Date.now() < parseInt(tokenExpires)) {
     // Token exists and hasn't expired
     isAuthenticated.value = true
-    await Promise.all([loadRequests(), loadDomains()])
+    await Promise.all([loadRequests(), loadDomains(), loadAppSettings()])
   } else if (token) {
     // Token exists but has expired
     localStorage.removeItem('admin_token')

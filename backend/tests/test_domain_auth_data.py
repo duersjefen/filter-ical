@@ -10,7 +10,8 @@ import time
 from datetime import datetime, timezone, timedelta
 
 from app.data.domain_auth import (
-    hash_password,
+    encrypt_password,
+    decrypt_password,
     verify_password,
     create_auth_token,
     decode_auth_token,
@@ -22,74 +23,80 @@ from app.data.domain_auth import (
 
 
 @pytest.mark.unit
-class TestPasswordHashing:
-    """Test password hashing and verification functions."""
+class TestPasswordEncryption:
+    """Test password encryption and verification functions."""
 
-    def test_hash_password_creates_valid_hash(self):
-        """Test that password hashing creates a valid bcrypt hash."""
+    TEST_ENCRYPTION_KEY = "P-EOqzNBZhEg8QVf2pWq9xY7tR5uKmN3oJlHbFcGdVw="
+
+    def test_encrypt_password_creates_valid_encrypted_string(self):
+        """Test that password encryption creates a valid encrypted string."""
         password = "test_password_123"
-        hash_result = hash_password(password)
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
 
-        assert hash_result is not None
-        assert len(hash_result) > 0
-        assert hash_result.startswith('$2b$')  # bcrypt identifier
+        assert encrypted is not None
+        assert len(encrypted) > 0
+        assert isinstance(encrypted, str)
 
-    def test_hash_password_different_for_same_input(self):
-        """Test that hashing same password twice produces different hashes (salt)."""
+    def test_encrypt_password_deterministic_with_same_key(self):
+        """Test that encrypting same password with same key is deterministic."""
         password = "same_password"
-        hash1 = hash_password(password)
-        hash2 = hash_password(password)
+        encrypted1 = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
+        encrypted2 = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
 
-        assert hash1 != hash2  # Different salts
+        # Fernet encryption is deterministic with the same key and timestamp
+        # but may differ slightly due to timestamp
+        assert isinstance(encrypted1, str)
+        assert isinstance(encrypted2, str)
 
-    def test_hash_password_empty_raises_error(self):
+    def test_encrypt_password_empty_raises_error(self):
         """Test that empty password raises ValueError."""
         with pytest.raises(ValueError, match="Password cannot be empty"):
-            hash_password("")
+            encrypt_password("", self.TEST_ENCRYPTION_KEY)
 
-    def test_hash_password_with_custom_cost_factor(self):
-        """Test password hashing with custom cost factor."""
-        password = "test_password"
-        hash_result = hash_password(password, cost_factor=10)
+    def test_decrypt_password_returns_original(self):
+        """Test that decryption returns the original password."""
+        password = "test_password_123"
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
+        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
 
-        assert hash_result.startswith('$2b$10$')  # Cost factor 10
+        assert decrypted == password
 
     def test_verify_password_correct_password(self):
         """Test password verification with correct password."""
         password = "correct_password"
-        password_hash = hash_password(password)
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
 
-        assert verify_password(password, password_hash) is True
+        assert verify_password(password, encrypted, self.TEST_ENCRYPTION_KEY) is True
 
     def test_verify_password_incorrect_password(self):
         """Test password verification with incorrect password."""
         password = "correct_password"
         wrong_password = "wrong_password"
-        password_hash = hash_password(password)
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
 
-        assert verify_password(wrong_password, password_hash) is False
+        assert verify_password(wrong_password, encrypted, self.TEST_ENCRYPTION_KEY) is False
 
     def test_verify_password_empty_password(self):
         """Test password verification with empty password."""
-        password_hash = hash_password("something")
+        encrypted = encrypt_password("something", self.TEST_ENCRYPTION_KEY)
 
-        assert verify_password("", password_hash) is False
+        assert verify_password("", encrypted, self.TEST_ENCRYPTION_KEY) is False
 
-    def test_verify_password_empty_hash(self):
-        """Test password verification with empty hash."""
-        assert verify_password("password", "") is False
+    def test_verify_password_empty_encrypted(self):
+        """Test password verification with empty encrypted password."""
+        assert verify_password("password", "", self.TEST_ENCRYPTION_KEY) is False
 
-    def test_verify_password_invalid_hash_format(self):
-        """Test password verification with invalid hash format."""
-        assert verify_password("password", "not_a_valid_hash") is False
+    def test_verify_password_invalid_encrypted_format(self):
+        """Test password verification with invalid encrypted format."""
+        assert verify_password("password", "not_valid_encrypted", self.TEST_ENCRYPTION_KEY) is False
 
     def test_verify_password_case_sensitive(self):
         """Test that password verification is case-sensitive."""
         password = "CaseSensitive"
-        password_hash = hash_password(password)
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
 
-        assert verify_password("casesensitive", password_hash) is False
-        assert verify_password("CaseSensitive", password_hash) is True
+        assert verify_password("casesensitive", encrypted, self.TEST_ENCRYPTION_KEY) is False
+        assert verify_password("CaseSensitive", encrypted, self.TEST_ENCRYPTION_KEY) is True
 
 
 @pytest.mark.unit

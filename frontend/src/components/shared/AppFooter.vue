@@ -1,5 +1,5 @@
 <template>
-  <footer class="mt-1 mb-6">
+  <footer v-if="shouldShowFooter" class="mt-1 mb-6">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Donation Section -->
       <div class="bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 dark:from-slate-800 dark:via-slate-900 dark:to-black rounded-lg shadow-lg border border-slate-500/20 dark:border-slate-700/30 p-3 sm:p-4">
@@ -49,5 +49,41 @@
 </template>
 
 <script setup>
-// No props or reactive data needed for this simple component
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from 'axios'
+import { API_BASE_URL } from '../../constants/api'
+
+const route = useRoute()
+
+const footerVisibility = ref('everywhere')
+
+// Check if current route is an admin page
+const isAdminPage = computed(() => {
+  return route.path.includes('/admin')
+})
+
+// Determine if footer should be shown
+const shouldShowFooter = computed(() => {
+  if (footerVisibility.value === 'nowhere') {
+    return false
+  }
+  if (footerVisibility.value === 'admin_only') {
+    return isAdminPage.value
+  }
+  // 'everywhere'
+  return true
+})
+
+// Load app settings
+onMounted(async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/app-settings`)
+    footerVisibility.value = response.data.footer_visibility
+  } catch (error) {
+    console.error('Failed to load app settings:', error)
+    // Default to 'everywhere' on error
+    footerVisibility.value = 'everywhere'
+  }
+})
 </script>
