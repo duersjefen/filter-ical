@@ -40,5 +40,9 @@ EXPOSE 80
 # The platform's health check validation doesn't properly handle Docker's "starting" state
 # which was causing false negatives during deployment
 
+# Reset entrypoint from base image (fholzer/nginx-brotli has ENTRYPOINT [nginx])
+# Without this, Docker would run: nginx nginx -g daemon off; (duplicate nginx)
+ENTRYPOINT []
+
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
