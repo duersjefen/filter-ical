@@ -142,6 +142,46 @@ return { get user() { return appStore.user } }
 - **Staging:** https://staging.filter-ical.de
 - **AWS:** EC2 i-01647c3d9af4fe9fc (13.62.136.72)
 
+### Multi-Tenant Platform Architecture
+**CRITICAL:** filter-ical is deployed via the [multi-tenant-platform](../multi-tenant-platform) system.
+
+**Repository Structure:**
+```
+~/Desktop/
+├── filter-ical/              # This repository (application code)
+│   ├── backend/              # FastAPI application
+│   ├── frontend/             # Vue 3 application
+│   └── CLAUDE.md            # This file
+└── multi-tenant-platform/    # Platform repository (deployment configs)
+    └── configs/filter-ical/  # filter-ical deployment configuration
+        ├── docker-compose.yml    # Container orchestration
+        ├── .env.staging          # Staging environment variables
+        ├── .env.production       # Production environment variables
+        └── nginx.conf            # Reverse proxy configuration
+```
+
+**How Deployment Works:**
+1. **Code Changes** → Pushed to `filter-ical` GitHub repo
+2. **GitHub Actions** → Builds Docker images and pushes to ghcr.io
+3. **Deployment Script** → Pulls configs from `multi-tenant-platform` repo
+4. **Docker Compose** → Orchestrates container deployment on EC2
+
+**Container Networking:**
+- Both frontend and backend join the `platform` Docker network
+- Backend has network alias `backend` for DNS resolution
+- Frontend connects to backend via `BACKEND_HOST` environment variable (defaults to `backend`)
+- This allows frontend nginx to proxy `/api/*` requests to backend
+
+**Environment Variables:**
+- **Backend:** Configured via `.env.{environment}` files in platform repo
+- **Frontend:** `BACKEND_HOST=backend` (set in platform .env files)
+- Frontend's nginx.conf uses `${BACKEND_HOST}` for dynamic backend hostname
+
+**Key Files to Update:**
+- Application code: `filter-ical` repository
+- Deployment config: `multi-tenant-platform/configs/filter-ical/`
+- Never commit environment secrets to `filter-ical` repo
+
 ### Database Migrations
 **MANDATORY: Use Alembic for all schema changes**
 ```bash
