@@ -169,13 +169,12 @@ return { get user() { return appStore.user } }
 **Container Networking:**
 - Both frontend and backend join the `platform` Docker network
 - Backend has network alias `backend` for DNS resolution
-- Frontend connects to backend via `BACKEND_HOST` environment variable (defaults to `backend`)
-- This allows frontend nginx to proxy `/api/*` requests to backend
+- Frontend nginx uses Docker's internal DNS to proxy `/api/*` requests to `backend:3000`
+- This allows seamless communication between containers
 
 **Environment Variables:**
 - **Backend:** Configured via `.env.{environment}` files in platform repo
-- **Frontend:** `BACKEND_HOST=backend` (set in platform .env files)
-- Frontend's nginx.conf uses `${BACKEND_HOST}` for dynamic backend hostname
+- **Frontend:** `VITE_API_URL` set in `.env.{environment}` files
 
 **Key Files to Update:**
 - Application code: `filter-ical` repository
