@@ -24,24 +24,14 @@ RUN npm run build
 # v1.28.0 is based on nginx 1.28.0 stable + brotli module
 FROM fholzer/nginx-brotli:v1.28.0
 
-# Install curl for health checks and gettext for envsubst (Alpine doesn't include them by default)
-RUN apk add --no-cache curl gettext
+# Install curl for health checks (Alpine doesn't include it by default)
+RUN apk add --no-cache curl
 
-# Copy nginx configuration template
-COPY nginx.conf /etc/nginx/nginx.conf.template
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built app from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
-
-# Create startup script to substitute environment variables in nginx config
-RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
-    echo 'set -e' >> /docker-entrypoint.sh && \
-    echo 'echo "🔧 Configuring nginx with BACKEND_HOST=${BACKEND_HOST:-backend}"' >> /docker-entrypoint.sh && \
-    echo 'export BACKEND_HOST=${BACKEND_HOST:-backend}' >> /docker-entrypoint.sh && \
-    echo 'envsubst '"'"'$BACKEND_HOST'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
-    echo 'echo "✅ nginx configuration ready"' >> /docker-entrypoint.sh && \
-    echo 'exec "$@"' >> /docker-entrypoint.sh && \
-    chmod +x /docker-entrypoint.sh
 
 # Expose port
 EXPOSE 80
@@ -52,8 +42,5 @@ EXPOSE 80
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
-# Use custom entrypoint to substitute environment variables before starting nginx
-ENTRYPOINT ["/docker-entrypoint.sh"]
-
-# Start nginx
+# Start nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
