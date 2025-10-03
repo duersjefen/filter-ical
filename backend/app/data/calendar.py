@@ -331,50 +331,76 @@ def transform_events_for_export(events: List[Dict[str, Any]], filter_name: str) 
 def _generate_vevent_from_data(event: Dict[str, Any]) -> List[str]:
     """
     Generate VEVENT lines from event data.
-    
+
     Args:
         event: Event data dictionary
-        
+
     Returns:
         List of iCal VEVENT lines
-        
+
     Pure function - generates iCal format.
     """
     lines = ["BEGIN:VEVENT"]
-    
+
     # Required fields
     uid = event.get("uid", f"generated-{event.get('id', 'unknown')}")
     lines.append(f"UID:{uid}")
-    
+
     title = event.get("title", "Untitled Event")
     lines.append(f"SUMMARY:{title}")
-    
-    # Times
+
+    # Times - REQUIRED for calendar apps to display events
     start_time = event.get("start_time")
     if start_time:
+        # Handle both datetime objects and ISO strings
         if isinstance(start_time, str):
-            lines.append(f"DTSTART:{start_time}")
-        else:
+            # Clean ISO string to iCal format (remove timezone suffix if present)
+            clean_time = start_time.replace('+00:00', '').replace('Z', '').replace('-', '').replace(':', '')
+            if 'T' not in clean_time:
+                clean_time = f"{clean_time}T000000"
+            if not clean_time.endswith('Z'):
+                clean_time += 'Z'
+            lines.append(f"DTSTART:{clean_time}")
+        elif hasattr(start_time, 'strftime'):
+            # Datetime object - format as UTC
+            if start_time.tzinfo:
+                # Convert to UTC if timezone-aware
+                start_time = start_time.astimezone(timezone.utc)
             formatted_time = start_time.strftime("%Y%m%dT%H%M%SZ")
             lines.append(f"DTSTART:{formatted_time}")
-    
+    else:
+        # Fallback: Use current date if start_time is missing (legacy events)
+        fallback = datetime.now(timezone.utc)
+        lines.append(f"DTSTART:{fallback.strftime('%Y%m%dT%H%M%SZ')}")
+
     end_time = event.get("end_time")
     if end_time:
+        # Handle both datetime objects and ISO strings
         if isinstance(end_time, str):
-            lines.append(f"DTEND:{end_time}")
-        else:
+            # Clean ISO string to iCal format
+            clean_time = end_time.replace('+00:00', '').replace('Z', '').replace('-', '').replace(':', '')
+            if 'T' not in clean_time:
+                clean_time = f"{clean_time}T000000"
+            if not clean_time.endswith('Z'):
+                clean_time += 'Z'
+            lines.append(f"DTEND:{clean_time}")
+        elif hasattr(end_time, 'strftime'):
+            # Datetime object - format as UTC
+            if end_time.tzinfo:
+                # Convert to UTC if timezone-aware
+                end_time = end_time.astimezone(timezone.utc)
             formatted_time = end_time.strftime("%Y%m%dT%H%M%SZ")
             lines.append(f"DTEND:{formatted_time}")
-    
+
     # Optional fields
     description = event.get("description")
     if description:
         lines.append(f"DESCRIPTION:{description}")
-    
+
     location = event.get("location")
     if location:
         lines.append(f"LOCATION:{location}")
-    
+
     lines.append("END:VEVENT")
     return lines
 
