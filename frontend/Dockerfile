@@ -36,9 +36,11 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Expose port
 EXPOSE 80
 
-# Note: Docker HEALTHCHECK removed - platform deploy script handles health checks
-# The platform's health check validation doesn't properly handle Docker's "starting" state
-# which was causing false negatives during deployment
+# Health check - curl the /health endpoint every 10s
+# Start checking after 5s (give nginx time to start)
+# Timeout after 5s, allow 3 retries before marking unhealthy
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/health || exit 1
 
 # Reset entrypoint from base image (fholzer/nginx-brotli has ENTRYPOINT [nginx])
 # Without this, Docker would run: nginx nginx -g daemon off; (duplicate nginx)
