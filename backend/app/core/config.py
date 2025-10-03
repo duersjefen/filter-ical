@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings
 class Environment(str, Enum):
     """Application environment types."""
     DEVELOPMENT = "development"
+    STAGING = "staging"
     PRODUCTION = "production"
     TESTING = "testing"
 
@@ -87,10 +88,15 @@ class Settings(BaseSettings):
         return self.environment == Environment.DEVELOPMENT
     
     @property
+    def is_staging(self) -> bool:
+        """Check if running in staging environment."""
+        return self.environment == Environment.STAGING
+
+    @property
     def is_production(self) -> bool:
         """Check if running in production environment."""
         return self.environment == Environment.PRODUCTION
-    
+
     @property
     def is_testing(self) -> bool:
         """Check if running in testing environment."""
