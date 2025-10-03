@@ -81,9 +81,10 @@ jobs:
           # Navigate to platform directory
           cd /opt/multi-tenant-platform
 
-          # Update platform code
+          # Update platform code (force if divergent)
           echo "📦 Updating platform code..."
-          git pull origin main 2>/dev/null || git pull origin master || echo "⚠️  Using existing platform code"
+          git fetch origin 2>/dev/null
+          git reset --hard origin/master 2>/dev/null || git reset --hard origin/main 2>/dev/null || echo "⚠️  Using existing platform code"
 
           # Authenticate to GHCR
           echo "🔑 Authenticating to GitHub Container Registry..."
