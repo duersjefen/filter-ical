@@ -342,6 +342,17 @@
                   </span>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>📧 Email:</strong>
+                    <span class="ml-1">{{ request.email }}</span>
+                  </p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>🔑 Requested Domain:</strong>
+                    <span class="ml-1 font-mono font-semibold text-purple-600 dark:text-purple-400">{{ request.requested_domain_key }}</span>
+                  </p>
+                </div>
+
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 break-all">
                   <strong>{{ $t('admin.panel.calendarUrl') }}:</strong>
                   <a :href="request.calendar_url" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">

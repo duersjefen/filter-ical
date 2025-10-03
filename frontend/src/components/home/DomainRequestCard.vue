@@ -70,6 +70,42 @@
 
     <!-- Request Form -->
     <form @submit.prevent="submitRequest" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="email-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            Email Address
+          </label>
+          <input
+            id="email-request"
+            v-model="formData.email"
+            type="email"
+            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
+            placeholder="your@email.com"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="domain-key-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            Desired Domain Key
+          </label>
+          <input
+            id="domain-key-request"
+            v-model="formData.requested_domain_key"
+            type="text"
+            pattern="[a-z0-9-]+"
+            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
+            placeholder="my-calendar"
+            minlength="3"
+            maxlength="100"
+            required
+          />
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Lowercase letters, numbers, hyphens only
+          </div>
+        </div>
+      </div>
+
       <div>
         <label for="calendar-url-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
           {{ $t('domainRequest.form.calendarUrl') }}
@@ -103,9 +139,31 @@
         </div>
       </div>
 
+      <div>
+        <label for="password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+          Admin Password (for your domain)
+        </label>
+        <input
+          id="password-request"
+          v-model="formData.default_password"
+          :type="showPassword ? 'text' : 'password'"
+          class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
+          placeholder="Enter a secure password (min 4 chars)"
+          minlength="4"
+          maxlength="100"
+          required
+        />
+        <div class="flex items-center mt-2">
+          <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+            <input type="checkbox" v-model="showPassword" class="w-4 h-4 rounded border-gray-300 dark:border-gray-600" />
+            Show password
+          </label>
+        </div>
+      </div>
+
       <button
         type="submit"
-        :disabled="loading || !formData.calendar_url || !formData.description || formData.description.length < 10"
+        :disabled="loading || !formData.email || !formData.requested_domain_key || !formData.calendar_url || !formData.description || formData.description.length < 10 || !formData.default_password || formData.default_password.length < 4"
         class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 py-3.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg hover:shadow-xl disabled:shadow-sm disabled:transform-none"
       >
         {{ loading ? $t('domainRequest.form.submitting') : $t('domainRequest.form.submit') }}
@@ -127,10 +185,14 @@ const { post } = useHTTP()
 const loading = ref(false)
 const successMessage = ref(null)
 const errorMessage = ref(null)
+const showPassword = ref(false)
 
 const formData = ref({
+  email: '',
+  requested_domain_key: '',
   calendar_url: '',
-  description: ''
+  description: '',
+  default_password: ''
 })
 
 const submitRequest = async () => {
@@ -144,6 +206,11 @@ const submitRequest = async () => {
     return
   }
 
+  if (formData.value.default_password.length < 4) {
+    errorMessage.value = 'Password must be at least 4 characters'
+    return
+  }
+
   loading.value = true
   errorMessage.value = null
   successMessage.value = null
@@ -151,15 +218,22 @@ const submitRequest = async () => {
   try {
     const result = await post('/api/domain-requests', {
       username: username.value,
+      email: formData.value.email.toLowerCase(),
+      requested_domain_key: formData.value.requested_domain_key.toLowerCase(),
       calendar_url: formData.value.calendar_url,
-      description: formData.value.description
+      description: formData.value.description,
+      default_password: formData.value.default_password
     })
 
     if (result.success) {
       successMessage.value = t('domainRequest.success')
       // Clear form
+      formData.value.email = ''
+      formData.value.requested_domain_key = ''
       formData.value.calendar_url = ''
       formData.value.description = ''
+      formData.value.default_password = ''
+      showPassword.value = false
     } else {
       errorMessage.value = result.error || t('domainRequest.errors.submissionFailed')
     }
