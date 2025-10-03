@@ -42,5 +42,5 @@ EXPOSE 80
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
-# Start nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Base image already has ENTRYPOINT ["nginx"] and CMD ["-g", "daemon off;"]
+# No need to override - using base image's CMD
