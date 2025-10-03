@@ -35,8 +35,11 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 # Create startup script to substitute environment variables in nginx config
 RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
+    echo 'set -e' >> /docker-entrypoint.sh && \
+    echo 'echo "🔧 Configuring nginx with BACKEND_HOST=${BACKEND_HOST:-backend}"' >> /docker-entrypoint.sh && \
     echo 'export BACKEND_HOST=${BACKEND_HOST:-backend}' >> /docker-entrypoint.sh && \
-    echo 'envsubst "\$BACKEND_HOST" < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
+    echo 'envsubst '"'"'$BACKEND_HOST'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
+    echo 'echo "✅ nginx configuration ready"' >> /docker-entrypoint.sh && \
     echo 'exec "$@"' >> /docker-entrypoint.sh && \
     chmod +x /docker-entrypoint.sh
 
