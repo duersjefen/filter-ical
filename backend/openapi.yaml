@@ -1064,9 +1064,9 @@ paths:
                 example: |
                   BEGIN:VCALENDAR
                   VERSION:2.0
-                  PRODID:-//iCal Viewer//EN
+                  PRODID:-//Filter iCal//EN
                   BEGIN:VEVENT
-                  UID:example@icalviewer.com
+                  UID:example@filter-ical.de
                   DTSTART:20241201T100000Z
                   DTEND:20241201T110000Z
                   SUMMARY:Team Meeting

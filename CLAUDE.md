@@ -1,4 +1,4 @@
-# CLAUDE.md - iCal Viewer Project Instructions
+# CLAUDE.md - Filter iCal Project Instructions
 
 Production-ready Python + Vue 3 web application with comprehensive TDD workflow and language-independent CI/CD.
 

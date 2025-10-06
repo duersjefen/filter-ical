@@ -1,5 +1,5 @@
 """
-Database models for iCal Viewer application.
+Database models for Filter iCal application.
 
 These models follow the database schema designed for domain integration
 and match the OpenAPI specification exactly.

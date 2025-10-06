@@ -341,9 +341,11 @@ def transform_events_for_export(events: List[Dict[str, Any]], filter_name: str) 
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        f"PRODID:-//iCal Viewer//{filter_name}//EN",
+        f"PRODID:-//Filter iCal//{filter_name}//EN",
         "CALSCALE:GREGORIAN",
-        "METHOD:PUBLISH"
+        "METHOD:PUBLISH",
+        f"X-WR-CALNAME:{filter_name}",
+        "X-WR-CALDESC:Filtered calendar from Filter iCal"
     ]
 
     for event in events:

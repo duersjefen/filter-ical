@@ -1,5 +1,4 @@
-- Fix Group/Event logic (see if it's sound)
-- Fix group-rules not auto-activated
+-  Health check consistency (reliability)
 
 
 - Fix Adding domains
