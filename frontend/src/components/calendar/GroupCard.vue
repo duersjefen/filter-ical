@@ -100,7 +100,7 @@
                   : selectedGroupRecurringEvents.length === recurringEventsCount
                     ? (isGroupSubscribed
                         ? 'bg-gradient-to-r from-green-400 to-blue-500'
-                        : 'bg-gradient-to-r from-green-400 to-emerald-500')
+                        : 'bg-gradient-to-r from-blue-400 to-blue-600')
                     : 'bg-gradient-to-r from-blue-400 to-indigo-500'"
                 :style="{ width: `${(selectedGroupRecurringEvents.length / recurringEventsCount) * 100}%` }"
               ></div>
