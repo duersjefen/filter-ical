@@ -88,6 +88,17 @@ dev-frontend: ## Run frontend natively (hot reload)
 		(test -d node_modules || npm install) && \
 		npm run dev
 
+preview: ## Build and preview production frontend
+	@echo "📦 Building production bundle..."
+	@cd frontend && npm run build
+	@echo "✅ Build complete!"
+	@echo ""
+	@echo "🔍 Starting production preview..."
+	@echo "📍 http://localhost:4173"
+	@echo ""
+	@echo "💡 Test performance with Lighthouse on localhost:4173"
+	@cd frontend && npm run preview
+
 stop: ## Stop all development services
 	@echo "🛑 Stopping services..."
 	@docker-compose -f docker-compose.dev.yml down
