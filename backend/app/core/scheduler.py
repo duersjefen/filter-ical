@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import get_db
 from ..services.cache_service import warm_domain_cache
-from ..services.domain_service import ensure_domain_calendar_exists, load_domains_config
+from ..services.domain_service import ensure_domain_calendar_exists, load_domains_config, auto_assign_events_with_rules
 
 
 # Global scheduler instance
@@ -100,11 +100,20 @@ def sync_domain_calendars_task():
                     success, calendar, sync_error = asyncio.run(
                         ensure_domain_calendar_exists(db, domain_key, config)
                     )
-                    
+
                     if success:
                         print(f"✅ Synced domain calendar: {domain_key}")
                         synced_count += 1
-                        
+
+                        # Apply assignment rules to newly synced events
+                        rule_success, assignment_count, rule_error = asyncio.run(
+                            auto_assign_events_with_rules(db, domain_key)
+                        )
+                        if rule_success and assignment_count > 0:
+                            print(f"📋 Applied {assignment_count} assignment rules for domain: {domain_key}")
+                        elif not rule_success:
+                            print(f"⚠️ Rule application failed for domain {domain_key}: {rule_error}")
+
                         # Warm cache for this domain
                         cache_success = warm_domain_cache(db, domain_key)
                         if cache_success:
@@ -114,7 +123,7 @@ def sync_domain_calendars_task():
                             print(f"⚠️ Cache warming failed for domain: {domain_key}")
                     else:
                         print(f"❌ Failed to sync domain {domain_key}: {sync_error}")
-                
+
                 except Exception as domain_error:
                     print(f"❌ Error processing domain {domain_key}: {domain_error}")
                     continue

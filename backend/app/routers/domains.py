@@ -311,13 +311,13 @@ async def get_domain_assignment_rules(
         success, config, error = load_domains_config(settings.domains_config_path)
         if not success:
             raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
+
         if domain not in config.get('domains', {}):
             raise HTTPException(status_code=404, detail="Domain not found")
-        
+
         # Get assignment rules
         rules = get_assignment_rules(db, domain)
-        
+
         # Transform to OpenAPI schema format
         rules_response = []
         for rule in rules:
@@ -327,9 +327,41 @@ async def get_domain_assignment_rules(
                 "rule_value": rule.rule_value,
                 "target_group_id": rule.target_group_id
             })
-        
+
         return rules_response
-        
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/{domain}/assignment-rules/apply")
+async def apply_domain_assignment_rules(
+    domain: str,
+    db: Session = Depends(get_db)
+):
+    """Manually trigger assignment rules to be applied to all events (admin)."""
+    try:
+        # Load domain configuration to verify domain exists
+        success, config, error = load_domains_config(settings.domains_config_path)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
+
+        if domain not in config.get('domains', {}):
+            raise HTTPException(status_code=404, detail="Domain not found")
+
+        # Apply assignment rules
+        success, assignment_count, error = await auto_assign_events_with_rules(db, domain)
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Rule application failed: {error}")
+
+        return {
+            "success": True,
+            "message": f"Applied assignment rules to {assignment_count} events",
+            "assignment_count": assignment_count
+        }
+
     except HTTPException:
         raise
     except Exception as e:
