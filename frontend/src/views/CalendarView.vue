@@ -206,7 +206,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useHTTP } from '../composables/useHTTP'
@@ -218,9 +218,15 @@ import {
   HeaderSection,
   RecurringEventsCardsSection
 } from '../components/calendar'
-import PreviewEventsSection from '../components/preview/PreviewEventsSection.vue'
 import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
-import FilteredCalendarSection from '../components/FilteredCalendarSection.vue'
+
+// Lazy load heavy components for better initial page load
+const PreviewEventsSection = defineAsyncComponent(() =>
+  import('../components/preview/PreviewEventsSection.vue')
+)
+const FilteredCalendarSection = defineAsyncComponent(() =>
+  import('../components/FilteredCalendarSection.vue')
+)
 
 const appStore = useAppStore()
 const router = useRouter()
