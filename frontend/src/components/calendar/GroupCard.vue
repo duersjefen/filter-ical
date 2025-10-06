@@ -12,10 +12,16 @@
   >
     <!-- Enhanced Group Header with gradient pattern for consistency -->
     <div class="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-gray-700 dark:to-gray-800 px-6 py-5 border-b border-slate-200 dark:border-gray-600 relative overflow-hidden">
-      <!-- Subscription status indicator stripe -->
-      <div 
-        class="absolute top-0 left-0 right-0 h-1 transition-all duration-300"
-        :class="isGroupSubscribed ? 'bg-green-400' : 'bg-gray-500'"
+      <!-- Status indicator stripe - Green for subscribed, Blue for all selected, Gradient for both -->
+      <div
+        class="absolute top-0 left-0 right-0 h-1.5 transition-all duration-300"
+        :class="isGroupSubscribed && areAllRecurringEventsSelected
+          ? 'bg-gradient-to-r from-green-500 to-blue-500'
+          : isGroupSubscribed
+            ? 'bg-green-500'
+            : areAllRecurringEventsSelected
+              ? 'bg-blue-500'
+              : 'bg-gray-400'"
       ></div>
       
       <!-- Group Title and Info - Enhanced Layout -->
@@ -23,18 +29,34 @@
         <!-- Status Icon and Title Container -->
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3 mb-2">
-            <!-- Subscription Status Badge -->
-            <div 
-              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300"
-              :class="isGroupSubscribed 
-                ? 'bg-green-600 text-white ring-1 ring-green-500' 
-                : 'bg-gray-500 text-white ring-1 ring-gray-400'"
-            >
-              <div 
-                class="w-2 h-2 rounded-full transition-colors duration-300"
-                :class="isGroupSubscribed ? 'bg-green-300' : 'bg-gray-300'"
-              ></div>
-              <span>{{ isGroupSubscribed ? $t('status.subscribed') : $t('status.notSubscribed') }}</span>
+            <!-- Status Badges - Shows both subscription and selection status -->
+            <div class="flex items-center gap-2">
+              <!-- Subscription Status Badge -->
+              <div
+                v-if="isGroupSubscribed"
+                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 bg-green-600 text-white ring-1 ring-green-500"
+              >
+                <div class="w-2 h-2 rounded-full bg-green-300"></div>
+                <span>{{ $t('status.subscribed') }}</span>
+              </div>
+
+              <!-- Selection Status Badge -->
+              <div
+                v-if="areAllRecurringEventsSelected"
+                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 bg-blue-600 text-white ring-1 ring-blue-500"
+              >
+                <div class="w-2 h-2 rounded-full bg-blue-300"></div>
+                <span>{{ $t('status.allSelected') }}</span>
+              </div>
+
+              <!-- No status badge -->
+              <div
+                v-if="!isGroupSubscribed && !areAllRecurringEventsSelected"
+                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-500 text-white ring-1 ring-gray-400"
+              >
+                <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                <span>{{ $t('status.notSubscribed') }}</span>
+              </div>
             </div>
           </div>
           
@@ -84,19 +106,26 @@
           </div>
         </div>
         
-        <!-- Expansion Arrow - Enhanced Design -->
+        <!-- Expansion Arrow - Enhanced Design with Label -->
         <div class="flex-shrink-0 self-start mt-1">
-          <div 
-            class="w-8 h-8 rounded-full bg-gray-500 shadow-sm border border-gray-400 flex items-center justify-center transition-all duration-300 group-hover:border-blue-400 group-hover:shadow-md group-hover:bg-gray-400"
-          >
-            <svg 
-              class="w-4 h-4 text-white transition-all duration-300"
-              :class="{ 'rotate-90': isExpanded }"
-              fill="currentColor" 
-              viewBox="0 0 20 20"
+          <div class="flex flex-col items-center gap-1">
+            <!-- Click to expand label -->
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors uppercase tracking-wide">
+              {{ isExpanded ? 'Close' : 'Expand' }}
+            </div>
+            <div
+              class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-500 shadow-md border-2 border-gray-400 flex items-center justify-center transition-all duration-300 group-hover:from-blue-600 group-hover:to-blue-500 group-hover:border-blue-400 group-hover:shadow-lg group-hover:scale-110"
+              :class="{ 'from-blue-600 to-blue-500 border-blue-400': isExpanded }"
             >
-              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-            </svg>
+              <svg
+                class="w-5 h-5 text-white transition-all duration-300"
+                :class="{ 'rotate-90': isExpanded }"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -107,13 +136,13 @@
       
       <!-- Compact Action Buttons -->
       <div class="space-y-2">
-        <!-- Primary Action Button -->
+        <!-- Primary Action Button - Gradient when both active -->
         <button
           @click.stop="toggleSubscribeAndSelect"
           class="w-full"
-          :class="isBothSubscribedAndSelected 
-            ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-2 border-green-600 hover:border-green-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50 min-h-[44px]' 
-            : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-600 hover:border-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[44px]'"
+          :class="isBothSubscribedAndSelected
+            ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 hover:from-green-600 hover:via-teal-600 hover:to-blue-600 border-2 border-teal-500 hover:border-teal-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-teal-500/50 min-h-[44px]'
+            : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 border-2 border-gray-600 hover:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-gray-500/50 min-h-[44px]'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
           <!-- Standardized SVG Icon -->
@@ -130,11 +159,11 @@
         
         <!-- Individual Control Buttons -->
         <div class="grid grid-cols-2 gap-2">
-          <!-- Subscribe Button -->
+          <!-- Subscribe Button - Green when subscribed -->
           <button
             @click.stop="toggleGroupSubscription"
-            :class="isGroupSubscribed 
-              ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-green-600 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-transparent hover:border-green-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 dark:from-green-900/20 dark:to-green-800/40 dark:text-green-300 dark:hover:from-green-800/40 dark:hover:to-green-900/60 dark:hover:text-green-200' 
+            :class="isGroupSubscribed
+              ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-green-700 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-transparent hover:border-green-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 dark:from-green-900/20 dark:to-green-800/40 dark:text-green-300 dark:hover:from-green-800/40 dark:hover:to-green-900/60 dark:hover:text-green-200'
               : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border border-transparent hover:border-gray-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300'"
             :title="isGroupSubscribed ? $t('status.unsubscribeFromGroup') : $t('status.subscribeToGroup')"
           >
