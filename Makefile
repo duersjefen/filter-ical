@@ -187,11 +187,13 @@ migrate-stamp: ## Mark database as being at specific version (usage: make migrat
 	@echo "✅ Database stamped to $(version)"
 
 ##
-## 🚀 Deployment Commands
+## 🚀 Deployment Commands (Platform-Driven)
 ##
 
-deploy-staging: ## Deploy to staging (push to master)
+deploy-staging: ## Deploy to staging (builds image + platform deploys)
 	@echo "🎭 Deploying to staging..."
+	@echo ""
+	@echo "ℹ️  NOTE: Deployment is now managed by the platform repo"
 	@echo ""
 	@echo "📋 Checking git status..."
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -199,25 +201,34 @@ deploy-staging: ## Deploy to staging (push to master)
 		echo "   git add . && git commit -m 'Your message'"; \
 		exit 1; \
 	fi
-	@echo "📤 Pushing to master (triggers auto-deploy)..."
-	@git push origin master
+	@echo "📤 Pushing to main (triggers build + auto-deploy)..."
+	@git push origin main
 	@echo ""
-	@echo "👀 Monitoring deployment..."
-	@sleep 3
-	@gh run list --limit 1 2>/dev/null || echo "💡 Check GitHub Actions: https://github.com/duersjefen/filter-ical/actions"
+	@echo "🔄 Build pipeline:"
+	@echo "  1. Build Docker images (filter-ical repo)"
+	@echo "  2. Notify platform repo"
+	@echo "  3. Platform deploys to staging"
+	@echo ""
+	@echo "👀 Monitor build: https://github.com/duersjefen/filter-ical/actions"
+	@echo "👀 Monitor deploy: https://github.com/duersjefen/multi-tenant-platform/actions"
 	@echo ""
 	@echo "🔍 Verify at: https://staging.filter-ical.de/health"
 
-deploy-production: ## Deploy to production (manual workflow)
-	@echo "🚀 Triggering production deployment..."
+deploy-production: ## Deploy to production (via platform repo)
+	@echo "🚀 Deploying to production..."
 	@echo ""
-	@echo "⚠️  Production requires manual approval!"
-	@gh workflow run "Deploy to Production" -f confirm=deploy 2>/dev/null || \
-		(echo "❌ Failed to trigger workflow" && exit 1)
-	@echo "✅ Workflow triggered"
+	@echo "ℹ️  NOTE: Production deployment is managed by platform repo"
 	@echo ""
-	@echo "👉 Use 'make approve-production' to approve"
-	@echo "   or use 'make deploy-production-auto' to trigger + auto-approve"
+	@echo "📖 To deploy to production:"
+	@echo "  1. Ensure staging is working"
+	@echo "  2. cd ../multi-tenant-platform"
+	@echo "  3. make promote project=filter-ical"
+	@echo ""
+	@echo "Or trigger manually:"
+	@echo "  cd ../multi-tenant-platform"
+	@echo "  make trigger-deploy project=filter-ical env=production"
+	@echo ""
+	@exit 1
 
 approve-production: ## Approve pending production deployment
 	@echo "🔍 Looking for pending production deployment..."

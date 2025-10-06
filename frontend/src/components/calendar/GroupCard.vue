@@ -70,13 +70,13 @@
             <div v-if="group.description" class="truncate mb-1">
               {{ group.description }}
             </div>
-            <div class="flex items-center gap-2 text-xs">
-              <span class="inline-flex items-center gap-1">
-                <span class="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+            <div class="flex items-center gap-1.5 text-[10px]">
+              <span class="inline-flex items-center gap-0.5">
+                <span class="w-1 h-1 bg-blue-400 rounded-full"></span>
                 {{ totalEventCount }} {{ t('common.totalEvents') }}
               </span>
-              <span v-if="hasRecurringEvents" class="inline-flex items-center gap-1">
-                <span class="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
+              <span v-if="hasRecurringEvents" class="inline-flex items-center gap-0.5">
+                <span class="w-1 h-1 bg-purple-400 rounded-full"></span>
                 {{ recurringEventsCount }} {{ t('common.recurringEvents') }}
               </span>
             </div>

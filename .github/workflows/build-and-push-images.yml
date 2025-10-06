@@ -84,4 +84,19 @@ jobs:
           echo "${{ steps.meta-frontend.outputs.tags }}"
           echo ""
           echo "✅ Images pushed to GitHub Container Registry"
-          echo "🚀 Deploy with: ./lib/deploy.sh filter-ical production"
+
+      - name: 🚀 Notify platform repo to deploy
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_DEPLOY_TOKEN }}
+        run: |
+          echo "📢 Notifying platform repo of new images..."
+          gh api repos/duersjefen/multi-tenant-platform/dispatches \
+            -f event_type="new-image" \
+            -f client_payload[project]="filter-ical" \
+            -f client_payload[sha]="${{ github.sha }}" \
+            -f client_payload[actor]="${{ github.actor }}" \
+            -f client_payload[backend_tag]="latest" \
+            -f client_payload[frontend_tag]="latest"
+          echo "✅ Platform will deploy to staging automatically"
+          echo "👀 Monitor: https://github.com/duersjefen/multi-tenant-platform/actions"
