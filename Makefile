@@ -5,7 +5,7 @@
 # See DEV_WORKFLOW.md for complete guide
 # =============================================================================
 
-.PHONY: help setup dev dev-db dev-backend dev-frontend stop test deploy-staging deploy-production approve-production deploy-production-auto status clean migrate-create migrate-up migrate-down migrate-history migrate-current migrate-stamp
+.PHONY: help setup dev dev-db dev-backend dev-frontend stop test deploy-staging deploy-production status clean migrate-create migrate-up migrate-down migrate-history migrate-current migrate-stamp
 
 .DEFAULT_GOAL := help
 
@@ -190,10 +190,8 @@ migrate-stamp: ## Mark database as being at specific version (usage: make migrat
 ## 🚀 Deployment Commands (Platform-Driven)
 ##
 
-deploy-staging: ## Deploy to staging (builds image + platform deploys)
-	@echo "🎭 Deploying to staging..."
-	@echo ""
-	@echo "ℹ️  NOTE: Deployment is now managed by the platform repo"
+deploy-staging: ## Deploy to staging (triggers continuous deployment pipeline)
+	@echo "🎭 Continuous Deployment Pipeline Starting..."
 	@echo ""
 	@echo "📋 Checking git status..."
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -201,94 +199,40 @@ deploy-staging: ## Deploy to staging (builds image + platform deploys)
 		echo "   git add . && git commit -m 'Your message'"; \
 		exit 1; \
 	fi
-	@echo "📤 Pushing to main (triggers build + auto-deploy)..."
+	@echo "📤 Pushing to main (triggers continuous deployment)..."
 	@git push origin main
 	@echo ""
-	@echo "🔄 Build pipeline:"
-	@echo "  1. Build Docker images (filter-ical repo)"
-	@echo "  2. Notify platform repo"
-	@echo "  3. Platform deploys to staging"
+	@echo "🔄 Continuous Deployment Pipeline:"
+	@echo "  1. Build Docker images (filter-ical repo) ⏳"
+	@echo "  2. Notify platform repo ⏳"
+	@echo "  3. Deploy to staging ⏳"
+	@echo "  4. Auto-queue production ⏸️  (requires approval)"
 	@echo ""
-	@echo "👀 Monitor build: https://github.com/duersjefen/filter-ical/actions"
+	@echo "👀 Monitor build:  https://github.com/duersjefen/filter-ical/actions"
 	@echo "👀 Monitor deploy: https://github.com/duersjefen/multi-tenant-platform/actions"
 	@echo ""
-	@echo "🔍 Verify at: https://staging.filter-ical.de/health"
+	@echo "🔍 Test staging: https://staging.filter-ical.de"
+	@echo ""
+	@echo "✅ When staging looks good, approve production:"
+	@echo "   cd ../multi-tenant-platform"
+	@echo "   make approve-production project=filter-ical"
 
-deploy-production: ## Deploy to production (via platform repo)
-	@echo "🚀 Deploying to production..."
+deploy-production: ## Approve pending production deployment
+	@echo "🚀 Production Deployment Approval"
 	@echo ""
-	@echo "ℹ️  NOTE: Production deployment is managed by platform repo"
+	@echo "ℹ️  Production auto-queues after staging succeeds"
 	@echo ""
-	@echo "📖 To deploy to production:"
-	@echo "  1. Ensure staging is working"
-	@echo "  2. cd ../multi-tenant-platform"
-	@echo "  3. make promote project=filter-ical"
+	@echo "📖 To approve production deployment:"
+	@echo "  1. Test staging: https://staging.filter-ical.de"
+	@echo "  2. Approve deployment:"
+	@echo "     cd ../multi-tenant-platform"
+	@echo "     make approve-production project=filter-ical"
 	@echo ""
-	@echo "Or trigger manually:"
-	@echo "  cd ../multi-tenant-platform"
-	@echo "  make trigger-deploy project=filter-ical env=production"
+	@echo "Or approve via GitHub UI:"
+	@echo "  https://github.com/duersjefen/multi-tenant-platform/actions"
+	@echo "  → Click 'Review deployments' → Approve 'production'"
 	@echo ""
 	@exit 1
-
-approve-production: ## Approve pending production deployment
-	@echo "🔍 Looking for pending production deployment..."
-	@PENDING=$$(gh run list -w "Deploy to Production" -L 5 --json status,databaseId,conclusion \
-		--jq '.[] | select(.status == "waiting" or .status == "in_progress") | .databaseId' | head -1); \
-	if [ -z "$$PENDING" ]; then \
-		echo "❌ No pending production deployment found"; \
-		echo "💡 Run 'make deploy-production' first"; \
-		exit 1; \
-	fi; \
-	echo "✅ Found pending deployment: $$PENDING"; \
-	echo ""; \
-	echo "⏳ Reviewing pending environments..."; \
-	gh run view $$PENDING --json name,status,createdAt,url \
-		--jq '"📋 Workflow: " + .name, "🕒 Started: " + .createdAt, "🔗 URL: " + .url'; \
-	echo ""; \
-	read -p "🤔 Approve production deployment? (yes/no): " confirm; \
-	if [ "$$confirm" = "yes" ]; then \
-		echo "✅ Approving deployment..."; \
-		ENV_ID=$$(gh api repos/duersjefen/filter-ical/actions/runs/$$PENDING/pending_deployments --jq '.[0].environment.id'); \
-		gh api repos/duersjefen/filter-ical/actions/runs/$$PENDING/pending_deployments -X POST --input - <<< "{\"environment_ids\":[$$ENV_ID],\"state\":\"approved\",\"comment\":\"Approved via make approve-production\"}"; \
-		echo ""; \
-		echo "👀 Watching deployment progress..."; \
-		gh run watch $$PENDING; \
-	else \
-		echo "❌ Approval cancelled"; \
-		exit 1; \
-	fi
-
-deploy-production-auto: ## Deploy to production and auto-approve (use with caution!)
-	@echo "🚀 Starting automated production deployment..."
-	@echo "⚠️  This will deploy AND approve automatically!"
-	@echo ""
-	@read -p "🤔 Continue? (yes/no): " confirm; \
-	if [ "$$confirm" != "yes" ]; then \
-		echo "❌ Cancelled"; \
-		exit 1; \
-	fi
-	@echo ""
-	@echo "📤 Triggering workflow..."
-	@gh workflow run "Deploy to Production" -f confirm=deploy
-	@echo "⏳ Waiting for workflow to start..."
-	@sleep 5
-	@echo ""
-	@echo "🔍 Finding workflow run..."
-	@RUN_ID=$$(gh run list -w "Deploy to Production" -L 1 --json databaseId --jq '.[0].databaseId'); \
-	if [ -z "$$RUN_ID" ]; then \
-		echo "❌ Could not find workflow run"; \
-		exit 1; \
-	fi; \
-	echo "✅ Found deployment: $$RUN_ID"; \
-	echo ""; \
-	echo "⏳ Waiting for approval gate..."; \
-	sleep 3; \
-	echo "✅ Auto-approving..."; \
-	ENV_ID=$$(gh api repos/duersjefen/filter-ical/actions/runs/$$RUN_ID/pending_deployments --jq '.[0].environment.id'); \
-	gh api repos/duersjefen/filter-ical/actions/runs/$$RUN_ID/pending_deployments -X POST --input - <<< "{\"environment_ids\":[$$ENV_ID],\"state\":\"approved\",\"comment\":\"Auto-approved via make deploy-production-auto\"}"; \
-	echo ""; \
-	echo "👀 Watching deployment progress..."; \
-	gh run watch $$RUN_ID
 
 status: ## Check deployment status
 	@echo "📊 Recent deployments:"
