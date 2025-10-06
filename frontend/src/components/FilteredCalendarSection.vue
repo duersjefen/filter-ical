@@ -1083,19 +1083,22 @@ const getGroupDisplayClass = (groupId) => {
 }
 
 const getCountDisplayClass = (groupId) => {
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
   const selectedCount = getGroupSelectedCount(groupId)
   const totalCount = getGroupTotalCount(props.groups[groupId])
-  
-  // Match the same color coding: 0 -> Grey; 1/7 -> Blue; 7/7 -> Green
-  // Based on subscription ratios, regardless of subscription status
-  if (selectedCount === totalCount && totalCount > 0) {
-    // 7/7 (or any complete selection) -> Green
+
+  // Color logic: Green only when subscribed, Blue for selection
+  if (isSubscribed && selectedCount === totalCount && totalCount > 0) {
+    // Subscribed AND all selected -> Green
     return 'bg-green-600 dark:bg-green-500 text-white'
+  } else if (selectedCount === totalCount && totalCount > 0) {
+    // All selected but NOT subscribed -> Blue
+    return 'bg-blue-600 dark:bg-blue-500 text-white'
   } else if (selectedCount > 0 && selectedCount < totalCount) {
-    // 1/7 (or any partial selection) -> Blue
+    // Partially selected -> Blue
     return 'bg-blue-600 dark:bg-blue-500 text-white'
   } else {
-    // 0/7 (no selection) -> Grey
+    // Not selected -> Grey
     return 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
   }
 }
@@ -1156,12 +1159,18 @@ const getGroupSubscriptionDotClass = (groupId) => {
 }
 
 const getProgressBarClass = (groupId) => {
+  const isSubscribed = props.subscribedGroups && props.subscribedGroups.has(groupId)
   const selectedCount = getGroupSelectedCount(groupId)
   const totalCount = getGroupTotalCount(props.groups[groupId])
-  
-  if (selectedCount === totalCount && totalCount > 0) {
-    return 'bg-gradient-to-r from-green-400 to-green-500'
+
+  if (isSubscribed && selectedCount === totalCount && totalCount > 0) {
+    // Subscribed AND all selected -> Green+Blue gradient
+    return 'bg-gradient-to-r from-green-400 to-blue-500'
+  } else if (selectedCount === totalCount && totalCount > 0) {
+    // All selected but NOT subscribed -> Blue gradient
+    return 'bg-gradient-to-r from-blue-400 to-blue-600'
   } else if (selectedCount > 0) {
+    // Partially selected -> Blue gradient
     return 'bg-gradient-to-r from-blue-400 to-blue-500'
   } else {
     return 'bg-gray-300 dark:bg-gray-600'
