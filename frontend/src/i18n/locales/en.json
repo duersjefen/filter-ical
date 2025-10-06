@@ -542,7 +542,7 @@
     "show": "Show",
     "clickToExpandUniqueEvents": "Click to expand unique events",
     "clickToCollapseUniqueEvents": "Click to collapse unique events",
-    "notSubscribed": "NOT SUBSCRIBED",
+    "notSubscribed": "Not Subscribed",
     "unsubscribeFromGroup": "Unsubscribe from this group",
     "subscribeToGroup": "Subscribe to future events from this group",
     "deselectAllEvents": "Deselect all recurring events",
