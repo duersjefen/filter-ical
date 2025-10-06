@@ -238,7 +238,7 @@ export function useFilteredCalendarAPI() {
     }
   }
 
-  const updateFilteredCalendar = async (filterId, updates) => {
+  const updateFilteredCalendar = async (filterId, updates, groups = {}) => {
     if (!filterId) {
       setError('Filter ID is required')
       return false
@@ -255,11 +255,46 @@ export function useFilteredCalendarAPI() {
       }
 
       let payload = { ...updates }
-      
-      // If filter_config is provided, map it to backend format
+
+      // If filter_config is provided, map it to backend format with three-list computation
       if (updates.filter_config) {
-        payload.subscribed_event_ids = updates.filter_config.recurring_events || []
-        payload.subscribed_group_ids = updates.filter_config.groups || []
+        const selectedGroups = updates.filter_config.groups || []
+        const selectedEvents = updates.filter_config.recurring_events || []
+
+        // Compute the three lists for domain filters
+        const subscribedGroupIds = selectedGroups
+        let subscribedEventIds = selectedEvents
+        const unselectedEventIds = []
+
+        // For domain calendars: compute whitelist and blacklist
+        if (subscribedGroupIds.length > 0 && Object.keys(groups).length > 0) {
+          // Get all event titles from subscribed groups
+          const eventTitlesInSubscribedGroups = new Set()
+          subscribedGroupIds.forEach(groupId => {
+            const group = groups[groupId]
+            if (group?.recurring_events) {
+              group.recurring_events.forEach(event => {
+                if (event.event_count > 0) {
+                  eventTitlesInSubscribedGroups.add(event.title)
+                }
+              })
+            }
+          })
+
+          // Whitelist: events selected but NOT in any subscribed group
+          subscribedEventIds = selectedEvents.filter(title => !eventTitlesInSubscribedGroups.has(title))
+
+          // Blacklist: events in subscribed groups but NOT selected
+          eventTitlesInSubscribedGroups.forEach(title => {
+            if (!selectedEvents.includes(title)) {
+              unselectedEventIds.push(title)
+            }
+          })
+        }
+
+        payload.subscribed_event_ids = subscribedEventIds
+        payload.subscribed_group_ids = subscribedGroupIds
+        payload.unselected_event_ids = unselectedEventIds
         // Remove filter_config from payload as backend doesn't expect it
         delete payload.filter_config
       }

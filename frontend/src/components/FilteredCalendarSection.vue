@@ -696,7 +696,8 @@ const createFilteredCalendar = async () => {
       {
         name: createForm.value.name,
         filter_config: filterConfig
-      }
+      },
+      props.groups || {}
     )
   } else {
     // Create new calendar
@@ -761,10 +762,11 @@ const updateFilteredCalendar = async () => {
     
     const success = await apiUpdateFiltered(
       editForm.value.id,
-      { 
+      {
         name: editForm.value.name,
         filter_config: filterConfig
-      }
+      },
+      props.groups || {}
     )
 
     if (success) {
