@@ -147,13 +147,13 @@
                   :class="getGroupDisplayClass(groupId)"
                 >
                   <!-- Enhanced status indicator with gradient -->
-                  <div 
+                  <div
                     class="absolute top-0 left-0 right-0 h-1.5 rounded-t-xl transition-all duration-300"
                     :class="getProgressBarClass(groupId)"
                   ></div>
-                  
+
                   <!-- Group Content with improved layout -->
-                  <div class="pt-1">
+                  <div class="pt-2">
                     <!-- Group Name with better typography -->
                     <div class="flex items-start gap-2 mb-2">
                       <span class="text-lg leading-none">{{ getGroupDisplayName(group).split(' ')[0] || '📋' }}</span>
@@ -1170,8 +1170,8 @@ const getProgressBarClass = (groupId) => {
     // All selected but NOT subscribed -> Blue gradient
     return 'bg-gradient-to-r from-blue-400 to-blue-600'
   } else if (selectedCount > 0) {
-    // Partially selected -> Blue gradient
-    return 'bg-gradient-to-r from-blue-400 to-blue-500'
+    // Partially selected -> Grey (incomplete state)
+    return 'bg-gray-300 dark:bg-gray-600'
   } else {
     return 'bg-gray-300 dark:bg-gray-600'
   }
