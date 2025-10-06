@@ -113,7 +113,7 @@
           <div class="flex flex-col items-center gap-1">
             <!-- Click to expand label -->
             <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors uppercase tracking-wide">
-              {{ isExpanded ? 'Close' : 'Expand' }}
+              {{ isExpanded ? $t('common.collapse') : $t('common.expand') }}
             </div>
             <div
               class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-500 shadow-md border-2 border-gray-400 flex items-center justify-center transition-all duration-300 group-hover:from-blue-600 group-hover:to-blue-500 group-hover:border-blue-400 group-hover:shadow-lg group-hover:scale-110"

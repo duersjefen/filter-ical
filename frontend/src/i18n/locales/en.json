@@ -12,6 +12,8 @@
     "yes": "Yes",
     "no": "No",
     "close": "Close",
+    "expand": "Expand",
+    "collapse": "Collapse",
     "save": "Save",
     "saved": "Saved!",
     "cancel": "Cancel",
