@@ -157,9 +157,10 @@ jobs:
             echo "🌐 Application is live at https://filter-ical.de"
           REMOTE
 
-      - name: 🧪 Run External Smoke Tests
+      - name: 🧪 Final External Verification
         run: |
-          echo "🧪 Running external smoke tests..."
+          echo "🧪 Running final external verification..."
+          echo "ℹ️  Internal smoke tests already passed in deploy.sh"
           sleep 5
 
           # Test external HTTPS endpoint
@@ -169,8 +170,7 @@ jobs:
           fi
           echo "✅ External HTTPS is working"
 
-          echo "✅ External smoke tests passed"
-          echo "⚠️  Note: API smoke tests skipped - backend health verified internally"
+          echo "✅ External verification passed"
 
       - name: 📊 Post-Deployment Status
         if: success()

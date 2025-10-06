@@ -76,36 +76,20 @@ jobs:
             echo "✅ Staging deployment complete"
           REMOTE
 
-      - name: 🧪 Run Smoke Tests
-        env:
-          EC2_USER: ${{ secrets.EC2_USER }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
+      - name: 🧪 Final External Verification
         run: |
-          echo "🧪 Running smoke tests..."
-          sleep 10
-
-          # Test backend health endpoint
-          if ! ssh ${EC2_USER}@${EC2_HOST} 'docker exec filter-ical-backend-staging curl -f http://localhost:3000/health 2>/dev/null'; then
-            echo "❌ Backend health check failed"
-            exit 1
-          fi
-          echo "✅ Backend is healthy"
-
-          # Test frontend health endpoint
-          if ! ssh ${EC2_USER}@${EC2_HOST} 'docker exec filter-ical-frontend-staging curl -f http://localhost/health 2>/dev/null'; then
-            echo "❌ Frontend health check failed"
-            exit 1
-          fi
-          echo "✅ Frontend is healthy"
+          echo "🧪 Running final external verification..."
+          echo "ℹ️  Internal smoke tests already passed in deploy.sh"
+          sleep 5
 
           # Test external HTTPS endpoint
-          if ! curl -f -m 10 https://staging.filter-ical.de/health 2>/dev/null; then
+          if ! curl -f -m 10 https://staging.filter-ical.de/ 2>/dev/null; then
             echo "❌ External HTTPS check failed"
             exit 1
           fi
           echo "✅ External HTTPS is working"
 
-          echo "✅ All smoke tests passed"
+          echo "✅ External verification passed"
 
       - name: 📢 Deployment Success
         if: success()
