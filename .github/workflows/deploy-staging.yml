@@ -52,7 +52,7 @@ jobs:
 
             # Reload nginx to pick up config changes
             echo "🔄 Reloading platform nginx..."
-            docker exec nginx-platform nginx -t && docker exec nginx-platform nginx -s reload
+            docker exec platform-nginx-staging nginx -t && docker exec platform-nginx-staging nginx -s reload
 
             # Authenticate to GitHub Container Registry
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u duersjefen --password-stdin

@@ -74,7 +74,7 @@ jobs:
 
             # Reload nginx to pick up config changes
             echo "🔄 Reloading platform nginx..."
-            docker exec nginx-platform nginx -t && docker exec nginx-platform nginx -s reload
+            docker exec platform-nginx nginx -t && docker exec platform-nginx nginx -s reload
 
             # Verify database connectivity
             echo "🔍 Verifying database connectivity..."
