@@ -50,6 +50,10 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
+            # Reload nginx to pick up config changes
+            echo "🔄 Reloading platform nginx..."
+            docker exec nginx-platform nginx -t && docker exec nginx-platform nginx -s reload
+
             # Authenticate to GitHub Container Registry
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u duersjefen --password-stdin
 
