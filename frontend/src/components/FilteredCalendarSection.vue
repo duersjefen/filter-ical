@@ -143,7 +143,7 @@
                 <div
                   v-for="(group, groupId) in groups"
                   :key="groupId"
-                  class="relative bg-white dark:bg-gray-800 rounded-xl p-3 border shadow-sm cursor-default"
+                  class="relative bg-white dark:bg-gray-800 rounded-xl p-3 border shadow-sm cursor-default overflow-hidden"
                   :class="getGroupDisplayClass(groupId)"
                 >
                   <!-- Enhanced status indicator with gradient -->
