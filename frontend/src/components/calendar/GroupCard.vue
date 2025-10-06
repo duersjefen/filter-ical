@@ -134,53 +134,56 @@
     <!-- Enhanced Card Content with modern button design -->
     <div class="p-6 bg-gray-50 dark:bg-gray-800">
       
-      <!-- Compact Action Buttons -->
-      <div class="space-y-2">
-        <!-- Primary Action Button - Gradient when both active -->
+      <!-- Action Buttons - Primary individual actions, secondary combined action -->
+      <div class="space-y-3">
+        <!-- Primary Individual Control Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Subscribe Button - Primary, prominent when subscribed -->
+          <button
+            @click.stop="toggleGroupSubscription"
+            :class="isGroupSubscribed
+              ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-2 border-green-500 hover:border-green-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50 min-h-[48px]'
+              : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-green-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-gray-300/50 min-h-[48px] dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-green-500'"
+            :title="isGroupSubscribed ? $t('status.unsubscribeFromGroup') : $t('status.subscribeToGroup')"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path v-if="isGroupSubscribed" d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+              <path v-else d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
+            </svg>
+            <span>{{ isGroupSubscribed ? $t('status.subscribed') : $t('status.subscribe') }}</span>
+          </button>
+
+          <!-- Select All Button - Primary, prominent when selected -->
+          <button
+            @click.stop="toggleSelectAllRecurringEvents"
+            :class="areAllRecurringEventsSelected
+              ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-500 hover:border-blue-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 min-h-[48px]'
+              : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-blue-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-gray-300/50 min-h-[48px] dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-blue-500'"
+            :title="areAllRecurringEventsSelected ? $t('status.deselectAllEvents') : $t('status.selectAllEvents')"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path v-if="areAllRecurringEventsSelected" fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              <path v-else fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ areAllRecurringEventsSelected ? $t('status.selected') : $t('status.selectAll') }}</span>
+          </button>
+        </div>
+
+        <!-- Secondary Combined Action Button - Less prominent -->
         <button
           @click.stop="toggleSubscribeAndSelect"
           class="w-full"
           :class="isBothSubscribedAndSelected
-            ? 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 hover:from-green-600 hover:via-teal-600 hover:to-blue-600 border-2 border-teal-500 hover:border-teal-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-teal-500/50 min-h-[44px]'
-            : 'inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 border-2 border-gray-600 hover:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-gray-500/50 min-h-[44px]'"
+            ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-teal-700 bg-gradient-to-r from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 border border-teal-300 hover:border-teal-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:from-teal-900/20 dark:to-teal-800/40 dark:text-teal-300 dark:border-teal-700 dark:hover:from-teal-800/40 dark:hover:to-teal-900/60'
+            : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 hover:border-gray-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-600'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
-          <!-- Standardized SVG Icon -->
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
             <path v-if="isBothSubscribedAndSelected" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             <path v-else fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
           </svg>
-          
-          <!-- Button text -->
-          <span class="font-semibold text-sm">
-            {{ isBothSubscribedAndSelected ? $t('groupCard.subscribedSelected') : $t('groupCard.subscribeSelect') }}
-          </span>
+          <span>{{ isBothSubscribedAndSelected ? $t('groupCard.subscribedSelected') : $t('groupCard.subscribeSelect') }}</span>
         </button>
-        
-        <!-- Individual Control Buttons -->
-        <div class="grid grid-cols-2 gap-2">
-          <!-- Subscribe Button - Green when subscribed -->
-          <button
-            @click.stop="toggleGroupSubscription"
-            :class="isGroupSubscribed
-              ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-green-700 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-transparent hover:border-green-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 dark:from-green-900/20 dark:to-green-800/40 dark:text-green-300 dark:hover:from-green-800/40 dark:hover:to-green-900/60 dark:hover:text-green-200'
-              : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border border-transparent hover:border-gray-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300'"
-            :title="isGroupSubscribed ? $t('status.unsubscribeFromGroup') : $t('status.subscribeToGroup')"
-          >
-            <span>{{ isGroupSubscribed ? $t('status.subscribed') : $t('status.subscribe') }}</span>
-          </button>
-          
-          <!-- Select All Button -->
-          <button
-            @click.stop="toggleSelectAllRecurringEvents"
-            :class="areAllRecurringEventsSelected 
-              ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-transparent hover:border-blue-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:from-blue-900/20 dark:to-blue-800/40 dark:text-blue-300 dark:hover:from-blue-800/40 dark:hover:to-blue-900/60 dark:hover:text-blue-200' 
-              : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border border-transparent hover:border-gray-200 rounded-lg opacity-75 hover:opacity-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:from-gray-700 dark:to-gray-600 dark:text-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500 dark:hover:text-gray-300'"
-            :title="areAllRecurringEventsSelected ? $t('status.deselectAllEvents') : $t('status.selectAllEvents')"
-          >
-            <span>{{ areAllRecurringEventsSelected ? $t('status.selected') : $t('status.selectAll') }}</span>
-          </button>
-        </div>
       </div>
     </div>
     
