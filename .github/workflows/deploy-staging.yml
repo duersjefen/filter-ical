@@ -50,9 +50,20 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
+            # Regenerate nginx configs from projects.yml
+            echo "🔧 Regenerating nginx configurations..."
+            python3 lib/generate-nginx-configs.py
+
+            # Validate nginx config before reloading
+            echo "🔍 Validating nginx configuration..."
+            if ! docker exec platform-nginx-staging nginx -t; then
+              echo "❌ Nginx configuration is invalid - aborting deployment"
+              exit 1
+            fi
+
             # Reload nginx to pick up config changes
             echo "🔄 Reloading platform nginx..."
-            docker exec platform-nginx-staging nginx -t && docker exec platform-nginx-staging nginx -s reload
+            docker exec platform-nginx-staging nginx -s reload
 
             # Authenticate to GitHub Container Registry
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u duersjefen --password-stdin
