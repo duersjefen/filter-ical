@@ -518,7 +518,7 @@
   },
   "status": {
     "subscribed": "SUBSCRIBED",
-    "allSelected": "ALL SELECTED",
+    "allSelected": "All Selected",
     "partial": "PARTIAL",
     "notSelected": "NOT SELECTED",
     "unnamedGroup": "Unnamed Group",

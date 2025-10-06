@@ -530,7 +530,7 @@
   },
   "status": {
     "subscribed": "ABONNIERT",
-    "allSelected": "ALLE AUSGEWÄHLT",
+    "allSelected": "Alle ausgewählt",
     "partial": "TEILWEISE",
     "notSelected": "NICHT AUSGEWÄHLT",
     "unnamedGroup": "Unbenannte Gruppe",
