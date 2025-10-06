@@ -476,13 +476,22 @@ paths:
                 subscribed_event_ids:
                   type: array
                   items:
-                    type: integer
-                  example: [1, 2, 5]
+                    type: string
+                  example: ["Special Conference", "One-time Meeting"]
+                  description: "Manual whitelist: event titles to include that are NOT in subscribed groups"
                 subscribed_group_ids:
                   type: array
                   items:
                     type: integer
                   example: [1, 3]
+                  description: "Group subscriptions: all events in these groups (including future ones) are automatically included"
+                unselected_event_ids:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Daily Standup"]
+                  description: "Manual blacklist: event titles to exclude from subscribed groups"
+                  default: []
       responses:
         '201':
           description: Filter created
@@ -1508,6 +1517,13 @@ components:
 
     Filter:
       type: object
+      description: |
+        Filter for calendar events using the three-list model:
+        - **subscribed_group_ids**: Groups to subscribe to (all events in group, including future ones)
+        - **subscribed_event_ids**: Manual whitelist (event titles NOT in subscribed groups)
+        - **unselected_event_ids**: Manual blacklist (event titles FROM subscribed groups to exclude)
+
+        Computation: included_titles = (group_titles ∪ subscribed_event_ids) - unselected_event_ids
       properties:
         id:
           type: integer
@@ -1529,14 +1545,22 @@ components:
         subscribed_event_ids:
           type: array
           items:
-            type: integer
-          example: [1, 2, 5]
+            type: string
+          example: ["Special Conference", "One-time Meeting"]
+          description: "Manual whitelist: event titles to include that are NOT in subscribed groups. For domain filters, these are event titles (strings). For personal calendar filters, these can be event IDs (integers)."
         subscribed_group_ids:
           type: array
           items:
             type: integer
           example: [1, 3]
-          description: "Only present for domain calendar filters"
+          description: "Group subscriptions (domain filters only): all events in these groups, including future recurring events, are automatically included"
+        unselected_event_ids:
+          type: array
+          items:
+            type: string
+          example: ["Daily Standup"]
+          description: "Manual blacklist: event titles to exclude from subscribed groups. Events manually removed from subscribed groups."
+          default: []
         include_future_events:
           type: boolean
           nullable: true

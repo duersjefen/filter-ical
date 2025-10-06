@@ -145,8 +145,9 @@ class Filter(Base):
     username = Column(String(100), nullable=True)  # Optional user scoping
     
     # Filter data stored as JSON arrays for flexibility
-    subscribed_event_ids = Column(JSON, nullable=True, default=list)  # Array of event IDs
+    subscribed_event_ids = Column(JSON, nullable=True, default=list)  # Array of event IDs/titles
     subscribed_group_ids = Column(JSON, nullable=True, default=list)   # Array of group IDs (domain only)
+    unselected_event_ids = Column(JSON, nullable=True, default=list)   # Array of event titles to exclude (domain only)
 
     # Personal calendar option: include future recurring events
     include_future_events = Column(Boolean, nullable=True, default=False)  # Personal calendars only

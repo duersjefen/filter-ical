@@ -396,7 +396,8 @@ async def create_domain_filter(
             domain_key=domain,
             username=username,
             subscribed_event_ids=filter_data.get("subscribed_event_ids", []),
-            subscribed_group_ids=filter_data.get("subscribed_group_ids", [])
+            subscribed_group_ids=filter_data.get("subscribed_group_ids", []),
+            unselected_event_ids=filter_data.get("unselected_event_ids", [])
         )
         if not success:
             raise HTTPException(status_code=400, detail=error)
@@ -409,6 +410,7 @@ async def create_domain_filter(
             "username": filter_obj.username,
             "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
             "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
+            "unselected_event_ids": filter_obj.unselected_event_ids or [],
             "link_uuid": filter_obj.link_uuid,
             "export_url": f"/ical/{filter_obj.link_uuid}.ics",
             # Add filter_config for frontend compatibility
@@ -455,6 +457,7 @@ async def get_domain_filters(
                 "username": filter_obj.username,
                 "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
                 "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
+                "unselected_event_ids": filter_obj.unselected_event_ids or [],
                 "link_uuid": filter_obj.link_uuid,
                 "export_url": f"/ical/{filter_obj.link_uuid}.ics",
                 # Add filter_config for frontend compatibility
@@ -507,11 +510,13 @@ async def update_domain_filter(
             existing_filter.subscribed_event_ids = filter_data["subscribed_event_ids"]
         if "subscribed_group_ids" in filter_data:
             existing_filter.subscribed_group_ids = filter_data["subscribed_group_ids"]
-        
+        if "unselected_event_ids" in filter_data:
+            existing_filter.unselected_event_ids = filter_data["unselected_event_ids"]
+
         existing_filter.updated_at = func.now()
         db.commit()
         db.refresh(existing_filter)
-        
+
         # Return updated filter data
         return {
             "id": existing_filter.id,
@@ -520,6 +525,7 @@ async def update_domain_filter(
             "username": existing_filter.username,
             "subscribed_event_ids": existing_filter.subscribed_event_ids or [],
             "subscribed_group_ids": existing_filter.subscribed_group_ids or [],
+            "unselected_event_ids": existing_filter.unselected_event_ids or [],
             "link_uuid": existing_filter.link_uuid,
             "export_url": f"/ical/{existing_filter.link_uuid}.ics",
             # Add filter_config for frontend compatibility

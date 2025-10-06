@@ -280,6 +280,7 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
                  domain_key: Optional[str] = None, username: Optional[str] = None,
                  subscribed_event_ids: Optional[List[int]] = None,
                  subscribed_group_ids: Optional[List[int]] = None,
+                 unselected_event_ids: Optional[List[str]] = None,
                  include_future_events: Optional[bool] = None) -> Tuple[bool, Optional[Filter], str]:
     """
     Create filter in database.
@@ -290,8 +291,9 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
         calendar_id: Calendar ID for user filters
         domain_key: Domain key for domain filters
         username: Username for user scoping
-        subscribed_event_ids: Event IDs to include
-        subscribed_group_ids: Group IDs to include
+        subscribed_event_ids: Event IDs/titles to include
+        subscribed_group_ids: Group IDs to include (domain filters only)
+        unselected_event_ids: Event titles to exclude from groups (domain filters only)
         include_future_events: Include future recurring events (personal calendars only)
 
     Returns:
@@ -319,6 +321,7 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
             username=username,
             subscribed_event_ids=subscribed_event_ids,
             subscribed_group_ids=subscribed_group_ids,
+            unselected_event_ids=unselected_event_ids,
             include_future_events=include_future_events
         )
         
