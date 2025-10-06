@@ -26,11 +26,11 @@ const initializeUsername = () => {
 // Validation function for usernames
 const isValidUsername = (name) => {
   if (!name || typeof name !== 'string') return false
-  
+
   const trimmed = name.trim()
-  // Allow 3-20 characters, alphanumeric plus underscore and hyphen
-  const validPattern = /^[a-zA-Z0-9_-]{3,20}$/
-  
+  // Allow 3-20 characters, alphanumeric plus underscore, hyphen, and spaces
+  const validPattern = /^[a-zA-Z0-9_\- ]{3,20}$/
+
   return validPattern.test(trimmed)
 }
 

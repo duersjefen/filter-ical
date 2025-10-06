@@ -130,12 +130,20 @@
           <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
             <!-- Groups Display for Group-enabled Calendars -->
             <div v-if="hasGroups && groups && Object.keys(groups).length > 0">
+              <!-- Header label for clarity -->
+              <div class="mb-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>{{ $t('filteredCalendar.currentFilter') }}</span>
+              </div>
+
               <!-- Enhanced Groups Grid with better spacing -->
               <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                <div 
-                  v-for="(group, groupId) in groups" 
+                <div
+                  v-for="(group, groupId) in groups"
                   :key="groupId"
-                  class="relative bg-white dark:bg-gray-800 rounded-xl p-3 border shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105"
+                  class="relative bg-white dark:bg-gray-800 rounded-xl p-3 border shadow-sm cursor-default"
                   :class="getGroupDisplayClass(groupId)"
                 >
                   <!-- Enhanced status indicator with gradient -->
@@ -194,6 +202,14 @@
             
             <!-- Enhanced display for Personal Calendars (Non-Group) -->
             <div v-else>
+              <!-- Header label for clarity -->
+              <div v-if="selectedRecurringEvents.length > 0" class="mb-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>{{ $t('filteredCalendar.currentFilter') }}</span>
+              </div>
+
               <div v-if="selectedRecurringEvents.length > 0" class="space-y-3">
                 <!-- Recurring Events - Show all names as chips -->
                 <div v-if="selectedMainRecurringEventNames.length > 0" class="flex flex-wrap gap-2">
@@ -614,10 +630,30 @@ const shouldShowSection = computed(() => {
 
 // Auto-populate form name when groups/events selected
 const updateFormName = () => {
-  if ((props.selectedRecurringEvents.length > 0 || (props.subscribedGroups && props.subscribedGroups.size > 0)) && !createForm.value.name.trim()) {
-    const groupCount = props.subscribedGroups ? props.subscribedGroups.size : 0
-    const suffix = groupCount > 0 ? t('filteredCalendar.groupSelection') : t('filteredCalendar.eventSelection')
-    createForm.value.name = `${props.selectedCalendar.name} - ${suffix}`
+  // Only auto-fill if we're not in update mode
+  if (isUpdateMode.value) return
+
+  const hasSelection = props.selectedRecurringEvents.length > 0 || (props.subscribedGroups && props.subscribedGroups.size > 0)
+
+  if (hasSelection) {
+    const userId = getUserId()
+
+    // Find the highest filter number from existing filtered calendars
+    const filterNumbers = filteredCalendars.value
+      .map(cal => {
+        // Match pattern: "{anything} - Filter {number}"
+        const match = cal.name.match(/Filter (\d+)$/i)
+        return match ? parseInt(match[1], 10) : 0
+      })
+      .filter(num => num > 0)
+
+    // Get next filter number (highest + 1, or 1 if none exist)
+    const nextNumber = filterNumbers.length > 0 ? Math.max(...filterNumbers) + 1 : 1
+
+    createForm.value.name = `${userId} - Filter ${nextNumber}`
+  } else {
+    // Clear the name when nothing is selected
+    createForm.value.name = ''
   }
 }
 
@@ -772,21 +808,29 @@ const loadFilterIntoPage = (calendar) => {
   // Extract the filter configuration
   const filterConfig = calendar.filter_config
   if (!filterConfig) return
-  
+
   // Get recurring events and groups to select
   const recurringEventsToSelect = filterConfig.recurring_events || []
   const groupsToSelect = filterConfig.groups || []
-  
+
   // Enter update mode
   isUpdateMode.value = true
   updateModeCalendar.value = calendar
   createForm.value.name = calendar.name
-  
+
   // Emit to parent component to load the filter with both events and groups
   emit('load-filter', {
     recurringEvents: recurringEventsToSelect,
     groups: groupsToSelect,
     calendarName: calendar.name
+  })
+
+  // Scroll to top of page smoothly after DOM updates
+  nextTick(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
   })
 }
 
@@ -1185,25 +1229,33 @@ watch(() => getUserId(), async (newUserId, oldUserId) => {
 }, { immediate: false })
 
 // Watch for recurring event changes to auto-populate form name and track user interaction
-watch([() => props.selectedRecurringEvents], () => {
-  updateFormName()
-  
-  // Track if user has ever selected events to prevent section from disappearing
-  if (props.selectedRecurringEvents.length > 0) {
-    hasEverHadRecurringEvents.value = true
-  }
-  
-  // Exit update mode if no events are selected (with delay to allow parent to update props)
-  if (props.selectedRecurringEvents.length === 0 && isUpdateMode.value) {
-    // Use nextTick to allow parent component to process the load-filter event first
-    setTimeout(() => {
-      // Only exit if still no events after allowing time for parent to update
-      if (props.selectedRecurringEvents.length === 0 && isUpdateMode.value) {
-        exitUpdateMode()
-      }
-    }, 100)
-  }
-}, { immediate: true })
+watch(
+  [
+    () => props.selectedRecurringEvents.length,
+    () => props.subscribedGroups?.size || 0,
+    () => props.selectedCalendar?.id
+  ],
+  () => {
+    updateFormName()
+
+    // Track if user has ever selected events to prevent section from disappearing
+    if (props.selectedRecurringEvents.length > 0) {
+      hasEverHadRecurringEvents.value = true
+    }
+
+    // Exit update mode if no events are selected (with delay to allow parent to update props)
+    if (props.selectedRecurringEvents.length === 0 && isUpdateMode.value) {
+      // Use nextTick to allow parent component to process the load-filter event first
+      setTimeout(() => {
+        // Only exit if still no events after allowing time for parent to update
+        if (props.selectedRecurringEvents.length === 0 && isUpdateMode.value) {
+          exitUpdateMode()
+        }
+      }, 100)
+    }
+  },
+  { immediate: true }
+)
 
 // Lifecycle
 onMounted(async () => {
