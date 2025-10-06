@@ -67,6 +67,10 @@ jobs:
 
             cd /opt/multi-tenant-platform
 
+            # Pull latest platform configs (env files, nginx configs, etc.)
+            echo "📥 Pulling latest platform configurations..."
+            git pull origin main
+
             # Verify database connectivity
             echo "🔍 Verifying database connectivity..."
             if docker exec postgres-platform psql -U filterical_user -d filterical_production -c "SELECT 1;" > /dev/null 2>&1; then

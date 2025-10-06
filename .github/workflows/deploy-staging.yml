@@ -45,6 +45,10 @@ jobs:
             echo "🚀 Deploying filter-ical to staging..."
             cd /opt/multi-tenant-platform
 
+            # Pull latest platform configs (env files, nginx configs, etc.)
+            echo "📥 Pulling latest platform configurations..."
+            git pull origin main
+
             # Authenticate to GitHub Container Registry
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u duersjefen --password-stdin
 
