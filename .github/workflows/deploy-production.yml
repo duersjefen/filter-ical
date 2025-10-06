@@ -149,8 +149,8 @@ jobs:
           fi
           echo "✅ External HTTPS is working"
 
-          # Test API endpoint
-          if ! curl -f -m 10 https://filter-ical.de/api/health 2>/dev/null; then
+          # Test API endpoint (check domains endpoint as a real API test)
+          if ! curl -f -m 10 https://filter-ical.de/api/domains 2>/dev/null; then
             echo "❌ External API check failed"
             exit 1
           fi
