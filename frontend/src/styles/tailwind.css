@@ -2,6 +2,13 @@
 
 @theme {
   --default-transition-duration: 300ms;
+
+  /* Primary Color Scheme: Green + Blue Combination
+   * Used for "subscribed & selected" states throughout the app
+   * - Green (subscription): green-500 (#22c55e), green-400, green-50
+   * - Blue (selection): blue-500 (#3b82f6), blue-400, blue-100
+   * - Combined gradient: from-green-{shade} to-blue-{shade}
+   */
 }
 
 /* Enable class-based dark mode for Tailwind v4 */

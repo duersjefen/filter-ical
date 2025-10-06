@@ -93,12 +93,14 @@
               </span>
             </div>
             <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
-              <div 
+              <div
                 class="h-full transition-all duration-500 ease-out rounded-full"
-                :class="selectedGroupRecurringEvents.length === 0 
-                  ? 'bg-gray-600 w-0' 
+                :class="selectedGroupRecurringEvents.length === 0
+                  ? 'bg-gray-600 w-0'
                   : selectedGroupRecurringEvents.length === recurringEventsCount
-                    ? 'bg-gradient-to-r from-green-400 to-emerald-500'
+                    ? (isGroupSubscribed
+                        ? 'bg-gradient-to-r from-green-400 to-blue-500'
+                        : 'bg-gradient-to-r from-green-400 to-emerald-500')
                     : 'bg-gradient-to-r from-blue-400 to-indigo-500'"
                 :style="{ width: `${(selectedGroupRecurringEvents.length / recurringEventsCount) * 100}%` }"
               ></div>
@@ -174,7 +176,7 @@
           @click.stop="toggleSubscribeAndSelect"
           class="w-full"
           :class="isBothSubscribedAndSelected
-            ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-teal-700 bg-gradient-to-r from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 border border-teal-300 hover:border-teal-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:from-teal-900/20 dark:to-teal-800/40 dark:text-teal-300 dark:border-teal-700 dark:hover:from-teal-800/40 dark:hover:to-teal-900/60'
+            ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-green-700 bg-gradient-to-r from-green-50 to-blue-100 hover:from-green-100 hover:to-blue-200 border border-green-300 hover:border-blue-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 dark:from-green-900/20 dark:to-blue-800/40 dark:text-green-300 dark:border-green-700 dark:hover:from-green-800/40 dark:hover:to-blue-900/60'
             : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 hover:border-gray-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-600'"
           :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
         >
