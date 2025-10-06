@@ -553,23 +553,40 @@ const getRecurringEventDayPattern = (recurringEvent) => {
 
 // Enhanced date formatting for individual events with i18n support
 function formatCompactEventDate(event, hasConsistentDay = false) {
-  const date = new Date(event.start || event.dtstart)
+  const startDate = new Date(event.start || event.dtstart)
+  const endField = event.end || event.dtend || event.end_time || event.endTime
+  const endDate = endField ? new Date(endField) : null
+
+  // Check if it's a multi-day event
+  if (endDate) {
+    const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+    const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime()
+
+    // For multi-day events, use formatDateRange which handles them properly
+    if (isMultiDay) {
+      return formatDateRange(event)
+    }
+  }
+
+  // Single-day event - use compact formatting
+  const date = startDate
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  
+
   // Calculate days difference
   const diffTime = eventDate - today
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
+
   // Get current locale for proper formatting
   const locale = t('language.switch') === 'Sprache wechseln' ? 'de-DE' : 'en-US'
-  
+
   // Format time part
-  const timeStr = date.toLocaleTimeString(locale, { 
-    hour: 'numeric', 
+  const timeStr = date.toLocaleTimeString(locale, {
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: false 
+    hour12: false
   })
   
   // Smart date formatting based on proximity
