@@ -705,7 +705,8 @@ const createFilteredCalendar = async () => {
       createForm.value.name,
       filterConfig.groups,
       filterConfig.recurring_events,
-      filterConfig.include_future_events
+      filterConfig.include_future_events,
+      props.groups || {}
     )
   }
 

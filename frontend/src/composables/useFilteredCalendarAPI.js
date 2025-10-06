@@ -123,6 +123,7 @@ export function useFilteredCalendarAPI() {
         username: filter.username,
         subscribed_event_ids: filter.subscribed_event_ids || [],
         subscribed_group_ids: filter.subscribed_group_ids || [],
+        unselected_event_ids: filter.unselected_event_ids || [],
         link_uuid: filter.link_uuid,
         export_url: filter.export_url || API_ENDPOINTS.ICAL_EXPORT(filter.link_uuid),
         filter_config: filter.filter_config || {
@@ -137,7 +138,7 @@ export function useFilteredCalendarAPI() {
     }
   }
 
-  const createFilteredCalendar = async (sourceCalendarId, name, selectedGroups, selectedEvents, includeFutureEvents) => {
+  const createFilteredCalendar = async (sourceCalendarId, name, selectedGroups, selectedEvents, includeFutureEvents, groups = {}) => {
     if (!name?.trim()) {
       setError('Name is required')
       return false
@@ -159,11 +160,43 @@ export function useFilteredCalendarAPI() {
 
     creating.value = true
 
-    // Map to backend filter format - convert recurring event names to subscribed_event_ids
+    // Compute the three lists for domain filters
+    const subscribedGroupIds = selectedGroups || []
+    let subscribedEventIds = selectedEvents || []
+    const unselectedEventIds = []
+
+    // For domain calendars: compute whitelist and blacklist
+    if (subscribedGroupIds.length > 0 && Object.keys(groups).length > 0) {
+      // Get all event titles from subscribed groups
+      const eventTitlesInSubscribedGroups = new Set()
+      subscribedGroupIds.forEach(groupId => {
+        const group = groups[groupId]
+        if (group?.recurring_events) {
+          group.recurring_events.forEach(event => {
+            if (event.event_count > 0) {
+              eventTitlesInSubscribedGroups.add(event.title)
+            }
+          })
+        }
+      })
+
+      // Whitelist: events selected but NOT in any subscribed group
+      subscribedEventIds = selectedEvents.filter(title => !eventTitlesInSubscribedGroups.has(title))
+
+      // Blacklist: events in subscribed groups but NOT selected
+      eventTitlesInSubscribedGroups.forEach(title => {
+        if (!selectedEvents.includes(title)) {
+          unselectedEventIds.push(title)
+        }
+      })
+    }
+
+    // Map to backend filter format
     const payload = {
       name: name.trim(),
-      subscribed_group_ids: selectedGroups || [],
-      subscribed_event_ids: selectedEvents || []
+      subscribed_group_ids: subscribedGroupIds,
+      subscribed_event_ids: subscribedEventIds,
+      unselected_event_ids: unselectedEventIds
     }
 
     // Only add include_future_events for personal calendars when explicitly set to true
@@ -187,6 +220,7 @@ export function useFilteredCalendarAPI() {
         username: result.data.username,
         subscribed_event_ids: result.data.subscribed_event_ids || [],
         subscribed_group_ids: result.data.subscribed_group_ids || [],
+        unselected_event_ids: result.data.unselected_event_ids || [],
         link_uuid: result.data.link_uuid,
         export_url: result.data.export_url || API_ENDPOINTS.ICAL_EXPORT(result.data.link_uuid),
         filter_config: result.data.filter_config || {
