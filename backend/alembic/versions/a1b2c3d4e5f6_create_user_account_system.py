@@ -22,7 +22,7 @@ from sqlalchemy.sql import func
 
 # revision identifiers, used by Alembic.
 revision = 'a1b2c3d4e5f6'
-down_revision = '291591d9697b'
+down_revision = '25986e61c39d'  # Updated to point to regenerated initial migration
 branch_labels = None
 depends_on = None
 
