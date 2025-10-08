@@ -57,7 +57,7 @@ def create_calendar(db: Session, name: str, source_url: str,
         name: Calendar name
         source_url: iCal source URL
         calendar_type: "user" or "domain"
-        domain_key: Domain key for domain calendars
+        domain_key: Domain key for domain calendars (creates DomainAuth entry)
         user_id: User ID for user scoping
 
     Returns:
@@ -71,18 +71,28 @@ def create_calendar(db: Session, name: str, source_url: str,
         return False, None, error_msg
 
     try:
-        # Create calendar data using pure function
+        # Create calendar data using pure function (no domain_key in calendar)
         calendar_data = create_calendar_data(
             name=name,
             source_url=source_url,
             calendar_type=calendar_type,
-            domain_key=domain_key,
             user_id=user_id
         )
 
         # Create database object
         calendar = Calendar(**calendar_data)
         db.add(calendar)
+        db.flush()  # Get calendar.id without committing
+
+        # For domain calendars, create DomainAuth entry
+        if calendar_type == "domain" and domain_key:
+            from ..models.domain_auth import DomainAuth
+            domain_auth = DomainAuth(
+                domain_key=domain_key,
+                calendar_id=calendar.id
+            )
+            db.add(domain_auth)
+
         db.commit()
         db.refresh(calendar)
 
@@ -145,19 +155,27 @@ def get_calendar_by_id(db: Session, calendar_id: int,
 def get_calendar_by_domain(db: Session, domain_key: str) -> Optional[Calendar]:
     """
     Get domain calendar by domain key.
-    
+
     Args:
         db: Database session
         domain_key: Domain identifier
-        
+
     Returns:
         Calendar object or None
-        
+
     I/O Operation - Database query.
+    Note: domain_key moved from calendars to domain_auth table (migration a1b2c3d4e5f6)
     """
-    return db.query(Calendar).filter(
-        and_(Calendar.domain_key == domain_key, Calendar.type == "domain")
+    from ..models.domain_auth import DomainAuth
+
+    # Join with DomainAuth to find calendar by domain_key
+    result = db.query(Calendar).join(
+        DomainAuth, DomainAuth.calendar_id == Calendar.id
+    ).filter(
+        and_(DomainAuth.domain_key == domain_key, Calendar.type == "domain")
     ).first()
+
+    return result
 
 
 def delete_calendar(db: Session, calendar_id: int,

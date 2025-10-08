@@ -11,7 +11,7 @@ from typing import Dict, List, Any, Optional, Tuple
 
 
 def create_calendar_data(name: str, source_url: str, calendar_type: str = "user",
-                        domain_key: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
+                        user_id: Optional[int] = None) -> Dict[str, Any]:
     """
     Create new calendar data structure.
 
@@ -19,11 +19,13 @@ def create_calendar_data(name: str, source_url: str, calendar_type: str = "user"
         name: Calendar name
         source_url: iCal source URL
         calendar_type: "user" or "domain"
-        domain_key: Domain key for domain calendars
         user_id: User ID for user scoping
 
     Returns:
         Calendar data dictionary
+
+    Note: domain_key is no longer stored in calendars table.
+    It's now in domain_auth table (see migration a1b2c3d4e5f6).
 
     Pure function - creates new data without side effects.
     """
@@ -33,7 +35,6 @@ def create_calendar_data(name: str, source_url: str, calendar_type: str = "user"
         "name": name.strip(),
         "source_url": source_url.strip(),
         "type": calendar_type,
-        "domain_key": domain_key,
         "user_id": user_id,
         "last_fetched": None,
         "created_at": now,

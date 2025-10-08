@@ -89,10 +89,22 @@ def test_db_engine():
     engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     
     # Import all models to register them with SQLAlchemy
-    from app.models.calendar import Calendar, Event, Group, RecurringEventGroup, AssignmentRule, Filter
-    
+    from app.models import (
+        Calendar, Event, Group, RecurringEventGroup, AssignmentRule, Filter,
+        DomainRequest, DomainAuth, AppSettings, User, UserDomainAccess, DomainBackup
+    )
+
+    # Debug: print tables
+    print(f"DEBUG: Tables in metadata: {list(Base.metadata.tables.keys())}")
+
     # Create all tables
     Base.metadata.create_all(bind=engine)
+
+    # Debug: verify tables were created
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    created_tables = inspector.get_table_names()
+    print(f"DEBUG: Tables created in database: {created_tables}")
     
     yield engine
     
@@ -150,11 +162,12 @@ def test_client(test_db_engine) -> Generator[TestClient, None, None]:
     app.dependency_overrides[get_db] = override_get_db
     
     # Import and include routers
-    from app.routers import calendars, domains, ical_export, test
+    from app.routers import calendars, domains, ical_export, test, domain_requests
     app.include_router(calendars.router, prefix="/calendars", tags=["calendars"])
     app.include_router(domains.router, prefix="/domains", tags=["domains"])
     app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
     app.include_router(test.router, prefix="/test", tags=["test"])
+    app.include_router(domain_requests.router, prefix="/api", tags=["domain_requests"])
     
     # Health check endpoint
     @app.get("/health")

@@ -4,13 +4,15 @@ Users router - User account management (register, login, profile).
 CONTRACT-DRIVEN: Implementation matches OpenAPI specification.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime, timedelta, timezone
 
 from ..core.database import get_db
 from ..core.auth import get_current_user_id, require_user_auth
+from ..core.rate_limit import limiter
 from ..models.user import User
 from ..services import auth_service
 
@@ -22,16 +24,28 @@ router = APIRouter()
 # =============================================================================
 
 class UserRegisterRequest(BaseModel):
-    """Request body for user registration."""
+    """
+    Request body for user registration.
+
+    Password is OPTIONAL - you can register with just a username for quick setup.
+    However, username-only accounts are insecure (anyone with your username can access).
+
+    For security, provide both username AND password.
+    """
     username: str
-    email: Optional[str] = None
-    password: Optional[str] = None
+    email: Optional[str] = None  # Optional - only needed for password reset
+    password: Optional[str] = None  # Optional - but recommended for security
 
 
 class UserLoginRequest(BaseModel):
-    """Request body for user login."""
+    """
+    Request body for user login.
+
+    Password is OPTIONAL - only required if your account has a password set.
+    Username-only accounts can login without a password.
+    """
     username: str
-    password: Optional[str] = None
+    password: Optional[str] = None  # Optional for username-only accounts
 
 
 class UserResponse(BaseModel):
@@ -66,10 +80,12 @@ class UpdateProfileRequest(BaseModel):
     "/api/users/register",
     response_model=AuthTokenResponse,
     summary="Register new user account",
-    description="Create user account. Email and password are optional for username-only accounts."
+    description="Password is OPTIONAL. Register with just username for quick setup (insecure), or add password for security."
 )
+@limiter.limit("5/minute")
 async def register_user(
-    request: UserRegisterRequest,
+    request: Request,
+    user_data: UserRegisterRequest,
     db: Session = Depends(get_db)
 ):
     """
@@ -80,24 +96,24 @@ async def register_user(
     - Username + password: Secure cross-device sync with authentication
     """
     # Validate username
-    is_valid, error_msg = auth_service.is_valid_username(request.username)
+    is_valid, error_msg = auth_service.is_valid_username(user_data.username)
     if not is_valid:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     # Validate email if provided
-    if request.email:
-        is_valid, error_msg = auth_service.is_valid_email(request.email)
+    if user_data.email:
+        is_valid, error_msg = auth_service.is_valid_email(user_data.email)
         if not is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     # Validate password if provided
-    if request.password:
-        is_valid, error_msg = auth_service.is_valid_password(request.password)
+    if user_data.password:
+        is_valid, error_msg = auth_service.is_valid_password(user_data.password)
         if not is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     # Check if username already exists
-    existing_user = db.query(User).filter(User.username == request.username).first()
+    existing_user = db.query(User).filter(User.username == user_data.username).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -105,8 +121,8 @@ async def register_user(
         )
 
     # Check if email already exists (if provided)
-    if request.email:
-        existing_email = db.query(User).filter(User.email == request.email).first()
+    if user_data.email:
+        existing_email = db.query(User).filter(User.email == user_data.email).first()
         if existing_email:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -115,13 +131,13 @@ async def register_user(
 
     # Hash password if provided
     password_hash = None
-    if request.password:
-        password_hash = auth_service.hash_password(request.password)
+    if user_data.password:
+        password_hash = auth_service.hash_password(user_data.password)
 
     # Create user
     user = User(
-        username=request.username,
-        email=request.email,
+        username=user_data.username,
+        email=user_data.email,
         password_hash=password_hash,
         role='user'
     )
@@ -155,10 +171,12 @@ async def register_user(
     "/api/users/login",
     response_model=AuthTokenResponse,
     summary="Login to user account",
-    description="Login with username. Password required only if account has one set."
+    description="Password is OPTIONAL. Only required if your account has a password. Username-only accounts login without password."
 )
+@limiter.limit("5/minute")
 async def login_user(
-    request: UserLoginRequest,
+    request: Request,
+    login_data: UserLoginRequest,
     db: Session = Depends(get_db)
 ):
     """
@@ -166,33 +184,72 @@ async def login_user(
 
     For username-only accounts, password is not required.
     For password-protected accounts, password must be provided.
+
+    Account lockout: 5 failed attempts = 15 minute lockout
     """
+    MAX_FAILED_ATTEMPTS = 5
+    LOCKOUT_DURATION_MINUTES = 15
+
     # Get user
-    user = db.query(User).filter(User.username == request.username).first()
+    user = db.query(User).filter(User.username == login_data.username).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
         )
 
+    # Check if account is locked
+    if user.account_locked_until:
+        now = datetime.now(timezone.utc)
+        if user.account_locked_until > now:
+            minutes_remaining = int((user.account_locked_until - now).total_seconds() / 60)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Account locked due to too many failed login attempts. Try again in {minutes_remaining} minutes."
+            )
+        else:
+            # Lockout expired - reset
+            user.account_locked_until = None
+            user.failed_login_attempts = 0
+            db.commit()
+
     # Check if password is required
     if user.password_hash:
         # Password-protected account
-        if not request.password:
+        if not login_data.password:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Password required for this account"
             )
 
         # Verify password
-        if not auth_service.verify_password(request.password, user.password_hash):
+        if not auth_service.verify_password(login_data.password, user.password_hash):
+            # Failed login - increment counter
+            user.failed_login_attempts += 1
+
+            if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
+                # Lock account
+                user.account_locked_until = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_DURATION_MINUTES)
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Account locked due to too many failed login attempts. Try again in {LOCKOUT_DURATION_MINUTES} minutes."
+                )
+
+            db.commit()
+            attempts_remaining = MAX_FAILED_ATTEMPTS - user.failed_login_attempts
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username or password"
+                detail=f"Invalid username or password. {attempts_remaining} attempts remaining before lockout."
             )
     else:
         # Username-only account - no password check needed
         pass
+
+    # Successful login - reset failed attempts
+    user.failed_login_attempts = 0
+    user.account_locked_until = None
+    db.commit()
 
     # Create JWT token
     token = auth_service.create_jwt_token(user.id, expiry_days=30)

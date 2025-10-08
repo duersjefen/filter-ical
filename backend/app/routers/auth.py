@@ -2,11 +2,12 @@
 Authentication router - Password reset endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..core.database import get_db
+from ..core.rate_limit import limiter
 from ..models.user import User
 from ..services import auth_service
 from ..services.email_service import send_password_reset_email
@@ -36,7 +37,9 @@ class MessageResponse(BaseModel):
     summary="Request password reset",
     description="Send password reset email to user"
 )
+@limiter.limit("3/minute")
 async def request_password_reset(
+    http_request: Request,
     request: PasswordResetRequestBody,
     db: Session = Depends(get_db)
 ):
@@ -69,7 +72,9 @@ async def request_password_reset(
     summary="Reset password with token",
     description="Reset user password using token from email"
 )
+@limiter.limit("5/minute")
 async def reset_password(
+    http_request: Request,
     request: PasswordResetBody,
     db: Session = Depends(get_db)
 ):
@@ -112,6 +117,7 @@ async def reset_password(
     description="Check if reset token is valid"
 )
 async def verify_reset_token(
+    request: Request,
     token: str,
     db: Session = Depends(get_db)
 ):
