@@ -1,8 +1,12 @@
 /**
  * Username Management Composable
  * Simple username state with localStorage persistence for UI preferences
+ *
+ * NOTE: This is a legacy composable. The system now uses JWT authentication.
+ * When a username is detected, it auto-registers/logs in to get a JWT token.
  */
 import { ref, watch } from 'vue'
+import { useAuth } from './useAuth'
 
 // Username state - reactive and persistent
 const username = ref('')
@@ -11,15 +15,26 @@ const STORAGE_KEY = 'icalViewer_username'
 // Username change callbacks for data source switching
 const usernameChangeCallbacks = new Set()
 
-// Initialize username from localStorage
-const initializeUsername = () => {
+// Initialize username from localStorage and auto-login
+const initializeUsername = async () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved && typeof saved === 'string') {
       username.value = saved.trim()
+
+      // Auto-login with saved username if not already authenticated
+      const auth = useAuth()
+      if (username.value && !localStorage.getItem('auth_token')) {
+        // Try login first (in case account exists)
+        const loginResult = await auth.login(username.value)
+        if (!loginResult.success) {
+          // If login fails, register new account (password-less)
+          await auth.register(username.value)
+        }
+      }
     }
   } catch (error) {
-    console.warn('Failed to load username from localStorage:', error)
+    // Silent fail - username loading is optional
   }
 }
 
@@ -62,15 +77,26 @@ export function useUsername() {
         })
       }
     } catch (error) {
-      console.warn('Failed to save username to localStorage:', error)
+      // Silent fail - username saving is optional
     }
   }, { immediate: false })
 
-  // Set username with validation
-  const setUsername = (newUsername) => {
+  // Set username with validation and auto-login
+  const setUsername = async (newUsername) => {
     if (newUsername && typeof newUsername === 'string') {
       const trimmed = newUsername.trim()
       username.value = trimmed
+
+      // Auto-register/login when username is set
+      if (trimmed) {
+        const auth = useAuth()
+        // Try login first
+        const loginResult = await auth.login(trimmed)
+        if (!loginResult.success) {
+          // If login fails, register new account
+          await auth.register(trimmed)
+        }
+      }
     } else {
       username.value = ''
     }

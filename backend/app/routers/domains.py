@@ -389,12 +389,20 @@ async def create_domain_filter(
         if "name" not in filter_data:
             raise HTTPException(status_code=400, detail="Filter name is required")
         
+        # Get user_id from username if provided
+        user_id = None
+        if username:
+            from ..models.user import User
+            user = db.query(User).filter(User.username == username).first()
+            if user:
+                user_id = user.id
+
         # Create filter
         success, filter_obj, error = create_filter(
             db=db,
             name=filter_data["name"],
             domain_key=domain,
-            username=username,
+            user_id=user_id,
             subscribed_event_ids=filter_data.get("subscribed_event_ids", []),
             subscribed_group_ids=filter_data.get("subscribed_group_ids", []),
             unselected_event_ids=filter_data.get("unselected_event_ids", [])
@@ -407,7 +415,7 @@ async def create_domain_filter(
             "id": filter_obj.id,
             "name": filter_obj.name,
             "domain_key": filter_obj.domain_key,
-            "username": filter_obj.username,
+            "user_id": filter_obj.user_id,
             "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
             "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
             "unselected_event_ids": filter_obj.unselected_event_ids or [],
@@ -454,7 +462,7 @@ async def get_domain_filters(
                 "id": filter_obj.id,
                 "name": filter_obj.name,
                 "domain_key": filter_obj.domain_key,
-                "username": filter_obj.username,
+                "user_id": filter_obj.user_id,
                 "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
                 "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
                 "unselected_event_ids": filter_obj.unselected_event_ids or [],
@@ -499,8 +507,17 @@ async def update_domain_filter(
         existing_filter = get_filter_by_id(db, filter_id)
         if not existing_filter or existing_filter.domain_key != domain:
             raise HTTPException(status_code=404, detail="Filter not found")
-        
-        if username and existing_filter.username != username:
+
+        # Get user_id from username if provided
+        user_id = None
+        if username:
+            from ..models.user import User
+            user = db.query(User).filter(User.username == username).first()
+            if user:
+                user_id = user.id
+
+        # Verify user owns this filter
+        if user_id and existing_filter.user_id != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
         # Update the filter
@@ -522,7 +539,7 @@ async def update_domain_filter(
             "id": existing_filter.id,
             "name": existing_filter.name,
             "domain_key": existing_filter.domain_key,
-            "username": existing_filter.username,
+            "user_id": existing_filter.user_id,
             "subscribed_event_ids": existing_filter.subscribed_event_ids or [],
             "subscribed_group_ids": existing_filter.subscribed_group_ids or [],
             "unselected_event_ids": existing_filter.unselected_event_ids or [],

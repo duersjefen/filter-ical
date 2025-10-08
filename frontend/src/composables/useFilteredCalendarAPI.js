@@ -23,22 +23,21 @@ export function useFilteredCalendarAPI() {
   const appStore = useAppStore()
 
   /**
-   * Pure function: Build authenticated endpoint for filtered calendars
+   * Pure function: Build endpoint for filtered calendars
+   *
+   * NOTE: Authentication now handled via JWT tokens in Authorization header,
+   * not via username query parameters.
    */
   const buildFilterEndpoint = (calendarIdOrDomain, filterId = null) => {
-    const currentUserId = getUserId()
-
     if (typeof calendarIdOrDomain === 'string' && calendarIdOrDomain.startsWith('cal_domain_')) {
       // Domain calendar: extract domain from cal_domain_exter -> exter
       const domain = calendarIdOrDomain.replace('cal_domain_', '')
       const base = API_ENDPOINTS.DOMAIN_FILTERS(domain)
-      const withId = filterId ? `${base}/${filterId}` : base
-      return `${withId}?username=${currentUserId}`
+      return filterId ? `${base}/${filterId}` : base
     } else {
       // Regular calendar
       const base = API_ENDPOINTS.CALENDAR_FILTERS(calendarIdOrDomain)
-      const withId = filterId ? `${base}/${filterId}` : base
-      return `${withId}?username=${currentUserId}`
+      return filterId ? `${base}/${filterId}` : base
     }
   }
 

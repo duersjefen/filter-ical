@@ -44,7 +44,7 @@ async def get_user_filters(
             filter_dict = {
                 "id": filter_obj.id,
                 "name": filter_obj.name,
-                "username": filter_obj.username,
+                "user_id": filter_obj.user_id,
                 "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
                 "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
                 "link_uuid": filter_obj.link_uuid,

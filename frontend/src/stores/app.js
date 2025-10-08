@@ -66,7 +66,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Load from server only
       try {
-        const result = await get(`${API_ENDPOINTS.CALENDARS}?username=${currentUserId}`)
+        const result = await get(`${API_ENDPOINTS.CALENDARS}`)
 
         if (result.success) {
           // New API returns direct array, not wrapped in object
@@ -108,7 +108,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Create on server immediately, wait for response
       try {
-        const result = await post(`${API_ENDPOINTS.CALENDARS}?username=${currentUserId}`, calendarData)
+        const result = await post(`${API_ENDPOINTS.CALENDARS}`, calendarData)
 
         if (result.success) {
           // Add to local calendars list
@@ -181,7 +181,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Delete from server first, then update local list
       try {
-        const result = await del(`${API_ENDPOINTS.CALENDAR_DELETE(numericCalendarId)}?username=${currentUserId}`)
+        const result = await del(`${API_ENDPOINTS.CALENDAR_DELETE(numericCalendarId)}`)
 
         if (result.success) {
           // Server deletion succeeded - remove from local list
@@ -224,7 +224,7 @@ export const useAppStore = defineStore('app', () => {
     if (hasCustomUsername) {
       // LOGGED IN: Call server sync endpoint
       try {
-        const result = await post(`${API_ENDPOINTS.CALENDAR_SYNC(numericCalendarId)}?username=${currentUserId}`)
+        const result = await post(`${API_ENDPOINTS.CALENDAR_SYNC(numericCalendarId)}`)
 
         if (result.success) {
           return {
@@ -514,7 +514,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Still fetch even for anonymous users in case they log in later
     try {
-      const result = await get(`${API_ENDPOINTS.USER_FILTERS}?username=${currentUserId}`)
+      const result = await get(`${API_ENDPOINTS.USER_FILTERS}`)
 
       if (result.success) {
         // useHTTP wraps response in { success: true, data: [...] }
@@ -671,7 +671,7 @@ export const useAppStore = defineStore('app', () => {
     
     try {
       // Create filter for this calendar
-      const filterResult = await post(`${API_ENDPOINTS.CALENDAR_FILTERS(calendarId)}?username=${getUserId()}`, filterData)
+      const filterResult = await post(`${API_ENDPOINTS.CALENDAR_FILTERS(calendarId)}`, filterData)
 
       if (filterResult.success && filterResult.data.link_uuid) {
         // Get the iCal content using the filter's UUID

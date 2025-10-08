@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from ..core.database import get_db
+from ..core.auth import get_current_user_id
 from ..i18n.utils import get_locale_from_request, format_error_message
 from ..services.calendar_service import (
     create_calendar, get_calendars, get_calendar_by_id, delete_calendar,
@@ -24,25 +25,25 @@ router = APIRouter()
 async def add_calendar(
     calendar_data: dict,
     request: Request,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """Add a user calendar."""
     try:
         # Validate request data
         locale = get_locale_from_request(request)
-        
+
         if "name" not in calendar_data:
             raise HTTPException(status_code=400, detail=format_error_message("calendar_name_required", locale))
         if "source_url" not in calendar_data:
             raise HTTPException(status_code=400, detail=format_error_message("source_url_required", locale))
-        
+
         # Create calendar
         success, calendar, error = create_calendar(
             db=db,
             name=calendar_data["name"],
             source_url=calendar_data["source_url"],
-            username=username
+            user_id=user_id
         )
         if not success:
             raise HTTPException(status_code=400, detail=error)
@@ -65,8 +66,7 @@ async def add_calendar(
             "name": calendar.name,
             "source_url": calendar.source_url,
             "type": calendar.type,
-            "domain_key": calendar.domain_key,
-            "username": calendar.username,
+            "user_id": calendar.user_id,
             "last_fetched": calendar.last_fetched.isoformat() if calendar.last_fetched else None
         }
         
@@ -88,29 +88,31 @@ async def add_calendar(
 
 @router.get("")
 async def list_calendars(
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """List user calendars."""
     try:
         # Get calendars from database
-        calendars = get_calendars(db, username=username)
-        
+        calendars = get_calendars(db, user_id=user_id)
+
         # Transform to OpenAPI schema format
         calendars_response = []
         for calendar in calendars:
+            # Get username from user relationship
+            calendar_username = calendar.user.username if calendar.user else None
+
             calendars_response.append({
                 "id": calendar.id,
                 "name": calendar.name,
                 "source_url": calendar.source_url,
                 "type": calendar.type,
-                "domain_key": calendar.domain_key,
-                "username": calendar.username,
+                "username": calendar_username,
                 "last_fetched": calendar.last_fetched.isoformat() if calendar.last_fetched else None
             })
-        
+
         return calendars_response
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
@@ -118,13 +120,13 @@ async def list_calendars(
 @router.post("/{calendar_id}/sync")
 async def sync_calendar_endpoint(
     calendar_id: int,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """Manually sync calendar events from source."""
     try:
         # Verify calendar exists and user has access
-        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
             raise HTTPException(status_code=404, detail="Calendar not found")
             
@@ -148,13 +150,13 @@ async def sync_calendar_endpoint(
 @router.delete("/{calendar_id}")
 async def delete_user_calendar(
     calendar_id: int,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """Delete a user calendar."""
     try:
         # Delete calendar
-        success, error = delete_calendar(db, calendar_id, username=username)
+        success, error = delete_calendar(db, calendar_id, user_id=user_id)
         if not success:
             if "not found" in error.lower():
                 raise HTTPException(status_code=404, detail="Calendar not found")
@@ -173,13 +175,13 @@ async def delete_user_calendar(
 @router.get("/{calendar_id}/events")
 async def get_calendar_events_endpoint(
     calendar_id: int,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """Get calendar events (flat structure for user calendars)."""
     try:
         # Verify calendar exists and user has access
-        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
             raise HTTPException(status_code=404, detail="Calendar not found")
         
@@ -213,26 +215,26 @@ async def get_calendar_events_endpoint(
 async def create_calendar_filter(
     calendar_id: int,
     filter_data: dict,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """Create filter for user calendar."""
     try:
         # Verify calendar exists and user has access
-        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
             raise HTTPException(status_code=404, detail="Calendar not found")
-        
+
         # Validate request data
         if "name" not in filter_data:
             raise HTTPException(status_code=400, detail="Filter name is required")
-        
+
         # Create filter
         success, filter_obj, error = create_filter(
             db=db,
             name=filter_data["name"],
             calendar_id=calendar_id,
-            username=username,
+            user_id=user_id,
             subscribed_event_ids=filter_data.get("subscribed_event_ids", []),
             include_future_events=filter_data.get("include_future_events", False)
         )
@@ -245,7 +247,7 @@ async def create_calendar_filter(
             "name": filter_obj.name,
             "calendar_id": filter_obj.calendar_id,
             "domain_key": filter_obj.domain_key,
-            "username": filter_obj.username,
+            "user_id": filter_obj.user_id,
             "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
             "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
             "include_future_events": filter_obj.include_future_events,
@@ -270,18 +272,18 @@ async def create_calendar_filter(
 @router.get("/{calendar_id}/filters")
 async def get_calendar_filters(
     calendar_id: int,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """List filters for user calendar."""
     try:
         # Verify calendar exists and user has access
-        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
             raise HTTPException(status_code=404, detail="Calendar not found")
-        
+
         # Get filters
-        filters = get_filters(db, calendar_id=calendar_id, username=username)
+        filters = get_filters(db, calendar_id=calendar_id, user_id=user_id)
         
         # Transform to OpenAPI schema format
         filters_response = []
@@ -291,7 +293,7 @@ async def get_calendar_filters(
                 "name": filter_obj.name,
                 "calendar_id": filter_obj.calendar_id,
                 "domain_key": filter_obj.domain_key,
-                "username": filter_obj.username,
+                "user_id": filter_obj.user_id,
                 "subscribed_event_ids": filter_obj.subscribed_event_ids or [],
                 "subscribed_group_ids": filter_obj.subscribed_group_ids or [],
                 "link_uuid": filter_obj.link_uuid,
@@ -318,13 +320,13 @@ async def update_calendar_filter(
     calendar_id: int,
     filter_id: int,
     filter_data: dict,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """Update an existing calendar filter."""
     try:
         # Verify calendar exists and user has access
-        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
             raise HTTPException(status_code=404, detail="Calendar not found")
         
@@ -332,8 +334,9 @@ async def update_calendar_filter(
         existing_filter = get_filter_by_id(db, filter_id)
         if not existing_filter or existing_filter.calendar_id != calendar_id:
             raise HTTPException(status_code=404, detail="Filter not found")
-        
-        if username and existing_filter.username != username:
+
+        # Verify user owns this filter
+        if user_id and existing_filter.user_id != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
         # Update the filter
@@ -354,7 +357,7 @@ async def update_calendar_filter(
             "name": existing_filter.name,
             "calendar_id": existing_filter.calendar_id,
             "domain_key": existing_filter.domain_key,
-            "username": existing_filter.username,
+            "user_id": existing_filter.user_id,
             "subscribed_event_ids": existing_filter.subscribed_event_ids or [],
             "subscribed_group_ids": existing_filter.subscribed_group_ids or [],
             "link_uuid": existing_filter.link_uuid,
@@ -379,18 +382,18 @@ async def update_calendar_filter(
 async def delete_calendar_filter(
     calendar_id: int,
     filter_id: int,
-    username: Optional[str] = Query(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """Delete filter for user calendar."""
     try:
         # Verify calendar exists and user has access
-        calendar = get_calendar_by_id(db, calendar_id, username=username)
+        calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
             raise HTTPException(status_code=404, detail="Calendar not found")
-        
+
         # Delete filter
-        success, error = delete_filter(db, filter_id, calendar_id=calendar_id, username=username)
+        success, error = delete_filter(db, filter_id, calendar_id=calendar_id, user_id=user_id)
         if not success:
             if "not found" in error.lower():
                 raise HTTPException(status_code=404, detail="Filter not found")

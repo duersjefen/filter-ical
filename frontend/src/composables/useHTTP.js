@@ -1,7 +1,7 @@
 /**
  * HTTP Client Composable
  * Provides HTTP methods with error handling and loading states
- * Includes JWT token injection for authenticated domain requests
+ * Includes JWT token injection for all authenticated requests
  */
 import { ref } from 'vue'
 import axios from 'axios'
@@ -16,7 +16,7 @@ const createHttpClient = () => {
 
   // Request interceptor - inject JWT tokens
   client.interceptors.request.use((config) => {
-    // Extract domain from URL path (e.g., /api/domains/exter/...)
+    // For domain endpoints: use domain-specific tokens
     const domainMatch = config.url?.match(/\/api\/domains\/([^/]+)/)
 
     if (domainMatch) {
@@ -30,6 +30,12 @@ const createHttpClient = () => {
 
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`
+      }
+    } else {
+      // For all other authenticated endpoints: use user auth token
+      const authToken = localStorage.getItem('auth_token')
+      if (authToken) {
+        config.headers['Authorization'] = `Bearer ${authToken}`
       }
     }
 

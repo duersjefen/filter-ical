@@ -18,6 +18,57 @@ from typing import Tuple, Optional
 
 from ..core.config import settings
 from ..models.user import User
+from sqlalchemy.orm import Session
+
+
+# =============================================================================
+# User Management (Database Operations)
+# =============================================================================
+
+def get_or_create_user_from_username(db: Session, username: str) -> Optional[User]:
+    """
+    Get existing user by username, or create a new username-only account.
+
+    This handles migration from the old username-based system to the new user accounts.
+    Users who had calendars with just a username will automatically get a user account created.
+
+    Args:
+        db: Database session
+        username: Username string
+
+    Returns:
+        User object, or None if username is invalid
+
+    I/O Operation - Database query and potential insert.
+    """
+    if not username or not isinstance(username, str):
+        return None
+
+    username = username.strip()
+    if not username:
+        return None
+
+    # Check if user already exists
+    user = db.query(User).filter(User.username == username).first()
+    if user:
+        return user
+
+    # Auto-create user for legacy username-based calendars
+    # These are username-only accounts (no password) for backward compatibility
+    try:
+        new_user = User(
+            username=username,
+            email=None,  # No email for auto-created accounts
+            password_hash=None,  # No password - username-only access
+            role='user'
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    except Exception as e:
+        db.rollback()
+        return None
 
 
 # =============================================================================
