@@ -31,12 +31,12 @@ class TestCalendarDataCreation:
     def test_create_calendar_data_basic(self):
         """Test basic calendar data creation."""
         result = create_calendar_data("Test Calendar", "https://example.com/cal.ics")
-        
+
         assert result["name"] == "Test Calendar"
         assert result["source_url"] == "https://example.com/cal.ics"
         assert result["type"] == "user"
         assert result["domain_key"] is None
-        assert result["username"] is None
+        assert result["user_id"] is None
         assert result["last_fetched"] is None
         assert isinstance(result["created_at"], datetime)
         assert isinstance(result["updated_at"], datetime)
@@ -44,16 +44,16 @@ class TestCalendarDataCreation:
     def test_create_calendar_data_domain(self):
         """Test domain calendar data creation."""
         result = create_calendar_data(
-            "Domain Cal", 
+            "Domain Cal",
             "https://domain.com/cal.ics",
             calendar_type="domain",
             domain_key="test_domain",
-            username="testuser"
+            user_id=123
         )
-        
+
         assert result["type"] == "domain"
         assert result["domain_key"] == "test_domain"
-        assert result["username"] == "testuser"
+        assert result["user_id"] == 123
     
     def test_create_calendar_data_strips_whitespace(self):
         """Test that name and URL are stripped of whitespace."""
@@ -307,14 +307,14 @@ class TestFilterData:
         result = create_filter_data(
             name="My Filter",
             calendar_id=1,
-            username="testuser",
+            user_id=123,
             subscribed_event_ids=[1, 2, 3]
         )
-        
+
         assert result["name"] == "My Filter"
         assert result["calendar_id"] == 1
         assert result["domain_key"] is None
-        assert result["username"] == "testuser"
+        assert result["user_id"] == 123
         assert result["subscribed_event_ids"] == [1, 2, 3]
         assert result["subscribed_group_ids"] == []
         assert isinstance(result["link_uuid"], str)

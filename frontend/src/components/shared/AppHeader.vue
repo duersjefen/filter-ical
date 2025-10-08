@@ -18,44 +18,12 @@
           </button>
         </div>
         
-        <!-- Username Control -->
+        <!-- Auth Control -->
         <div>
-          <!-- Editing Mode -->
-          <div v-if="isEditing" class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-lg border border-white/40 dark:border-gray-600 px-3 py-2 sm:px-4 sm:py-2.5">
-            <div class="flex items-center gap-1.5 sm:gap-2">
-              <input
-                ref="desktopUsernameInputRef"
-                v-model="usernameInput"
-                @keyup.enter="saveUsername"
-                @keyup.escape="cancelEdit"
-                @blur="saveUsername"
-                type="text"
-                class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-xl text-sm w-32 sm:w-40 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 shadow-md transition-all duration-200"
-                :placeholder="$t('ui.enterYourName')"
-                maxlength="20"
-                autocomplete="off"
-              />
-              <button 
-                @click="saveUsername"
-                class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
-                :title="$t('common.save')"
-              >
-                ✓
-              </button>
-              <button 
-                @click="cancelEdit"
-                class="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
-                :title="$t('common.cancel')"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-          
-          <!-- Anonymous Mode -->
-          <div 
-            v-else-if="!hasCustomUsername()" 
-            @click="startEdit"
+          <!-- Not Logged In -->
+          <div
+            v-if="!isLoggedIn"
+            @click="navigateToLogin"
             class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-md rounded-xl shadow-lg border-2 border-blue-400/50 hover:border-blue-300/70 px-3 py-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 group"
           >
             <div class="flex items-center gap-2">
@@ -68,25 +36,34 @@
               </div>
             </div>
           </div>
-          
-          <!-- Personal Mode -->
-          <div v-else class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/20 px-3 py-2 sm:px-4 sm:py-2.5">
+
+          <!-- Logged In Without Password -->
+          <div v-else-if="!hasPassword" class="bg-yellow-500/20 backdrop-blur-md rounded-xl shadow-lg border border-yellow-400/40 px-3 py-2 sm:px-4 sm:py-2.5">
             <div class="flex items-center gap-2">
-              <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span class="text-lg">🔓</span>
               <span class="text-white text-xs sm:text-sm font-medium">
-                {{ username }}
+                {{ user.username }}
               </span>
-              <button 
-                @click="startEdit"
-                class="text-white/60 hover:text-white transition-all duration-300 p-1 hover:bg-white/10 rounded-lg hover:scale-110 active:scale-95"
-                :title="$t('username.edit')"
+              <span class="text-yellow-300 text-xs font-semibold">Unsecured</span>
+              <button
+                @click="handleLogout"
+                class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
+                :title="$t('username.logout')"
               >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                </svg>
+                {{ $t('username.logout') }}
               </button>
-              <button 
-                @click="clearUsername"
+            </div>
+          </div>
+
+          <!-- Logged In With Password -->
+          <div v-else class="bg-green-500/20 backdrop-blur-md rounded-xl shadow-lg border border-green-400/40 px-3 py-2 sm:px-4 sm:py-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🔒</span>
+              <span class="text-white text-xs sm:text-sm font-medium">
+                {{ user.username }}
+              </span>
+              <button
+                @click="handleLogout"
                 class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
                 :title="$t('username.logout')"
               >
@@ -231,44 +208,12 @@
         </div>
       </div>
 
-      <!-- Username Section - Below title -->
+      <!-- Auth Section - Below title -->
       <div class="flex justify-center">
-        <!-- Editing Mode -->
-        <div v-if="isEditing" class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-lg border border-white/40 dark:border-gray-600 px-4 py-3">
-          <div class="flex items-center gap-2">
-            <input
-              ref="mobileUsernameInputRef"
-              v-model="usernameInput"
-              @keyup.enter="saveUsername"
-              @keyup.escape="cancelEdit"
-              @blur="saveUsername"
-              type="text"
-              class="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-xl text-sm w-36 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 touch-manipulation shadow-md transition-all duration-200"
-              :placeholder="$t('ui.enterYourName')"
-              maxlength="20"
-              autocomplete="off"
-            />
-            <button 
-              @click="saveUsername"
-              class="w-9 h-9 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
-              :title="$t('common.save')"
-            >
-              ✓
-            </button>
-            <button 
-              @click="cancelEdit"
-              class="w-9 h-9 bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
-              :title="$t('common.cancel')"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-        
-        <!-- Anonymous Mode -->
-        <div 
-          v-else-if="!hasCustomUsername()" 
-          @click="startEdit"
+        <!-- Not Logged In -->
+        <div
+          v-if="!isLoggedIn"
+          @click="navigateToLogin"
           class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 active:from-blue-500/40 active:to-purple-500/40 backdrop-blur-md rounded-xl shadow-lg border border-blue-400/50 hover:border-blue-300/70 px-5 py-4 cursor-pointer transition-all duration-200 group touch-manipulation hover:scale-105 active:scale-95"
         >
           <div class="flex items-center justify-center gap-2">
@@ -278,25 +223,34 @@
             </span>
           </div>
         </div>
-        
-        <!-- Personal Mode -->
-        <div v-else class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/20 px-4 py-3">
+
+        <!-- Logged In Without Password -->
+        <div v-else-if="!hasPassword" class="bg-yellow-500/20 backdrop-blur-md rounded-xl shadow-lg border border-yellow-400/40 px-4 py-3">
           <div class="flex items-center gap-3">
-            <div class="w-2.5 h-2.5 bg-green-400 rounded-full shadow-sm"></div>
+            <span class="text-xl">🔓</span>
             <span class="text-white text-sm font-medium">
-              {{ username }}
+              {{ user.username }}
             </span>
-            <button 
-              @click="startEdit"
-              class="w-9 h-9 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 flex items-center justify-center touch-manipulation hover:scale-110 active:scale-95"
-              :title="$t('username.edit')"
+            <span class="text-yellow-300 text-xs font-semibold">Unsecured</span>
+            <button
+              @click="handleLogout"
+              class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
+              :title="$t('username.logout')"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-              </svg>
+              {{ $t('username.logout') }}
             </button>
-            <button 
-              @click="clearUsername"
+          </div>
+        </div>
+
+        <!-- Logged In With Password -->
+        <div v-else class="bg-green-500/20 backdrop-blur-md rounded-xl shadow-lg border border-green-400/40 px-4 py-3">
+          <div class="flex items-center gap-3">
+            <span class="text-xl">🔒</span>
+            <span class="text-white text-sm font-medium">
+              {{ user.username }}
+            </span>
+            <button
+              @click="handleLogout"
               class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
               :title="$t('username.logout')"
             >
@@ -323,23 +277,17 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../../composables/useDarkMode'
-import { useUsername } from '../../composables/useUsername'
+import { useAuth } from '../../composables/useAuth'
 import LanguageToggle from '../LanguageToggle.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const { isDarkMode, toggleDarkMode } = useDarkMode()
-const { username, setUsername, clearUsername, hasCustomUsername, isValidUsername } = useUsername()
-
-// Simple editing state
-const isEditing = ref(false)
-const usernameInput = ref('')
-const desktopUsernameInputRef = ref(null)
-const mobileUsernameInputRef = ref(null)
+const { user, isLoggedIn, hasPassword, logout } = useAuth()
 
 // Context-aware message for anonymous mode
 const contextMessage = computed(() => {
@@ -350,67 +298,14 @@ const contextMessage = computed(() => {
   }
 })
 
-// Start editing
-const startEdit = async () => {
-  isEditing.value = true
-  usernameInput.value = username.value
-  await nextTick()
-  
-  // Focus the appropriate input based on which one is rendered
-  const focusInputs = () => {
-    let focused = false
-    
-    // Try desktop input first
-    if (desktopUsernameInputRef.value) {
-      try {
-        desktopUsernameInputRef.value.focus()
-        desktopUsernameInputRef.value.select()
-        focused = true
-      } catch (e) {
-        console.debug('Desktop input focus failed:', e)
-      }
-    }
-    
-    // Try mobile input if desktop didn't work
-    if (!focused && mobileUsernameInputRef.value) {
-      try {
-        mobileUsernameInputRef.value.focus()
-        mobileUsernameInputRef.value.select()
-        focused = true
-      } catch (e) {
-        console.debug('Mobile input focus failed:', e)
-      }
-    }
-    
-    return focused
-  }
-  
-  // Try immediately
-  if (!focusInputs()) {
-    // If that fails, try again after a short delay
-    setTimeout(() => {
-      focusInputs()
-    }, 50)
-  }
+// Navigate to login page
+const navigateToLogin = () => {
+  router.push('/login')
 }
 
-// Save username
-const saveUsername = () => {
-  const trimmed = usernameInput.value?.trim()
-  
-  if (trimmed && isValidUsername(trimmed)) {
-    setUsername(trimmed)
-  } else if (!trimmed) {
-    clearUsername()
-  }
-  
-  isEditing.value = false
-}
-
-// Cancel editing
-const cancelEdit = () => {
-  isEditing.value = false
-  usernameInput.value = username.value
+// Handle logout
+const handleLogout = () => {
+  logout()
 }
 
 const props = defineProps({

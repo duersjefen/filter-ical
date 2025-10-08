@@ -3,6 +3,8 @@ from .calendar import Calendar, Event, Group, RecurringEventGroup, AssignmentRul
 from .domain_request import DomainRequest, RequestStatus
 from .domain_auth import DomainAuth
 from .app_settings import AppSettings
+from .user import User
+from .user_domain_access import UserDomainAccess
 
 __all__ = [
     "Calendar",
@@ -16,4 +18,6 @@ __all__ = [
     "RequestStatus",
     "DomainAuth",
     "AppSettings",
+    "User",
+    "UserDomainAccess",
 ]

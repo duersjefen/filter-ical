@@ -46,30 +46,30 @@ async def fetch_ical_content(url: str, timeout: int = 30) -> Tuple[bool, str, st
         return False, "", f"Error fetching calendar: {str(e)}"
 
 
-def create_calendar(db: Session, name: str, source_url: str, 
+def create_calendar(db: Session, name: str, source_url: str,
                    calendar_type: str = "user", domain_key: Optional[str] = None,
-                   username: Optional[str] = None) -> Tuple[bool, Optional[Calendar], str]:
+                   user_id: Optional[int] = None) -> Tuple[bool, Optional[Calendar], str]:
     """
     Create new calendar in database.
-    
+
     Args:
         db: Database session
         name: Calendar name
         source_url: iCal source URL
         calendar_type: "user" or "domain"
         domain_key: Domain key for domain calendars
-        username: Username for user scoping
-        
+        user_id: User ID for user scoping
+
     Returns:
         Tuple of (success, calendar_obj, error_message)
-        
+
     I/O Operation - Database creation with validation.
     """
     # Validate data using pure function
     is_valid, error_msg = validate_calendar_data(name, source_url)
     if not is_valid:
         return False, None, error_msg
-    
+
     try:
         # Create calendar data using pure function
         calendar_data = create_calendar_data(
@@ -77,64 +77,64 @@ def create_calendar(db: Session, name: str, source_url: str,
             source_url=source_url,
             calendar_type=calendar_type,
             domain_key=domain_key,
-            username=username
+            user_id=user_id
         )
-        
+
         # Create database object
         calendar = Calendar(**calendar_data)
         db.add(calendar)
         db.commit()
         db.refresh(calendar)
-        
+
         return True, calendar, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, None, f"Database error: {str(e)}"
 
 
-def get_calendars(db: Session, username: Optional[str] = None) -> List[Calendar]:
+def get_calendars(db: Session, user_id: Optional[int] = None) -> List[Calendar]:
     """
     Get calendars from database.
-    
+
     Args:
         db: Database session
-        username: Filter by username if provided
-        
+        user_id: Filter by user_id if provided
+
     Returns:
         List of calendar objects
-        
+
     I/O Operation - Database query.
     """
     query = db.query(Calendar)
-    
-    if username:
-        query = query.filter(Calendar.username == username)
-    
+
+    if user_id:
+        query = query.filter(Calendar.user_id == user_id)
+
     return query.all()
 
 
-def get_calendar_by_id(db: Session, calendar_id: int, 
-                      username: Optional[str] = None) -> Optional[Calendar]:
+def get_calendar_by_id(db: Session, calendar_id: int,
+                      user_id: Optional[int] = None) -> Optional[Calendar]:
     """
     Get calendar by ID.
-    
+
     Args:
         db: Database session
         calendar_id: Calendar ID
-        username: Filter by username if provided
-        
+        user_id: Filter by user_id if provided
+
     Returns:
         Calendar object or None
-        
+
     I/O Operation - Database query with graceful degradation.
     """
     try:
         query = db.query(Calendar).filter(Calendar.id == calendar_id)
-        
-        if username:
-            query = query.filter(Calendar.username == username)
-        
+
+        if user_id:
+            query = query.filter(Calendar.user_id == user_id)
+
         return query.first()
     except Exception as e:
         # Graceful degradation for database issues (e.g., tables not ready in test environment)
@@ -160,30 +160,30 @@ def get_calendar_by_domain(db: Session, domain_key: str) -> Optional[Calendar]:
     ).first()
 
 
-def delete_calendar(db: Session, calendar_id: int, 
-                   username: Optional[str] = None) -> Tuple[bool, str]:
+def delete_calendar(db: Session, calendar_id: int,
+                   user_id: Optional[int] = None) -> Tuple[bool, str]:
     """
     Delete calendar from database.
-    
+
     Args:
         db: Database session
         calendar_id: Calendar ID to delete
-        username: Verify ownership if provided
-        
+        user_id: Verify ownership if provided
+
     Returns:
         Tuple of (success, error_message)
-        
+
     I/O Operation - Database deletion.
     """
     try:
-        calendar = get_calendar_by_id(db, calendar_id, username)
+        calendar = get_calendar_by_id(db, calendar_id, user_id)
         if not calendar:
             return False, "Calendar not found"
-        
+
         db.delete(calendar)
         db.commit()
         return True, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, f"Database error: {str(e)}"
@@ -277,7 +277,7 @@ def get_calendar_events(db: Session, calendar_id: int) -> List[Event]:
 
 
 def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
-                 domain_key: Optional[str] = None, username: Optional[str] = None,
+                 domain_key: Optional[str] = None, user_id: Optional[int] = None,
                  subscribed_event_ids: Optional[List[int]] = None,
                  subscribed_group_ids: Optional[List[int]] = None,
                  unselected_event_ids: Optional[List[str]] = None,
@@ -290,7 +290,7 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
         name: Filter name
         calendar_id: Calendar ID for user filters
         domain_key: Domain key for domain filters
-        username: Username for user scoping
+        user_id: User ID for user scoping
         subscribed_event_ids: Event IDs/titles to include
         subscribed_group_ids: Group IDs to include (domain filters only)
         unselected_event_ids: Event titles to exclude from groups (domain filters only)
@@ -318,53 +318,53 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
             name=name,
             calendar_id=calendar_id,
             domain_key=domain_key,
-            username=username,
+            user_id=user_id,
             subscribed_event_ids=subscribed_event_ids,
             subscribed_group_ids=subscribed_group_ids,
             unselected_event_ids=unselected_event_ids,
             include_future_events=include_future_events
         )
-        
+
         # Create database object
         filter_obj = Filter(**filter_data)
         db.add(filter_obj)
         db.commit()
         db.refresh(filter_obj)
-        
+
         return True, filter_obj, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, None, f"Database error: {str(e)}"
 
 
 def get_filters(db: Session, calendar_id: Optional[int] = None,
-               domain_key: Optional[str] = None, username: Optional[str] = None) -> List[Filter]:
+               domain_key: Optional[str] = None, user_id: Optional[int] = None) -> List[Filter]:
     """
     Get filters from database.
-    
+
     Args:
         db: Database session
         calendar_id: Filter by calendar ID
         domain_key: Filter by domain key
-        username: Filter by username
-        
+        user_id: Filter by user_id
+
     Returns:
         List of filter objects
-        
+
     I/O Operation - Database query.
     """
     query = db.query(Filter)
-    
+
     if calendar_id:
         query = query.filter(Filter.calendar_id == calendar_id)
-    
+
     if domain_key:
         query = query.filter(Filter.domain_key == domain_key)
-    
-    if username:
-        query = query.filter(Filter.username == username)
-    
+
+    if user_id:
+        query = query.filter(Filter.user_id == user_id)
+
     return query.all()
 
 
@@ -390,62 +390,62 @@ def get_filter_by_uuid(db: Session, link_uuid: str) -> Optional[Filter]:
 
 
 def get_filter_by_id(db: Session, filter_id: int, calendar_id: Optional[int] = None,
-                     domain_key: Optional[str] = None, username: Optional[str] = None) -> Optional[Filter]:
+                     domain_key: Optional[str] = None, user_id: Optional[int] = None) -> Optional[Filter]:
     """
     Get filter by ID with ownership verification.
-    
+
     Args:
         db: Database session
         filter_id: Filter ID
         calendar_id: Calendar ID for user filters
         domain_key: Domain key for domain filters
-        username: Username for user scoping
-        
+        user_id: User ID for user scoping
+
     Returns:
         Filter object or None
-        
+
     I/O Operation - Database query.
     """
     query = db.query(Filter).filter(Filter.id == filter_id)
-    
+
     if calendar_id:
         query = query.filter(Filter.calendar_id == calendar_id)
-    
+
     if domain_key:
         query = query.filter(Filter.domain_key == domain_key)
-    
-    if username:
-        query = query.filter(Filter.username == username)
-    
+
+    if user_id:
+        query = query.filter(Filter.user_id == user_id)
+
     return query.first()
 
 
 def delete_filter(db: Session, filter_id: int, calendar_id: Optional[int] = None,
-                  domain_key: Optional[str] = None, username: Optional[str] = None) -> Tuple[bool, str]:
+                  domain_key: Optional[str] = None, user_id: Optional[int] = None) -> Tuple[bool, str]:
     """
     Delete filter from database.
-    
+
     Args:
         db: Database session
         filter_id: Filter ID to delete
         calendar_id: Calendar ID for user filters
         domain_key: Domain key for domain filters
-        username: Username for user scoping
-        
+        user_id: User ID for user scoping
+
     Returns:
         Tuple of (success, error_message)
-        
+
     I/O Operation - Database deletion.
     """
     try:
-        filter_obj = get_filter_by_id(db, filter_id, calendar_id, domain_key, username)
+        filter_obj = get_filter_by_id(db, filter_id, calendar_id, domain_key, user_id)
         if not filter_obj:
             return False, "Filter not found"
-        
+
         db.delete(filter_obj)
         db.commit()
         return True, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, f"Database error: {str(e)}"

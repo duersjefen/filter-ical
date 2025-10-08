@@ -18,22 +18,25 @@ from ..core.database import Base
 class Calendar(Base):
     """
     Calendar model for both user calendars and domain calendars.
-    
+
     Corresponds to Calendar schema in OpenAPI spec.
+
+    Domain calendars: type='domain', user_id=None, linked via domain_auth table
+    User calendars: type='user', user_id=required
     """
     __tablename__ = "calendars"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     source_url = Column(Text, nullable=False)
     type = Column(String(50), nullable=False)  # 'user' or 'domain'
-    domain_key = Column(String(100), nullable=True)  # For domain calendars
-    username = Column(String(100), nullable=True)  # Optional user scoping
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # Owner (nullable for domain calendars)
     last_fetched = Column(DateTime, default=func.now())
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
+
     # Relationships
+    user = relationship("User", back_populates="calendars")
     events = relationship("Event", back_populates="calendar", cascade="all, delete-orphan")
     filters = relationship("Filter", back_populates="calendar", cascade="all, delete-orphan")
 
@@ -130,20 +133,24 @@ class AssignmentRule(Base):
 class Filter(Base):
     """
     Filter model for both user and domain calendar filters.
-    
+
     Corresponds to Filter schema in OpenAPI spec.
+
+    User filters: calendar_id + user_id set
+    Domain filters: domain_key set (user_id optional for anonymous filters)
     """
     __tablename__ = "filters"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    
+
     # Either calendar_id (user filters) OR domain_key (domain filters)
     calendar_id = Column(Integer, ForeignKey("calendars.id"), nullable=True)
     domain_key = Column(String(100), nullable=True, index=True)
-    
-    username = Column(String(100), nullable=True)  # Optional user scoping
-    
+
+    # Owner (nullable for anonymous domain filters stored in localStorage)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     # Filter data stored as JSON arrays for flexibility
     subscribed_event_ids = Column(JSON, nullable=True, default=list)  # Array of event IDs/titles
     subscribed_group_ids = Column(JSON, nullable=True, default=list)   # Array of group IDs (domain only)
@@ -154,14 +161,15 @@ class Filter(Base):
 
     # Dynamic iCal export
     link_uuid = Column(String(36), nullable=False, unique=True, index=True)  # UUID for /ical/{uuid}.ics
-    
+
     # Timestamps
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
+
     # Relationships
     calendar = relationship("Calendar", back_populates="filters")
-    
+    user = relationship("User", back_populates="filters")
+
     def __init__(self, **kwargs):
         """Auto-generate UUID for new filters."""
         if 'link_uuid' not in kwargs:

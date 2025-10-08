@@ -52,6 +52,14 @@
             >
               {{ authenticating ? $t('admin.panel.authenticating') : $t('admin.panel.login') }}
             </button>
+
+            <button
+              type="button"
+              @click="$router.push('/reset-password')"
+              class="w-full text-sm text-purple-600 dark:text-purple-400 hover:underline mt-2"
+            >
+              Forgot password?
+            </button>
           </form>
         </div>
       </div>

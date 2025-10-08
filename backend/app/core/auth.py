@@ -147,3 +147,84 @@ def verify_admin_auth(authorization: Optional[str] = Header(None)) -> bool:
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid authentication method"
     )
+
+
+# =============================================================================
+# User JWT Authentication (for regular users)
+# =============================================================================
+
+def get_current_user_id(authorization: Optional[str] = Header(None)) -> Optional[int]:
+    """
+    Extract user ID from JWT token (optional - returns None if not authenticated).
+
+    Use this for endpoints that work for both authenticated and anonymous users.
+
+    Args:
+        authorization: Authorization header value
+
+    Returns:
+        User ID if authenticated, None otherwise
+    """
+    if not authorization or not authorization.startswith('Bearer '):
+        return None
+
+    token = authorization.replace('Bearer ', '')
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm]
+        )
+        return payload.get('user_id')
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+
+def require_user_auth(authorization: Optional[str] = Header(None)) -> int:
+    """
+    Require user authentication and return user ID.
+
+    Use this for endpoints that require authentication.
+
+    Args:
+        authorization: Authorization header value
+
+    Returns:
+        User ID
+
+    Raises:
+        HTTPException: If not authenticated or token invalid
+    """
+    if not authorization or not authorization.startswith('Bearer '):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    token = authorization.replace('Bearer ', '')
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm]
+        )
+        user_id = payload.get('user_id')
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload"
+            )
+        return user_id
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )

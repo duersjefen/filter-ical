@@ -10,31 +10,31 @@ from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional, Tuple
 
 
-def create_calendar_data(name: str, source_url: str, calendar_type: str = "user", 
-                        domain_key: Optional[str] = None, username: Optional[str] = None) -> Dict[str, Any]:
+def create_calendar_data(name: str, source_url: str, calendar_type: str = "user",
+                        domain_key: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
     """
     Create new calendar data structure.
-    
+
     Args:
         name: Calendar name
         source_url: iCal source URL
         calendar_type: "user" or "domain"
         domain_key: Domain key for domain calendars
-        username: Username for user scoping
-        
+        user_id: User ID for user scoping
+
     Returns:
         Calendar data dictionary
-        
+
     Pure function - creates new data without side effects.
     """
     now = datetime.now(timezone.utc)
-    
+
     return {
         "name": name.strip(),
         "source_url": source_url.strip(),
         "type": calendar_type,
         "domain_key": domain_key,
-        "username": username,
+        "user_id": user_id,
         "last_fetched": None,
         "created_at": now,
         "updated_at": now
@@ -185,7 +185,7 @@ def sort_events_by_start_time(events: List[Dict[str, Any]], reverse: bool = Fals
 
 
 def create_filter_data(name: str, calendar_id: Optional[int] = None,
-                      domain_key: Optional[str] = None, username: Optional[str] = None,
+                      domain_key: Optional[str] = None, user_id: Optional[int] = None,
                       subscribed_event_ids: Optional[List[int]] = None,
                       subscribed_group_ids: Optional[List[int]] = None,
                       unselected_event_ids: Optional[List[str]] = None,
@@ -197,7 +197,7 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
         name: Filter name
         calendar_id: Calendar ID for user filters
         domain_key: Domain key for domain filters
-        username: Username for user scoping
+        user_id: User ID for user scoping
         subscribed_event_ids: List of event IDs/titles to include
         subscribed_group_ids: List of group IDs to include (domain filters only)
         unselected_event_ids: List of event titles to exclude from groups (domain filters only)
@@ -221,7 +221,7 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
         "name": name.strip(),
         "calendar_id": calendar_id,
         "domain_key": domain_key,
-        "username": username,
+        "user_id": user_id,
         "subscribed_event_ids": subscribed_event_ids or [],
         "subscribed_group_ids": subscribed_group_ids or [],
         "unselected_event_ids": unselected_event_ids or [],
