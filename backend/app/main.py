@@ -77,30 +77,49 @@ async def lifespan(app: FastAPI):
         print("🌱 Development environment - loading domain configurations from YAML...")
         try:
             from .services.domain_config_service import seed_domain_from_yaml, list_available_domain_configs
-            
+            from .services.domain_service import auto_assign_events_with_rules
+
             # Get available domain configurations
             domains_dir = settings.domains_config_path.parent
             available_configs = list_available_domain_configs(domains_dir)
-            
+
             if available_configs:
                 # Use dependency injection pattern - get session through DI
                 from .core.database import get_db
                 db_gen = get_db()
                 session = next(db_gen)
                 try:
+                    # Track which domains were freshly seeded
+                    freshly_seeded = []
+
                     for domain_key in available_configs:
-                        success, error = seed_domain_from_yaml(session, domain_key)
+                        success, message = seed_domain_from_yaml(session, domain_key)
                         if success:
                             print(f"✅ Domain '{domain_key}' configuration loaded from YAML")
+                            # Track if this was a fresh seed (not "already configured")
+                            if "already configured" not in message.lower():
+                                freshly_seeded.append(domain_key)
                         else:
-                            print(f"⚠️ Domain '{domain_key}' seeding issue: {error}")
+                            print(f"⚠️ Domain '{domain_key}' seeding issue: {message}")
+
                     # Commit changes to ensure they're visible to other sessions
                     session.commit()
+
+                    # Apply assignment rules for freshly seeded domains
+                    for domain_key in freshly_seeded:
+                        print(f"🎯 Applying assignment rules for '{domain_key}'...")
+                        rule_success, count, error = await auto_assign_events_with_rules(session, domain_key)
+                        if rule_success:
+                            print(f"✅ Applied {count} auto-assignments from rules")
+                        else:
+                            print(f"⚠️ Rule application warning for '{domain_key}': {error}")
+                        session.commit()
+
                 finally:
                     session.close()
             else:
                 print("📋 No domain configuration files found")
-                
+
         except Exception as e:
             print(f"⚠️ Domain YAML seeding warning: {e}")
     
