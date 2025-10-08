@@ -16,6 +16,7 @@ from ..core.database import get_db
 from ..core.auth import verify_admin_password, create_admin_token, verify_admin_auth
 from ..models.domain_request import DomainRequest, RequestStatus
 from ..models.calendar import Calendar
+from ..models.domain import Domain
 from ..routers.domain_requests import DomainRequestResponse
 import secrets
 
@@ -57,10 +58,10 @@ def generate_domain_key(username: str, db: Session) -> str:
     # Sanitize username to valid domain key format
     base_key = re.sub(r'[^a-z0-9_-]', '_', username.lower())
 
-    # Ensure uniqueness
+    # Ensure uniqueness by checking domains table
     domain_key = base_key
     counter = 1
-    while db.query(Calendar).filter(Calendar.domain_key == domain_key).first():
+    while db.query(Domain).filter(Domain.domain_key == domain_key).first():
         domain_key = f"{base_key}_{counter}"
         counter += 1
 
@@ -167,46 +168,63 @@ async def approve_domain_request(
         domain_key = domain_request.requested_domain_key
 
     # Check if domain key already exists
-    existing_calendar = db.query(Calendar).filter(Calendar.domain_key == domain_key).first()
-    if existing_calendar:
+    existing_domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+    if existing_domain:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Domain key '{domain_key}' already exists"
         )
 
     try:
-        # Create domain calendar
+        # 1. Create domain record first
+        domain = Domain(
+            domain_key=domain_key,
+            name=f"{domain_request.username}'s Calendar",
+            calendar_url=domain_request.calendar_url,
+            admin_password_hash=domain_request.default_password,  # Already encrypted
+            user_password_hash=None,
+            status='active'
+        )
+        db.add(domain)
+        db.flush()  # Get domain.id before creating calendar
+
+        # 2. Create domain calendar
         calendar = Calendar(
             name=f"{domain_request.username}'s Calendar",
             source_url=domain_request.calendar_url,
             type="domain",
-            domain_key=domain_key,
-            username=domain_request.username
+            user_id=None  # Domain calendars have no owner
         )
         db.add(calendar)
+        db.flush()  # Get calendar.id
 
-        # Set up domain authentication with the default password from the request
+        # 3. Link domain to calendar
+        domain.calendar_id = calendar.id
+
+        # 4. Create DomainAuth record (for password authentication system)
         from ..models.domain_auth import DomainAuth
         domain_auth = DomainAuth(
             domain_key=domain_key,
+            calendar_id=calendar.id,
             admin_password_hash=domain_request.default_password,  # Already encrypted
             user_password_hash=None
         )
         db.add(domain_auth)
 
-        # Update request status
+        # 5. Update request status
         domain_request.status = RequestStatus.APPROVED
         domain_request.reviewed_at = func.now()
         domain_request.domain_key = domain_key
 
         db.commit()
-        db.refresh(calendar)
+        db.refresh(domain)
 
         return {
             "success": True,
-            "message": "Domain request approved and domain created with password",
+            "message": "Domain request approved and domain created",
             "domain_key": domain_key,
-            "calendar_id": calendar.id
+            "calendar_id": calendar.id,
+            "domain_id": domain.id
         }
 
     except Exception as e:
@@ -267,4 +285,54 @@ async def reject_domain_request(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to reject request: {str(e)}"
+        )
+
+
+@router.delete(
+    "/admin/domains/{domain_key}",
+    summary="Delete a domain (admin only)",
+    description="Delete domain and all associated data (calendar, auth, filters, groups)"
+)
+async def delete_domain(
+    domain_key: str,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_admin_auth)
+):
+    """
+    Delete a domain and cascade delete all related records.
+
+    Requires admin password authentication.
+    """
+    # Get domain
+    domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+    if not domain:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Domain '{domain_key}' not found"
+        )
+
+    try:
+        # Delete DomainAuth record
+        from ..models.domain_auth import DomainAuth
+        db.query(DomainAuth).filter(DomainAuth.domain_key == domain_key).delete()
+
+        # Delete calendar if exists (cascade will handle events)
+        if domain.calendar_id:
+            db.query(Calendar).filter(Calendar.id == domain.calendar_id).delete()
+
+        # Delete domain (cascade will handle groups, filters, etc via FK)
+        db.delete(domain)
+
+        db.commit()
+
+        return {
+            "success": True,
+            "message": f"Domain '{domain_key}' deleted successfully"
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete domain: {str(e)}"
         )

@@ -104,13 +104,22 @@
                     📅 View Calendar →
                   </a>
                 </div>
-                <a
-                  :href="`/${domain.domain_key}/admin`"
-                  target="_blank"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  ⚙️ Manage Domain
-                </a>
+                <div class="flex items-center gap-2">
+                  <a
+                    :href="`/${domain.domain_key}/admin`"
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    ⚙️ Manage Domain
+                  </a>
+                  <button
+                    @click="deleteDomain(domain.domain_key)"
+                    :disabled="processing"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -271,55 +280,10 @@
         </div>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-6 border-2 border-yellow-200 dark:border-yellow-700">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold text-yellow-800 dark:text-yellow-200">{{ $t('admin.panel.pending') }}</p>
-              <p class="text-3xl font-bold text-yellow-900 dark:text-yellow-100 mt-1">{{ pendingCount }}</p>
-            </div>
-            <div class="w-12 h-12 bg-yellow-200 dark:bg-yellow-700 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-yellow-700 dark:text-yellow-200" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border-2 border-green-200 dark:border-green-700">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold text-green-800 dark:text-green-200">{{ $t('admin.panel.approved') }}</p>
-              <p class="text-3xl font-bold text-green-900 dark:text-green-100 mt-1">{{ approvedCount }}</p>
-            </div>
-            <div class="w-12 h-12 bg-green-200 dark:bg-green-700 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-green-700 dark:text-green-200" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl p-6 border-2 border-red-200 dark:border-red-700">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold text-red-800 dark:text-red-200">{{ $t('admin.panel.rejected') }}</p>
-              <p class="text-3xl font-bold text-red-900 dark:text-red-100 mt-1">{{ rejectedCount }}</p>
-            </div>
-            <div class="w-12 h-12 bg-red-200 dark:bg-red-700 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-red-700 dark:text-red-200" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Requests List -->
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ $t('admin.panel.allRequests') }}</h2>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ $t('admin.panel.pendingRequests') || 'Pending Domain Requests' }}</h2>
         </div>
 
         <div v-if="loading" class="p-12 text-center">
@@ -327,27 +291,17 @@
           <p class="mt-4 text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
         </div>
 
-        <div v-else-if="requests.length === 0" class="p-12 text-center">
+        <div v-else-if="pendingRequests.length === 0" class="p-12 text-center">
           <div class="text-6xl mb-4">📭</div>
           <p class="text-gray-600 dark:text-gray-400 font-semibold">{{ $t('admin.panel.noRequests') }}</p>
         </div>
 
         <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-          <div v-for="request in requests" :key="request.id" class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          <div v-for="request in pendingRequests" :key="request.id" class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-3 mb-2">
                   <span class="font-bold text-lg text-gray-900 dark:text-gray-100">{{ request.username }}</span>
-                  <span
-                    class="px-3 py-1 rounded-full text-xs font-bold"
-                    :class="{
-                      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200': request.status === 'pending',
-                      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200': request.status === 'approved',
-                      'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200': request.status === 'rejected'
-                    }"
-                  >
-                    {{ $t(`admin.panel.status.${request.status}`) }}
-                  </span>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
@@ -381,7 +335,7 @@
                 </p>
               </div>
 
-              <div v-if="request.status === 'pending'" class="flex flex-col gap-2">
+              <div class="flex flex-col gap-2">
                 <button
                   @click="approveRequest(request.id)"
                   :disabled="processing"
@@ -511,9 +465,8 @@ const appSettings = ref({
 const settingsSaving = ref(false)
 
 // Computed stats
-const pendingCount = computed(() => requests.value.filter(r => r.status === 'pending').length)
-const approvedCount = computed(() => requests.value.filter(r => r.status === 'approved').length)
-const rejectedCount = computed(() => requests.value.filter(r => r.status === 'rejected').length)
+// Only show pending requests (approved ones become domains, rejected ones are hidden)
+const pendingRequests = computed(() => requests.value.filter(r => r.status === 'pending'))
 
 const authenticate = async () => {
   authenticating.value = true
@@ -677,7 +630,8 @@ const approveRequest = async (requestId) => {
         headers: getAuthHeaders()
       }
     )
-    await loadRequests()
+    // Reload both requests and domains to show the new domain
+    await Promise.all([loadRequests(), loadDomains()])
     notify.success(t('admin.panel.approvalSuccess') || 'Request approved successfully')
   } catch (error) {
     notify.error(t('admin.panel.approvalFailed'))
@@ -703,6 +657,28 @@ const rejectRequest = async (requestId) => {
     notify.success(t('admin.panel.rejectionSuccess') || 'Request rejected successfully')
   } catch (error) {
     notify.error(t('admin.panel.rejectionFailed'))
+  } finally {
+    processing.value = false
+  }
+}
+
+const deleteDomain = async (domainKey) => {
+  if (!confirm(`Are you sure you want to delete domain "${domainKey}"? This will delete all associated data (calendar, filters, groups). This action cannot be undone.`)) {
+    return
+  }
+
+  processing.value = true
+  try {
+    await axios.delete(
+      `${API_BASE_URL}/api/admin/domains/${domainKey}`,
+      {
+        headers: getAuthHeaders()
+      }
+    )
+    await loadDomains()
+    notify.success(`Domain "${domainKey}" deleted successfully`)
+  } catch (error) {
+    notify.error(`Failed to delete domain: ${error.response?.data?.detail || error.message}`)
   } finally {
     processing.value = false
   }

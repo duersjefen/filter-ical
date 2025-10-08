@@ -27,7 +27,7 @@ class DomainRequestCreate(BaseModel):
     requested_domain_key: str = Field(..., min_length=3, max_length=100)
     calendar_url: str = Field(..., min_length=10, max_length=1000)
     description: str = Field(..., min_length=10, max_length=500)
-    default_password: str = Field(..., min_length=4, max_length=100)
+    default_password: Optional[str] = Field(None, min_length=4, max_length=100)
 
     @field_validator('email')
     @classmethod
@@ -90,11 +90,13 @@ async def create_domain_request(
     The request will be pending and an email notification will be sent to the admin.
     """
     try:
-        # Encrypt the default password
-        encrypted_password = encrypt_password(
-            request_data.default_password,
-            settings.password_encryption_key
-        )
+        # Encrypt the default password (if provided)
+        encrypted_password = None
+        if request_data.default_password:
+            encrypted_password = encrypt_password(
+                request_data.default_password,
+                settings.password_encryption_key
+            )
 
         # Create domain request
         domain_request = DomainRequest(

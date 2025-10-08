@@ -164,15 +164,14 @@ def get_calendar_by_domain(db: Session, domain_key: str) -> Optional[Calendar]:
         Calendar object or None
 
     I/O Operation - Database query.
-    Note: domain_key moved from calendars to domain_auth table (migration a1b2c3d4e5f6)
     """
-    from ..models.domain_auth import DomainAuth
+    from ..models.domain import Domain
 
-    # Join with DomainAuth to find calendar by domain_key
+    # Use Domain table as single source of truth
     result = db.query(Calendar).join(
-        DomainAuth, DomainAuth.calendar_id == Calendar.id
+        Domain, Domain.calendar_id == Calendar.id
     ).filter(
-        and_(DomainAuth.domain_key == domain_key, Calendar.type == "domain")
+        and_(Domain.domain_key == domain_key, Calendar.type == "domain")
     ).first()
 
     return result
@@ -342,6 +341,13 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
             unselected_event_ids=unselected_event_ids,
             include_future_events=include_future_events
         )
+
+        # If domain_key is provided, lookup domain_id for FK relationship
+        if domain_key:
+            from ..models.domain import Domain
+            domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+            if domain:
+                filter_data['domain_id'] = domain.id
 
         # Create database object
         filter_obj = Filter(**filter_data)

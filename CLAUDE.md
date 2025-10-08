@@ -106,12 +106,18 @@ return { get user() { return appStore.user } }
 ## 🔧 CRITICAL BEHAVIORS
 
 ### User Notification System
-**Required notifications using:**
+**Notify user when Claude can't continue (finished or needs input):**
 ```bash
-/home/martijn/.claude-notifications/claude_notify "message" "type"
+~/bin/claude-notify "message" "type"
 ```
 
-**Types:** `task_complete`, `error`, `milestone`, `approval_needed`
+**Types:** `success`, `task_complete`, `milestone`, `error`, `question`, `approval_needed`, `input_needed`
+
+**When to notify:**
+- ✅ All tasks complete - nothing left to do
+- ✅ Waiting for input - need decision/approval/clarification
+- ✅ Blocked/error - can't proceed without help
+- ❌ Don't notify on routine mid-task updates
 
 ### Systematic Debugging
 **2-Failure Rule:** After 2 failed attempts, IMMEDIATELY find root cause
@@ -127,7 +133,7 @@ return { get user() { return appStore.user } }
 
 ## 🚢 INFRASTRUCTURE
 
-### Local Development (WSL2)
+### Local Development (macOS)
 - **Backend:** Uvicorn on `localhost:3000` (hot reload)
 - **Frontend:** Vite on `localhost:8000` (hot reload)
 - **Database:** PostgreSQL in Docker on `localhost:5432`

@@ -34,7 +34,7 @@ class DomainRequest(Base):
     requested_domain_key = Column(String(100), nullable=False, index=True)  # Requested by user
     calendar_url = Column(Text, nullable=False)
     description = Column(Text, nullable=False)
-    default_password = Column(String(255), nullable=False)  # Encrypted password for domain
+    default_password = Column(String(255), nullable=True)  # Encrypted password for domain (optional)
 
     # Status tracking
     status = Column(

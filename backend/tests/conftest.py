@@ -91,20 +91,11 @@ def test_db_engine():
     # Import all models to register them with SQLAlchemy
     from app.models import (
         Calendar, Event, Group, RecurringEventGroup, AssignmentRule, Filter,
-        DomainRequest, DomainAuth, AppSettings, User, UserDomainAccess, DomainBackup
+        DomainRequest, DomainAuth, Domain, AppSettings, User, UserDomainAccess, DomainBackup
     )
-
-    # Debug: print tables
-    print(f"DEBUG: Tables in metadata: {list(Base.metadata.tables.keys())}")
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
-
-    # Debug: verify tables were created
-    from sqlalchemy import inspect
-    inspector = inspect(engine)
-    created_tables = inspector.get_table_names()
-    print(f"DEBUG: Tables created in database: {created_tables}")
     
     yield engine
     

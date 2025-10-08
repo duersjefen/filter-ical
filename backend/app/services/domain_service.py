@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from ..models.calendar import Calendar, Event, Group, RecurringEventGroup, AssignmentRule
+from ..models.domain import Domain
 from ..data.grouping import (
     load_domain_config, get_domain_config, create_group_data, create_recurring_event_group_data,
     create_assignment_rule_data, apply_assignment_rules, build_domain_events_response,
@@ -45,50 +46,54 @@ def load_domains_config(config_path: Path) -> Tuple[bool, Dict[str, Any], str]:
         return False, {}, f"Error reading domain configuration: {str(e)}"
 
 
-async def ensure_domain_calendar_exists(db: Session, domain_key: str, 
-                                      config: Dict[str, Any]) -> Tuple[bool, Optional[Calendar], str]:
+async def ensure_domain_calendar_exists(db: Session, domain_key: str) -> Tuple[bool, Optional[Calendar], str]:
     """
     Ensure domain calendar exists and is up to date.
-    
+
     Args:
         db: Database session
         domain_key: Domain identifier
-        config: Domain configuration
-        
+
     Returns:
         Tuple of (success, calendar_obj, error_message)
-        
-    I/O Operation - Database operations with domain config.
+
+    I/O Operation - Database operations with domain model.
     """
     try:
-        # Get domain configuration using pure function
-        domain_config = get_domain_config(domain_key, config)
-        if not domain_config:
-            return False, None, f"Domain {domain_key} not found in configuration"
-        
-        # Check if domain calendar exists
-        calendar = get_calendar_by_domain(db, domain_key)
-        
+        # Get domain from database
+        domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+        if not domain:
+            return False, None, f"Domain {domain_key} not found"
+
+        # Check if domain has a calendar
+        if domain.calendar_id:
+            calendar = db.query(Calendar).filter(Calendar.id == domain.calendar_id).first()
+        else:
+            calendar = None
+
         if not calendar:
             # Create domain calendar
-            from .calendar_service import create_calendar
-            success, calendar, error = create_calendar(
-                db=db,
-                name=domain_config['name'],
-                source_url=domain_config['calendar_url'],
-                calendar_type="domain",
-                domain_key=domain_key
+            calendar = Calendar(
+                name=domain.name,
+                source_url=domain.calendar_url,
+                type="domain",
+                user_id=None
             )
-            if not success:
-                return False, None, error
-        
+            db.add(calendar)
+            db.commit()
+            db.refresh(calendar)
+
+            # Link calendar to domain
+            domain.calendar_id = calendar.id
+            db.commit()
+
         # Sync calendar events
         sync_success, event_count, sync_error = await sync_calendar_events(db, calendar)
         if not sync_success:
             return False, calendar, sync_error
-        
+
         return True, calendar, ""
-        
+
     except Exception as e:
         return False, None, f"Error ensuring domain calendar: {str(e)}"
 
@@ -157,118 +162,137 @@ def get_domain_groups(db: Session, domain_key: str) -> List[Group]:
 def create_group(db: Session, domain_key: str, name: str) -> Tuple[bool, Optional[Group], str]:
     """
     Create group in database.
-    
+
     Args:
         db: Database session
         domain_key: Domain identifier
         name: Group name
-        
+
     Returns:
         Tuple of (success, group_obj, error_message)
-        
+
     I/O Operation - Database creation with validation.
     """
     # Validate data using pure function
     is_valid, error_msg = validate_group_data(name, domain_key)
     if not is_valid:
         return False, None, error_msg
-    
+
     try:
-        # Create group data using pure function
-        group_data = create_group_data(domain_key, name)
-        
-        # Create database object
-        group = Group(**group_data)
+        # Get domain_id from domain_key
+        domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+        if not domain:
+            return False, None, f"Domain {domain_key} not found"
+
+        # Create group with both domain_id and domain_key for backward compatibility
+        group = Group(
+            domain_id=domain.id,
+            domain_key=domain_key,
+            name=name.strip()
+        )
         db.add(group)
         db.commit()
         db.refresh(group)
-        
+
         return True, group, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, None, f"Database error: {str(e)}"
 
 
-def assign_recurring_events_to_group(db: Session, domain_key: str, group_id: int, 
+def assign_recurring_events_to_group(db: Session, domain_key: str, group_id: int,
                                    recurring_event_titles: List[str]) -> Tuple[bool, int, str]:
     """
     Assign recurring events to group.
-    
+
     Args:
         db: Database session
         domain_key: Domain identifier
         group_id: Target group ID
         recurring_event_titles: List of event titles to assign
-        
+
     Returns:
         Tuple of (success, assignment_count, error_message)
-        
+
     I/O Operation - Database operations.
     """
     try:
+        # Get domain_id from domain_key
+        domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+        if not domain:
+            return False, 0, f"Domain {domain_key} not found"
+
         # Remove existing assignments for the specific events in this group only
         if recurring_event_titles:
             db.query(RecurringEventGroup).filter(
                 RecurringEventGroup.group_id == group_id,
                 RecurringEventGroup.recurring_event_title.in_(recurring_event_titles)
             ).delete(synchronize_session=False)
-        
+
         # Create new assignments
         assignment_count = 0
         for title in recurring_event_titles:
             if title.strip():  # Skip empty titles
-                # Create assignment data using pure function
-                assignment_data = create_recurring_event_group_data(
-                    domain_key, title.strip(), group_id
+                assignment = RecurringEventGroup(
+                    domain_id=domain.id,
+                    domain_key=domain_key,
+                    recurring_event_title=title.strip(),
+                    group_id=group_id
                 )
-                
-                assignment = RecurringEventGroup(**assignment_data)
                 db.add(assignment)
                 assignment_count += 1
-        
+
         db.commit()
         return True, assignment_count, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, 0, f"Database error: {str(e)}"
 
 
-def create_assignment_rule(db: Session, domain_key: str, rule_type: str, 
+def create_assignment_rule(db: Session, domain_key: str, rule_type: str,
                           rule_value: str, target_group_id: int) -> Tuple[bool, Optional[AssignmentRule], str]:
     """
     Create assignment rule in database.
-    
+
     Args:
         db: Database session
         domain_key: Domain identifier
         rule_type: Type of rule
         rule_value: Value to match
         target_group_id: Target group ID
-        
+
     Returns:
         Tuple of (success, rule_obj, error_message)
-        
+
     I/O Operation - Database creation with validation.
     """
     # Validate data using pure function
     is_valid, error_msg = validate_assignment_rule_data(rule_type, rule_value, target_group_id)
     if not is_valid:
         return False, None, error_msg
-    
+
     try:
-        # Create rule data using pure function
-        rule_data = create_assignment_rule_data(domain_key, rule_type, rule_value, target_group_id)
-        
-        # Create database object
-        rule = AssignmentRule(**rule_data)
+        # Get domain_id from domain_key
+        domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+        if not domain:
+            return False, None, f"Domain {domain_key} not found"
+
+        # Create rule with both domain_id and domain_key
+        rule = AssignmentRule(
+            domain_id=domain.id,
+            domain_key=domain_key,
+            rule_type=rule_type,
+            rule_value=rule_value,
+            target_group_id=target_group_id
+        )
         db.add(rule)
         db.commit()
         db.refresh(rule)
-        
+
         return True, rule, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, None, f"Database error: {str(e)}"

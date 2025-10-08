@@ -13,6 +13,7 @@ import yaml
 
 from ..core.database import get_db
 from ..core.config import settings
+from ..models.domain import Domain
 from ..services.domain_service import (
     load_domains_config, ensure_domain_calendar_exists,
     build_domain_events_response_data, get_domain_groups, create_group,
@@ -34,31 +35,43 @@ from ..services.cache_service import get_or_build_domain_events
 router = APIRouter()
 
 
+def verify_domain_exists(db: Session, domain_key: str) -> Domain:
+    """
+    Verify that a domain exists in the database.
+
+    Args:
+        db: Database session
+        domain_key: Domain identifier
+
+    Returns:
+        Domain object if found
+
+    Raises:
+        HTTPException: If domain not found
+    """
+    domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+    if not domain:
+        raise HTTPException(status_code=404, detail=f"Domain '{domain_key}' not found")
+    return domain
+
+
 @router.get("/{domain}")
-async def get_domain_config(domain: str):
-    """Get domain configuration from domains.yaml."""
+async def get_domain_config(domain: str, db: Session = Depends(get_db)):
+    """Get domain configuration from database."""
     try:
-        # Load domain configuration
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        # Check if domain exists in configuration
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
-        # Return the domain configuration
-        domain_config = config['domains'][domain]
+        # Verify domain exists in database
+        domain_obj = verify_domain_exists(db, domain)
+
         return {
             "success": True,
             "data": {
-                "domain_key": domain,
-                "name": domain_config.get("name", domain),
-                "calendar_url": domain_config.get("calendar_url", ""),
-                **domain_config  # Include any additional config fields
+                "domain_key": domain_obj.domain_key,
+                "name": domain_obj.name,
+                "calendar_url": domain_obj.calendar_url,
+                "status": domain_obj.status
             }
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -74,15 +87,8 @@ async def get_domain_events(
 ):
     """Get domain calendar events (grouped structure) - cached for performance."""
     try:
-        # Load domain configuration
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        # Check if domain exists in configuration
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get cached domain events or build if needed
         success, response_data, error = get_or_build_domain_events(db, domain, force_refresh)
         
@@ -104,14 +110,8 @@ async def get_domain_groups_endpoint(
 ):
     """Get groups for domain calendar."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get groups from database
         groups = get_domain_groups(db, domain)
         
@@ -140,14 +140,8 @@ async def create_domain_group(
 ):
     """Create a new group (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "name" not in group_data:
             raise HTTPException(status_code=400, detail="Group name is required")
@@ -179,14 +173,8 @@ async def assign_recurring_events(
 ):
     """Manually assign recurring events to group (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "recurring_event_titles" not in assignment_data:
             raise HTTPException(status_code=400, detail="recurring_event_titles is required")
@@ -219,14 +207,8 @@ async def remove_events_from_group(
 ):
     """Remove events from specific group (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "recurring_event_titles" not in removal_data:
             raise HTTPException(status_code=400, detail="recurring_event_titles is required")
@@ -262,14 +244,8 @@ async def create_domain_assignment_rule(
 ):
     """Create auto-assignment rule (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate required fields
         required_fields = ["rule_type", "rule_value", "target_group_id"]
         for field in required_fields:
@@ -307,14 +283,8 @@ async def get_domain_assignment_rules(
 ):
     """List assignment rules for domain."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get assignment rules
         rules = get_assignment_rules(db, domain)
 
@@ -343,14 +313,8 @@ async def apply_domain_assignment_rules(
 ):
     """Manually trigger assignment rules to be applied to all events (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Apply assignment rules
         success, assignment_count, error = await auto_assign_events_with_rules(db, domain)
         if not success:
@@ -377,14 +341,8 @@ async def create_domain_filter(
 ):
     """Create filter for domain calendar."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "name" not in filter_data:
             raise HTTPException(status_code=400, detail="Filter name is required")
@@ -444,14 +402,8 @@ async def get_domain_filters(
 ):
     """List filters for domain calendar."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get filters
         filters = get_filters(db, domain_key=domain, username=username)
         
@@ -495,14 +447,8 @@ async def update_domain_filter(
 ):
     """Update an existing domain filter."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get existing filter to verify it exists and user has access
         existing_filter = get_filter_by_id(db, filter_id)
         if not existing_filter or existing_filter.domain_key != domain:
@@ -570,14 +516,8 @@ async def delete_domain_filter(
 ):
     """Delete filter for domain calendar."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Delete filter
         success, error = delete_filter(db, filter_id, domain_key=domain, username=username)
         if not success:
@@ -604,14 +544,8 @@ async def get_domain_recurring_events(
 ):
     """Get available recurring events for assignment (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get recurring events
         recurring_events = get_available_recurring_events(db, domain)
         
@@ -632,14 +566,8 @@ async def update_domain_group(
 ):
     """Update group (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "name" not in group_data:
             raise HTTPException(status_code=400, detail="Group name is required")
@@ -673,14 +601,8 @@ async def delete_domain_group(
 ):
     """Delete group and its assignments (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Delete group
         success, error = delete_group(db, group_id, domain)
         if not success:
@@ -706,14 +628,8 @@ async def delete_domain_assignment_rule(
 ):
     """Delete assignment rule (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Delete rule
         success, error = delete_assignment_rule(db, rule_id, domain)
         if not success:
@@ -740,14 +656,8 @@ async def get_domain_recurring_events_with_assignments(
 ):
     """Get available recurring events with their current assignments (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get recurring events with assignment information
         events_with_assignments = get_available_recurring_events_with_assignments(db, domain)
         
@@ -770,14 +680,8 @@ async def bulk_assign_events_to_group(
 ):
     """Bulk assign multiple events to a group (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "group_id" not in assignment_data or "recurring_event_titles" not in assignment_data:
             raise HTTPException(status_code=400, detail="group_id and recurring_event_titles are required")
@@ -812,14 +716,8 @@ async def bulk_unassign_events(
 ):
     """Bulk unassign multiple events from their current groups (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "recurring_event_titles" not in assignment_data:
             raise HTTPException(status_code=400, detail="recurring_event_titles is required")
@@ -853,14 +751,8 @@ async def unassign_single_event(
 ):
     """Unassign a single event from its current group (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Validate request data
         if "recurring_event_title" not in assignment_data:
             raise HTTPException(status_code=400, detail="recurring_event_title is required")
@@ -893,14 +785,8 @@ async def export_domain_config(
 ):
     """Export current domain configuration as YAML (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Export current domain state
         success, export_config, error = export_domain_configuration(db, domain)
         if not success:
@@ -931,14 +817,8 @@ async def import_domain_config(
 ):
     """Import domain configuration from YAML (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get raw content from request
         content_type = request.headers.get('content-type', '').lower()
         
@@ -985,14 +865,8 @@ async def reset_domain_config(
 ):
     """Reset domain to baseline configuration from YAML file (admin)."""
     try:
-        # Load domain configuration to verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-        
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-        
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Load baseline configuration from YAML file
         from ..services.domain_config_service import load_domain_configuration
         domains_dir = settings.domains_config_path.parent
@@ -1026,14 +900,8 @@ async def create_domain_backup(
 ):
     """Create a backup snapshot of current domain configuration."""
     try:
-        # Verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Extract description from body if provided
         description = body.get('description') if body else None
 
@@ -1072,14 +940,8 @@ async def get_domain_backups(
 ):
     """List all backups for a domain, ordered by creation date (newest first)."""
     try:
-        # Verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get backups
         list_success, backups, list_error = list_backups(db=db, domain_key=domain)
 
@@ -1115,14 +977,8 @@ async def delete_domain_backup(
 ):
     """Delete a backup snapshot."""
     try:
-        # Verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Delete backup
         delete_success, delete_error = delete_backup(
             db=db,
@@ -1154,14 +1010,8 @@ async def restore_domain_backup(
 ):
     """Restore domain from a backup snapshot. Automatically creates a backup of current state first."""
     try:
-        # Verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Restore from backup
         restore_success, auto_backup_id, restore_error = restore_backup(
             db=db,
@@ -1195,14 +1045,8 @@ async def download_domain_backup(
 ):
     """Download a backup as YAML file."""
     try:
-        # Verify domain exists
-        success, config, error = load_domains_config(settings.domains_config_path)
-        if not success:
-            raise HTTPException(status_code=500, detail=f"Configuration error: {error}")
-
-        if domain not in config.get('domains', {}):
-            raise HTTPException(status_code=404, detail="Domain not found")
-
+        # Verify domain exists in database
+        verify_domain_exists(db, domain)
         # Get backup
         get_success, backup, get_error = get_backup(
             db=db,

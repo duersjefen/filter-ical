@@ -76,18 +76,20 @@ class Event(Base):
 class Group(Base):
     """
     Group model for domain calendar event organization.
-    
+
     Corresponds to Group schema in OpenAPI spec.
     """
     __tablename__ = "groups"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    domain_key = Column(String(100), nullable=False, index=True)  # Links to domains.yaml
+    domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=True, index=True)  # New FK to domains table
+    domain_key = Column(String(100), nullable=True, index=True)  # Legacy field for backward compatibility
     name = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
+
     # Relationships
+    domain = relationship("Domain", back_populates="groups")
     recurring_event_groups = relationship("RecurringEventGroup", back_populates="group", cascade="all, delete-orphan")
     assignment_rules = relationship("AssignmentRule", back_populates="group", cascade="all, delete-orphan")
 
@@ -95,17 +97,18 @@ class Group(Base):
 class RecurringEventGroup(Base):
     """
     Association between recurring event titles and groups.
-    
+
     This enables the Groups -> Recurring Events -> Events hierarchy.
     """
     __tablename__ = "recurring_event_groups"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    domain_key = Column(String(100), nullable=False, index=True)
+    domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=True, index=True)  # New FK to domains table
+    domain_key = Column(String(100), nullable=True, index=True)  # Legacy field for backward compatibility
     recurring_event_title = Column(String(500), nullable=False, index=True)
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
     created_at = Column(DateTime, default=func.now())
-    
+
     # Relationships
     group = relationship("Group", back_populates="recurring_event_groups")
 
@@ -113,19 +116,20 @@ class RecurringEventGroup(Base):
 class AssignmentRule(Base):
     """
     Auto-assignment rules for automatically assigning recurring events to groups.
-    
+
     Corresponds to AssignmentRule schema in OpenAPI spec.
     """
     __tablename__ = "assignment_rules"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    domain_key = Column(String(100), nullable=False, index=True)
+    domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=True, index=True)  # New FK to domains table
+    domain_key = Column(String(100), nullable=True, index=True)  # Legacy field for backward compatibility
     rule_type = Column(String(50), nullable=False)  # 'title_contains', 'description_contains', 'category_contains'
     rule_value = Column(String(500), nullable=False)
     target_group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
+
     # Relationships
     group = relationship("Group", back_populates="assignment_rules")
 
@@ -137,16 +141,17 @@ class Filter(Base):
     Corresponds to Filter schema in OpenAPI spec.
 
     User filters: calendar_id + user_id set
-    Domain filters: domain_key set (user_id optional for anonymous filters)
+    Domain filters: domain_id/domain_key set (user_id optional for anonymous filters)
     """
     __tablename__ = "filters"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
 
-    # Either calendar_id (user filters) OR domain_key (domain filters)
+    # Either calendar_id (user filters) OR domain_id/domain_key (domain filters)
     calendar_id = Column(Integer, ForeignKey("calendars.id"), nullable=True)
-    domain_key = Column(String(100), nullable=True, index=True)
+    domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=True, index=True)  # New FK to domains table
+    domain_key = Column(String(100), nullable=True, index=True)  # Legacy field for API compatibility
 
     # Owner (nullable for anonymous domain filters stored in localStorage)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)

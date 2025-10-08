@@ -10,13 +10,16 @@ Integrated with Docker workflow for rapid development.
 import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
 from .core.database import Base, engine
 from .core.scheduler import start_scheduler, stop_scheduler
+from .core.rate_limit import limiter
 
 
 def load_openapi_spec() -> Optional[Dict[str, Any]]:
@@ -40,6 +43,19 @@ async def lifespan(app: FastAPI):
     print("🚀 Starting Filter iCal...")
     print(f"🌍 Environment: {settings.environment.value}")
     print("📋 Contract-first development active")
+
+    # Security validation - ensure JWT secret is configured properly
+    if settings.environment.value == "production":
+        if settings.jwt_secret_key == "change-me-in-production-use-strong-random-key":
+            raise RuntimeError(
+                "🚨 SECURITY ERROR: JWT_SECRET_KEY is using default value in production! "
+                "Set JWT_SECRET_KEY environment variable to a strong random key."
+            )
+        if len(settings.jwt_secret_key) < 32:
+            raise RuntimeError(
+                "🚨 SECURITY ERROR: JWT_SECRET_KEY must be at least 32 characters long"
+            )
+        print("✅ JWT secret key validated")
 
     # Database migrations are managed by Alembic
     # Run migrations via: make migrate-up (dev) or deploy.sh (production)
@@ -152,7 +168,15 @@ def create_application() -> FastAPI:
         debug=settings.debug,
         lifespan=lifespan
     )
-    
+
+    # Rate limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Security headers middleware
+    from .core.security_headers import SecurityHeadersMiddleware
+    app.add_middleware(SecurityHeadersMiddleware)
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
