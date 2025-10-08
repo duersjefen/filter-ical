@@ -1,51 +1,54 @@
 # Core FastAPI dependencies
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.7.0
 
 # Database
-sqlalchemy==2.0.23
-psycopg2-binary==2.9.9
-alembic==1.13.1
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+alembic==1.14.0
 
 # Cache
-redis==5.0.1
+redis==5.2.1
 
 # HTTP and iCal processing
-httpx==0.25.2
-icalendar==5.0.11
-requests==2.31.0
+httpx==0.27.2
+icalendar==6.1.0
+requests==2.32.3
 
 # YAML processing for domains.yaml
-PyYAML==6.0.1
+PyYAML==6.0.2
 
 # Background tasks
-APScheduler==3.10.4
+APScheduler==3.11.0
 
 # Email notifications
-aiosmtplib==3.0.1
-email-validator==2.1.0
+aiosmtplib==3.0.2
+email-validator==2.2.0
 
 # Authentication
-bcrypt==4.1.2
-cryptography==41.0.7
-PyJWT==2.8.0
+bcrypt==4.2.1
+cryptography==44.0.0
+PyJWT==2.10.1
+
+# Rate limiting
+slowapi==0.1.9
 
 # Testing and Development
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
 
 # Contract testing
-openapi-core==0.18.2
-jsonschema==4.20.0
+openapi-core==0.19.4
+jsonschema==4.23.0
 
 # Development tools
-black==23.11.0
-isort==5.12.0
-flake8==6.1.0
-mypy==1.7.1
+black==24.10.0
+isort==5.13.2
+flake8==7.1.1
+mypy==1.13.0
 
 # Production
-gunicorn==21.2.0
+gunicorn==23.0.0

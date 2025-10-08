@@ -18,7 +18,7 @@ setup: ## Install all dependencies (run this first!)
 	@echo ""
 	@echo "🐍 Installing backend dependencies..."
 	@cd backend && \
-		(test -d venv || python3 -m venv venv) && \
+		(test -d venv || python3.13 -m venv venv) && \
 		. venv/bin/activate && \
 		pip install --upgrade pip && \
 		pip install -r requirements.txt
@@ -39,6 +39,7 @@ setup: ## Install all dependencies (run this first!)
 
 dev: ## Start full development environment (recommended)
 	@echo "🚀 Starting full development environment..."
+	@$(MAKE) stop
 	@echo ""
 	@$(MAKE) dev-db
 	@echo ""
@@ -46,13 +47,15 @@ dev: ## Start full development environment (recommended)
 	@echo ""
 	@echo "⬆️  Applying database migrations..."
 	@cd backend && \
+		(test -d venv || python3.13 -m venv venv) && \
 		. venv/bin/activate && \
+		pip install -q -r requirements.txt && \
 		alembic upgrade head 2>&1 | grep -E "(Running upgrade|Already at head|ERROR)" || true
 	@echo "✅ Migrations applied"
 	@echo ""
 	@echo "🐍 Starting backend..."
 	@bash -c "trap 'kill 0' EXIT; \
-		(cd backend && (test -d venv || python3 -m venv venv) && . venv/bin/activate && pip install -q -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 3000) & \
+		(cd backend && (test -d venv || python3.13 -m venv venv) && . venv/bin/activate && pip install -q -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 3000) & \
 		BACKEND_PID=$$!; \
 		echo '⏳ Waiting for backend to be ready...'; \
 		for i in {1..30}; do \
@@ -76,7 +79,7 @@ dev-backend: ## Run backend natively (hot reload)
 	@echo "📍 http://localhost:3000"
 	@echo "📖 http://localhost:3000/docs"
 	@cd backend && \
-		(test -d venv || python3 -m venv venv) && \
+		(test -d venv || python3.13 -m venv venv) && \
 		. venv/bin/activate && \
 		pip install -q -r requirements.txt && \
 		uvicorn app.main:app --reload --host 0.0.0.0 --port 3000

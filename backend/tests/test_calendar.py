@@ -35,7 +35,6 @@ class TestCalendarDataCreation:
         assert result["name"] == "Test Calendar"
         assert result["source_url"] == "https://example.com/cal.ics"
         assert result["type"] == "user"
-        assert result["domain_key"] is None
         assert result["user_id"] is None
         assert result["last_fetched"] is None
         assert isinstance(result["created_at"], datetime)
@@ -47,12 +46,10 @@ class TestCalendarDataCreation:
             "Domain Cal",
             "https://domain.com/cal.ics",
             calendar_type="domain",
-            domain_key="test_domain",
             user_id=123
         )
 
         assert result["type"] == "domain"
-        assert result["domain_key"] == "test_domain"
         assert result["user_id"] == 123
     
     def test_create_calendar_data_strips_whitespace(self):
