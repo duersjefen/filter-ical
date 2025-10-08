@@ -5,10 +5,11 @@ Implements user filter endpoints from OpenAPI specification.
 """
 
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..core.database import get_db
+from ..core.auth import get_current_user_id
 from ..services.calendar_service import get_filters
 
 router = APIRouter()
@@ -16,7 +17,7 @@ router = APIRouter()
 
 @router.get("")
 async def get_user_filters(
-    username: Optional[str] = Query(None, description="Username to filter by"),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -26,8 +27,10 @@ async def get_user_filters(
     allowing the frontend to display domain navigation buttons for domains where
     the user has created filters.
 
+    Authentication via JWT token in Authorization header.
+
     Args:
-        username: Optional username to filter by
+        user_id: User ID extracted from JWT token
         db: Database session
 
     Returns:
@@ -35,8 +38,7 @@ async def get_user_filters(
     """
     try:
         # Get all filters for the user (no calendar_id or domain_key filter)
-        # The get_filters function already supports filtering by username only
-        filters = get_filters(db, username=username)
+        filters = get_filters(db, user_id=user_id)
 
         # Transform to OpenAPI schema format
         filters_response = []
