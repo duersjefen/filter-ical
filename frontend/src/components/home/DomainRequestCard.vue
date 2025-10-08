@@ -128,42 +128,62 @@
           id="description-request"
           v-model="formData.description"
           rows="4"
-          class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500 resize-none"
+          :class="[
+            'w-full px-4 py-3.5 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500 resize-none',
+            formData.description && !isDescriptionValid
+              ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
+              : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
+          ]"
           :placeholder="$t('domainRequest.form.descriptionPlaceholder')"
           minlength="10"
           maxlength="500"
           required
         ></textarea>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {{ formData.description.length }} / 500 {{ $t('domainRequest.form.characters') }}
+        <div class="flex items-center justify-between mt-1">
+          <div v-if="formData.description && !isDescriptionValid" class="text-xs text-red-600 dark:text-red-400 font-semibold">
+            {{ $t('domainRequest.errors.descriptionTooShort') }}
+          </div>
+          <div v-else class="text-xs text-gray-500 dark:text-gray-400">
+            {{ formData.description.length }} / 500 {{ $t('domainRequest.form.characters') }}
+          </div>
         </div>
       </div>
 
-      <div>
+      <div class="opacity-60 focus-within:opacity-100 transition-opacity">
         <label for="password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-          Admin Password (for your domain)
+          Admin Password <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
         </label>
         <input
           id="password-request"
           v-model="formData.default_password"
           :type="showPassword ? 'text' : 'password'"
-          class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="Enter a secure password (min 4 chars)"
+          :class="[
+            'w-full px-4 py-3.5 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500',
+            formData.default_password && !isPasswordValid
+              ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
+              : 'border-gray-300/60 dark:border-gray-600/60 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
+          ]"
+          placeholder="Leave blank for password-free access"
           minlength="4"
           maxlength="100"
-          required
         />
-        <div class="flex items-center mt-2">
+        <div v-if="formData.default_password && !isPasswordValid" class="mt-2 text-xs text-red-600 dark:text-red-400 font-semibold">
+          {{ $t('domainRequest.errors.passwordTooShort') }}
+        </div>
+        <div class="flex items-center justify-between mt-2">
           <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
             <input type="checkbox" v-model="showPassword" class="w-4 h-4 rounded border-gray-300 dark:border-gray-600" />
             Show password
           </label>
         </div>
+        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg px-3 py-2 border border-blue-200/50 dark:border-blue-700/50">
+          💡 <strong>No password?</strong> Anyone with the link can access. <strong>With password?</strong> Secure access only.
+        </div>
       </div>
 
       <button
         type="submit"
-        :disabled="loading || !formData.email || !formData.requested_domain_key || !formData.calendar_url || !formData.description || formData.description.length < 10 || !formData.default_password || formData.default_password.length < 4"
+        :disabled="loading || !isFormValid"
         class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 py-3.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg hover:shadow-xl disabled:shadow-sm disabled:transform-none"
       >
         {{ loading ? $t('domainRequest.form.submitting') : $t('domainRequest.form.submit') }}
@@ -195,19 +215,31 @@ const formData = ref({
   default_password: ''
 })
 
+// Validation computed properties
+const isDescriptionValid = computed(() => {
+  return formData.value.description.length >= 10
+})
+
+const isPasswordValid = computed(() => {
+  // Password is optional, but if provided, must be at least 4 chars
+  return !formData.value.default_password || formData.value.default_password.length >= 4
+})
+
+const isFormValid = computed(() => {
+  return formData.value.email &&
+         formData.value.requested_domain_key &&
+         formData.value.calendar_url &&
+         isDescriptionValid.value &&
+         isPasswordValid.value
+})
+
 const submitRequest = async () => {
   if (!username.value) {
     errorMessage.value = t('domainRequest.errors.loginRequired')
     return
   }
 
-  if (formData.value.description.length < 10) {
-    errorMessage.value = t('domainRequest.errors.descriptionTooShort')
-    return
-  }
-
-  if (formData.value.default_password.length < 4) {
-    errorMessage.value = 'Password must be at least 4 characters'
+  if (!isFormValid.value) {
     return
   }
 
@@ -216,14 +248,20 @@ const submitRequest = async () => {
   successMessage.value = null
 
   try {
-    const result = await post('/api/domain-requests', {
+    const payload = {
       username: username.value,
       email: formData.value.email.toLowerCase(),
       requested_domain_key: formData.value.requested_domain_key.toLowerCase(),
       calendar_url: formData.value.calendar_url,
-      description: formData.value.description,
-      default_password: formData.value.default_password
-    })
+      description: formData.value.description
+    }
+
+    // Only include password if provided
+    if (formData.value.default_password) {
+      payload.default_password = formData.value.default_password
+    }
+
+    const result = await post('/api/domain-requests', payload)
 
     if (result.success) {
       successMessage.value = t('domainRequest.success')

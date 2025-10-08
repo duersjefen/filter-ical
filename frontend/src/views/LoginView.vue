@@ -1,5 +1,10 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+    <!-- Language Toggle - Top Right -->
+    <div class="fixed top-4 right-4 z-50">
+      <LanguageToggle />
+    </div>
+
     <div class="max-w-md w-full">
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-8">
         <!-- Header -->
@@ -9,8 +14,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{activeTab === 'login' ? 'Welcome Back' : 'Create Account' }}</h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">{{ activeTab === 'login' ? 'Login to your account' : 'Start filtering your calendars' }}</p>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ activeTab === 'login' ? $t('login.welcomeBack') : $t('login.createAccount') }}</h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-2">{{ activeTab === 'login' ? $t('login.loginToAccount') : $t('login.startFiltering') }}</p>
         </div>
 
         <!-- Tabs -->
@@ -20,14 +25,14 @@
             class="flex-1 py-3 font-semibold transition-colors rounded-tl-xl"
             :class="activeTab === 'login' ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'"
           >
-            Login
+            {{ $t('login.loginTab') }}
           </button>
           <button
             @click="activeTab = 'register'"
             class="flex-1 py-3 font-semibold transition-colors rounded-tr-xl"
             :class="activeTab === 'register' ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'"
           >
-            Register
+            {{ $t('login.registerTab') }}
           </button>
         </div>
 
@@ -45,26 +50,31 @@
         <form v-if="activeTab === 'login'" @submit.prevent="handleLogin" class="space-y-4">
           <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Username
+              {{ $t('login.username') }}
             </label>
             <input
               v-model="loginUsername"
               type="text"
               required
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Enter your username"
+              :placeholder="$t('login.usernamePlaceholder')"
             />
           </div>
 
-          <div v-if="showLoginPassword">
+          <!-- Info: Password is optional -->
+          <div class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg px-3 py-2.5 border border-blue-200/50 dark:border-blue-700/50">
+            💡 {{ $t('login.passwordOptionalInfo') }}
+          </div>
+
+          <div class="opacity-60 focus-within:opacity-100 transition-opacity">
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Password
+              {{ $t('login.passwordLabel') }} <span class="text-gray-400">{{ $t('login.passwordOptionalLabel') }}</span>
             </label>
             <input
               v-model="loginPassword"
               type="password"
-              class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Enter your password"
+              class="w-full px-4 py-3 border-2 border-gray-300/60 dark:border-gray-600/60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-all"
+              :placeholder="$t('login.passwordPlaceholder')"
             />
           </div>
 
@@ -73,16 +83,15 @@
             :disabled="loading"
             class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 rounded-xl font-bold transition-all hover:shadow-lg disabled:cursor-not-allowed"
           >
-            {{ loading ? 'Logging in...' : 'Login' }}
+            {{ loading ? $t('login.loggingIn') : $t('login.loginButton') }}
           </button>
 
           <button
-            v-if="showLoginPassword"
             type="button"
             @click="$router.push('/reset-password')"
             class="w-full text-sm text-purple-600 dark:text-purple-400 hover:underline"
           >
-            Forgot password?
+            {{ $t('login.forgotPassword') }}
           </button>
         </form>
 
@@ -90,7 +99,7 @@
         <form v-else-if="activeTab === 'register'" @submit.prevent="handleRegister" class="space-y-4">
           <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Username <span class="text-red-500">*</span>
+              {{ $t('login.usernameRequired') }}
             </label>
             <input
               v-model="registerUsername"
@@ -99,36 +108,42 @@
               minlength="3"
               maxlength="50"
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Choose a username"
+              :placeholder="$t('login.chooseUsername')"
             />
           </div>
 
-          <div>
+          <!-- Info box explaining optional fields -->
+          <div class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-green-50/50 dark:bg-green-900/20 rounded-lg px-3 py-2.5 border border-green-200/50 dark:border-green-700/50">
+            <div class="font-semibold mb-1">{{ $t('login.quickStartTitle') }}</div>
+            <div class="space-y-1 ml-4">
+              <div>{{ $t('login.emailPurpose') }}</div>
+              <div>{{ $t('login.passwordPurpose') }}</div>
+            </div>
+          </div>
+
+          <div class="opacity-60 focus-within:opacity-100 transition-opacity">
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Email <span class="text-gray-400">(optional)</span>
+              {{ $t('login.email') }} <span class="text-gray-400">{{ $t('login.emailOptionalLabel') }}</span>
             </label>
             <input
               v-model="registerEmail"
               type="email"
-              class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="your@email.com"
+              class="w-full px-4 py-3 border-2 border-gray-300/60 dark:border-gray-600/60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-all"
+              :placeholder="$t('login.emailPlaceholder')"
             />
           </div>
 
-          <div>
+          <div class="opacity-60 focus-within:opacity-100 transition-opacity">
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Password <span class="text-gray-400">(optional)</span>
+              {{ $t('login.passwordLabel') }} <span class="text-gray-400">{{ $t('login.passwordSecurityLabel') }}</span>
             </label>
             <input
               v-model="registerPassword"
               type="password"
               minlength="4"
-              class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Choose a password (optional)"
+              class="w-full px-4 py-3 border-2 border-gray-300/60 dark:border-gray-600/60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-all"
+              :placeholder="$t('login.registerPasswordPlaceholder')"
             />
-            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              💡 Email & password are optional. Add them for secure cross-device sync!
-            </p>
           </div>
 
           <button
@@ -136,7 +151,7 @@
             :disabled="loading"
             class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 rounded-xl font-bold transition-all hover:shadow-lg disabled:cursor-not-allowed"
           >
-            {{ loading ? 'Creating Account...' : 'Create Account' }}
+            {{ loading ? $t('login.creatingAccount') : $t('login.createAccount') }}
           </button>
         </form>
 
@@ -146,7 +161,7 @@
             @click="$router.push('/')"
             class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:underline"
           >
-            ← Back to Home
+            {{ $t('login.backToHome') }}
           </button>
         </div>
       </div>
@@ -157,10 +172,13 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '../composables/useAuth'
+import LanguageToggle from '../components/LanguageToggle.vue'
 
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 const { register, login } = useAuth()
 
 // State
@@ -172,7 +190,6 @@ const success = ref('')
 // Login form
 const loginUsername = ref('')
 const loginPassword = ref('')
-const showLoginPassword = ref(true)
 
 // Register form
 const registerUsername = ref('')
@@ -187,26 +204,20 @@ const handleLogin = async () => {
 
   const result = await login(
     loginUsername.value,
-    showLoginPassword.value ? loginPassword.value : null
+    loginPassword.value || null
   )
 
   loading.value = false
 
   if (result.success) {
-    success.value = 'Login successful!'
+    success.value = t('login.loginSuccessful')
     // Redirect to intended page or home
     const redirect = route.query.redirect || '/home'
     setTimeout(() => {
       router.push(redirect)
     }, 500)
   } else {
-    // Check if error is about password requirement
-    if (result.error.includes('Password required')) {
-      showLoginPassword.value = true
-      error.value = result.error
-    } else {
-      error.value = result.error
-    }
+    error.value = result.error
   }
 }
 
@@ -225,7 +236,7 @@ const handleRegister = async () => {
   loading.value = false
 
   if (result.success) {
-    success.value = 'Account created successfully!'
+    success.value = t('login.accountCreated')
     // Redirect to intended page or home
     const redirect = route.query.redirect || '/home'
     setTimeout(() => {

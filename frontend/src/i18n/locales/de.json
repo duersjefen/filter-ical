@@ -207,7 +207,32 @@
     "username": "Benutzername",
     "usernamePlaceholder": "Geben Sie Ihren Benutzernamen ein",
     "loggingIn": "Wird angemeldet...",
-    "loginButton": "Anmelden"
+    "loginButton": "Anmelden",
+    "welcomeBack": "Willkommen zurück",
+    "createAccount": "Konto erstellen",
+    "loginToAccount": "Melden Sie sich bei Ihrem Konto an",
+    "startFiltering": "Beginnen Sie, Ihre Kalender zu filtern",
+    "loginTab": "Anmelden",
+    "registerTab": "Registrieren",
+    "passwordOptionalInfo": "Passwort optional: Nur eingeben, wenn Sie es bei der Registrierung gesetzt haben. Die meisten Benutzer benötigen kein Passwort!",
+    "passwordLabel": "Passwort",
+    "passwordOptionalLabel": "(optional - falls gesetzt)",
+    "passwordPlaceholder": "Leer lassen, wenn Sie keins haben",
+    "forgotPassword": "Passwort vergessen?",
+    "email": "E-Mail",
+    "emailOptionalLabel": "(optional - für Passwort-Reset)",
+    "emailPlaceholder": "ihre@email.com",
+    "passwordSecurityLabel": "(optional - für Sicherheit)",
+    "registerPasswordPlaceholder": "Leer lassen für passwortfreies Anmelden",
+    "quickStartTitle": "🎯 Schnellstart: Nur ein Benutzername reicht!",
+    "emailPurpose": "• E-Mail: Nur für Passwort-Reset benötigt",
+    "passwordPurpose": "• Passwort: Optional - fügt Sicherheit für geräteübergreifende Synchronisierung hinzu",
+    "loginSuccessful": "Anmeldung erfolgreich!",
+    "accountCreated": "Konto erfolgreich erstellt!",
+    "creatingAccount": "Konto wird erstellt...",
+    "backToHome": "← Zurück zur Startseite",
+    "usernameRequired": "Benutzername (erforderlich)",
+    "chooseUsername": "Wählen Sie einen Benutzernamen"
   },
   "filteredCalendar": {
     "title": "Gefilterte Kalender-Links",
@@ -678,6 +703,7 @@
     "errors": {
       "loginRequired": "Bitte legen Sie einen Benutzernamen fest, um eine Anfrage zu senden",
       "descriptionTooShort": "Beschreibung muss mindestens 10 Zeichen enthalten",
+      "passwordTooShort": "Passwort muss mindestens 4 Zeichen enthalten",
       "submissionFailed": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
     }
   },

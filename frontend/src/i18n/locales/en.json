@@ -207,7 +207,32 @@
     "username": "Username",
     "usernamePlaceholder": "Enter your username",
     "loggingIn": "Logging in...",
-    "loginButton": "Login"
+    "loginButton": "Login",
+    "welcomeBack": "Welcome Back",
+    "createAccount": "Create Account",
+    "loginToAccount": "Login to your account",
+    "startFiltering": "Start filtering your calendars",
+    "loginTab": "Login",
+    "registerTab": "Register",
+    "passwordOptionalInfo": "Password optional: Only enter if you set one during registration. Most users don't need a password!",
+    "passwordLabel": "Password",
+    "passwordOptionalLabel": "(optional - if you set one)",
+    "passwordPlaceholder": "Leave blank if you don't have one",
+    "forgotPassword": "Forgot password?",
+    "email": "Email",
+    "emailOptionalLabel": "(optional - for password reset)",
+    "emailPlaceholder": "your@email.com",
+    "passwordSecurityLabel": "(optional - for security)",
+    "registerPasswordPlaceholder": "Leave blank for password-free login",
+    "quickStartTitle": "🎯 Quick start: Just a username is enough!",
+    "emailPurpose": "• Email: Only needed for password reset",
+    "passwordPurpose": "• Password: Optional - adds security for cross-device sync",
+    "loginSuccessful": "Login successful!",
+    "accountCreated": "Account created successfully!",
+    "creatingAccount": "Creating Account...",
+    "backToHome": "← Back to Home",
+    "usernameRequired": "Username (required)",
+    "chooseUsername": "Choose a username"
   },
   "filteredCalendar": {
     "title": "Filtered Calendar Links",
@@ -666,6 +691,7 @@
     "errors": {
       "loginRequired": "Please set a username to submit a request",
       "descriptionTooShort": "Description must be at least 10 characters",
+      "passwordTooShort": "Password must be at least 4 characters",
       "submissionFailed": "Failed to submit request. Please try again."
     }
   },

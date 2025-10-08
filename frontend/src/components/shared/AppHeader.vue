@@ -21,21 +21,20 @@
         <!-- Auth Control -->
         <div>
           <!-- Not Logged In -->
-          <div
+          <button
             v-if="!isLoggedIn"
             @click="navigateToLogin"
-            class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-md rounded-xl shadow-lg border-2 border-blue-400/50 hover:border-blue-300/70 px-3 py-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 group"
+            class="bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl shadow-lg border border-white/30 hover:border-white/40 px-4 py-2.5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95 group"
           >
-            <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 bg-blue-300 rounded-full animate-pulse shadow-sm"></div>
-              <span class="text-white text-xs sm:text-sm font-semibold group-hover:text-blue-100 drop-shadow-sm">
+            <div class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-white transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+              </svg>
+              <span class="text-white text-sm font-semibold drop-shadow-sm whitespace-nowrap">
                 {{ contextMessage }}
               </span>
-              <div class="ml-1 px-2 py-0.5 bg-white/20 rounded-full">
-                <span class="text-xs font-bold text-white">{{ $t('domainAdmin.click') }}</span>
-              </div>
             </div>
-          </div>
+          </button>
 
           <!-- Logged In Without Password -->
           <div v-else-if="!hasPassword" class="bg-yellow-500/20 backdrop-blur-md rounded-xl shadow-lg border border-yellow-400/40 px-3 py-2 sm:px-4 sm:py-2.5">
@@ -211,18 +210,20 @@
       <!-- Auth Section - Below title -->
       <div class="flex justify-center">
         <!-- Not Logged In -->
-        <div
+        <button
           v-if="!isLoggedIn"
           @click="navigateToLogin"
-          class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 active:from-blue-500/40 active:to-purple-500/40 backdrop-blur-md rounded-xl shadow-lg border border-blue-400/50 hover:border-blue-300/70 px-5 py-4 cursor-pointer transition-all duration-200 group touch-manipulation hover:scale-105 active:scale-95"
+          class="bg-white/15 hover:bg-white/25 active:bg-white/30 backdrop-blur-md rounded-xl shadow-lg border border-white/30 hover:border-white/40 px-6 py-3.5 cursor-pointer transition-all duration-200 group touch-manipulation hover:scale-105 active:scale-95"
         >
-          <div class="flex items-center justify-center gap-2">
-            <div class="w-2.5 h-2.5 bg-blue-300 rounded-full animate-pulse shadow-sm"></div>
-            <span class="text-white text-sm font-semibold group-hover:text-blue-100 drop-shadow-sm">
+          <div class="flex items-center justify-center gap-3">
+            <svg class="w-5 h-5 text-white transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+            </svg>
+            <span class="text-white text-base font-semibold drop-shadow-sm">
               {{ contextMessage }}
             </span>
           </div>
-        </div>
+        </button>
 
         <!-- Logged In Without Password -->
         <div v-else-if="!hasPassword" class="bg-yellow-500/20 backdrop-blur-md rounded-xl shadow-lg border border-yellow-400/40 px-4 py-3">
