@@ -189,7 +189,8 @@ def verify_domain_password(
     db: Session,
     domain_key: str,
     password: str,
-    access_level: str
+    access_level: str,
+    skip_password_check: bool = False
 ) -> Tuple[bool, str]:
     """
     Verify password for domain access.
@@ -199,6 +200,7 @@ def verify_domain_password(
         domain_key: Domain identifier
         password: Plain text password to verify
         access_level: 'admin' or 'user'
+        skip_password_check: If True, skip password verification (for users with saved access)
 
     Returns:
         Tuple of (success, jwt_token_or_error)
@@ -230,6 +232,17 @@ def verify_domain_password(
 
         # No password set for this level = no protection
         if not password_hash:
+            token = create_auth_token(
+                domain_key,
+                access_level,
+                settings.jwt_secret_key,
+                settings.jwt_algorithm
+            )
+            return True, token
+
+        # If skip_password_check, generate token without verification
+        # (used for logged-in users with saved domain access)
+        if skip_password_check:
             token = create_auth_token(
                 domain_key,
                 access_level,
@@ -366,6 +379,8 @@ def get_all_domains_auth_status(db: Session) -> list:
             'domain_key': domain.domain_key,
             'admin_password_set': domain.admin_password_hash is not None,
             'user_password_set': domain.user_password_hash is not None,
+            'owner_id': domain.owner_id,
+            'owner_username': domain.owner.username if domain.owner else None,
             'created_at': domain.created_at.isoformat() if domain.created_at else None,
             'updated_at': domain.updated_at.isoformat() if domain.updated_at else None
         }

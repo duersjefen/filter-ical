@@ -1096,6 +1096,12 @@ paths:
                       type: boolean
                     user_password_set:
                       type: boolean
+                    owner_id:
+                      type: integer
+                      nullable: true
+                    owner_username:
+                      type: string
+                      nullable: true
                     created_at:
                       type: string
                       format: date-time

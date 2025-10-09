@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 from ..core.database import get_db
-from ..core.auth import verify_admin_password, verify_admin_auth
+from ..core.auth import verify_admin_password, verify_admin_auth, get_current_user_id
 from ..services.domain_auth_service import (
     verify_domain_password,
     set_admin_password,
@@ -21,6 +21,10 @@ from ..services.domain_auth_service import (
     verify_token,
     get_all_domains_auth_status,
     get_decrypted_password
+)
+from ..services.domain_access_service import (
+    check_user_has_domain_access,
+    unlock_domain_for_user
 )
 
 router = APIRouter()
@@ -56,6 +60,8 @@ class DomainAuthStatusResponse(BaseModel):
     domain_key: str
     admin_password_set: bool
     user_password_set: bool
+    owner_id: Optional[int]
+    owner_username: Optional[str]
     created_at: Optional[str]
     updated_at: Optional[str]
 
@@ -125,17 +131,41 @@ def verify_domain_admin_jwt(
 async def verify_admin_password_endpoint(
     domain: str,
     request: VerifyPasswordRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user_id)
 ):
     """
     Verify admin password for domain and return JWT token.
 
     Returns JWT token with 30-day expiry if password correct.
     If no password set, returns token without verification (backward compatibility).
+
+    If user is logged in:
+    - Checks if they already have access (saved from previous unlock)
+    - Saves access to their account for future use across devices
     """
+    # If user is logged in, check if they already have access
+    if user_id:
+        has_access = check_user_has_domain_access(db, user_id, domain, "admin")
+        if has_access:
+            # User already unlocked this domain - generate token without password
+            success, result = verify_domain_password(db, domain, "", "admin", skip_password_check=True)
+            if success:
+                return VerifyPasswordResponse(
+                    success=True,
+                    token=result,
+                    message="Authentication successful (previously unlocked)"
+                )
+
+    # Verify password
     success, result = verify_domain_password(db, domain, request.password, "admin")
 
     if success:
+        # If user is logged in, save this unlock to their account
+        if user_id:
+            unlock_success, error = unlock_domain_for_user(db, user_id, domain, request.password, "admin")
+            # Continue even if unlock fails - JWT token still works
+
         return VerifyPasswordResponse(
             success=True,
             token=result,
@@ -156,17 +186,41 @@ async def verify_admin_password_endpoint(
 async def verify_user_password_endpoint(
     domain: str,
     request: VerifyPasswordRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user_id)
 ):
     """
     Verify user password for domain and return JWT token.
 
     Returns JWT token with 30-day expiry if password correct.
     If no password set, returns token without verification (backward compatibility).
+
+    If user is logged in:
+    - Checks if they already have access (saved from previous unlock)
+    - Saves access to their account for future use across devices
     """
+    # If user is logged in, check if they already have access
+    if user_id:
+        has_access = check_user_has_domain_access(db, user_id, domain, "user")
+        if has_access:
+            # User already unlocked this domain - generate token without password
+            success, result = verify_domain_password(db, domain, "", "user", skip_password_check=True)
+            if success:
+                return VerifyPasswordResponse(
+                    success=True,
+                    token=result,
+                    message="Authentication successful (previously unlocked)"
+                )
+
+    # Verify password
     success, result = verify_domain_password(db, domain, request.password, "user")
 
     if success:
+        # If user is logged in, save this unlock to their account
+        if user_id:
+            unlock_success, error = unlock_domain_for_user(db, user_id, domain, request.password, "user")
+            # Continue even if unlock fails - JWT token still works
+
         return VerifyPasswordResponse(
             success=True,
             token=result,
