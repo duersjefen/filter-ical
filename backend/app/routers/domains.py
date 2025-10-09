@@ -35,6 +35,37 @@ from ..services.cache_service import get_or_build_domain_events
 router = APIRouter()
 
 
+@router.get("")
+async def list_all_domains(db: Session = Depends(get_db)):
+    """
+    List all available domains.
+
+    PUBLIC ENDPOINT - No authentication required.
+    Returns basic domain information including group counts.
+    """
+    try:
+        # Query all domains from database
+        domains = db.query(Domain).filter(Domain.status == "active").all()
+
+        # Build response with group counts
+        response = []
+        for domain in domains:
+            # Count groups for this domain using the direct relationship
+            group_count = len(domain.groups) if domain.groups else 0
+
+            response.append({
+                "domain_key": domain.domain_key,
+                "name": domain.name,
+                "calendar_url": domain.calendar_url,
+                "group_count": group_count
+            })
+
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 def verify_domain_exists(db: Session, domain_key: str) -> Domain:
     """
     Verify that a domain exists in the database.

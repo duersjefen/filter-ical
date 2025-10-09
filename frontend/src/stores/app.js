@@ -20,10 +20,33 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   // PUBLIC ACCESS - NO AUTHENTICATION REQUIRED
   // ===============================================
-  
+
+  // Available domains (all configured domains in system)
+  const availableDomains = ref([])
+
+  const fetchAvailableDomains = async () => {
+    try {
+      const result = await get(API_ENDPOINTS.DOMAINS)
+
+      if (result.success) {
+        availableDomains.value = result.data || []
+        return { success: true, data: availableDomains.value }
+      } else {
+        availableDomains.value = []
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      availableDomains.value = []
+      return { success: false, error: 'Failed to load domains' }
+    }
+  }
+
   const initializeApp = () => {
     // Force username initialization from localStorage
     getUserId() // This triggers the username composable initialization
+
+    // Load available domains (public data, no auth required)
+    fetchAvailableDomains()
 
     // Set up username change detection for data source switching
     onUsernameChange((newUsername, oldUsername) => {
@@ -691,6 +714,12 @@ export const useAppStore = defineStore('app', () => {
     // APP INITIALIZATION
     // ===============================================
     initializeApp,
+
+    // ===============================================
+    // DOMAINS
+    // ===============================================
+    availableDomains,
+    fetchAvailableDomains,
 
     // ===============================================
     // CALENDARS

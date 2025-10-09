@@ -291,6 +291,47 @@ paths:
                     example: null
 
   # Domain-specific endpoints (auto-created from domains.yaml)
+
+  /api/domains:
+    get:
+      summary: List all available domains
+      description: Get list of all domains configured in the system. No authentication required. Returns basic domain information including group counts.
+      tags:
+        - Domains
+      responses:
+        '200':
+          description: List of all domains
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    domain_key:
+                      type: string
+                      example: "exter"
+                      description: Unique identifier for the domain
+                    name:
+                      type: string
+                      example: "Exter Kalendar"
+                      description: Human-readable domain name
+                    calendar_url:
+                      type: string
+                      format: uri
+                      example: "https://widgets.bcc.no/ical-4fea7cc56289cdfc/35490/Portal-Calendar.ics"
+                      description: Source calendar URL
+                    group_count:
+                      type: integer
+                      example: 12
+                      description: Number of groups in this domain
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /api/domains/{domain}/events:
     get:
       summary: Get domain calendar events (grouped structure)

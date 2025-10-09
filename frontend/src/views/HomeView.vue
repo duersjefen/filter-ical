@@ -6,8 +6,8 @@
       page-context="home"
     />
 
-    <!-- Domain Calendars Section -->
-    <div v-if="appStore.domainsWithFilters.length > 0" class="bg-gradient-to-br from-white via-white to-purple-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-purple-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-8 hover:shadow-2xl hover:border-purple-300/50 dark:hover:border-purple-600/50 transition-all duration-300 backdrop-blur-sm">
+    <!-- Browse Domains Section - Smart Sorted -->
+    <div v-if="appStore.availableDomains.length > 0" class="bg-gradient-to-br from-white via-white to-purple-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-purple-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-8 hover:shadow-2xl hover:border-purple-300/50 dark:hover:border-purple-600/50 transition-all duration-300 backdrop-blur-sm">
       <div class="flex items-center justify-between mb-6 sm:mb-8">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
@@ -16,17 +16,17 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $t('home.domainCalendars.title') }}</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{{ $t('home.domainCalendars.description') }}</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Browse Domains</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Explore available calendar domains</p>
           </div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <router-link
-          v-for="domainInfo in appStore.domainsWithFilters"
-          :key="domainInfo.domain_key"
-          :to="`/${domainInfo.domain_key}`"
+          v-for="domain in sortedDomains"
+          :key="domain.domain_key"
+          :to="`/${domain.domain_key}`"
           class="group relative bg-gradient-to-br from-white to-purple-50/50 dark:from-gray-700 dark:to-purple-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-700 shadow-lg hover:shadow-2xl p-6 transition-all duration-300 hover:scale-[1.03] hover:border-purple-400 dark:hover:border-purple-500 active:scale-[0.98] no-underline overflow-hidden"
         >
           <!-- Animated background gradient on hover -->
@@ -39,14 +39,20 @@
               </svg>
             </div>
             <div class="flex-1 min-w-0">
-              <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors capitalize truncate">
-                {{ domainInfo.domain_key }}
-              </h3>
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors capitalize truncate">
+                  {{ domain.name }}
+                </h3>
+                <!-- Filter count badge for logged-in users -->
+                <span v-if="getFilterCount(domain.domain_key) > 0" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md">
+                  {{ getFilterCount(domain.domain_key) }} {{ getFilterCount(domain.domain_key) === 1 ? 'filter' : 'filters' }}
+                </span>
+              </div>
               <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/>
                 </svg>
-                <span>{{ $t('home.domainCalendars.filterCount', { count: domainInfo.filter_count }) }}</span>
+                <span>{{ domain.group_count }} {{ domain.group_count === 1 ? 'group' : 'groups' }}</span>
               </p>
             </div>
             <svg class="w-6 h-6 text-purple-500 dark:text-purple-400 group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,6 +350,41 @@ const calendarToDelete = ref(null)
 
 // App settings
 const showDomainRequest = ref(true)
+
+// Smart domain sorting: domains with filters first, then alphabetically
+const sortedDomains = computed(() => {
+  if (!appStore.availableDomains || appStore.availableDomains.length === 0) {
+    return []
+  }
+
+  // Create map of domain_key → filter_count
+  const filterCountMap = new Map()
+  if (appStore.domainsWithFilters) {
+    appStore.domainsWithFilters.forEach(d => {
+      filterCountMap.set(d.domain_key, d.filter_count)
+    })
+  }
+
+  // Sort: domains with filters first, then alphabetically
+  return [...appStore.availableDomains].sort((a, b) => {
+    const aFilters = filterCountMap.get(a.domain_key) || 0
+    const bFilters = filterCountMap.get(b.domain_key) || 0
+
+    // If one has filters and the other doesn't, prioritize the one with filters
+    if (aFilters > 0 && bFilters === 0) return -1
+    if (aFilters === 0 && bFilters > 0) return 1
+
+    // Otherwise sort alphabetically by name
+    return a.name.localeCompare(b.name)
+  })
+})
+
+// Helper function to get filter count for a domain
+const getFilterCount = (domainKey) => {
+  if (!appStore.domainsWithFilters) return 0
+  const domainInfo = appStore.domainsWithFilters.find(d => d.domain_key === domainKey)
+  return domainInfo ? domainInfo.filter_count : 0
+}
 
 onMounted(async () => {
   // Public-first access - always try to initialize and fetch calendars
