@@ -82,40 +82,42 @@
 
     <!-- Request Form -->
     <form @submit.prevent="submitRequest" class="space-y-4">
-      <div>
-        <label for="domain-key-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-          Desired Domain Key
-        </label>
-        <input
-          id="domain-key-request"
-          v-model="formData.requested_domain_key"
-          type="text"
-          pattern="[a-z0-9-]+"
-          class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="my-calendar"
-          minlength="3"
-          maxlength="100"
-          :disabled="!canSubmitRequest"
-          required
-        />
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Lowercase letters, numbers, hyphens only
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="domain-key-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            Desired Domain Key
+          </label>
+          <input
+            id="domain-key-request"
+            v-model="formData.requested_domain_key"
+            type="text"
+            pattern="[a-z0-9-]+"
+            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
+            placeholder="my-calendar"
+            minlength="3"
+            maxlength="100"
+            :disabled="!canSubmitRequest"
+            required
+          />
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Lowercase letters, numbers, hyphens only
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label for="calendar-url-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-          {{ $t('domainRequest.form.calendarUrl') }}
-        </label>
-        <input
-          id="calendar-url-request"
-          v-model="formData.calendar_url"
-          type="url"
-          class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
-          :placeholder="$t('domainRequest.form.calendarUrlPlaceholder')"
-          :disabled="!canSubmitRequest"
-          required
-        />
+        <div>
+          <label for="calendar-url-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            {{ $t('domainRequest.form.calendarUrl') }}
+          </label>
+          <input
+            id="calendar-url-request"
+            v-model="formData.calendar_url"
+            type="url"
+            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
+            :placeholder="$t('domainRequest.form.calendarUrlPlaceholder')"
+            :disabled="!canSubmitRequest"
+            required
+          />
+        </div>
       </div>
 
       <div>
