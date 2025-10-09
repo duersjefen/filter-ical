@@ -5,6 +5,7 @@ IMPERATIVE SHELL - Handles email sending with SMTP.
 """
 
 import aiosmtplib
+import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Tuple
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 async def _send_email(to_email: str, subject: str, html_body: str, text_body: str) -> Tuple[bool, str]:
-    """Helper function to send emails - DRY principle."""
+    """Helper function to send emails - DRY principle with 5s timeout."""
     if not settings.smtp_username:
         logger.warning("Email not configured - skipping notification")
         return True, ""
@@ -33,18 +34,26 @@ async def _send_email(to_email: str, subject: str, html_body: str, text_body: st
         message.attach(part1)
         message.attach(part2)
 
-        await aiosmtplib.send(
-            message,
-            hostname=settings.smtp_host,
-            port=settings.smtp_port,
-            username=settings.smtp_username,
-            password=settings.smtp_password,
-            start_tls=True,
+        # Add 5 second timeout to prevent hanging
+        await asyncio.wait_for(
+            aiosmtplib.send(
+                message,
+                hostname=settings.smtp_host,
+                port=settings.smtp_port,
+                username=settings.smtp_username,
+                password=settings.smtp_password,
+                start_tls=True,
+            ),
+            timeout=5.0
         )
 
         logger.info(f"Email sent to {to_email}")
         return True, ""
 
+    except asyncio.TimeoutError:
+        error_msg = f"Email timeout - SMTP took longer than 5 seconds"
+        logger.error(error_msg)
+        return False, error_msg
     except Exception as e:
         error_msg = f"Failed to send email: {str(e)}"
         logger.error(error_msg)
