@@ -137,6 +137,12 @@
                 </div>
                 <div class="flex gap-2">
                   <button
+                    @click="togglePasswordManagement(domain.domain_key)"
+                    class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                  >
+                    {{ showingPasswords === domain.domain_key ? 'Hide' : 'Manage' }} Passwords
+                  </button>
+                  <button
                     @click="toggleAdminManagement(domain.domain_key)"
                     class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                   >
@@ -148,6 +154,83 @@
                   >
                     View Domain
                   </button>
+                </div>
+              </div>
+
+              <!-- Password Management -->
+              <div v-if="showingPasswords === domain.domain_key" class="mt-4 pt-4 border-t-2 border-gray-200 dark:border-gray-700">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Domain Passwords</h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Admin Password -->
+                  <div class="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border-2 border-purple-200 dark:border-purple-700">
+                    <h5 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">Admin Password</h5>
+                    <div class="relative mb-2">
+                      <input
+                        v-model="passwordForms[domain.domain_key].adminPassword"
+                        :type="showAdminPassword ? 'text' : 'password'"
+                        placeholder="Enter admin password (min 4 chars)"
+                        class="w-full px-3 py-2 pr-12 border-2 border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+                      />
+                      <button
+                        v-if="passwordForms[domain.domain_key]?.adminPassword"
+                        type="button"
+                        @click="showAdminPassword = !showAdminPassword"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                        :title="showAdminPassword ? 'Hide password' : 'Show password'"
+                      >
+                        <svg v-if="showAdminPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                        </svg>
+                        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      @click="setAdminPasswordForDomain(domain.domain_key)"
+                      :disabled="!passwordForms[domain.domain_key]?.adminPassword || passwordForms[domain.domain_key]?.adminPassword.length < 4 || settingPassword"
+                      class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm font-semibold transition"
+                    >
+                      {{ settingPassword ? 'Setting...' : 'Set Admin Password' }}
+                    </button>
+                  </div>
+
+                  <!-- User Password -->
+                  <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border-2 border-blue-200 dark:border-blue-700">
+                    <h5 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">User Password</h5>
+                    <div class="relative mb-2">
+                      <input
+                        v-model="passwordForms[domain.domain_key].userPassword"
+                        :type="showUserPassword ? 'text' : 'password'"
+                        placeholder="Enter user password (min 4 chars)"
+                        class="w-full px-3 py-2 pr-12 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+                      />
+                      <button
+                        v-if="passwordForms[domain.domain_key]?.userPassword"
+                        type="button"
+                        @click="showUserPassword = !showUserPassword"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                        :title="showUserPassword ? 'Hide password' : 'Show password'"
+                      >
+                        <svg v-if="showUserPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                        </svg>
+                        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      @click="setUserPasswordForDomain(domain.domain_key)"
+                      :disabled="!passwordForms[domain.domain_key]?.userPassword || passwordForms[domain.domain_key]?.userPassword.length < 4 || settingPassword"
+                      class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm font-semibold transition"
+                    >
+                      {{ settingPassword ? 'Setting...' : 'Set User Password' }}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -359,6 +442,12 @@ const newAdminUsername = ref('')
 const addingAdmin = ref(false)
 const removingAdmin = ref(false)
 
+const showingPasswords = ref(null)
+const passwordForms = ref({})
+const settingPassword = ref(false)
+const showAdminPassword = ref(false)
+const showUserPassword = ref(false)
+
 const accountForm = ref({
   email: '',
   newPassword: '',
@@ -378,6 +467,16 @@ const fetchDomains = async () => {
       adminDomains.value = result.data.admin_domains || []
       passwordAccessDomains.value = result.data.password_access_domains || []
       filterDomains.value = result.data.filter_domains || []
+
+      // Initialize password forms for owned domains
+      ownedDomains.value.forEach(domain => {
+        if (!passwordForms.value[domain.domain_key]) {
+          passwordForms.value[domain.domain_key] = {
+            adminPassword: '',
+            userPassword: ''
+          }
+        }
+      })
     }
   } catch (error) {
     console.error('Failed to fetch domains:', error)
@@ -505,6 +604,80 @@ const removeAdmin = async (domainKey, username) => {
     notify.error('Failed to remove admin')
   } finally {
     removingAdmin.value = false
+  }
+}
+
+// Toggle password management panel
+const togglePasswordManagement = (domainKey) => {
+  if (showingPasswords.value === domainKey) {
+    showingPasswords.value = null
+    return
+  }
+
+  showingPasswords.value = domainKey
+
+  // Initialize password form for this domain if not exists
+  if (!passwordForms.value[domainKey]) {
+    passwordForms.value[domainKey] = {
+      adminPassword: '',
+      userPassword: ''
+    }
+  }
+}
+
+// Set admin password for domain
+const setAdminPasswordForDomain = async (domainKey) => {
+  const password = passwordForms.value[domainKey]?.adminPassword
+  if (!password || password.length < 4) {
+    notify.error('Password must be at least 4 characters')
+    return
+  }
+
+  settingPassword.value = true
+
+  try {
+    const result = await patch(`/api/users/me/domains/${domainKey}/passwords`, {
+      admin_password: password
+    })
+
+    if (result.success) {
+      notify.success('Admin password set successfully')
+      passwordForms.value[domainKey].adminPassword = ''
+    } else {
+      notify.error(result.error || 'Failed to set admin password')
+    }
+  } catch (error) {
+    notify.error('Failed to set admin password')
+  } finally {
+    settingPassword.value = false
+  }
+}
+
+// Set user password for domain
+const setUserPasswordForDomain = async (domainKey) => {
+  const password = passwordForms.value[domainKey]?.userPassword
+  if (!password || password.length < 4) {
+    notify.error('Password must be at least 4 characters')
+    return
+  }
+
+  settingPassword.value = true
+
+  try {
+    const result = await patch(`/api/users/me/domains/${domainKey}/passwords`, {
+      user_password: password
+    })
+
+    if (result.success) {
+      notify.success('User password set successfully')
+      passwordForms.value[domainKey].userPassword = ''
+    } else {
+      notify.error(result.error || 'Failed to set user password')
+    }
+  } catch (error) {
+    notify.error('Failed to set user password')
+  } finally {
+    settingPassword.value = false
   }
 }
 
