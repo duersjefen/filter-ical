@@ -443,7 +443,8 @@ const loadCalendarData = async (calendarId) => {
     }
     
     console.log('✅ Groups loaded:', {
-      hasGroups: appStore.hasGroups,
+      isDomainCalendar: appStore.isDomainCalendar,
+      hasCustomGroups: appStore.hasCustomGroups,
       groupsCount: appStore.groups ? Object.keys(appStore.groups).length : 0
     })
 
@@ -545,9 +546,10 @@ const loadCalendarData = async (calendarId) => {
       // Groups already loaded above
       
       // Debug: Force re-render check
-      console.log('🐛 DEBUG: hasGroups reactivity check:', {
-        hasGroupsValue: appStore.hasGroups,
-        hasGroupsType: typeof appStore.hasGroups
+      console.log('🐛 DEBUG: Calendar type reactivity check:', {
+        isDomainCalendar: appStore.isDomainCalendar,
+        hasCustomGroups: appStore.hasCustomGroups,
+        groupsCount: Object.keys(appStore.groups || {}).length
       })
       
     console.log('✅ Calendar data loaded successfully')

@@ -304,14 +304,16 @@ export const useAppStore = defineStore('app', () => {
 
   const groups = ref({})
 
-  // Check if ANY groups exist (including auto-groups)
-  // Used for subscription features, filtered calendars, etc.
-  const hasGroups = computed(() => {
+  // Check if this is a domain calendar (has ANY groups including auto-groups)
+  // Domain calendars always have groups (backend creates auto-groups)
+  // Personal calendars never have groups
+  // This is effectively a calendar type indicator
+  const isDomainCalendar = computed(() => {
     return groups.value && Object.keys(groups.value).length > 0
   })
 
   // Check if CUSTOM (non-auto) groups exist
-  // Used to decide between Groups view vs Events view
+  // Used to decide whether to show group-related UI features
   // Auto-groups have IDs >= 9998
   const hasCustomGroups = computed(() => {
     return checkHasCustomGroups(groups.value)
@@ -447,7 +449,7 @@ export const useAppStore = defineStore('app', () => {
 
     if (result.success) {
       // User calendars don't have groups in the new API, they have flat event structure
-      groups.value = {} // hasGroups computed will automatically be false
+      groups.value = {} // isDomainCalendar computed will automatically be false
 
       // Process events from the new API response format
       if (result.data.events && result.data.events.length > 0) {
@@ -515,7 +517,7 @@ export const useAppStore = defineStore('app', () => {
         })
       }
 
-      // hasGroups and hasCustomGroups are computed properties that automatically update
+      // isDomainCalendar and hasCustomGroups are computed properties that automatically update
     }
 
     return result
@@ -765,7 +767,7 @@ export const useAppStore = defineStore('app', () => {
     // GROUPS
     // ===============================================
     groups,
-    hasGroups, // True if ANY groups exist (including auto-groups)
+    isDomainCalendar, // True if this is a domain calendar (has any groups, including auto-groups)
     hasCustomGroups, // True only if CUSTOM (non-auto) groups exist
     loadCalendarGroups,
     loadDomainGroups,
