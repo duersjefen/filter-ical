@@ -120,6 +120,7 @@
               {{ $t('login.usernameRequired') }}
             </label>
             <input
+              ref="registerUsernameInput"
               v-model="registerUsername"
               type="text"
               required
@@ -128,15 +129,41 @@
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
               :placeholder="$t('login.chooseUsername')"
             />
+            <!-- Username availability feedback -->
+            <div v-if="checkingUsernameAvailability" class="mt-2 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              <svg class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Checking availability...</span>
+            </div>
+            <div v-else-if="usernameAvailable === false" class="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+              <span>Username already taken</span>
+            </div>
+            <div v-else-if="usernameAvailable === true" class="mt-2 text-xs text-green-600 dark:text-green-400 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span>Username available!</span>
+            </div>
           </div>
 
           <!-- Info box explaining optional fields -->
-          <div class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-green-50/50 dark:bg-green-900/20 rounded-lg px-3 py-2.5 border border-green-200/50 dark:border-green-700/50">
+          <div v-if="!passwordRequired" class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-green-50/50 dark:bg-green-900/20 rounded-lg px-3 py-2.5 border border-green-200/50 dark:border-green-700/50">
             <div class="font-semibold mb-1">{{ $t('login.quickStartTitle') }}</div>
             <div class="space-y-1 ml-4">
               <div>{{ $t('login.emailPurpose') }}</div>
               <div>{{ $t('login.passwordPurpose') }}</div>
             </div>
+          </div>
+
+          <!-- Warning when password becomes required -->
+          <div v-else class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
+            <div class="font-semibold mb-1">🔒 Password required</div>
+            <div class="ml-4">When providing an email, a password is required for account security and password reset functionality.</div>
           </div>
 
           <div class="opacity-60 focus-within:opacity-100 transition-opacity">
@@ -151,22 +178,26 @@
             />
           </div>
 
-          <div class="opacity-60 focus-within:opacity-100 transition-opacity">
+          <div :class="passwordRequired ? 'opacity-100' : 'opacity-60 focus-within:opacity-100'" class="transition-opacity">
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              {{ $t('login.passwordLabel') }} <span class="text-gray-400">{{ $t('login.passwordSecurityLabel') }}</span>
+              {{ $t('login.passwordLabel') }}
+              <span v-if="passwordRequired" class="text-red-600 dark:text-red-400">*</span>
+              <span v-else class="text-gray-400">{{ $t('login.passwordSecurityLabel') }}</span>
             </label>
             <input
               v-model="registerPassword"
               type="password"
+              :required="passwordRequired"
               minlength="4"
-              class="w-full px-4 py-3 border-2 border-gray-300/60 dark:border-gray-600/60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-all"
+              :class="passwordRequired ? 'border-gray-300 dark:border-gray-600' : 'border-gray-300/60 dark:border-gray-600/60'"
+              class="w-full px-4 py-3 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-all"
               :placeholder="$t('login.registerPasswordPlaceholder')"
             />
           </div>
 
           <button
             type="submit"
-            :disabled="loading"
+            :disabled="loading || usernameAvailable === false || (passwordRequired && !registerPassword)"
             class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 rounded-xl font-bold transition-all hover:shadow-lg disabled:cursor-not-allowed"
           >
             {{ loading ? $t('login.creatingAccount') : $t('login.createAccount') }}
@@ -188,7 +219,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '../composables/useAuth'
@@ -215,9 +246,17 @@ const usernameRequiresPassword = ref(null) // null = unknown, true/false = known
 const checkingUsername = ref(false)
 
 // Register form
+const registerUsernameInput = ref(null) // Ref for potential auto-focus
 const registerUsername = ref('')
 const registerEmail = ref('')
 const registerPassword = ref('')
+const usernameAvailable = ref(null) // null = unknown, true = available, false = taken
+const checkingUsernameAvailability = ref(false)
+
+// Password becomes required when email is provided
+const passwordRequired = computed(() => {
+  return registerEmail.value && registerEmail.value.trim().length > 0
+})
 
 // Handle login
 const handleLogin = async () => {
@@ -277,7 +316,7 @@ onMounted(() => {
   }
 })
 
-// Check username password requirement with debouncing
+// Check username password requirement with debouncing (LOGIN form)
 let usernameCheckTimeout = null
 watch(loginUsername, (newUsername) => {
   // Clear previous timeout
@@ -311,6 +350,47 @@ watch(loginUsername, (newUsername) => {
       usernameRequiresPassword.value = null
     } finally {
       checkingUsername.value = false
+    }
+  }, 500)
+})
+
+// Check username availability with debouncing (REGISTER form)
+let usernameAvailabilityTimeout = null
+watch(registerUsername, (newUsername) => {
+  // Clear previous timeout
+  if (usernameAvailabilityTimeout) {
+    clearTimeout(usernameAvailabilityTimeout)
+  }
+
+  // Reset state if username is empty or too short
+  if (!newUsername || newUsername.trim().length < 3) {
+    usernameAvailable.value = null
+    checkingUsernameAvailability.value = false
+    return
+  }
+
+  // Start checking indicator
+  checkingUsernameAvailability.value = true
+
+  // Debounce: wait 500ms after user stops typing
+  usernameAvailabilityTimeout = setTimeout(async () => {
+    try {
+      const result = await get(`/api/users/check/${encodeURIComponent(newUsername.trim())}`)
+
+      if (result.success && result.data) {
+        // Username exists - not available
+        usernameAvailable.value = false
+      }
+    } catch (err) {
+      // 404 means username doesn't exist - available!
+      if (err.status === 404) {
+        usernameAvailable.value = true
+      } else {
+        // Other error - reset to unknown
+        usernameAvailable.value = null
+      }
+    } finally {
+      checkingUsernameAvailability.value = false
     }
   }, 500)
 })
