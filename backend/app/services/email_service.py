@@ -198,6 +198,7 @@ async def send_password_reset_email(user_email: str, username: str, reset_token:
         logger.warning("Email not configured - skipping password reset email")
         return False, "Email not configured"
 
+    logger.info(f"📧 Attempting to send password reset email to {user_email}")
     try:
         # Create reset URL (use localhost in development)
         base_url = "http://localhost:8000" if settings.is_development else "https://filter-ical.de"

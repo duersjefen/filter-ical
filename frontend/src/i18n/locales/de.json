@@ -221,7 +221,7 @@
     "forgotPassword": "Passwort vergessen?",
     "email": "E-Mail",
     "emailOptionalLabel": "(optional - für Passwort-Reset)",
-    "emailPlaceholder": "ihre@email.com",
+    "emailPlaceholder": "ihre{'@'}email.com",
     "passwordSecurityLabel": "(optional - für Sicherheit)",
     "registerPasswordPlaceholder": "Leer lassen für passwortfreies Anmelden",
     "quickStartTitle": "🎯 Schnellstart: Nur ein Benutzername reicht!",

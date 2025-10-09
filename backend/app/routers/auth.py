@@ -47,9 +47,25 @@ async def request_password_reset(
     Request password reset email.
 
     Always returns success to prevent email enumeration attacks.
+    In development, provides verbose error messages for easier debugging.
     """
+    from ..core.config import settings
+
     # Find user by email
     user = db.query(User).filter(User.email == body.email).first()
+
+    # Development: Show helpful error messages
+    if settings.is_development:
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No user found with email: {body.email}"
+            )
+        if not user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User '{user.username}' doesn't have a password set. Password reset only works for accounts with passwords."
+            )
 
     if user and user.password_hash:  # Only for users with passwords
         # Generate reset token
@@ -62,7 +78,7 @@ async def request_password_reset(
         # Send email
         await send_password_reset_email(user.email, user.username, reset_token)
 
-    # Always return success (security: don't reveal if email exists)
+    # Production: Always return success (security: don't reveal if email exists)
     return MessageResponse(message="If that email is registered, a reset link has been sent")
 
 
