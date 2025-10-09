@@ -14,6 +14,7 @@ import httpx
 from ..core.database import get_db
 from ..core.config import settings
 from ..models.domain_request import DomainRequest, RequestStatus
+from ..models.domain import Domain
 from ..services.email_service import send_domain_request_notification
 from ..data.domain_auth import encrypt_password
 from ..data.ical_parser import parse_ical_content
@@ -97,6 +98,28 @@ async def create_domain_request(
     The request will be pending and an email notification will be sent to the admin.
     """
     try:
+        # Check if domain key already exists or is pending
+        requested_key = request_data.requested_domain_key.strip().lower()
+
+        # Check if domain already exists (approved)
+        existing_domain = db.query(Domain).filter(Domain.domain_key == requested_key).first()
+        if existing_domain:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Domain key '{requested_key}' is already taken. Please choose a different domain name."
+            )
+
+        # Check if there's already a pending request for this domain
+        pending_request = db.query(DomainRequest).filter(
+            DomainRequest.requested_domain_key == requested_key,
+            DomainRequest.status == RequestStatus.PENDING
+        ).first()
+        if pending_request:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Domain key '{requested_key}' already has a pending request. Please choose a different domain name or wait for the current request to be reviewed."
+            )
+
         # Validate iCal URL before accepting the request (skip in test mode)
         calendar_url = request_data.calendar_url.strip()
 
