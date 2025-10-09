@@ -233,6 +233,10 @@ export function useFilteredCalendarAPI() {
       return true
     } else {
       console.error('Error creating filtered calendar:', result.error)
+      // Check for authentication errors
+      if (result.status === 401) {
+        setError('Please login to create filters')
+      }
       return false
     }
   }

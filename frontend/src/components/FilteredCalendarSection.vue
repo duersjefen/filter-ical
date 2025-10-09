@@ -539,6 +539,7 @@ const {
   loading,
   creating,
   updating,
+  error: apiError,
   createFilteredCalendar: apiCreateFiltered,
   updateFilteredCalendar: apiUpdateFiltered,
   deleteFilteredCalendar: apiDeleteFiltered,
@@ -733,7 +734,8 @@ const createFilteredCalendar = async () => {
     }
   } else {
     // Show error notification
-    notify.error(t('filteredCalendar.failedToSaveFilter') || 'Failed to save filter. Please try again.')
+    const errorMessage = apiError.value || t('filteredCalendar.failedToSaveFilter') || 'Failed to save filter. Please try again.'
+    notify.error(errorMessage)
   }
 }
 
