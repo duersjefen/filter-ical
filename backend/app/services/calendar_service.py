@@ -116,10 +116,12 @@ def get_calendars(db: Session, user_id: Optional[int] = None) -> List[Calendar]:
 
     I/O Operation - Database query.
     """
-    query = db.query(Calendar)
+    # Return empty list for anonymous users
+    if not user_id:
+        return []
 
-    if user_id:
-        query = query.filter(Calendar.user_id == user_id)
+    query = db.query(Calendar)
+    query = query.filter(Calendar.user_id == user_id)
 
     return query.all()
 
