@@ -325,6 +325,14 @@ paths:
                       type: integer
                       example: 12
                       description: Number of groups in this domain
+                    has_user_password:
+                      type: boolean
+                      example: false
+                      description: Whether the domain requires a user password
+                    has_admin_password:
+                      type: boolean
+                      example: true
+                      description: Whether the domain requires an admin password
         '500':
           description: Server error
           content:

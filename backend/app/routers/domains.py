@@ -47,7 +47,7 @@ async def list_all_domains(db: Session = Depends(get_db)):
         # Query all domains from database
         domains = db.query(Domain).filter(Domain.status == "active").all()
 
-        # Build response with group counts
+        # Build response with group counts and password status
         response = []
         for domain in domains:
             # Count groups for this domain using the direct relationship
@@ -57,7 +57,9 @@ async def list_all_domains(db: Session = Depends(get_db)):
                 "domain_key": domain.domain_key,
                 "name": domain.name,
                 "calendar_url": domain.calendar_url,
-                "group_count": group_count
+                "group_count": group_count,
+                "has_user_password": domain.user_password_hash is not None and domain.user_password_hash != "",
+                "has_admin_password": domain.admin_password_hash is not None and domain.admin_password_hash != ""
             })
 
         return response
