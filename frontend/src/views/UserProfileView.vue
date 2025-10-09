@@ -73,20 +73,20 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {{ user?.email ? 'Change Password' : 'Add Password' }}
+                  {{ user?.has_password ? 'Change Password' : 'Add Password' }}
                 </label>
                 <input
                   v-model="accountForm.newPassword"
                   type="password"
                   class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg"
-                  :placeholder="user?.email ? 'Leave blank to keep current' : 'Optional: Add password for account security'"
+                  :placeholder="user?.has_password ? 'Leave blank to keep current' : 'Optional: Add password for account security'"
                 />
                 <p v-if="!user?.email && accountForm.newPassword" class="text-xs text-orange-600 dark:text-orange-400 mt-1">
                   ⚠️ Add email first - required for password reset
                 </p>
               </div>
 
-              <div v-if="user?.email && accountForm.newPassword">
+              <div v-if="user?.has_password && accountForm.newPassword">
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Current Password</label>
                 <input
                   v-model="accountForm.currentPassword"
@@ -103,7 +103,7 @@
                 :disabled="updatingAccount"
                 class="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-semibold transition"
               >
-                {{ updatingAccount ? 'Saving...' : (user?.email ? 'Update Account' : 'Save Account Info') }}
+                {{ updatingAccount ? 'Saving...' : (user?.email || user?.has_password ? 'Update Account' : 'Save Account Info') }}
               </button>
             </div>
           </div>
@@ -411,8 +411,8 @@ const updateAccount = async () => {
     // Send password if provided
     if (accountForm.value.newPassword) {
       payload.password = accountForm.value.newPassword
-      // Only send current_password if user has email
-      if (user.value?.email || payload.email) {
+      // Only send current_password if user ALREADY HAS a password
+      if (user.value?.has_password) {
         payload.current_password = accountForm.value.currentPassword
       }
     }
