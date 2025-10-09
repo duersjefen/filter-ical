@@ -47,8 +47,8 @@
                 <span v-if="getFilterCount(domain.domain_key) > 0" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md">
                   {{ getFilterCount(domain.domain_key) }} {{ getFilterCount(domain.domain_key) === 1 ? 'filter' : 'filters' }}
                 </span>
-                <!-- Password protected badge -->
-                <span v-if="domain.has_user_password || domain.has_admin_password" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md" :title="domain.has_admin_password ? 'Admin password required' : 'User password required'">
+                <!-- Password protected badge (only shows when domain calendar is password protected) -->
+                <span v-if="domain.has_user_password" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md" title="User password required">
                   <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                   </svg>
