@@ -1634,6 +1634,7 @@ paths:
                 - domain_key
                 - name
                 - calendar_url
+                - admin_password
               properties:
                 domain_key:
                   type: string
@@ -1641,13 +1642,13 @@ paths:
                   maxLength: 100
                   pattern: '^[a-z0-9-]+$'
                   example: "company-events"
-                  description: "Unique domain key (lowercase letters, numbers, hyphens only)"
+                  description: "Unique domain key (lowercase letters, numbers, hyphens only). Display name auto-generated from this."
                 name:
                   type: string
                   minLength: 1
                   maxLength: 200
-                  example: "Company Events Calendar"
-                  description: "Display name for the domain"
+                  example: "Company Events"
+                  description: "Display name for the domain (auto-filled from domain_key with capitalization)"
                 calendar_url:
                   type: string
                   minLength: 10
@@ -1658,9 +1659,8 @@ paths:
                   type: string
                   minLength: 4
                   maxLength: 100
-                  nullable: true
                   example: "admin123"
-                  description: "Optional admin password for the domain"
+                  description: "Required admin password for the domain"
                 user_password:
                   type: string
                   minLength: 4
@@ -1672,7 +1672,7 @@ paths:
                   type: string
                   nullable: true
                   example: "john_doe"
-                  description: "Optional username to assign as domain owner"
+                  description: "Optional username to assign as domain owner. If not provided, main admin will be the owner."
       responses:
         '201':
           description: Domain created successfully

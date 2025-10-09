@@ -152,24 +152,31 @@ class TestAdminDomainCreation:
 
         assert response.status_code == 422  # Validation error
 
-    def test_create_domain_minimal_fields(self, test_client: TestClient, admin_token: str, test_db: Session):
-        """Can create domain with only required fields (domain_key, name, calendar_url)."""
+    def test_create_domain_without_admin_password_fails(self, test_client: TestClient, admin_token: str):
+        """Admin password is required."""
         response = test_client.post(
             "/admin/domains",
             json={
-                "domain_key": "minimal-domain",
-                "name": "Minimal Domain",
-                "calendar_url": "https://example.com/minimal.ics"
+                "domain_key": "no-password-domain",
+                "name": "No Password Domain",
+                "calendar_url": "https://example.com/calendar.ics"
             },
             headers={"Authorization": f"Bearer {admin_token}"}
         )
 
-        assert response.status_code == 201
-        data = response.json()
-        assert data["domain_key"] == "minimal-domain"
+        assert response.status_code == 422  # Validation error
 
-        # Verify domain was created without passwords
-        domain = test_db.query(Domain).filter(Domain.domain_key == "minimal-domain").first()
-        assert domain.admin_password_hash is None
-        assert domain.user_password_hash is None
-        assert domain.owner_id is None
+    def test_create_domain_with_short_admin_password_fails(self, test_client: TestClient, admin_token: str):
+        """Admin password must be at least 4 characters."""
+        response = test_client.post(
+            "/admin/domains",
+            json={
+                "domain_key": "short-pass-domain",
+                "name": "Short Password Domain",
+                "calendar_url": "https://example.com/calendar.ics",
+                "admin_password": "abc"  # Only 3 chars
+            },
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+
+        assert response.status_code == 422  # Validation error

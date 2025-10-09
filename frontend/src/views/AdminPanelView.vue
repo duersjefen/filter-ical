@@ -257,27 +257,16 @@
           </div>
 
           <div v-if="showCreateDomainForm" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Domain Key *</label>
-                <input
-                  v-model="newDomain.domain_key"
-                  type="text"
-                  placeholder="company-events"
-                  class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
-                />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Lowercase letters, numbers, hyphens only</p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Display Name *</label>
-                <input
-                  v-model="newDomain.name"
-                  type="text"
-                  placeholder="Company Events"
-                  class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
-                />
-              </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Domain Key *</label>
+              <input
+                v-model="newDomain.domain_key"
+                @input="autoFillDisplayName"
+                type="text"
+                placeholder="company-events"
+                class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Lowercase letters, numbers, hyphens only. Display name auto-fills from this.</p>
             </div>
 
             <div>
@@ -292,12 +281,12 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Admin Password (Optional)</label>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Admin Password *</label>
                 <div class="relative">
                   <input
                     v-model="newDomain.admin_password"
                     :type="showNewDomainAdminPassword ? 'text' : 'password'"
-                    placeholder="Leave blank for no password"
+                    placeholder="Required (min 4 characters)"
                     class="w-full px-3 py-2 pr-12 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
                   />
                   <button
@@ -347,22 +336,27 @@
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Owner Username (Optional)</label>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Assign to User (Optional)</label>
               <input
                 v-model="newDomain.owner_username"
                 type="text"
-                placeholder="Leave blank for no owner"
+                placeholder="Leave blank for main admin to own"
                 class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
               />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">If left blank, you (main admin) will own this domain</p>
             </div>
 
             <button
               @click="createDomain"
-              :disabled="creatingDomain || !newDomain.domain_key || !newDomain.name || !newDomain.calendar_url"
+              :disabled="creatingDomain || !newDomain.domain_key || !newDomain.calendar_url || !newDomain.admin_password || newDomain.admin_password.length < 4"
               class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-3 rounded-lg font-semibold transition"
             >
               {{ creatingDomain ? 'Creating...' : '➕ Create Domain' }}
             </button>
+          </div>
+
+          <div v-else class="text-sm text-gray-600 dark:text-gray-400">
+            Click "Show Form" to create a new domain directly
           </div>
         </div>
       </div>
@@ -1207,25 +1201,43 @@ const getApprovalDisabledReason = (requestId) => {
   return ''
 }
 
+const autoFillDisplayName = () => {
+  // Auto-generate display name from domain key (capitalize first letter)
+  const key = newDomain.value.domain_key.trim()
+  if (key) {
+    // Replace hyphens with spaces and capitalize first letter of each word
+    newDomain.value.name = key
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  } else {
+    newDomain.value.name = ''
+  }
+}
+
 const createDomain = async () => {
   creatingDomain.value = true
 
   try {
     const token = localStorage.getItem('admin_token')
+
+    // Auto-generate display name if not set
+    if (!newDomain.value.name) {
+      autoFillDisplayName()
+    }
+
     const payload = {
       domain_key: newDomain.value.domain_key.trim().toLowerCase(),
       name: newDomain.value.name.trim(),
-      calendar_url: newDomain.value.calendar_url.trim()
+      calendar_url: newDomain.value.calendar_url.trim(),
+      admin_password: newDomain.value.admin_password  // Required
     }
 
     // Add optional fields if provided
-    if (newDomain.value.admin_password) {
-      payload.admin_password = newDomain.value.admin_password
-    }
     if (newDomain.value.user_password) {
       payload.user_password = newDomain.value.user_password
     }
-    if (newDomain.value.owner_username) {
+    if (newDomain.value.owner_username && newDomain.value.owner_username.trim()) {
       payload.owner_username = newDomain.value.owner_username.trim()
     }
 

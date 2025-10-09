@@ -370,7 +370,7 @@ class CreateDomainRequest(BaseModel):
     domain_key: str
     name: str
     calendar_url: str
-    admin_password: Optional[str] = None
+    admin_password: str  # Required
     user_password: Optional[str] = None
     owner_username: Optional[str] = None
 
@@ -409,6 +409,13 @@ async def create_domain_directly(
             detail="Calendar URL must start with http:// or https://"
         )
 
+    # Validate admin password length
+    if len(domain_data.admin_password) < 4:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Admin password must be at least 4 characters"
+        )
+
     # Check if domain key already exists
     existing_domain = db.query(Domain).filter(Domain.domain_key == domain_data.domain_key).first()
     if existing_domain:
@@ -430,11 +437,9 @@ async def create_domain_directly(
         owner_id = owner.id
         owner_username = owner.username
 
-    # Encrypt passwords if provided
-    admin_password_hash = None
+    # Encrypt passwords
+    admin_password_hash = encrypt_password(domain_data.admin_password, settings.password_encryption_key)
     user_password_hash = None
-    if domain_data.admin_password:
-        admin_password_hash = encrypt_password(domain_data.admin_password, settings.password_encryption_key)
     if domain_data.user_password:
         user_password_hash = encrypt_password(domain_data.user_password, settings.password_encryption_key)
 
