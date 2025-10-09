@@ -395,13 +395,13 @@ async def update_user_profile(
 @router.get(
     "/api/users/me/domains",
     summary="Get user's domains",
-    description="Get all domains owned by or administered by the current user"
+    description="Get all domains the user interacts with: owned, admin, password-access, and filter domains"
 )
 async def get_user_domains(
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's owned and admin domains."""
+    """Get user's owned, admin, password-access, and filter domains."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
@@ -432,7 +432,45 @@ async def get_user_domains(
                 "created_at": domain.created_at.isoformat()
             })
 
+    # Get password-access domains (from UserDomainAccess)
+    password_access_domains = []
+    for access in user.domain_access:
+        if access.calendar_id:
+            # Find domain by calendar_id
+            domain = db.query(Domain).filter(Domain.calendar_id == access.calendar_id).first()
+            if domain:
+                # Skip if already in owned or admin
+                if domain.owner_id == user.id or domain in user.admin_domains:
+                    continue
+                password_access_domains.append({
+                    "domain_key": domain.domain_key,
+                    "name": domain.name,
+                    "access_level": access.access_level,
+                    "unlocked_at": access.unlocked_at.isoformat()
+                })
+
+    # Get filter domains (domains where user has filters)
+    filter_domains = []
+    seen_domain_keys = set()
+    for filter_obj in user.filters:
+        if filter_obj.domain_key:
+            # Skip if already in other lists
+            if filter_obj.domain_key in [d["domain_key"] for d in owned_domains + admin_domains + password_access_domains]:
+                continue
+            if filter_obj.domain_key not in seen_domain_keys:
+                seen_domain_keys.add(filter_obj.domain_key)
+                # Get domain info
+                domain = db.query(Domain).filter(Domain.domain_key == filter_obj.domain_key).first()
+                if domain:
+                    filter_domains.append({
+                        "domain_key": domain.domain_key,
+                        "name": domain.name,
+                        "filter_count": len([f for f in user.filters if f.domain_key == domain.domain_key])
+                    })
+
     return {
         "owned_domains": owned_domains,
-        "admin_domains": admin_domains
+        "admin_domains": admin_domains,
+        "password_access_domains": password_access_domains,
+        "filter_domains": filter_domains
     }
