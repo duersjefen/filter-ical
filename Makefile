@@ -105,8 +105,8 @@ preview: ## Build and preview production frontend
 stop: ## Stop all development services
 	@echo "🛑 Stopping services..."
 	@docker-compose -f docker-compose.dev.yml down
-	@-pkill -f "uvicorn app.main:app"
-	@-pkill -f "vite"
+	@-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	@-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@echo "✅ All services stopped"
 
 clean: ## Clean development artifacts and containers

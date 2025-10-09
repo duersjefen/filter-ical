@@ -98,7 +98,7 @@ def sync_domain_calendars_task():
                 try:
                     # Ensure domain calendar exists and is synced
                     success, calendar, sync_error = asyncio.run(
-                        ensure_domain_calendar_exists(db, domain_key, config)
+                        ensure_domain_calendar_exists(db, domain_key)
                     )
 
                     if success:

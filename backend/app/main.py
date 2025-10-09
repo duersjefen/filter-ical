@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
             try:
                 for domain_key in domains_config.get('domains', {}):
                     domain_success, calendar, domain_error = await ensure_domain_calendar_exists(
-                        session, domain_key, domains_config
+                        session, domain_key
                     )
                     if domain_success:
                         print(f"✅ Domain calendar '{domain_key}' ready")
