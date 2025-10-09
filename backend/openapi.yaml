@@ -1721,6 +1721,111 @@ paths:
         '422':
           description: Validation error (invalid domain key format or URL)
 
+  /api/admin/users/search:
+    get:
+      summary: Search users (admin only)
+      description: Search for users by username or email for assignment operations
+      security:
+        - AdminPassword: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Search query (username or email)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            maximum: 50
+            default: 10
+          description: Maximum number of results
+      responses:
+        '200':
+          description: User search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 42
+                        username:
+                          type: string
+                          example: "john_doe"
+                        email:
+                          type: string
+                          nullable: true
+                          example: "john@example.com"
+                        role:
+                          type: string
+                          example: "user"
+        '401':
+          description: Unauthorized - invalid admin authentication
+
+  /api/admin/domains/{domainKey}/owner:
+    patch:
+      summary: Assign or remove domain owner (admin only)
+      description: Assign a domain to a user or remove the owner assignment
+      security:
+        - AdminPassword: []
+      parameters:
+        - name: domainKey
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "company-events"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  nullable: true
+                  example: 42
+                  description: "User ID to assign as owner, or null to remove owner"
+      responses:
+        '200':
+          description: Owner assigned or removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Owner assigned successfully"
+                  domain_key:
+                    type: string
+                    example: "company-events"
+                  owner_id:
+                    type: integer
+                    nullable: true
+                    example: 42
+                  owner_username:
+                    type: string
+                    nullable: true
+                    example: "john_doe"
+        '401':
+          description: Unauthorized - invalid admin authentication
+        '404':
+          description: Domain or user not found
+
 components:
   securitySchemes:
     AdminPassword:

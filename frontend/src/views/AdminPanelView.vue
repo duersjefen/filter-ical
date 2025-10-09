@@ -246,23 +246,37 @@
       <!-- Create New Domain (admin shortcut) -->
       <div class="mb-6">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <!-- Header -->
-          <div class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 px-6 py-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
+          <!-- Header - Clickable -->
+          <div
+            @click="showCreateDomainForm = !showCreateDomainForm"
+            class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 px-6 py-4 cursor-pointer hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 transition-all"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-lg font-bold text-white">Create New Domain</h2>
+                  <p class="text-xs text-blue-100">Click to {{ showCreateDomainForm ? 'hide' : 'show' }} form</p>
+                </div>
               </div>
-              <div>
-                <h2 class="text-lg font-bold text-white">Create New Domain</h2>
-                <p class="text-xs text-blue-100">Add a new calendar domain to the system</p>
-              </div>
+              <svg
+                class="w-5 h-5 text-white transition-transform"
+                :class="showCreateDomainForm ? 'rotate-180' : ''"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
             </div>
           </div>
 
           <!-- Form -->
-          <div class="p-6">
+          <div v-if="showCreateDomainForm" class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <!-- Domain Key -->
               <div>
@@ -508,6 +522,75 @@
                 </div>
               </div>
 
+            </div>
+
+            <!-- Owner Management -->
+            <div class="px-4 pb-4 border-t-2 border-gray-100 dark:border-gray-700 pt-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-bold text-gray-700 dark:text-gray-300">👤 Owner</span>
+                <span v-if="domain.owner_username" class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-medium rounded">
+                  {{ domain.owner_username }}
+                </span>
+                <span v-else class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded">
+                  No owner
+                </span>
+              </div>
+
+              <!-- Owner Search & Assign -->
+              <div v-if="assigningOwner === domain.domain_key" class="space-y-2">
+                <div class="relative">
+                  <input
+                    v-model="ownerSearchQuery"
+                    @input="searchUsers"
+                    type="text"
+                    placeholder="Search users..."
+                    class="w-full px-3 py-2 pr-8 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <svg v-if="searchingUsers" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+
+                <!-- Search Results -->
+                <div v-if="userSearchResults.length > 0" class="max-h-40 overflow-y-auto bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <button
+                    v-for="user in userSearchResults"
+                    :key="user.id"
+                    @click="assignOwner(domain.domain_key, user.id, user.username)"
+                    class="w-full px-3 py-2 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition text-sm"
+                  >
+                    <div class="font-semibold text-gray-900 dark:text-gray-100">{{ user.username }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ user.email || 'No email' }}</div>
+                  </button>
+                </div>
+
+                <div class="flex gap-2">
+                  <button
+                    @click="cancelOwnerAssignment"
+                    class="flex-1 px-3 py-2 text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+
+              <!-- Owner Actions -->
+              <div v-else class="flex gap-2">
+                <button
+                  @click="startOwnerAssignment(domain.domain_key)"
+                  class="flex-1 px-3 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+                >
+                  {{ domain.owner_username ? '✏️ Change' : '➕ Assign' }}
+                </button>
+                <button
+                  v-if="domain.owner_username"
+                  @click="removeOwner(domain.domain_key)"
+                  class="flex-1 px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                >
+                  🗑️ Remove
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -814,6 +897,7 @@ const confirmDialogData = ref({
 })
 
 // Create domain state
+const showCreateDomainForm = ref(false)
 const creatingDomain = ref(false)
 const newDomain = ref({
   domain_key: '',
@@ -824,6 +908,13 @@ const newDomain = ref({
 })
 const showNewDomainAdminPassword = ref(false)
 const showNewDomainUserPassword = ref(false)
+
+// Owner assignment state
+const assigningOwner = ref(null)  // domain_key being edited
+const ownerSearchQuery = ref('')
+const userSearchResults = ref([])
+const searchingUsers = ref(false)
+let searchTimeout = null
 
 // Computed stats
 // Only show pending requests (approved ones become domains, rejected ones are hidden)
@@ -1273,6 +1364,110 @@ const createDomain = async () => {
     }
   } finally {
     creatingDomain.value = false
+  }
+}
+
+const startOwnerAssignment = (domainKey) => {
+  assigningOwner.value = domainKey
+  ownerSearchQuery.value = ''
+  userSearchResults.value = []
+}
+
+const cancelOwnerAssignment = () => {
+  assigningOwner.value = null
+  ownerSearchQuery.value = ''
+  userSearchResults.value = []
+}
+
+const searchUsers = async () => {
+  const query = ownerSearchQuery.value.trim()
+
+  if (!query || query.length < 1) {
+    userSearchResults.value = []
+    return
+  }
+
+  // Debounce search
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(async () => {
+    searchingUsers.value = true
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await axios.get(
+        `${API_BASE_URL}/api/admin/users/search?q=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      userSearchResults.value = response.data.users
+    } catch (error) {
+      console.error('Failed to search users:', error)
+      userSearchResults.value = []
+    } finally {
+      searchingUsers.value = false
+    }
+  }, 300)
+}
+
+const assignOwner = async (domainKey, userId, username) => {
+  try {
+    const token = localStorage.getItem('admin_token')
+    await axios.patch(
+      `${API_BASE_URL}/api/admin/domains/${domainKey}/owner`,
+      { user_id: userId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    alert(`✅ Domain "${domainKey}" assigned to ${username}`)
+
+    // Update local domain list
+    const domain = domains.value.find(d => d.domain_key === domainKey)
+    if (domain) {
+      domain.owner_username = username
+      domain.owner_id = userId
+    }
+
+    cancelOwnerAssignment()
+  } catch (error) {
+    console.error('Failed to assign owner:', error)
+    alert(`❌ Failed to assign owner: ${error.response?.data?.detail || error.message}`)
+  }
+}
+
+const removeOwner = async (domainKey) => {
+  if (!confirm(`Remove owner from domain "${domainKey}"?`)) {
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('admin_token')
+    await axios.patch(
+      `${API_BASE_URL}/api/admin/domains/${domainKey}/owner`,
+      { user_id: null },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    alert(`✅ Owner removed from domain "${domainKey}"`)
+
+    // Update local domain list
+    const domain = domains.value.find(d => d.domain_key === domainKey)
+    if (domain) {
+      domain.owner_username = null
+      domain.owner_id = null
+    }
+  } catch (error) {
+    console.error('Failed to remove owner:', error)
+    alert(`❌ Failed to remove owner: ${error.response?.data?.detail || error.message}`)
   }
 }
 
