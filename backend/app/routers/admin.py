@@ -222,7 +222,18 @@ async def approve_domain_request(
         db.commit()
         db.refresh(domain)
 
-        # 6. Send email notification if requested
+        # 6. Sync calendar events from source URL
+        from ..services.calendar_service import sync_calendar_events
+        try:
+            success, event_count, error = await sync_calendar_events(db, calendar)
+            if success:
+                print(f"✅ Synced {event_count} events for domain '{domain_key}'")
+            else:
+                print(f"⚠️ Failed to sync events for domain '{domain_key}': {error}")
+        except Exception as e:
+            print(f"⚠️ Exception during calendar sync: {e}")
+
+        # 7. Send email notification if requested
         if body and body.send_email:
             from ..services.email_service import send_domain_approval_email
             try:
