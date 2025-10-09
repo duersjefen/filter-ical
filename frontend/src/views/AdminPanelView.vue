@@ -91,82 +91,82 @@
           <p class="text-gray-600 dark:text-gray-400">No domains found</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 gap-4">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <!-- Domain Card -->
-          <div v-for="domain in domains" :key="domain.domain_key" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow">
+          <div v-for="domain in domains" :key="domain.domain_key" class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow">
 
             <!-- Card Header -->
-            <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <div class="flex items-center justify-between">
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center justify-between mb-2">
                 <div>
-                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ domain.domain_key }}</h3>
-                  <a :href="`/${domain.domain_key}`" target="_blank" class="text-sm text-purple-600 dark:text-purple-400 hover:underline inline-flex items-center gap-1 mt-1">
-                    📅 View Calendar →
+                  <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">{{ domain.domain_key }}</h3>
+                  <a :href="`/${domain.domain_key}`" target="_blank" class="text-xs text-purple-600 dark:text-purple-400 hover:underline inline-flex items-center gap-1">
+                    📅 View →
                   </a>
                 </div>
-                <div class="flex items-center gap-2">
-                  <a
-                    :href="`/${domain.domain_key}/admin`"
-                    target="_blank"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    ⚙️ Manage Domain
-                  </a>
-                  <button
-                    @click="deleteDomain(domain.domain_key)"
-                    :disabled="processing"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
+              </div>
+              <div class="flex gap-1.5">
+                <a
+                  :href="`/${domain.domain_key}/admin`"
+                  target="_blank"
+                  class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-medium transition-colors"
+                >
+                  ⚙️ Manage
+                </a>
+                <button
+                  @click="deleteDomain(domain.domain_key)"
+                  :disabled="processing"
+                  class="inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors disabled:opacity-50"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
 
             <!-- Card Body -->
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-3 grid grid-cols-2 gap-3">
 
               <!-- Admin Password Section -->
-              <div class="space-y-3">
-                <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">🔐 Admin Password</h4>
+              <div class="space-y-2">
+                <h4 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">🔐 Admin</h4>
 
-                <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'" class="space-y-3">
+                <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'" class="space-y-2">
                   <!-- Status Badge -->
                   <div>
-                    <span v-if="domain.admin_password_set" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
+                    <span v-if="domain.admin_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
                       ✅ Protected
                     </span>
-                    <span v-else class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                      ⚠️ No password set
+                    <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                      ⚠️ No password
                     </span>
                   </div>
 
                   <!-- Revealed Password Box -->
-                  <div v-if="viewingPassword === `${domain.domain_key}-admin` && viewedPassword" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-lg border-2 border-green-300 dark:border-green-700">
-                    <div class="text-xs text-green-700 dark:text-green-300 font-semibold mb-2">PASSWORD:</div>
-                    <code class="text-lg font-mono font-bold text-green-900 dark:text-green-100 select-all">{{ viewedPassword }}</code>
+                  <div v-if="viewingPassword === `${domain.domain_key}-admin` && viewedPassword" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-2 rounded border border-green-300 dark:border-green-700">
+                    <div class="text-xs text-green-700 dark:text-green-300 font-semibold mb-1">PASSWORD:</div>
+                    <code class="text-sm font-mono font-bold text-green-900 dark:text-green-100 select-all">{{ viewedPassword }}</code>
                   </div>
 
                   <!-- Action Buttons -->
-                  <div class="flex gap-2">
+                  <div class="flex gap-1">
                     <button
                       v-if="domain.admin_password_set"
                       @click="viewPassword(domain.domain_key, 'admin')"
-                      class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all"
+                      class="flex-1 px-2 py-1.5 text-xs font-medium rounded transition-all"
                       :class="viewingPassword === `${domain.domain_key}-admin` ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'"
                     >
-                      {{ viewingPassword === `${domain.domain_key}-admin` ? '🙈 Hide' : '👁️ View' }}
+                      {{ viewingPassword === `${domain.domain_key}-admin` ? '🙈' : '👁️' }}
                     </button>
                     <button
                       @click="startEditing(domain.domain_key, 'admin', domain.admin_password_set)"
-                      class="flex-1 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
+                      class="flex-1 px-2 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-all"
                     >
-                      {{ domain.admin_password_set ? '✏️ Change' : '➕ Set' }}
+                      {{ domain.admin_password_set ? '✏️' : '➕' }}
                     </button>
                     <button
                       v-if="domain.admin_password_set"
                       @click="removePassword(domain.domain_key, 'admin')"
-                      class="px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
+                      class="px-2 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded transition-all"
                     >
                       🗑️
                     </button>
@@ -174,74 +174,74 @@
                 </div>
 
                 <!-- Edit Form -->
-                <div v-else class="space-y-3">
-                  <div class="flex gap-2">
+                <div v-else class="space-y-2">
+                  <div class="flex gap-1">
                     <input
                       v-model="newPassword"
                       :type="showPassword ? 'text' : 'password'"
-                      placeholder="Enter new password (min 4 chars)"
-                      class="flex-1 px-3 py-2 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800"
+                      placeholder="New password (min 4)"
+                      class="flex-1 px-2 py-1.5 text-xs border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-200 dark:focus:ring-purple-800"
                     />
                     <button
                       @click="showPassword = !showPassword"
-                      class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-all"
+                      class="px-2 py-1.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-all"
                       :title="showPassword ? 'Hide password' : 'Show password'"
                     >
                       {{ showPassword ? '🙈' : '👁️' }}
                     </button>
                   </div>
-                  <div class="flex gap-2">
-                    <button @click="savePassword(domain.domain_key, 'admin')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">
-                      💾 Save
+                  <div class="flex gap-1">
+                    <button @click="savePassword(domain.domain_key, 'admin')" class="flex-1 px-2 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded transition-all">
+                      💾
                     </button>
-                    <button @click="cancelEditing" class="flex-1 px-3 py-2 text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">
-                      ❌ Cancel
+                    <button @click="cancelEditing" class="flex-1 px-2 py-1.5 text-xs font-medium bg-gray-500 hover:bg-gray-600 text-white rounded transition-all">
+                      ❌
                     </button>
                   </div>
                 </div>
               </div>
 
               <!-- User Password Section -->
-              <div class="space-y-3">
-                <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">👤 User Password</h4>
+              <div class="space-y-2">
+                <h4 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">👤 User</h4>
 
-                <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'" class="space-y-3">
+                <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'" class="space-y-2">
                   <!-- Status Badge -->
                   <div>
-                    <span v-if="domain.user_password_set" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                    <span v-if="domain.user_password_set" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
                       ✅ Protected
                     </span>
-                    <span v-else class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                      ⚠️ No password set
+                    <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                      ⚠️ No password
                     </span>
                   </div>
 
                   <!-- Revealed Password Box -->
-                  <div v-if="viewingPassword === `${domain.domain_key}-user` && viewedPassword" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-lg border-2 border-green-300 dark:border-green-700">
-                    <div class="text-xs text-green-700 dark:text-green-300 font-semibold mb-2">PASSWORD:</div>
-                    <code class="text-lg font-mono font-bold text-green-900 dark:text-green-100 select-all">{{ viewedPassword }}</code>
+                  <div v-if="viewingPassword === `${domain.domain_key}-user` && viewedPassword" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-2 rounded border border-green-300 dark:border-green-700">
+                    <div class="text-xs text-green-700 dark:text-green-300 font-semibold mb-1">PASSWORD:</div>
+                    <code class="text-sm font-mono font-bold text-green-900 dark:text-green-100 select-all">{{ viewedPassword }}</code>
                   </div>
 
                   <!-- Action Buttons -->
-                  <div class="flex gap-2">
+                  <div class="flex gap-1">
                     <button
                       v-if="domain.user_password_set"
                       @click="viewPassword(domain.domain_key, 'user')"
-                      class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all"
+                      class="flex-1 px-2 py-1.5 text-xs font-medium rounded transition-all"
                       :class="viewingPassword === `${domain.domain_key}-user` ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'"
                     >
-                      {{ viewingPassword === `${domain.domain_key}-user` ? '🙈 Hide' : '👁️ View' }}
+                      {{ viewingPassword === `${domain.domain_key}-user` ? '🙈' : '👁️' }}
                     </button>
                     <button
                       @click="startEditing(domain.domain_key, 'user', domain.user_password_set)"
-                      class="flex-1 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
+                      class="flex-1 px-2 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-all"
                     >
-                      {{ domain.user_password_set ? '✏️ Change' : '➕ Set' }}
+                      {{ domain.user_password_set ? '✏️' : '➕' }}
                     </button>
                     <button
                       v-if="domain.user_password_set"
                       @click="removePassword(domain.domain_key, 'user')"
-                      class="px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
+                      class="px-2 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded transition-all"
                     >
                       🗑️
                     </button>
@@ -249,28 +249,28 @@
                 </div>
 
                 <!-- Edit Form -->
-                <div v-else class="space-y-3">
-                  <div class="flex gap-2">
+                <div v-else class="space-y-2">
+                  <div class="flex gap-1">
                     <input
                       v-model="newPassword"
                       :type="showPassword ? 'text' : 'password'"
-                      placeholder="Enter new password (min 4 chars)"
-                      class="flex-1 px-3 py-2 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                      placeholder="New password (min 4)"
+                      class="flex-1 px-2 py-1.5 text-xs border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-800"
                     />
                     <button
                       @click="showPassword = !showPassword"
-                      class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-all"
+                      class="px-2 py-1.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-all"
                       :title="showPassword ? 'Hide password' : 'Show password'"
                     >
                       {{ showPassword ? '🙈' : '👁️' }}
                     </button>
                   </div>
-                  <div class="flex gap-2">
-                    <button @click="savePassword(domain.domain_key, 'user')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">
-                      💾 Save
+                  <div class="flex gap-1">
+                    <button @click="savePassword(domain.domain_key, 'user')" class="flex-1 px-2 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded transition-all">
+                      💾
                     </button>
-                    <button @click="cancelEditing" class="flex-1 px-3 py-2 text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">
-                      ❌ Cancel
+                    <button @click="cancelEditing" class="flex-1 px-2 py-1.5 text-xs font-medium bg-gray-500 hover:bg-gray-600 text-white rounded transition-all">
+                      ❌
                     </button>
                   </div>
                 </div>
@@ -326,6 +326,56 @@
                   {{ request.description }}
                 </p>
 
+                <!-- iCal Preview -->
+                <div class="mb-3">
+                  <button
+                    @click="togglePreview(request.id)"
+                    class="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                  >
+                    <span>{{ icalPreviews[request.id]?.expanded ? '▼' : '▶' }}</span>
+                    <span>{{ icalPreviews[request.id]?.expanded ? 'Hide' : 'Show' }} Calendar Preview</span>
+                  </button>
+
+                  <div v-if="icalPreviews[request.id]?.expanded" class="mt-2">
+                    <!-- Loading State -->
+                    <div v-if="icalPreviews[request.id]?.loading" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <div class="flex items-center gap-2">
+                        <div class="inline-block w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-sm text-blue-700 dark:text-blue-300">Loading events...</span>
+                      </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div v-else-if="icalPreviews[request.id]?.data?.error" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-700">
+                      <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-sm font-semibold text-red-800 dark:text-red-200">❌ Calendar Error</span>
+                      </div>
+                      <p class="text-sm text-red-700 dark:text-red-300">{{ icalPreviews[request.id].data.error }}</p>
+                    </div>
+
+                    <!-- Success State -->
+                    <div v-else-if="icalPreviews[request.id]?.data" class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                      <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-sm font-semibold text-green-800 dark:text-green-200">✅ Found {{ icalPreviews[request.id].data.event_count }} event{{ icalPreviews[request.id].data.event_count !== 1 ? 's' : '' }}</span>
+                      </div>
+                      <div v-if="icalPreviews[request.id].data.events.length > 0" class="space-y-2">
+                        <p class="text-xs text-green-700 dark:text-green-300 font-semibold mb-2">Preview (first {{ Math.min(5, icalPreviews[request.id].data.events.length) }} events):</p>
+                        <div v-for="(event, idx) in icalPreviews[request.id].data.events.slice(0, 5)" :key="idx" class="bg-white dark:bg-gray-800 p-2 rounded border border-green-200 dark:border-green-700">
+                          <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ event.title }}</p>
+                          <p v-if="event.start_time" class="text-xs text-gray-600 dark:text-gray-400">📅 {{ new Date(event.start_time).toLocaleDateString() }} {{ new Date(event.start_time).toLocaleTimeString() }}</p>
+                          <p v-if="event.location" class="text-xs text-gray-600 dark:text-gray-400">📍 {{ event.location }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <p class="text-xs text-gray-500 dark:text-gray-400">
                   {{ $t('admin.panel.submitted') }}: {{ formatDate(request.created_at) }}
                 </p>
@@ -357,27 +407,27 @@
       </div>
 
       <!-- App Settings -->
-      <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">⚙️ App Settings</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Configure global application behavior</p>
+      <div class="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+          <h2 class="text-base font-bold text-gray-900 dark:text-gray-100">⚙️ App Settings</h2>
+          <p class="text-xs text-gray-600 dark:text-gray-400">Configure global application behavior</p>
         </div>
 
-        <div class="p-6 space-y-6">
+        <div class="p-4 space-y-4">
           <!-- Footer Visibility -->
           <div>
-            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
               👣 Footer Visibility
             </label>
             <select
               v-model="appSettings.footer_visibility"
-              class="w-full px-4 py-3 text-base border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl transition-all duration-200 focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-4 focus:ring-purple-100 dark:focus:ring-purple-900/50"
+              class="w-full px-3 py-2 text-sm border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg transition-all duration-200 focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50"
             >
               <option value="everywhere">🌍 Show Everywhere</option>
               <option value="admin_only">🔐 Admin Only</option>
               <option value="nowhere">🚫 Hide Completely</option>
             </select>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
               Control where the footer with PayPal donation link is displayed
             </p>
           </div>
@@ -386,10 +436,10 @@
           <div>
             <label class="flex items-center justify-between cursor-pointer group">
               <div class="flex-1">
-                <div class="text-sm font-bold text-gray-700 dark:text-gray-300">
+                <div class="text-xs font-bold text-gray-700 dark:text-gray-300">
                   ➕ Show "Add Your Own Domain" Card
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   Allow users to request their own custom domains
                 </p>
               </div>
@@ -399,18 +449,18 @@
                   v-model="appSettings.show_domain_request"
                   class="sr-only peer"
                 />
-                <div class="w-14 h-8 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 transition-colors peer-focus:ring-4 peer-focus:ring-purple-200 dark:peer-focus:ring-purple-900/50"></div>
-                <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform peer-checked:translate-x-6 shadow-md"></div>
+                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 transition-colors peer-focus:ring-2 peer-focus:ring-purple-200 dark:peer-focus:ring-purple-900/50"></div>
+                <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5 shadow-md"></div>
               </div>
             </label>
           </div>
 
           <!-- Save Button -->
-          <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
             <button
               @click="saveAppSettings"
               :disabled="settingsSaving"
-              class="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 dark:from-purple-600 dark:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-100 shadow-lg disabled:shadow-sm disabled:transform-none"
+              class="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 dark:from-purple-600 dark:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 active:scale-95 shadow-md disabled:shadow-sm disabled:transform-none"
             >
               {{ settingsSaving ? '💾 Saving...' : '💾 Save Settings' }}
             </button>
@@ -463,6 +513,9 @@ const appSettings = ref({
   show_domain_request: true
 })
 const settingsSaving = ref(false)
+
+// iCal preview state
+const icalPreviews = ref({})  // { [requestId]: { expanded: boolean, loading: boolean, data: {...} } }
 
 // Computed stats
 // Only show pending requests (approved ones become domains, rejected ones are hidden)
@@ -712,6 +765,40 @@ const saveAppSettings = async () => {
     notify.error(`Failed to update settings: ${error.response?.data?.detail || error.message}`)
   } finally {
     settingsSaving.value = false
+  }
+}
+
+const togglePreview = async (requestId) => {
+  // Initialize preview state if not exists
+  if (!icalPreviews.value[requestId]) {
+    icalPreviews.value[requestId] = { expanded: false, loading: false, data: null }
+  }
+
+  // Toggle expansion
+  icalPreviews.value[requestId].expanded = !icalPreviews.value[requestId].expanded
+
+  // If expanding and no data loaded yet, fetch it
+  if (icalPreviews.value[requestId].expanded && !icalPreviews.value[requestId].data) {
+    icalPreviews.value[requestId].loading = true
+
+    try {
+      const request = requests.value.find(r => r.id === requestId)
+      if (!request) return
+
+      const response = await axios.post(`${API_BASE_URL}/api/ical/preview`, {
+        calendar_url: request.calendar_url
+      })
+
+      icalPreviews.value[requestId].data = response.data
+    } catch (error) {
+      icalPreviews.value[requestId].data = {
+        event_count: 0,
+        events: [],
+        error: `Failed to load preview: ${error.response?.data?.detail || error.message}`
+      }
+    } finally {
+      icalPreviews.value[requestId].loading = false
+    }
   }
 }
 

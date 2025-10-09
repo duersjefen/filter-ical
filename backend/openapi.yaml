@@ -228,6 +228,68 @@ paths:
         '400':
           description: Invalid request
 
+  # Generic iCal utilities
+  /api/ical/preview:
+    post:
+      summary: Preview events from an iCal URL
+      description: Generic endpoint to fetch and preview events from any iCal URL. Returns up to 10 events for preview. Reusable across the application.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [calendar_url]
+              properties:
+                calendar_url:
+                  type: string
+                  format: uri
+                  minLength: 10
+                  maxLength: 2000
+                  example: "https://calendar.google.com/calendar/ical/example/basic.ics"
+      responses:
+        '200':
+          description: iCal preview with events or error
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [event_count, events]
+                properties:
+                  event_count:
+                    type: integer
+                    description: Total number of events found in calendar
+                    example: 42
+                  events:
+                    type: array
+                    description: Preview of up to 10 events
+                    items:
+                      type: object
+                      required: [title]
+                      properties:
+                        title:
+                          type: string
+                          example: "Team Meeting"
+                        start_time:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          example: "2025-10-10T10:00:00"
+                        end_time:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          example: "2025-10-10T11:00:00"
+                        location:
+                          type: string
+                          nullable: true
+                          example: "Conference Room A"
+                  error:
+                    type: string
+                    nullable: true
+                    description: Error message if preview failed
+                    example: null
+
   # Domain-specific endpoints (auto-created from domains.yaml)
   /api/domains/{domain}/events:
     get:
