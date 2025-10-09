@@ -150,9 +150,9 @@
         </div>
       </div>
 
-      <div class="opacity-60 focus-within:opacity-100 transition-opacity">
+      <div>
         <label for="password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-          Admin Password <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
+          Admin Password
         </label>
         <div class="relative">
           <input
@@ -163,12 +163,13 @@
               'w-full px-4 py-3.5 pr-12 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500',
               formData.default_password && !isPasswordValid
                 ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
-                : 'border-gray-300/60 dark:border-gray-600/60 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
+                : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
             ]"
-            placeholder="Leave blank for password-free access"
+            placeholder="Enter secure admin password (min 4 characters)"
             minlength="4"
             maxlength="100"
             :disabled="!canSubmitRequest"
+            required
           />
           <button
             v-if="formData.default_password"
@@ -188,9 +189,6 @@
         </div>
         <div v-if="formData.default_password && !isPasswordValid" class="mt-2 text-xs text-red-600 dark:text-red-400 font-semibold">
           {{ $t('domainRequest.errors.passwordTooShort') }}
-        </div>
-        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg px-3 py-2 border border-blue-200/50 dark:border-blue-700/50">
-          💡 <strong>No password?</strong> Anyone with the link can access. <strong>With password?</strong> Secure access only.
         </div>
       </div>
 
@@ -248,8 +246,8 @@ const isDescriptionValid = computed(() => {
 })
 
 const isPasswordValid = computed(() => {
-  // Password is optional, but if provided, must be at least 4 chars
-  return !formData.value.default_password || formData.value.default_password.length >= 4
+  // Password is required and must be at least 4 chars
+  return formData.value.default_password && formData.value.default_password.length >= 4
 })
 
 const isFormValid = computed(() => {
@@ -278,12 +276,8 @@ const submitRequest = async () => {
     const payload = {
       requested_domain_key: formData.value.requested_domain_key.toLowerCase(),
       calendar_url: formData.value.calendar_url,
-      description: formData.value.description
-    }
-
-    // Only include password if provided
-    if (formData.value.default_password) {
-      payload.default_password = formData.value.default_password
+      description: formData.value.description,
+      default_password: formData.value.default_password
     }
 
     const result = await post('/api/domain-requests', payload)
