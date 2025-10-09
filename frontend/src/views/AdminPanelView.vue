@@ -591,6 +591,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirm Dialog -->
+    <ConfirmDialog
+      ref="confirmDialog"
+      :title="confirmDialogData.title"
+      :message="confirmDialogData.message"
+      :confirmText="confirmDialogData.confirmText"
+      @confirm="confirmDialogData.onConfirm"
+    />
   </div>
 </template>
 
@@ -600,6 +609,7 @@ import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
+import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import { useNotification } from '../composables/useNotification'
 
 const { t } = useI18n()
@@ -653,6 +663,15 @@ const approvalMessage = ref('')
 const sendApprovalEmail = ref(true)
 const sendRejectionEmail = ref(true)
 const submittingApproval = ref(false)
+
+// Confirm dialog state
+const confirmDialog = ref(null)
+const confirmDialogData = ref({
+  title: '',
+  message: '',
+  confirmText: '',
+  onConfirm: null
+})
 
 // Computed stats
 // Only show pending requests (approved ones become domains, rejected ones are hidden)
@@ -767,27 +786,36 @@ const savePassword = async (domainKey, type) => {
   }
 }
 
-const removePassword = async (domainKey, type) => {
-  if (!confirm(t('admin.domainAuth.passwordSettings.confirm.remove' + (type === 'admin' ? 'Admin' : 'User')) || `Remove ${type} password for ${domainKey}?`)) {
-    return
+const removePassword = (domainKey, type) => {
+  const passwordType = type === 'admin' ? 'Admin' : 'User'
+
+  confirmDialogData.value = {
+    title: `Remove ${passwordType} Password`,
+    message: t('admin.domainAuth.passwordSettings.confirm.remove' + (type === 'admin' ? 'Admin' : 'User')) || `Are you sure you want to remove the ${type} password for domain "${domainKey}"? Users will no longer need a password to access this domain.`,
+    confirmText: 'Remove Password',
+    onConfirm: async () => {
+      processing.value = true
+      try {
+        const endpoint = `/api/admin/domains/${domainKey}/passwords`
+
+        const payload = type === 'admin'
+          ? { remove_admin_password: true }
+          : { remove_user_password: true }
+
+        await axios.patch(`${API_BASE_URL}${endpoint}`, payload, {
+          headers: getAuthHeaders()
+        })
+
+        notify.success(t(`admin.domainAuth.passwordSettings.success.${type}Removed`) || `${passwordType} password removed successfully`)
+        await loadDomains()  // Refresh the list
+      } catch (error) {
+        notify.error(t(`admin.domainAuth.passwordSettings.error.${type}Removed`) || `Failed to remove password: ${error.message}`)
+      } finally {
+        processing.value = false
+      }
+    }
   }
-
-  try {
-    const endpoint = `/api/admin/domains/${domainKey}/passwords`
-
-    const payload = type === 'admin'
-      ? { remove_admin_password: true }
-      : { remove_user_password: true }
-
-    await axios.patch(`${API_BASE_URL}${endpoint}`, payload, {
-      headers: getAuthHeaders()
-    })
-
-    notify.success(t(`admin.domainAuth.passwordSettings.success.${type}Removed`) || `${type === 'admin' ? 'Admin' : 'User'} password removed successfully`)
-    await loadDomains()  // Refresh the list
-  } catch (error) {
-    notify.error(t(`admin.domainAuth.passwordSettings.error.${type}Removed`) || `Failed to remove password: ${error.message}`)
-  }
+  confirmDialog.value.open()
 }
 
 const viewPassword = async (domainKey, type) => {
@@ -899,26 +927,30 @@ const submitRejection = async () => {
   }
 }
 
-const deleteDomain = async (domainKey) => {
-  if (!confirm(`Are you sure you want to delete domain "${domainKey}"? This will delete all associated data (calendar, filters, groups). This action cannot be undone.`)) {
-    return
-  }
-
-  processing.value = true
-  try {
-    await axios.delete(
-      `${API_BASE_URL}/api/admin/domains/${domainKey}`,
-      {
-        headers: getAuthHeaders()
+const deleteDomain = (domainKey) => {
+  confirmDialogData.value = {
+    title: 'Delete Domain',
+    message: `Are you sure you want to delete domain "${domainKey}"? This will delete all associated data (calendar, filters, groups). This action cannot be undone.`,
+    confirmText: 'Delete Domain',
+    onConfirm: async () => {
+      processing.value = true
+      try {
+        await axios.delete(
+          `${API_BASE_URL}/api/admin/domains/${domainKey}`,
+          {
+            headers: getAuthHeaders()
+          }
+        )
+        await loadDomains()
+        notify.success(`Domain "${domainKey}" deleted successfully`)
+      } catch (error) {
+        notify.error(`Failed to delete domain: ${error.response?.data?.detail || error.message}`)
+      } finally {
+        processing.value = false
       }
-    )
-    await loadDomains()
-    notify.success(`Domain "${domainKey}" deleted successfully`)
-  } catch (error) {
-    notify.error(`Failed to delete domain: ${error.response?.data?.detail || error.message}`)
-  } finally {
-    processing.value = false
+    }
   }
+  confirmDialog.value.open()
 }
 
 const formatDate = (dateString) => {

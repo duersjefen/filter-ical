@@ -52,7 +52,7 @@ class Event(Base):
     __tablename__ = "events"
     
     id = Column(Integer, primary_key=True, index=True)
-    calendar_id = Column(Integer, ForeignKey("calendars.id"), nullable=False)
+    calendar_id = Column(Integer, ForeignKey("calendars.id", ondelete="CASCADE"), nullable=False)
     
     # Core event data
     title = Column(String(500), nullable=False, index=True)  # Indexed for grouping recurring events
@@ -149,7 +149,7 @@ class Filter(Base):
     name = Column(String(255), nullable=False)
 
     # Either calendar_id (user filters) OR domain_id/domain_key (domain filters)
-    calendar_id = Column(Integer, ForeignKey("calendars.id"), nullable=True)
+    calendar_id = Column(Integer, ForeignKey("calendars.id", ondelete="CASCADE"), nullable=True)
     domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=True, index=True)  # New FK to domains table
     domain_key = Column(String(100), nullable=True, index=True)  # Legacy field for API compatibility
 
