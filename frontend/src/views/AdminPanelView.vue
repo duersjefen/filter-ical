@@ -243,6 +243,130 @@
         @navigate-back="$router.push('/')"
       />
 
+      <!-- Create New Domain (admin shortcut) -->
+      <div class="mb-6">
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-xl shadow-lg border-2 border-blue-200 dark:border-blue-700 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-blue-900 dark:text-blue-100">➕ Create New Domain</h2>
+            <button
+              @click="showCreateDomainForm = !showCreateDomainForm"
+              class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {{ showCreateDomainForm ? 'Hide' : 'Show' }} Form
+            </button>
+          </div>
+
+          <div v-if="showCreateDomainForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Domain Key *</label>
+                <input
+                  v-model="newDomain.domain_key"
+                  type="text"
+                  placeholder="company-events"
+                  class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Lowercase letters, numbers, hyphens only</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Display Name *</label>
+                <input
+                  v-model="newDomain.name"
+                  type="text"
+                  placeholder="Company Events"
+                  class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Calendar URL *</label>
+              <input
+                v-model="newDomain.calendar_url"
+                type="url"
+                placeholder="https://example.com/calendar.ics"
+                class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Admin Password (Optional)</label>
+                <div class="relative">
+                  <input
+                    v-model="newDomain.admin_password"
+                    :type="showNewDomainAdminPassword ? 'text' : 'password'"
+                    placeholder="Leave blank for no password"
+                    class="w-full px-3 py-2 pr-12 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+                  />
+                  <button
+                    v-if="newDomain.admin_password"
+                    type="button"
+                    @click="showNewDomainAdminPassword = !showNewDomainAdminPassword"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    :title="showNewDomainAdminPassword ? 'Hide password' : 'Show password'"
+                  >
+                    <svg v-if="showNewDomainAdminPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                    </svg>
+                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">User Password (Optional)</label>
+                <div class="relative">
+                  <input
+                    v-model="newDomain.user_password"
+                    :type="showNewDomainUserPassword ? 'text' : 'password'"
+                    placeholder="Leave blank for no password"
+                    class="w-full px-3 py-2 pr-12 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+                  />
+                  <button
+                    v-if="newDomain.user_password"
+                    type="button"
+                    @click="showNewDomainUserPassword = !showNewDomainUserPassword"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    :title="showNewDomainUserPassword ? 'Hide password' : 'Show password'"
+                  >
+                    <svg v-if="showNewDomainUserPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                    </svg>
+                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Owner Username (Optional)</label>
+              <input
+                v-model="newDomain.owner_username"
+                type="text"
+                placeholder="Leave blank for no owner"
+                class="w-full px-3 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+              />
+            </div>
+
+            <button
+              @click="createDomain"
+              :disabled="creatingDomain || !newDomain.domain_key || !newDomain.name || !newDomain.calendar_url"
+              class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-3 rounded-lg font-semibold transition"
+            >
+              {{ creatingDomain ? 'Creating...' : '➕ Create Domain' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Domains Overview (at top) -->
       <div class="mb-6">
         <div class="flex items-center justify-between mb-3">
@@ -315,10 +439,22 @@
                 </div>
 
                 <div v-else class="space-y-2">
-                  <div class="flex gap-1.5">
-                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Enter password" class="flex-1 px-3 py-2 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800" />
-                    <button @click="showPassword = !showPassword" class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-all" :title="showPassword ? 'Hide' : 'Show'">
-                      {{ showPassword ? '🙈' : '👁️' }}
+                  <div class="relative">
+                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Enter password" class="w-full px-3 py-2 pr-12 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800" />
+                    <button
+                      v-if="newPassword"
+                      type="button"
+                      @click="showPassword = !showPassword"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                      :title="showPassword ? 'Hide password' : 'Show password'"
+                    >
+                      <svg v-if="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                      </svg>
+                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
                     </button>
                   </div>
                   <div class="flex gap-1.5">
@@ -355,10 +491,22 @@
                 </div>
 
                 <div v-else class="space-y-2">
-                  <div class="flex gap-1.5">
-                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Enter password" class="flex-1 px-3 py-2 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800" />
-                    <button @click="showPassword = !showPassword" class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-all" :title="showPassword ? 'Hide' : 'Show'">
-                      {{ showPassword ? '🙈' : '👁️' }}
+                  <div class="relative">
+                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Enter password" class="w-full px-3 py-2 pr-12 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800" />
+                    <button
+                      v-if="newPassword"
+                      type="button"
+                      @click="showPassword = !showPassword"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                      :title="showPassword ? 'Hide password' : 'Show password'"
+                    >
+                      <svg v-if="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                      </svg>
+                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
                     </button>
                   </div>
                   <div class="flex gap-1.5">
@@ -672,6 +820,20 @@ const confirmDialogData = ref({
   confirmText: '',
   onConfirm: null
 })
+
+// Create domain state
+const showCreateDomainForm = ref(false)
+const creatingDomain = ref(false)
+const newDomain = ref({
+  domain_key: '',
+  name: '',
+  calendar_url: '',
+  admin_password: '',
+  user_password: '',
+  owner_username: ''
+})
+const showNewDomainAdminPassword = ref(false)
+const showNewDomainUserPassword = ref(false)
 
 // Computed stats
 // Only show pending requests (approved ones become domains, rejected ones are hidden)
@@ -1043,6 +1205,72 @@ const getApprovalDisabledReason = (requestId) => {
   }
 
   return ''
+}
+
+const createDomain = async () => {
+  creatingDomain.value = true
+
+  try {
+    const token = localStorage.getItem('admin_token')
+    const payload = {
+      domain_key: newDomain.value.domain_key.trim().toLowerCase(),
+      name: newDomain.value.name.trim(),
+      calendar_url: newDomain.value.calendar_url.trim()
+    }
+
+    // Add optional fields if provided
+    if (newDomain.value.admin_password) {
+      payload.admin_password = newDomain.value.admin_password
+    }
+    if (newDomain.value.user_password) {
+      payload.user_password = newDomain.value.user_password
+    }
+    if (newDomain.value.owner_username) {
+      payload.owner_username = newDomain.value.owner_username.trim()
+    }
+
+    const response = await axios.post(
+      `${API_BASE_URL}/api/admin/domains`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    // Success - reset form and reload domains
+    alert(`✅ Domain "${response.data.domain_key}" created successfully!`)
+
+    // Reset form
+    newDomain.value = {
+      domain_key: '',
+      name: '',
+      calendar_url: '',
+      admin_password: '',
+      user_password: '',
+      owner_username: ''
+    }
+    showCreateDomainForm.value = false
+
+    // Reload domains list
+    await loadDomains()
+
+  } catch (error) {
+    console.error('Failed to create domain:', error)
+
+    if (error.response?.status === 409) {
+      alert(`❌ Domain key "${newDomain.value.domain_key}" already exists. Please choose a different domain key.`)
+    } else if (error.response?.status === 404) {
+      alert(`❌ User "${newDomain.value.owner_username}" not found. Please check the username.`)
+    } else if (error.response?.status === 422) {
+      alert(`❌ Validation error: ${error.response?.data?.detail || 'Invalid domain key format or URL'}`)
+    } else {
+      alert(`❌ Failed to create domain: ${error.response?.data?.detail || error.message}`)
+    }
+  } finally {
+    creatingDomain.value = false
+  }
 }
 
 const autoExpandPreviews = async () => {

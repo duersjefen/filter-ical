@@ -363,3 +363,138 @@ async def delete_domain(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete domain: {str(e)}"
         )
+
+
+class CreateDomainRequest(BaseModel):
+    """Request body for direct domain creation by admin."""
+    domain_key: str
+    name: str
+    calendar_url: str
+    admin_password: Optional[str] = None
+    user_password: Optional[str] = None
+    owner_username: Optional[str] = None
+
+
+@router.post(
+    "/admin/domains",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create domain directly (admin only)",
+    description="Allows admin to create a domain without going through the request/approval process"
+)
+async def create_domain_directly(
+    domain_data: CreateDomainRequest,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_admin_auth)
+):
+    """
+    Create a domain directly without request/approval process.
+
+    Requires admin authentication. Optionally assign to a user as owner.
+    """
+    from app.models.user import User
+    from app.data.domain_auth import encrypt_password
+    from app.core.config import settings
+
+    # Validate domain key format
+    if not re.match(r'^[a-z0-9-]+$', domain_data.domain_key):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Domain key must contain only lowercase letters, numbers, and hyphens"
+        )
+
+    # Validate URL format
+    if not domain_data.calendar_url.startswith(('http://', 'https://')):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Calendar URL must start with http:// or https://"
+        )
+
+    # Check if domain key already exists
+    existing_domain = db.query(Domain).filter(Domain.domain_key == domain_data.domain_key).first()
+    if existing_domain:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Domain key '{domain_data.domain_key}' already exists"
+        )
+
+    # Get owner user if specified
+    owner_id = None
+    owner_username = None
+    if domain_data.owner_username:
+        owner = db.query(User).filter(User.username == domain_data.owner_username).first()
+        if not owner:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User '{domain_data.owner_username}' not found"
+            )
+        owner_id = owner.id
+        owner_username = owner.username
+
+    # Encrypt passwords if provided
+    admin_password_hash = None
+    user_password_hash = None
+    if domain_data.admin_password:
+        admin_password_hash = encrypt_password(domain_data.admin_password, settings.password_encryption_key)
+    if domain_data.user_password:
+        user_password_hash = encrypt_password(domain_data.user_password, settings.password_encryption_key)
+
+    try:
+        # 1. Create domain record
+        domain = Domain(
+            domain_key=domain_data.domain_key,
+            name=domain_data.name,
+            calendar_url=domain_data.calendar_url,
+            owner_id=owner_id,
+            admin_password_hash=admin_password_hash,
+            user_password_hash=user_password_hash,
+            status='active'
+        )
+        db.add(domain)
+        db.flush()  # Get domain.id
+
+        # 2. Create domain calendar
+        calendar = Calendar(
+            name=domain_data.name,
+            source_url=domain_data.calendar_url,
+            type="domain",
+            user_id=None  # Domain calendars have no user owner
+        )
+        db.add(calendar)
+        db.flush()  # Get calendar.id
+
+        # 3. Link domain to calendar
+        domain.calendar_id = calendar.id
+
+        db.commit()
+        db.refresh(domain)
+
+        # 4. Sync calendar events from source URL
+        from app.services.calendar_service import sync_calendar_events
+        try:
+            success, event_count, error = await sync_calendar_events(db, calendar)
+            if success:
+                print(f"✅ Synced {event_count} events for domain '{domain_data.domain_key}'")
+            else:
+                print(f"⚠️ Failed to sync events for domain '{domain_data.domain_key}': {error}")
+        except Exception as e:
+            print(f"⚠️ Exception during calendar sync: {e}")
+
+        return {
+            "success": True,
+            "message": f"Domain '{domain_data.domain_key}' created successfully",
+            "domain_key": domain.domain_key,
+            "name": domain.name,
+            "calendar_url": domain.calendar_url,
+            "domain_id": domain.id,
+            "calendar_id": calendar.id,
+            "owner_username": owner_username,
+            "has_admin_password": admin_password_hash is not None,
+            "has_user_password": user_password_hash is not None
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create domain: {str(e)}"
+        )

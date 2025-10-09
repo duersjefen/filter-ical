@@ -1618,6 +1618,109 @@ paths:
         '404':
           description: Request not found
 
+  /api/admin/domains:
+    post:
+      summary: Create domain directly (admin only)
+      description: Allows admin to create a domain without going through the request/approval process
+      security:
+        - AdminPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domain_key
+                - name
+                - calendar_url
+              properties:
+                domain_key:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                  pattern: '^[a-z0-9-]+$'
+                  example: "company-events"
+                  description: "Unique domain key (lowercase letters, numbers, hyphens only)"
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  example: "Company Events Calendar"
+                  description: "Display name for the domain"
+                calendar_url:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  example: "https://example.com/calendar.ics"
+                  description: "Source iCal URL"
+                admin_password:
+                  type: string
+                  minLength: 4
+                  maxLength: 100
+                  nullable: true
+                  example: "admin123"
+                  description: "Optional admin password for the domain"
+                user_password:
+                  type: string
+                  minLength: 4
+                  maxLength: 100
+                  nullable: true
+                  example: "user123"
+                  description: "Optional user password for the domain"
+                owner_username:
+                  type: string
+                  nullable: true
+                  example: "john_doe"
+                  description: "Optional username to assign as domain owner"
+      responses:
+        '201':
+          description: Domain created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Domain 'company-events' created successfully"
+                  domain_key:
+                    type: string
+                    example: "company-events"
+                  name:
+                    type: string
+                    example: "Company Events Calendar"
+                  calendar_url:
+                    type: string
+                    example: "https://example.com/calendar.ics"
+                  domain_id:
+                    type: integer
+                    example: 42
+                  calendar_id:
+                    type: integer
+                    example: 15
+                  owner_username:
+                    type: string
+                    nullable: true
+                    example: "john_doe"
+                  has_admin_password:
+                    type: boolean
+                    example: true
+                  has_user_password:
+                    type: boolean
+                    example: false
+        '401':
+          description: Unauthorized - invalid admin authentication
+        '404':
+          description: Owner username not found
+        '409':
+          description: Domain key already exists
+        '422':
+          description: Validation error (invalid domain key format or URL)
+
 components:
   securitySchemes:
     AdminPassword:

@@ -153,12 +153,13 @@ def test_client(test_db_engine) -> Generator[TestClient, None, None]:
     app.dependency_overrides[get_db] = override_get_db
     
     # Import and include routers
-    from app.routers import calendars, domains, ical_export, test, domain_requests
+    from app.routers import calendars, domains, ical_export, test, domain_requests, admin
     app.include_router(calendars.router, prefix="/calendars", tags=["calendars"])
     app.include_router(domains.router, prefix="/domains", tags=["domains"])
     app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
     app.include_router(test.router, prefix="/test", tags=["test"])
     app.include_router(domain_requests.router, prefix="/api", tags=["domain_requests"])
+    app.include_router(admin.router, prefix="/api", tags=["admin"])
     
     # Health check endpoint
     @app.get("/health")
@@ -211,6 +212,41 @@ def sample_domain_filter_data():
 def sample_user_filter_data():
     """Sample user filter data for testing."""
     return {
-        "name": "Test User Filter", 
+        "name": "Test User Filter",
         "subscribed_event_ids": [1, 2, 3]
     }
+
+
+@pytest.fixture
+def test_db(test_db_engine):
+    """Provide database session for tests that need direct DB access."""
+    from sqlalchemy.orm import sessionmaker
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+@pytest.fixture
+def test_user(test_db):
+    """Create a test user in the database."""
+    from app.models.user import User
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashed_password",
+        role="user"
+    )
+    test_db.add(user)
+    test_db.commit()
+    test_db.refresh(user)
+    return user
+
+
+@pytest.fixture
+def admin_token():
+    """Generate admin JWT token for testing."""
+    from app.core.auth import create_admin_token
+    return create_admin_token(expiry_days=1)
