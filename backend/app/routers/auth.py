@@ -39,8 +39,8 @@ class MessageResponse(BaseModel):
 )
 @limiter.limit("3/minute")
 async def request_password_reset(
-    http_request: Request,
-    request: PasswordResetRequestBody,
+    request: Request,
+    body: PasswordResetRequestBody,
     db: Session = Depends(get_db)
 ):
     """
@@ -49,7 +49,7 @@ async def request_password_reset(
     Always returns success to prevent email enumeration attacks.
     """
     # Find user by email
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(User).filter(User.email == body.email).first()
 
     if user and user.password_hash:  # Only for users with passwords
         # Generate reset token
@@ -74,13 +74,13 @@ async def request_password_reset(
 )
 @limiter.limit("5/minute")
 async def reset_password(
-    http_request: Request,
-    request: PasswordResetBody,
+    request: Request,
+    body: PasswordResetBody,
     db: Session = Depends(get_db)
 ):
     """Reset password using token."""
     # Find user with this token
-    user = db.query(User).filter(User.reset_token == request.token).first()
+    user = db.query(User).filter(User.reset_token == body.token).first()
 
     if not user:
         raise HTTPException(
@@ -89,19 +89,19 @@ async def reset_password(
         )
 
     # Validate token
-    if not auth_service.is_reset_token_valid(user, request.token):
+    if not auth_service.is_reset_token_valid(user, body.token):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token"
         )
 
     # Validate new password
-    is_valid, error_msg = auth_service.is_valid_password(request.new_password)
+    is_valid, error_msg = auth_service.is_valid_password(body.new_password)
     if not is_valid:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     # Update password and clear reset token
-    user.password_hash = auth_service.hash_password(request.new_password)
+    user.password_hash = auth_service.hash_password(body.new_password)
     user.reset_token = None
     user.reset_token_expires = None
 
