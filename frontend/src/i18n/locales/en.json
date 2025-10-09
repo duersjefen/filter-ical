@@ -704,6 +704,7 @@
       "login": "Login",
       "authenticating": "Authenticating...",
       "invalidPassword": "Invalid admin password",
+      "pendingRequests": "Pending Domain Requests",
       "domainRequests": "Domain Requests",
       "manageRequests": "Review and manage custom domain requests",
       "pending": "Pending",

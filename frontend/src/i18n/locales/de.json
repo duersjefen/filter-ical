@@ -716,6 +716,7 @@
       "login": "Anmelden",
       "authenticating": "Authentifizierung...",
       "invalidPassword": "Ungültiges Admin-Passwort",
+      "pendingRequests": "Ausstehende Domain-Anfragen",
       "domainRequests": "Domain-Anfragen",
       "manageRequests": "Benutzerdefinierte Domain-Anfragen überprüfen und verwalten",
       "pending": "Ausstehend",

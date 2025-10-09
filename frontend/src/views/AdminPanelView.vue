@@ -65,6 +65,79 @@
       </div>
     </div>
 
+    <!-- Rejection Modal (Full-screen overlay) -->
+    <div v-if="showRejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="max-w-2xl w-full mx-4">
+        <div class="bg-gradient-to-br from-white via-white to-red-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-red-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-8">
+          <!-- Icon -->
+          <div class="flex items-center justify-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 rounded-2xl flex items-center justify-center shadow-lg">
+              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Title & Description -->
+          <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-2">
+            Reject Domain Request
+          </h2>
+          <p class="text-center text-gray-600 dark:text-gray-400 mb-6">
+            Provide a reason for rejecting this request. The user will receive an email notification with your explanation.
+          </p>
+
+          <!-- Warning Box -->
+          <div class="bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-4 py-3 rounded-xl mb-6 border border-amber-200 dark:border-amber-700">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p class="font-semibold text-sm mb-1">📧 Email notification will be sent</p>
+                <p class="text-sm">The user will receive your rejection reason via email. Please be clear and constructive in your feedback.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rejection Reason Textarea -->
+          <div class="mb-6">
+            <label for="rejection-reason" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+              Rejection Reason
+            </label>
+            <textarea
+              id="rejection-reason"
+              v-model="rejectionReason"
+              rows="6"
+              class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-red-500 dark:focus:border-red-400 focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/50 resize-none"
+              placeholder="Example: Your calendar URL is not accessible, or it contains events that don't meet our content guidelines..."
+              autofocus
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Be specific and helpful - this helps users understand how to improve their request.
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3">
+            <button
+              @click="cancelRejection"
+              :disabled="submittingRejection"
+              class="flex-1 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg disabled:shadow-sm disabled:transform-none"
+            >
+              Cancel
+            </button>
+            <button
+              @click="submitRejection"
+              :disabled="submittingRejection || !rejectionReason.trim()"
+              class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-red-600 dark:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg disabled:shadow-sm disabled:transform-none"
+            >
+              {{ submittingRejection ? 'Sending...' : 'Confirm Rejection' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Admin Panel Content -->
     <div v-else>
       <AppHeader
@@ -91,98 +164,112 @@
           <p class="text-gray-600 dark:text-gray-400">No domains found</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-          <!-- Domain Card - Completely Redesigned -->
-          <div v-for="domain in domains" :key="domain.domain_key" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all overflow-hidden">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <!-- Domain Card - Better Spacing & Readability -->
+          <div v-for="domain in domains" :key="domain.domain_key" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm hover:shadow-md">
 
-            <!-- Compact Single-Line Header -->
-            <div class="px-3 py-2 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-200 dark:border-gray-700">
-              <div class="flex items-center gap-2 min-w-0">
-                <h3 class="font-bold text-gray-900 dark:text-gray-100 truncate">{{ domain.domain_key }}</h3>
-              </div>
-              <div class="flex items-center gap-1 flex-shrink-0">
-                <a :href="`/${domain.domain_key}`" target="_blank" class="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" title="View Calendar">
-                  <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Header with Domain Name & Actions -->
+            <div class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ domain.domain_key }}</h3>
+              <div class="flex items-center gap-2">
+                <a :href="`/${domain.domain_key}`" target="_blank" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors" title="View Calendar">
+                  <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                   </svg>
                 </a>
-                <a :href="`/${domain.domain_key}/admin`" target="_blank" class="p-1.5 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded transition-colors" title="Manage">
-                  <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a :href="`/${domain.domain_key}/admin`" target="_blank" class="p-2 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-800/50 rounded-lg transition-colors" title="Manage Domain">
+                  <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   </svg>
                 </a>
-                <button @click="deleteDomain(domain.domain_key)" :disabled="processing" class="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors disabled:opacity-50" title="Delete">
-                  <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="deleteDomain(domain.domain_key)" :disabled="processing" class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-800/50 rounded-lg transition-colors disabled:opacity-50" title="Delete Domain">
+                  <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                   </svg>
                 </button>
               </div>
             </div>
 
-            <!-- Passwords: Side by Side, Compact -->
-            <div class="p-2.5 grid grid-cols-2 gap-2">
+            <!-- Password Management: Side by Side -->
+            <div class="p-4 grid grid-cols-2 gap-4">
 
               <!-- Admin Password -->
-              <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-2">
-                <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">🔐 Admin</span>
-                  <span v-if="domain.admin_password_set" class="text-xs text-green-600 dark:text-green-400">●</span>
-                  <span v-else class="text-xs text-gray-400">○</span>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-gray-700 dark:text-gray-300">🔐 Admin</span>
+                  <span v-if="domain.admin_password_set" class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded">Protected</span>
+                  <span v-else class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded">None</span>
                 </div>
 
                 <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'">
-                  <div v-if="viewingPassword === `${domain.domain_key}-admin` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded mb-1.5 border border-green-200 dark:border-green-700">
-                    <code class="text-xs font-mono text-green-900 dark:text-green-100 select-all break-all">{{ viewedPassword }}</code>
+                  <div v-if="viewingPassword === `${domain.domain_key}-admin` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg mb-2 border border-green-200 dark:border-green-700">
+                    <code class="text-sm font-mono text-green-900 dark:text-green-100 select-all break-all">{{ viewedPassword }}</code>
                   </div>
 
-                  <div class="flex gap-0.5">
-                    <button v-if="domain.admin_password_set" @click="viewPassword(domain.domain_key, 'admin')" class="flex-1 px-1.5 py-1 text-xs rounded" :class="viewingPassword === `${domain.domain_key}-admin` ? 'bg-gray-600 text-white' : 'bg-green-600 text-white hover:bg-green-700'" title="View">👁️</button>
-                    <button @click="startEditing(domain.domain_key, 'admin')" class="flex-1 px-1.5 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" :title="domain.admin_password_set ? 'Change' : 'Set'">{{ domain.admin_password_set ? '✏️' : '➕' }}</button>
-                    <button v-if="domain.admin_password_set" @click="removePassword(domain.domain_key, 'admin')" class="px-1.5 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded" title="Remove">🗑️</button>
+                  <div class="flex flex-col gap-1.5">
+                    <button v-if="domain.admin_password_set" @click="viewPassword(domain.domain_key, 'admin')" class="px-3 py-2 text-sm font-medium rounded-lg transition-all" :class="viewingPassword === `${domain.domain_key}-admin` ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'">
+                      {{ viewingPassword === `${domain.domain_key}-admin` ? '🙈 Hide' : '👁️ View' }}
+                    </button>
+                    <button @click="startEditing(domain.domain_key, 'admin')" class="px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
+                      {{ domain.admin_password_set ? '✏️ Change' : '➕ Set Password' }}
+                    </button>
+                    <button v-if="domain.admin_password_set" @click="removePassword(domain.domain_key, 'admin')" class="px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
+                      🗑️ Remove
+                    </button>
                   </div>
                 </div>
 
-                <div v-else class="space-y-1">
-                  <div class="flex gap-0.5">
-                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Password" class="flex-1 px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 min-w-0" />
-                    <button @click="showPassword = !showPassword" class="px-1.5 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded" :title="showPassword ? 'Hide' : 'Show'">{{ showPassword ? '🙈' : '👁️' }}</button>
+                <div v-else class="space-y-2">
+                  <div class="flex gap-1.5">
+                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Enter password" class="flex-1 px-3 py-2 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800" />
+                    <button @click="showPassword = !showPassword" class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-all" :title="showPassword ? 'Hide' : 'Show'">
+                      {{ showPassword ? '🙈' : '👁️' }}
+                    </button>
                   </div>
-                  <div class="flex gap-0.5">
-                    <button @click="savePassword(domain.domain_key, 'admin')" class="flex-1 px-1.5 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded">💾</button>
-                    <button @click="cancelEditing" class="flex-1 px-1.5 py-1 text-xs bg-gray-500 hover:bg-gray-600 text-white rounded">✖</button>
+                  <div class="flex gap-1.5">
+                    <button @click="savePassword(domain.domain_key, 'admin')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">💾 Save</button>
+                    <button @click="cancelEditing" class="flex-1 px-3 py-2 text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">Cancel</button>
                   </div>
                 </div>
               </div>
 
               <!-- User Password -->
-              <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-2">
-                <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">👤 User</span>
-                  <span v-if="domain.user_password_set" class="text-xs text-blue-600 dark:text-blue-400">●</span>
-                  <span v-else class="text-xs text-gray-400">○</span>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-gray-700 dark:text-gray-300">👤 User</span>
+                  <span v-if="domain.user_password_set" class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-medium rounded">Protected</span>
+                  <span v-else class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded">None</span>
                 </div>
 
                 <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'">
-                  <div v-if="viewingPassword === `${domain.domain_key}-user` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded mb-1.5 border border-green-200 dark:border-green-700">
-                    <code class="text-xs font-mono text-green-900 dark:text-green-100 select-all break-all">{{ viewedPassword }}</code>
+                  <div v-if="viewingPassword === `${domain.domain_key}-user` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg mb-2 border border-green-200 dark:border-green-700">
+                    <code class="text-sm font-mono text-green-900 dark:text-green-100 select-all break-all">{{ viewedPassword }}</code>
                   </div>
 
-                  <div class="flex gap-0.5">
-                    <button v-if="domain.user_password_set" @click="viewPassword(domain.domain_key, 'user')" class="flex-1 px-1.5 py-1 text-xs rounded" :class="viewingPassword === `${domain.domain_key}-user` ? 'bg-gray-600 text-white' : 'bg-green-600 text-white hover:bg-green-700'" title="View">👁️</button>
-                    <button @click="startEditing(domain.domain_key, 'user')" class="flex-1 px-1.5 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" :title="domain.user_password_set ? 'Change' : 'Set'">{{ domain.user_password_set ? '✏️' : '➕' }}</button>
-                    <button v-if="domain.user_password_set" @click="removePassword(domain.domain_key, 'user')" class="px-1.5 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded" title="Remove">🗑️</button>
+                  <div class="flex flex-col gap-1.5">
+                    <button v-if="domain.user_password_set" @click="viewPassword(domain.domain_key, 'user')" class="px-3 py-2 text-sm font-medium rounded-lg transition-all" :class="viewingPassword === `${domain.domain_key}-user` ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'">
+                      {{ viewingPassword === `${domain.domain_key}-user` ? '🙈 Hide' : '👁️ View' }}
+                    </button>
+                    <button @click="startEditing(domain.domain_key, 'user')" class="px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
+                      {{ domain.user_password_set ? '✏️ Change' : '➕ Set Password' }}
+                    </button>
+                    <button v-if="domain.user_password_set" @click="removePassword(domain.domain_key, 'user')" class="px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
+                      🗑️ Remove
+                    </button>
                   </div>
                 </div>
 
-                <div v-else class="space-y-1">
-                  <div class="flex gap-0.5">
-                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Password" class="flex-1 px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 min-w-0" />
-                    <button @click="showPassword = !showPassword" class="px-1.5 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded" :title="showPassword ? 'Hide' : 'Show'">{{ showPassword ? '🙈' : '👁️' }}</button>
+                <div v-else class="space-y-2">
+                  <div class="flex gap-1.5">
+                    <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" placeholder="Enter password" class="flex-1 px-3 py-2 text-sm border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800" />
+                    <button @click="showPassword = !showPassword" class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-all" :title="showPassword ? 'Hide' : 'Show'">
+                      {{ showPassword ? '🙈' : '👁️' }}
+                    </button>
                   </div>
-                  <div class="flex gap-0.5">
-                    <button @click="savePassword(domain.domain_key, 'user')" class="flex-1 px-1.5 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded">💾</button>
-                    <button @click="cancelEditing" class="flex-1 px-1.5 py-1 text-xs bg-gray-500 hover:bg-gray-600 text-white rounded">✖</button>
+                  <div class="flex gap-1.5">
+                    <button @click="savePassword(domain.domain_key, 'user')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">💾 Save</button>
+                    <button @click="cancelEditing" class="flex-1 px-3 py-2 text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">Cancel</button>
                   </div>
                 </div>
               </div>
@@ -319,70 +406,76 @@
         </div>
       </div>
 
-      <!-- App Settings - Compact & Inline -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="font-bold text-gray-900 dark:text-gray-100">⚙️ App Settings</h2>
+      <!-- App Settings - Clean & Spacious -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-5 py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">⚙️ App Settings</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Configure global application behavior</p>
         </div>
 
-        <div class="p-4 space-y-4">
-          <!-- Footer Visibility - Button Group -->
-          <div>
-            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">👣 Footer Visibility</label>
-            <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
-              <button
-                @click="appSettings.footer_visibility = 'everywhere'"
-                class="px-4 py-2 text-sm font-medium transition-colors border-r border-gray-300 dark:border-gray-600"
-                :class="appSettings.footer_visibility === 'everywhere'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
-              >
-                🌍 Everywhere
-              </button>
-              <button
-                @click="appSettings.footer_visibility = 'admin_only'"
-                class="px-4 py-2 text-sm font-medium transition-colors border-r border-gray-300 dark:border-gray-600"
-                :class="appSettings.footer_visibility === 'admin_only'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
-              >
-                🔐 Admin Only
-              </button>
-              <button
-                @click="appSettings.footer_visibility = 'nowhere'"
-                class="px-4 py-2 text-sm font-medium transition-colors"
-                :class="appSettings.footer_visibility === 'nowhere'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
-              >
-                🚫 Hidden
-              </button>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Control where the PayPal donation footer appears</p>
-          </div>
+        <div class="p-5">
+          <!-- Settings Grid: Side by Side -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
-          <!-- Domain Request Toggle -->
-          <div>
-            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">➕ Domain Request Card</label>
-            <div class="flex items-center gap-3">
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="appSettings.show_domain_request" class="sr-only peer" />
-                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 transition-colors"></div>
-                <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
-              </label>
-              <span class="text-sm font-medium" :class="appSettings.show_domain_request ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'">
-                {{ appSettings.show_domain_request ? '✓ Enabled' : '✗ Disabled' }}
-              </span>
+            <!-- Footer Visibility -->
+            <div>
+              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">👣 Footer Visibility</label>
+              <div class="inline-flex rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden shadow-sm">
+                <button
+                  @click="appSettings.footer_visibility = 'everywhere'"
+                  class="px-4 py-2.5 text-sm font-medium transition-all border-r-2 border-gray-300 dark:border-gray-600"
+                  :class="appSettings.footer_visibility === 'everywhere'
+                    ? 'bg-purple-600 text-white shadow-inner'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                >
+                  🌍 Everywhere
+                </button>
+                <button
+                  @click="appSettings.footer_visibility = 'admin_only'"
+                  class="px-4 py-2.5 text-sm font-medium transition-all border-r-2 border-gray-300 dark:border-gray-600"
+                  :class="appSettings.footer_visibility === 'admin_only'
+                    ? 'bg-purple-600 text-white shadow-inner'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                >
+                  🔐 Admin
+                </button>
+                <button
+                  @click="appSettings.footer_visibility = 'nowhere'"
+                  class="px-4 py-2.5 text-sm font-medium transition-all"
+                  :class="appSettings.footer_visibility === 'nowhere'
+                    ? 'bg-purple-600 text-white shadow-inner'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                >
+                  🚫 Hidden
+                </button>
+              </div>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Control where the PayPal donation footer appears</p>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Allow users to request their own custom domains</p>
+
+            <!-- Domain Request Card -->
+            <div>
+              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">➕ Domain Request Card</label>
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" v-model="appSettings.show_domain_request" class="sr-only peer" />
+                  <div class="w-14 h-7 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 transition-all shadow-inner"></div>
+                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-md"></div>
+                </label>
+                <span class="text-sm font-semibold" :class="appSettings.show_domain_request ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'">
+                  {{ appSettings.show_domain_request ? '✓ Enabled' : '✗ Disabled' }}
+                </span>
+              </div>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Allow users to request their own custom domains</p>
+            </div>
+
           </div>
 
           <!-- Save Button -->
-          <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div class="pt-4 border-t-2 border-gray-100 dark:border-gray-700">
             <button
               @click="saveAppSettings"
               :disabled="settingsSaving"
-              class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded font-medium transition-all disabled:cursor-not-allowed"
+              class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed shadow-md hover:shadow-lg disabled:shadow-none"
             >
               {{ settingsSaving ? '💾 Saving...' : '💾 Save Settings' }}
             </button>
@@ -438,6 +531,12 @@ const settingsSaving = ref(false)
 
 // iCal preview state
 const icalPreviews = ref({})  // { [requestId]: { expanded: boolean, loading: boolean, data: {...} } }
+
+// Rejection modal state
+const showRejectModal = ref(false)
+const rejectingRequestId = ref(null)
+const rejectionReason = ref('')
+const submittingRejection = ref(false)
 
 // Computed stats
 // Only show pending requests (approved ones become domains, rejected ones are hidden)
@@ -618,25 +717,41 @@ const approveRequest = async (requestId) => {
   }
 }
 
-const rejectRequest = async (requestId) => {
-  const reason = prompt(t('admin.panel.rejectionReason'))
-  if (!reason) return
+const rejectRequest = (requestId) => {
+  // Open rejection modal
+  rejectingRequestId.value = requestId
+  rejectionReason.value = ''
+  showRejectModal.value = true
+}
 
-  processing.value = true
+const cancelRejection = () => {
+  showRejectModal.value = false
+  rejectingRequestId.value = null
+  rejectionReason.value = ''
+}
+
+const submitRejection = async () => {
+  if (!rejectionReason.value.trim()) {
+    notify.error('Please provide a rejection reason')
+    return
+  }
+
+  submittingRejection.value = true
   try {
     await axios.patch(
-      `${API_BASE_URL}/api/admin/domain-requests/${requestId}/reject`,
-      { reason },
+      `${API_BASE_URL}/api/admin/domain-requests/${rejectingRequestId.value}/reject`,
+      { reason: rejectionReason.value.trim() },
       {
         headers: getAuthHeaders()
       }
     )
     await loadRequests()
     notify.success(t('admin.panel.rejectionSuccess') || 'Request rejected successfully')
+    cancelRejection()
   } catch (error) {
     notify.error(t('admin.panel.rejectionFailed'))
   } finally {
-    processing.value = false
+    submittingRejection.value = false
   }
 }
 
