@@ -424,18 +424,10 @@ async def create_domain_directly(
             detail=f"Domain key '{domain_data.domain_key}' already exists"
         )
 
-    # Get owner user if specified
+    # Owner assignment removed from creation - domains are created without owner
+    # Owner can be assigned later via separate endpoint
     owner_id = None
     owner_username = None
-    if domain_data.owner_username:
-        owner = db.query(User).filter(User.username == domain_data.owner_username).first()
-        if not owner:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User '{domain_data.owner_username}' not found"
-            )
-        owner_id = owner.id
-        owner_username = owner.username
 
     # Encrypt passwords
     admin_password_hash = encrypt_password(domain_data.admin_password, settings.password_encryption_key)
@@ -502,4 +494,107 @@ async def create_domain_directly(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create domain: {str(e)}"
+        )
+
+
+@router.get(
+    "/admin/users/search",
+    summary="Search users (admin only)",
+    description="Search for users by username or email"
+)
+async def search_users(
+    q: str = Query(..., min_length=1, description="Search query"),
+    limit: int = Query(10, le=50, description="Maximum number of results"),
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_admin_auth)
+):
+    """
+    Search for users by username or email.
+
+    Returns matching users for assignment operations.
+    """
+    from app.models.user import User
+
+    # Search by username or email (case-insensitive)
+    users = db.query(User).filter(
+        (User.username.ilike(f"%{q}%")) |
+        (User.email.ilike(f"%{q}%"))
+    ).limit(limit).all()
+
+    return {
+        "users": [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role
+            }
+            for user in users
+        ]
+    }
+
+
+class AssignOwnerRequest(BaseModel):
+    """Request body for assigning domain owner."""
+    user_id: Optional[int] = None  # None to remove owner
+
+
+@router.patch(
+    "/admin/domains/{domain_key}/owner",
+    summary="Assign domain owner (admin only)",
+    description="Assign or remove domain owner"
+)
+async def assign_domain_owner(
+    domain_key: str,
+    request: AssignOwnerRequest,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_admin_auth)
+):
+    """
+    Assign or remove domain owner.
+
+    Set user_id to null to remove owner.
+    """
+    from app.models.user import User
+
+    # Get domain
+    domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+    if not domain:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Domain '{domain_key}' not found"
+        )
+
+    # If user_id provided, verify user exists
+    owner_username = None
+    if request.user_id:
+        user = db.query(User).filter(User.id == request.user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with ID {request.user_id} not found"
+            )
+        domain.owner_id = user.id
+        owner_username = user.username
+    else:
+        # Remove owner
+        domain.owner_id = None
+
+    try:
+        db.commit()
+        db.refresh(domain)
+
+        return {
+            "success": True,
+            "message": f"Owner {'assigned' if request.user_id else 'removed'} successfully",
+            "domain_key": domain_key,
+            "owner_id": domain.owner_id,
+            "owner_username": owner_username
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to assign owner: {str(e)}"
         )
