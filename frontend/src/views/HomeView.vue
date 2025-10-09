@@ -100,7 +100,7 @@
       </div>
 
       <!-- Login Required Message for Anonymous Users -->
-      <div v-if="!hasCustomUsername()" class="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-5 mb-6 shadow-xl backdrop-blur-sm">
+      <div v-if="!isLoggedIn" class="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-5 mb-6 shadow-xl backdrop-blur-sm">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 dark:from-amber-600 dark:to-orange-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
             <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -113,7 +113,7 @@
         </div>
       </div>
 
-      <form @submit.prevent="handleAddCalendar" class="flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-4 sm:gap-6 lg:items-end" :class="{ 'opacity-50 pointer-events-none': !hasCustomUsername() }">
+      <form @submit.prevent="handleAddCalendar" class="flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-4 sm:gap-6 lg:items-end" :class="{ 'opacity-50 pointer-events-none': !isLoggedIn }">
         <div class="mb-0">
           <label for="calendar-name" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">{{ $t('home.calendarName') }}</label>
           <input
@@ -122,7 +122,7 @@
             type="text"
             class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
             :placeholder="$t('home.calendarNamePlaceholder')"
-            :disabled="!hasCustomUsername()"
+            :disabled="!isLoggedIn"
             required
           />
         </div>
@@ -135,12 +135,12 @@
             type="url"
             class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
             :placeholder="$t('home.icalUrlPlaceholder')"
-            :disabled="!hasCustomUsername()"
+            :disabled="!isLoggedIn"
             required
           />
         </div>
 
-        <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 sm:px-8 py-3.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg hover:shadow-xl disabled:shadow-sm disabled:transform-none w-full lg:w-auto mt-4 lg:mt-0" :disabled="appStore.loading || !hasCustomUsername()">
+        <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 sm:px-8 py-3.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg hover:shadow-xl disabled:shadow-sm disabled:transform-none w-full lg:w-auto mt-4 lg:mt-0" :disabled="appStore.loading || !isLoggedIn">
           {{ appStore.loading ? $t('home.adding') : $t('home.addCalendar') }}
         </button>
       </form>
@@ -159,7 +159,7 @@
         </div>
         
         <!-- Read-only Mode Indicator -->
-        <div v-if="!hasCustomUsername()" class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm">
+        <div v-if="!isLoggedIn" class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm">
           <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
             <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
@@ -231,7 +231,7 @@
                   🔄 Sync Events
                 </button>
                 <button
-                  v-if="calendar.type === 'user' && hasCustomUsername()"
+                  v-if="calendar.type === 'user' && isLoggedIn"
                   @click="deleteCalendar(calendar.id)"
                   class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-red-600 dark:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-4 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg disabled:shadow-sm disabled:transform-none"
                   :disabled="appStore.loading"
@@ -298,7 +298,7 @@
                       🔄 Sync
                     </button>
                     <button
-                      v-if="calendar.user_id !== 'default' && !String(calendar.id).startsWith('cal_domain_') && hasCustomUsername()"
+                      v-if="calendar.user_id !== 'default' && !String(calendar.id).startsWith('cal_domain_') && isLoggedIn"
                       @click="deleteCalendar(calendar.id)"
                       class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-red-600 dark:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-md hover:shadow-lg disabled:shadow-sm disabled:transform-none whitespace-nowrap"
                       :disabled="appStore.loading"
@@ -340,16 +340,16 @@ import AppHeader from '../components/shared/AppHeader.vue'
 import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import DomainRequestCard from '../components/home/DomainRequestCard.vue'
 import { useDarkMode } from '../composables/useDarkMode'
-import { useUsername } from '../composables/useUsername'
+import { useAuth } from '../composables/useAuth'
 import { useNotification } from '../composables/useNotification'
 
 const appStore = useAppStore()
 const router = useRouter()
 const notify = useNotification()
 
-// Initialize dark mode and username
+// Initialize dark mode and authentication
 const { isDarkMode, toggleDarkMode } = useDarkMode()
-const { hasCustomUsername } = useUsername()
+const { isLoggedIn } = useAuth()
 
 // Confirmation dialog refs
 const confirmDialog = ref(null)

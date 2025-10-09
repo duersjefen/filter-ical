@@ -50,7 +50,7 @@
     >
       <div class="p-3 sm:p-4">
       <!-- Create/Update Form - Auto-show when events selected or groups subscribed, or for anonymous users to show login warning -->
-      <div v-if="selectedRecurringEvents.length > 0 || (subscribedGroups && subscribedGroups.size > 0) || isUpdateMode || !hasCustomUsername()" class="mb-6 p-4 rounded-lg border" 
+      <div v-if="selectedRecurringEvents.length > 0 || (subscribedGroups && subscribedGroups.size > 0) || isUpdateMode || !isLoggedIn" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
              : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
@@ -82,7 +82,7 @@
         </h4>
         
         <!-- Login Required Message for Anonymous Users -->
-        <div v-if="!hasCustomUsername()" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4">
+        <div v-if="!isLoggedIn" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4">
           <div class="flex items-center gap-2">
             <div class="text-amber-600 dark:text-amber-400">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -95,7 +95,7 @@
           </div>
         </div>
         
-        <form @submit.prevent="createFilteredCalendar" class="space-y-4" :class="{ 'opacity-50 pointer-events-none': !hasCustomUsername() }">
+        <form @submit.prevent="createFilteredCalendar" class="space-y-4" :class="{ 'opacity-50 pointer-events-none': !isLoggedIn }">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('filteredCalendar.name') }}
@@ -246,7 +246,7 @@
           <div class="flex gap-3">
             <button
               type="submit"
-              :disabled="!createForm.name.trim() || creating || !hasCustomUsername()"
+              :disabled="!createForm.name.trim() || creating || !isLoggedIn"
               class="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] min-h-[44px] border-2 flex items-center justify-center gap-2"
               :class="isUpdateMode 
                 ? 'bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white border-amber-400 hover:border-amber-500 disabled:border-gray-300' 
@@ -484,6 +484,7 @@ import { useI18n } from 'vue-i18n'
 import { formatDateTime as formatDateTimeUtil, formatDateRange as formatDateRangeUtil } from '@/utils/dateFormatting'
 import { useFilteredCalendarAPI } from '@/composables/useFilteredCalendarAPI'
 import { useUsername } from '@/composables/useUsername'
+import { useAuth } from '@/composables/useAuth'
 import { useNotification } from '@/composables/useNotification'
 import { API_ENDPOINTS } from '@/constants/api'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
@@ -530,7 +531,8 @@ const emit = defineEmits(['navigate-to-calendar', 'load-filter'])
 
 // Composables
 const { t, locale } = useI18n()
-const { hasCustomUsername, getUserId } = useUsername()
+const { getUserId } = useUsername() // Still used for generating filter names
+const { isLoggedIn } = useAuth()
 const notify = useNotification()
 const {
   filteredCalendars,
