@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
+import httpx
 
 from ..core.database import get_db
 from ..core.config import settings
 from ..models.domain_request import DomainRequest, RequestStatus
 from ..services.email_service import send_domain_request_notification
 from ..data.domain_auth import encrypt_password
+from ..data.ical_parser import parse_ical_content
 
 router = APIRouter()
 
