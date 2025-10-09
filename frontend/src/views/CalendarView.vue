@@ -39,7 +39,7 @@
       <!-- Show Groups Interface Based on User Choice -->
       <EventGroupsSection
         v-if="shouldShowGroups"
-        :has-groups="appStore.hasGroups"
+        :has-groups="appStore.hasCustomGroups"
         :groups="appStore.groups"
         :domain-id="props.domainContext?.id || 'default'"
         :show-groups-section="showGroupsSection"
@@ -226,7 +226,6 @@ import {
 } from '../components/calendar'
 import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
 import AdminSetupCard from '../components/calendar/AdminSetupCard.vue'
-import { hasCustomGroups as checkHasCustomGroups } from '../utils/groups'
 
 // Lazy load heavy components for better initial page load
 const PreviewEventsSection = defineAsyncComponent(() =>
@@ -331,12 +330,12 @@ viewMode.value = loadViewModePreference()
 const shouldShowGroups = computed(() => {
   // If user explicitly chose types, show types
   if (viewMode.value === 'types') return false
-  
-  // If user chose groups but no groups available, fallback to types
-  if (viewMode.value === 'groups' && !appStore.hasGroups) return false
-  
-  // Show groups if available and user chose groups
-  return appStore.hasGroups
+
+  // If user chose groups but no CUSTOM groups available, fallback to types
+  if (viewMode.value === 'groups' && !appStore.hasCustomGroups) return false
+
+  // Show groups if CUSTOM groups available and user chose groups
+  return appStore.hasCustomGroups
 })
 
 const shouldShowTypes = computed(() => {
@@ -344,8 +343,9 @@ const shouldShowTypes = computed(() => {
 })
 
 // Check if there are custom (non-auto) groups
+// (use store's computed property instead of calling utility directly)
 const hasRealCustomGroups = computed(() => {
-  return checkHasCustomGroups(appStore.groups)
+  return appStore.hasCustomGroups
 })
 
 

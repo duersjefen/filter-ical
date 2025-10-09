@@ -8,7 +8,7 @@ import { ref, computed } from 'vue'
 import { useHTTP } from '../composables/useHTTP'
 import { useUsername } from '../composables/useUsername'
 import { API_ENDPOINTS } from '../constants/api'
-import { hasCustomGroups } from '../utils/groups'
+import { hasCustomGroups as checkHasCustomGroups } from '../utils/groups'
 
 export const useAppStore = defineStore('app', () => {
   // ===============================================
@@ -301,9 +301,21 @@ export const useAppStore = defineStore('app', () => {
   // ===============================================
   // GROUPS SECTION
   // ===============================================
-  
+
   const groups = ref({})
-  const hasGroups = ref(false)
+
+  // Check if ANY groups exist (including auto-groups)
+  // Used for subscription features, filtered calendars, etc.
+  const hasGroups = computed(() => {
+    return groups.value && Object.keys(groups.value).length > 0
+  })
+
+  // Check if CUSTOM (non-auto) groups exist
+  // Used to decide between Groups view vs Events view
+  // Auto-groups have IDs >= 9998
+  const hasCustomGroups = computed(() => {
+    return checkHasCustomGroups(groups.value)
+  })
 
   // ===============================================
   // EVENTS EXTRACTION FROM GROUPS - REACTIVE
@@ -435,8 +447,7 @@ export const useAppStore = defineStore('app', () => {
 
     if (result.success) {
       // User calendars don't have groups in the new API, they have flat event structure
-      hasGroups.value = false
-      groups.value = {}
+      groups.value = {} // hasGroups computed will automatically be false
 
       // Process events from the new API response format
       if (result.data.events && result.data.events.length > 0) {
@@ -504,11 +515,7 @@ export const useAppStore = defineStore('app', () => {
         })
       }
 
-      // Only set hasGroups to true if there are custom (non-auto) groups
-      // Auto-created groups have IDs >= 9998
-      hasGroups.value = hasCustomGroups(groups.value)
-
-
+      // hasGroups and hasCustomGroups are computed properties that automatically update
     }
 
     return result
@@ -758,7 +765,8 @@ export const useAppStore = defineStore('app', () => {
     // GROUPS
     // ===============================================
     groups,
-    hasGroups,
+    hasGroups, // True if ANY groups exist (including auto-groups)
+    hasCustomGroups, // True only if CUSTOM (non-auto) groups exist
     loadCalendarGroups,
     loadDomainGroups,
 
