@@ -354,6 +354,62 @@
               </div>
             </div>
 
+            <!-- Preview Button -->
+            <button
+              v-if="newDomain.calendar_url"
+              @click="previewNewDomainCalendar"
+              :disabled="newDomainPreview.loading"
+              class="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg disabled:shadow-none flex items-center justify-center gap-2 mb-3"
+            >
+              <svg v-if="!newDomainPreview.loading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ newDomainPreview.loading ? 'Loading Preview...' : 'Preview Calendar' }}
+            </button>
+
+            <!-- Preview Display -->
+            <div v-if="newDomainPreview.data" class="mb-4">
+              <!-- Error State -->
+              <div v-if="newDomainPreview.data.error" class="bg-red-50 dark:bg-red-900/30 rounded-lg p-4 border-2 border-red-200 dark:border-red-700">
+                <div class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <div>
+                    <p class="font-semibold text-red-800 dark:text-red-200 mb-1">❌ Calendar Error</p>
+                    <p class="text-sm text-red-700 dark:text-red-300">{{ newDomainPreview.data.error }}</p>
+                    <p class="text-xs text-red-600 dark:text-red-400 mt-2">This URL cannot be used to create a domain.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Success State -->
+              <div v-else class="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+                <div class="flex items-start gap-3 mb-3">
+                  <svg class="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <div class="flex-1">
+                    <p class="font-semibold text-green-800 dark:text-green-200 mb-1">✅ Valid Calendar</p>
+                    <p class="text-sm text-green-700 dark:text-green-300">Found {{ newDomainPreview.data.event_count }} event{{ newDomainPreview.data.event_count !== 1 ? 's' : '' }}</p>
+                  </div>
+                </div>
+
+                <!-- Event Preview -->
+                <div class="space-y-2">
+                  <p class="text-xs font-semibold text-green-700 dark:text-green-300 mb-2">📅 Preview (first {{ Math.min(5, newDomainPreview.data.events.length) }} events):</p>
+                  <div v-for="(event, index) in newDomainPreview.data.events.slice(0, 5)" :key="index" class="bg-white dark:bg-gray-800 rounded p-2 text-xs">
+                    <p class="font-semibold text-gray-900 dark:text-gray-100">{{ event.title }}</p>
+                    <p class="text-gray-600 dark:text-gray-400" v-if="event.start_time">{{ event.start_time }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Create Button -->
             <button
               @click="createDomain"
@@ -909,6 +965,12 @@ const newDomain = ref({
 const showNewDomainAdminPassword = ref(false)
 const showNewDomainUserPassword = ref(false)
 
+// Preview state for new domain creation
+const newDomainPreview = ref({
+  loading: false,
+  data: null
+})
+
 // Owner assignment state
 const assigningOwner = ref(null)  // domain_key being edited
 const ownerSearchQuery = ref('')
@@ -1302,6 +1364,27 @@ const autoFillDisplayName = () => {
   }
 }
 
+const previewNewDomainCalendar = async () => {
+  newDomainPreview.value.loading = true
+  newDomainPreview.value.data = null
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/ical/preview`, {
+      calendar_url: newDomain.value.calendar_url
+    })
+    newDomainPreview.value.data = response.data
+  } catch (error) {
+    console.error('Failed to preview calendar:', error)
+    newDomainPreview.value.data = {
+      event_count: 0,
+      events: [],
+      error: error.response?.data?.detail || error.message || 'Failed to load preview'
+    }
+  } finally {
+    newDomainPreview.value.loading = false
+  }
+}
+
 const createDomain = async () => {
   creatingDomain.value = true
 
@@ -1338,13 +1421,17 @@ const createDomain = async () => {
     // Success - reset form and reload domains
     notify.success(t('admin.domains.createSuccess', { domainKey: response.data.domain_key }))
 
-    // Reset form
+    // Reset form and preview
     newDomain.value = {
       domain_key: '',
       name: '',
       calendar_url: '',
       admin_password: '',
       user_password: ''
+    }
+    newDomainPreview.value = {
+      loading: false,
+      data: null
     }
 
     // Reload domains list
