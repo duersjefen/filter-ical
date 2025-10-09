@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 import re
+import httpx
 
 from ..core.database import get_db
 from ..core.auth import verify_admin_password, create_admin_token, verify_admin_auth
@@ -18,6 +19,7 @@ from ..models.domain_request import DomainRequest, RequestStatus
 from ..models.calendar import Calendar
 from ..models.domain import Domain
 from ..routers.domain_requests import DomainRequestResponse
+from ..data.ical_parser import parse_ical_content
 import secrets
 
 router = APIRouter()
@@ -407,6 +409,52 @@ async def create_domain_directly(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Calendar URL must start with http:// or https://"
+        )
+
+    # Validate iCal URL by fetching and parsing it
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(domain_data.calendar_url)
+            response.raise_for_status()
+            ical_content = response.text
+
+        # Parse iCal content to verify it's valid
+        success, events, error = parse_ical_content(ical_content)
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid iCal URL: {error}"
+            )
+
+        if not events:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Calendar URL is valid but contains no events"
+            )
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Failed to fetch calendar: HTTP {e.response.status_code}"
+        )
+    except httpx.TimeoutException:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Calendar URL timed out - URL took too long to respond"
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Failed to fetch calendar: {str(e)}"
+        )
+    except HTTPException:
+        # Re-raise our own HTTPExceptions
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Failed to validate calendar URL: {str(e)}"
         )
 
     # Validate admin password length
