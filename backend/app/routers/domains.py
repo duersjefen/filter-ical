@@ -431,15 +431,15 @@ async def create_domain_filter(
 @router.get("/{domain}/filters")
 async def get_domain_filters(
     domain: str,
-    username: Optional[str] = Query(None),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
     """List filters for domain calendar."""
     try:
         # Verify domain exists in database
         verify_domain_exists(db, domain)
-        # Get filters
-        filters = get_filters(db, domain_key=domain, username=username)
+        # Get filters for authenticated user
+        filters = get_filters(db, domain_key=domain, user_id=user_id)
         
         # Transform to OpenAPI schema format
         filters_response = []
