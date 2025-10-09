@@ -184,6 +184,7 @@ async def approve_domain_request(
             domain_key=domain_key,
             name=f"{domain_request.username}'s Calendar",
             calendar_url=domain_request.calendar_url,
+            owner_id=domain_request.user_id,  # Assign requesting user as owner
             admin_password_hash=domain_request.default_password,  # Already encrypted
             user_password_hash=None,
             status='active'

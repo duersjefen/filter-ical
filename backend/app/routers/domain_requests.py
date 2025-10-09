@@ -13,8 +13,10 @@ import httpx
 
 from ..core.database import get_db
 from ..core.config import settings
+from ..core.auth import require_user_auth
 from ..models.domain_request import DomainRequest, RequestStatus
 from ..models.domain import Domain
+from ..models.user import User
 from ..services.email_service import send_domain_request_notification
 from ..data.domain_auth import encrypt_password
 from ..data.ical_parser import parse_ical_content
@@ -25,20 +27,10 @@ router = APIRouter()
 # Pydantic models matching OpenAPI schema
 class DomainRequestCreate(BaseModel):
     """Schema for creating a domain request - matches OpenAPI spec."""
-    username: str = Field(..., min_length=3, max_length=50)
-    email: str = Field(..., min_length=5, max_length=255)
     requested_domain_key: str = Field(..., min_length=3, max_length=100)
     calendar_url: str = Field(..., min_length=10, max_length=1000)
     description: str = Field(..., min_length=10, max_length=500)
     default_password: Optional[str] = Field(None, min_length=4, max_length=100)
-
-    @field_validator('email')
-    @classmethod
-    def validate_email(cls, v: str) -> str:
-        """Validate email format."""
-        if '@' not in v or '.' not in v.split('@')[-1]:
-            raise ValueError('Invalid email format')
-        return v
 
     @field_validator('calendar_url')
     @classmethod
@@ -81,11 +73,12 @@ class DomainRequestResponse(BaseModel):
     response_model=DomainRequestResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Submit a custom domain request",
-    description="Users can request their own custom domain calendar to be set up"
+    description="Users can request their own custom domain calendar to be set up. Requires authentication. User's email will be automatically used from their profile."
 )
 async def create_domain_request(
     request_data: DomainRequestCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(require_user_auth)
 ) -> DomainRequest:
     """
     Create a new domain request.
@@ -98,6 +91,21 @@ async def create_domain_request(
     The request will be pending and an email notification will be sent to the admin.
     """
     try:
+        # Get authenticated user
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        # Require email for domain requests
+        if not user.email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email address is required to request a domain. Please add an email to your profile first."
+            )
+
         # Check if domain key already exists or is pending
         requested_key = request_data.requested_domain_key.strip().lower()
 
@@ -171,8 +179,9 @@ async def create_domain_request(
 
         # Create domain request
         domain_request = DomainRequest(
-            username=request_data.username.strip(),
-            email=request_data.email.strip().lower(),
+            user_id=user.id,
+            username=user.username,
+            email=user.email,
             requested_domain_key=request_data.requested_domain_key.strip().lower(),
             calendar_url=calendar_url,
             description=request_data.description.strip(),

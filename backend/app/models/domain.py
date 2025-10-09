@@ -30,6 +30,7 @@ class Domain(Base):
     - name: Display name
     - calendar_url: Source iCal URL
     - calendar_id: Link to synced Calendar record
+    - owner_id: User who owns the domain
     - Optional admin/user passwords (Fernet encrypted)
 
     Corresponds to domain requirements in OpenAPI spec.
@@ -40,6 +41,9 @@ class Domain(Base):
     domain_key = Column(String(100), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
     calendar_url = Column(Text, nullable=False)
+
+    # Ownership (nullable for backward compatibility with existing domains)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Calendar linkage (nullable until first sync creates calendar)
     calendar_id = Column(Integer, ForeignKey("calendars.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
@@ -56,8 +60,10 @@ class Domain(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
+    owner = relationship("User", foreign_keys=[owner_id], back_populates="owned_domains")
     calendar = relationship("Calendar", foreign_keys=[calendar_id])
     groups = relationship("Group", back_populates="domain", cascade="all, delete-orphan")
+    admins = relationship("User", secondary="domain_admins", back_populates="admin_domains")
 
     def __repr__(self):
         return f"<Domain(domain_key='{self.domain_key}', name='{self.name}', status='{self.status}')>"

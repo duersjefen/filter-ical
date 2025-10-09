@@ -1186,11 +1186,245 @@ paths:
         '404':
           description: Filter not found
 
+  # User Authentication & Profile
+  /api/users/register:
+    post:
+      summary: Register new user account
+      description: Create a new user account. Email is required if password is provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          description: Invalid input
+        '409':
+          description: Username or email already taken
+
+  /api/users/login:
+    post:
+      summary: Login to user account
+      description: Authenticate with username and password (if account has password set)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Invalid credentials
+        '403':
+          description: Account locked
+
+  /api/users/me:
+    get:
+      summary: Get current user profile
+      description: Get authenticated user's profile information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized
+
+    patch:
+      summary: Update user profile
+      description: Update email or password. Email required if password is being set.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '409':
+          description: Email already taken
+
+  /api/users/me/domains:
+    get:
+      summary: Get user's domains
+      description: Get all domains owned by or administered by the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User's domains
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  owned_domains:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DomainInfo'
+                    description: Domains where user is the owner
+                  admin_domains:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DomainInfo'
+                    description: Domains where user is an admin (but not owner)
+        '401':
+          description: Unauthorized
+
+  # Domain Admin Management
+  /api/domains/{domain}/admins:
+    get:
+      summary: List domain admins
+      description: Get list of all admins for a domain (owner or admin access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "soccer-club"
+      responses:
+        '200':
+          description: List of admins
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  owner:
+                    $ref: '#/components/schemas/UserInfo'
+                  admins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserInfo'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not owner or admin
+        '404':
+          description: Domain not found
+
+    post:
+      summary: Add domain admin
+      description: Add a user as admin for the domain (owner access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "soccer-club"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+                  example: "john_doe"
+      responses:
+        '201':
+          description: Admin added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input or user not found
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not owner
+        '404':
+          description: Domain not found
+        '409':
+          description: User is already an admin
+
+  /api/domains/{domain}/admins/{username}:
+    delete:
+      summary: Remove domain admin
+      description: Remove a user from domain admins (owner access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "soccer-club"
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "john_doe"
+      responses:
+        '200':
+          description: Admin removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not owner
+        '404':
+          description: Domain or admin not found
+
   # Domain Requests (User-facing)
   /api/domain-requests:
     post:
       summary: Submit a custom domain request
-      description: Users can request their own custom domain calendar to be set up
+      description: Users can request their own custom domain calendar to be set up. Requires authentication. User's email will be automatically used from their profile.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -1206,6 +1440,12 @@ paths:
                 $ref: '#/components/schemas/DomainRequest'
         '400':
           description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required
           content:
             application/json:
               schema:
@@ -1351,23 +1591,144 @@ components:
       description: JWT Bearer token for domain-level authentication
 
   schemas:
-    DomainRequestCreate:
+    # User Authentication & Profile Schemas
+    UserRegisterRequest:
       type: object
-      required: [username, email, requested_domain_key, calendar_url, description]
+      required: [username]
       properties:
         username:
           type: string
           minLength: 3
           maxLength: 50
           example: "john_doe"
-          description: "Username of the person requesting the domain"
         email:
           type: string
           format: email
-          minLength: 5
-          maxLength: 255
+          nullable: true
           example: "john@example.com"
-          description: "Email address for communication about the domain"
+          description: "Email address - REQUIRED if password is provided"
+        password:
+          type: string
+          nullable: true
+          minLength: 8
+          example: "SecurePass123"
+          description: "Password - if provided, email is required"
+
+    UserLoginRequest:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+          example: "john_doe"
+        password:
+          type: string
+          nullable: true
+          example: "SecurePass123"
+          description: "Only required if account has password set"
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john@example.com"
+        password:
+          type: string
+          nullable: true
+          minLength: 8
+          example: "NewSecurePass123"
+          description: "New password - if provided, email must be set"
+        current_password:
+          type: string
+          nullable: true
+          example: "OldSecurePass123"
+          description: "Required if changing password on password-protected account"
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "john_doe"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [user, global_admin]
+          example: "user"
+        has_password:
+          type: boolean
+          example: true
+          description: "Whether user has set a password"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-10T14:23:15Z"
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          description: "JWT bearer token"
+        expires_in_days:
+          type: integer
+          example: 30
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "john_doe"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john@example.com"
+
+    DomainInfo:
+      type: object
+      properties:
+        domain_key:
+          type: string
+          example: "soccer-club"
+        name:
+          type: string
+          example: "Soccer Club Calendar"
+        calendar_url:
+          type: string
+          format: uri
+          example: "https://example.com/calendar.ics"
+        status:
+          type: string
+          enum: [active, inactive, pending]
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-10T14:23:15Z"
+
+    # Domain Request Schemas
+    DomainRequestCreate:
+      type: object
+      required: [requested_domain_key, calendar_url, description]
+      properties:
         requested_domain_key:
           type: string
           minLength: 3

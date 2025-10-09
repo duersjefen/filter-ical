@@ -6,7 +6,7 @@ groups and filters.
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Enum as SQLEnum, ForeignKey
 from sqlalchemy.sql import func
 import enum
 
@@ -29,8 +29,9 @@ class DomainRequest(Base):
     __tablename__ = "domain_requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), nullable=False, index=True)
-    email = Column(String(255), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)  # Link to User who requested (nullable for backward compat)
+    username = Column(String(50), nullable=False, index=True)  # Denormalized for easy display
+    email = Column(String(255), nullable=False, index=True)  # Denormalized from user profile
     requested_domain_key = Column(String(100), nullable=False, index=True)  # Requested by user
     calendar_url = Column(Text, nullable=False)
     description = Column(Text, nullable=False)

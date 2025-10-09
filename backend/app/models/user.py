@@ -52,3 +52,5 @@ class User(Base):
     calendars = relationship("Calendar", back_populates="user")
     filters = relationship("Filter", back_populates="user")
     domain_access = relationship("UserDomainAccess", back_populates="user", cascade="all, delete-orphan")
+    owned_domains = relationship("Domain", foreign_keys="Domain.owner_id", back_populates="owner")
+    admin_domains = relationship("Domain", secondary="domain_admins", back_populates="admins")

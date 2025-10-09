@@ -14,6 +14,7 @@ from ..core.database import get_db
 from ..core.auth import get_current_user_id, require_user_auth
 from ..core.rate_limit import limiter
 from ..models.user import User
+from ..models.domain import Domain
 from ..services import auth_service
 
 router = APIRouter()
@@ -111,6 +112,13 @@ async def register_user(
         is_valid, error_msg = auth_service.is_valid_password(user_data.password)
         if not is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
+
+        # Require email when password is set
+        if not user_data.email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email address is required when setting a password (needed for password reset)"
+            )
 
     # Check if username already exists
     existing_user = db.query(User).filter(User.username == user_data.username).first()
@@ -347,6 +355,13 @@ async def update_user_profile(
         if not is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
+        # Require email when setting password
+        if not user.email and request.email is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email address is required when setting a password (needed for password reset)"
+            )
+
         # If user already has a password, verify current password
         if user.password_hash:
             if not request.current_password:
@@ -375,3 +390,49 @@ async def update_user_profile(
         has_password=user.password_hash is not None,
         created_at=user.created_at.isoformat()
     )
+
+
+@router.get(
+    "/api/users/me/domains",
+    summary="Get user's domains",
+    description="Get all domains owned by or administered by the current user"
+)
+async def get_user_domains(
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
+):
+    """Get user's owned and admin domains."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Get owned domains
+    owned_domains = []
+    for domain in user.owned_domains:
+        owned_domains.append({
+            "domain_key": domain.domain_key,
+            "name": domain.name,
+            "calendar_url": domain.calendar_url,
+            "status": domain.status,
+            "created_at": domain.created_at.isoformat()
+        })
+
+    # Get admin domains (where user is admin but not owner)
+    admin_domains = []
+    for domain in user.admin_domains:
+        if domain.owner_id != user.id:  # Exclude domains where user is owner
+            admin_domains.append({
+                "domain_key": domain.domain_key,
+                "name": domain.name,
+                "calendar_url": domain.calendar_url,
+                "status": domain.status,
+                "created_at": domain.created_at.isoformat()
+            })
+
+    return {
+        "owned_domains": owned_domains,
+        "admin_domains": admin_domains
+    }
