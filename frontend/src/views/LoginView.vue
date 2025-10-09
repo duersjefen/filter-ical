@@ -82,14 +82,16 @@
             💡 {{ $t('login.passwordOptionalInfo') }}
           </div>
 
-          <div class="opacity-60 focus-within:opacity-100 transition-opacity">
+          <div :class="usernameRequiresPassword === true ? 'opacity-100' : 'opacity-60 focus-within:opacity-100'" class="transition-opacity">
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              {{ $t('login.passwordLabel') }} <span class="text-gray-400">{{ $t('login.passwordOptionalLabel') }}</span>
+              {{ $t('login.passwordLabel') }}
+              <span v-if="usernameRequiresPassword !== true" class="text-gray-400">{{ $t('login.passwordOptionalLabel') }}</span>
             </label>
             <input
               v-model="loginPassword"
               type="password"
-              class="w-full px-4 py-3 border-2 border-gray-300/60 dark:border-gray-600/60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-all"
+              :class="usernameRequiresPassword === true ? 'border-gray-300 dark:border-gray-600' : 'border-gray-300/60 dark:border-gray-600/60'"
+              class="w-full px-4 py-3 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-all"
               :placeholder="$t('login.passwordPlaceholder')"
             />
           </div>
