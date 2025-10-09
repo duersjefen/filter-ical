@@ -112,7 +112,8 @@ def unlock_domain_for_user(
 
     # Verify password
     try:
-        decrypted_password = decrypt_password(password_hash)
+        from ..core.config import settings
+        decrypted_password = decrypt_password(password_hash, settings.password_encryption_key)
         if decrypted_password != password:
             return False, "Invalid password"
     except Exception as e:
