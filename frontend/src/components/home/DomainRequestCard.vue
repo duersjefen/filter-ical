@@ -120,6 +120,94 @@
         </div>
       </div>
 
+      <!-- Passwords: Side by Side -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Admin Password -->
+        <div>
+          <label for="admin-password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            Admin Password *
+          </label>
+          <div class="relative">
+            <input
+              id="admin-password-request"
+              v-model="formData.default_password"
+              :type="showAdminPassword ? 'text' : 'password'"
+              :class="[
+                'w-full px-4 py-3.5 pr-12 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500',
+                formData.default_password && !isAdminPasswordValid
+                  ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
+                  : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
+              ]"
+              placeholder="Min 4 characters"
+              minlength="4"
+              maxlength="100"
+              :disabled="!canSubmitRequest"
+              required
+            />
+            <button
+              v-if="formData.default_password"
+              type="button"
+              @click="showAdminPassword = !showAdminPassword"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              :title="showAdminPassword ? 'Hide password' : 'Show password'"
+            >
+              <svg v-if="showAdminPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+          <div v-if="formData.default_password && !isAdminPasswordValid" class="mt-1 text-xs text-red-600 dark:text-red-400 font-semibold">
+            {{ $t('domainRequest.errors.passwordTooShort') }}
+          </div>
+        </div>
+
+        <!-- User Password -->
+        <div>
+          <label for="user-password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            User Password <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
+          </label>
+          <div class="relative">
+            <input
+              id="user-password-request"
+              v-model="formData.user_password"
+              :type="showUserPassword ? 'text' : 'password'"
+              :class="[
+                'w-full px-4 py-3.5 pr-12 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500',
+                formData.user_password && !isUserPasswordValid
+                  ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
+                  : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
+              ]"
+              placeholder="Leave blank if none"
+              minlength="4"
+              maxlength="100"
+              :disabled="!canSubmitRequest"
+            />
+            <button
+              v-if="formData.user_password"
+              type="button"
+              @click="showUserPassword = !showUserPassword"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              :title="showUserPassword ? 'Hide password' : 'Show password'"
+            >
+              <svg v-if="showUserPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+          <div v-if="formData.user_password && !isUserPasswordValid" class="mt-1 text-xs text-red-600 dark:text-red-400 font-semibold">
+            {{ $t('domainRequest.errors.passwordTooShort') }}
+          </div>
+        </div>
+      </div>
+
       <div>
         <label for="description-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
           {{ $t('domainRequest.form.description') }}
@@ -150,48 +238,6 @@
         </div>
       </div>
 
-      <div>
-        <label for="password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-          Admin Password
-        </label>
-        <div class="relative">
-          <input
-            id="password-request"
-            v-model="formData.default_password"
-            :type="showPassword ? 'text' : 'password'"
-            :class="[
-              'w-full px-4 py-3.5 pr-12 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500',
-              formData.default_password && !isPasswordValid
-                ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
-                : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
-            ]"
-            placeholder="Enter secure admin password (min 4 characters)"
-            minlength="4"
-            maxlength="100"
-            :disabled="!canSubmitRequest"
-            required
-          />
-          <button
-            v-if="formData.default_password"
-            type="button"
-            @click="showPassword = !showPassword"
-            class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-            :title="showPassword ? 'Hide password' : 'Show password'"
-          >
-            <svg v-if="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-            </svg>
-            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-          </button>
-        </div>
-        <div v-if="formData.default_password && !isPasswordValid" class="mt-2 text-xs text-red-600 dark:text-red-400 font-semibold">
-          {{ $t('domainRequest.errors.passwordTooShort') }}
-        </div>
-      </div>
-
       <button
         type="submit"
         :disabled="loading || !isFormValid"
@@ -216,13 +262,15 @@ const { post } = useHTTP()
 const loading = ref(false)
 const successMessage = ref(null)
 const errorMessage = ref(null)
-const showPassword = ref(false)
+const showAdminPassword = ref(false)
+const showUserPassword = ref(false)
 
 const formData = ref({
   requested_domain_key: '',
   calendar_url: '',
   description: '',
-  default_password: ''
+  default_password: '',
+  user_password: ''
 })
 
 // Check if user can submit (logged in with email)
@@ -245,9 +293,14 @@ const isDescriptionValid = computed(() => {
   return formData.value.description.length >= 10
 })
 
-const isPasswordValid = computed(() => {
-  // Password is required and must be at least 4 chars
+const isAdminPasswordValid = computed(() => {
+  // Admin password is required and must be at least 4 chars
   return formData.value.default_password && formData.value.default_password.length >= 4
+})
+
+const isUserPasswordValid = computed(() => {
+  // User password is optional, but if provided, must be at least 4 chars
+  return !formData.value.user_password || formData.value.user_password.length >= 4
 })
 
 const isFormValid = computed(() => {
@@ -255,7 +308,8 @@ const isFormValid = computed(() => {
          formData.value.requested_domain_key &&
          formData.value.calendar_url &&
          isDescriptionValid.value &&
-         isPasswordValid.value
+         isAdminPasswordValid.value &&
+         isUserPasswordValid.value
 })
 
 const submitRequest = async () => {
@@ -280,6 +334,11 @@ const submitRequest = async () => {
       default_password: formData.value.default_password
     }
 
+    // Only include user_password if provided
+    if (formData.value.user_password) {
+      payload.user_password = formData.value.user_password
+    }
+
     const result = await post('/api/domain-requests', payload)
 
     if (result.success) {
@@ -289,7 +348,9 @@ const submitRequest = async () => {
       formData.value.calendar_url = ''
       formData.value.description = ''
       formData.value.default_password = ''
-      showPassword.value = false
+      formData.value.user_password = ''
+      showAdminPassword.value = false
+      showUserPassword.value = false
     } else {
       errorMessage.value = result.error || t('domainRequest.errors.submissionFailed')
     }
