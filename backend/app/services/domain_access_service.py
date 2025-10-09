@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from ..models.domain import Domain
 from ..models.user_domain_access import UserDomainAccess
 from ..models.calendar import Calendar
-from ..services.domain_auth_service import decrypt_password
+from ..data.domain_auth import decrypt_password
 
 
 def check_user_has_domain_access(

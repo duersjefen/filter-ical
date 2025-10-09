@@ -6,7 +6,6 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '../constants/api'
-import { getToken, clearToken, shouldRefreshToken, storeToken } from './useDomainAuth'
 
 // Create axios instance with interceptors
 const createHttpClient = () => {
@@ -14,58 +13,23 @@ const createHttpClient = () => {
     baseURL: API_BASE_URL
   })
 
-  // Request interceptor - inject JWT tokens
+  // Request interceptor - inject user auth token
   client.interceptors.request.use((config) => {
-    // For domain endpoints: use domain-specific tokens, fall back to user auth token
-    const domainMatch = config.url?.match(/\/api\/domains\/([^/]+)/)
-
-    if (domainMatch) {
-      const domain = domainMatch[1]
-
-      // Try admin token first, then user token
-      let token = getToken(domain, 'admin')
-      if (!token || shouldRefreshToken(token)) {
-        token = getToken(domain, 'user')
-      }
-
-      // Fall back to user's login token if no domain-specific token
-      if (!token) {
-        token = localStorage.getItem('auth_token')
-      }
-
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`
-      }
-    } else {
-      // For all other authenticated endpoints: use user auth token
-      const authToken = localStorage.getItem('auth_token')
-      if (authToken) {
-        config.headers['Authorization'] = `Bearer ${authToken}`
-      }
+    // Use user's auth token for all authenticated requests
+    const authToken = localStorage.getItem('auth_token')
+    if (authToken) {
+      config.headers['Authorization'] = `Bearer ${authToken}`
     }
 
     return config
   })
 
-  // Response interceptor - handle 401 and token refresh
+  // Response interceptor - handle errors
   client.interceptors.response.use(
     (response) => response,
     async (error) => {
-      if (error.response?.status === 401) {
-        // Extract domain from request URL
-        const domainMatch = error.config.url?.match(/\/api\/domains\/([^/]+)/)
-
-        if (domainMatch) {
-          const domain = domainMatch[1]
-
-          // Clear both tokens on 401
-          clearToken(domain, 'admin')
-          clearToken(domain, 'user')
-
-          // Redirect to password gate will happen via component reactivity
-        }
-      }
-
+      // For 401 errors, the app should redirect to login
+      // This will be handled by component logic
       return Promise.reject(error)
     }
   )

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 from ..core.database import get_db
-from ..core.auth import verify_admin_password, verify_admin_auth, get_current_user_id
+from ..core.auth import verify_admin_password, verify_admin_auth, require_user_auth
 from ..services.domain_auth_service import (
     verify_domain_password,
     set_admin_password,
@@ -40,7 +40,6 @@ class VerifyPasswordRequest(BaseModel):
 class VerifyPasswordResponse(BaseModel):
     """Response for successful password verification."""
     success: bool
-    token: str
     message: str
 
 
@@ -126,110 +125,80 @@ def verify_domain_admin_jwt(
 @router.post(
     "/api/domains/{domain}/auth/verify-admin",
     response_model=VerifyPasswordResponse,
-    summary="Verify admin password and get JWT token"
+    summary="Verify admin password (requires login)"
 )
 async def verify_admin_password_endpoint(
     domain: str,
     request: VerifyPasswordRequest,
-    db: Session = Depends(get_db),
-    user_id: Optional[int] = Depends(get_current_user_id)
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
 ):
     """
-    Verify admin password for domain and return JWT token.
+    Verify admin password for domain and save access to user account.
 
-    Returns JWT token with 30-day expiry if password correct.
-    If no password set, returns token without verification (backward compatibility).
-
-    If user is logged in:
-    - Checks if they already have access (saved from previous unlock)
-    - Saves access to their account for future use across devices
+    Requires user to be logged in. Password access is saved to database
+    and follows the user across devices.
     """
-    # If user is logged in, check if they already have access
-    if user_id:
-        has_access = check_user_has_domain_access(db, user_id, domain, "admin")
-        if has_access:
-            # User already unlocked this domain - generate token without password
-            success, result = verify_domain_password(db, domain, "", "admin", skip_password_check=True)
-            if success:
-                return VerifyPasswordResponse(
-                    success=True,
-                    token=result,
-                    message="Authentication successful (previously unlocked)"
-                )
-
-    # Verify password
-    success, result = verify_domain_password(db, domain, request.password, "admin")
-
-    if success:
-        # If user is logged in, save this unlock to their account
-        if user_id:
-            unlock_success, error = unlock_domain_for_user(db, user_id, domain, request.password, "admin")
-            # Continue even if unlock fails - JWT token still works
-
+    # Check if they already have access
+    has_access = check_user_has_domain_access(db, user_id, domain, "admin")
+    if has_access:
         return VerifyPasswordResponse(
             success=True,
-            token=result,
+            message="Already authenticated (previously unlocked)"
+        )
+
+    # Verify password and save access
+    unlock_success, error = unlock_domain_for_user(db, user_id, domain, request.password, "admin")
+
+    if unlock_success:
+        return VerifyPasswordResponse(
+            success=True,
             message="Authentication successful"
         )
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=result
+            detail=error
         )
 
 
 @router.post(
     "/api/domains/{domain}/auth/verify-user",
     response_model=VerifyPasswordResponse,
-    summary="Verify user password and get JWT token"
+    summary="Verify user password (requires login)"
 )
 async def verify_user_password_endpoint(
     domain: str,
     request: VerifyPasswordRequest,
-    db: Session = Depends(get_db),
-    user_id: Optional[int] = Depends(get_current_user_id)
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
 ):
     """
-    Verify user password for domain and return JWT token.
+    Verify user password for domain and save access to user account.
 
-    Returns JWT token with 30-day expiry if password correct.
-    If no password set, returns token without verification (backward compatibility).
-
-    If user is logged in:
-    - Checks if they already have access (saved from previous unlock)
-    - Saves access to their account for future use across devices
+    Requires user to be logged in. Password access is saved to database
+    and follows the user across devices.
     """
-    # If user is logged in, check if they already have access
-    if user_id:
-        has_access = check_user_has_domain_access(db, user_id, domain, "user")
-        if has_access:
-            # User already unlocked this domain - generate token without password
-            success, result = verify_domain_password(db, domain, "", "user", skip_password_check=True)
-            if success:
-                return VerifyPasswordResponse(
-                    success=True,
-                    token=result,
-                    message="Authentication successful (previously unlocked)"
-                )
-
-    # Verify password
-    success, result = verify_domain_password(db, domain, request.password, "user")
-
-    if success:
-        # If user is logged in, save this unlock to their account
-        if user_id:
-            unlock_success, error = unlock_domain_for_user(db, user_id, domain, request.password, "user")
-            # Continue even if unlock fails - JWT token still works
-
+    # Check if they already have access
+    has_access = check_user_has_domain_access(db, user_id, domain, "user")
+    if has_access:
         return VerifyPasswordResponse(
             success=True,
-            token=result,
+            message="Already authenticated (previously unlocked)"
+        )
+
+    # Verify password and save access
+    unlock_success, error = unlock_domain_for_user(db, user_id, domain, request.password, "user")
+
+    if unlock_success:
+        return VerifyPasswordResponse(
+            success=True,
             message="Authentication successful"
         )
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=result
+            detail=error
         )
 
 

@@ -152,7 +152,7 @@
           </div>
 
           <!-- Info box explaining optional fields -->
-          <div v-if="!passwordRequired" class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-green-50/50 dark:bg-green-900/20 rounded-lg px-3 py-2.5 border border-green-200/50 dark:border-green-700/50">
+          <div v-if="!passwordRequired && !registerPassword" class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-green-50/50 dark:bg-green-900/20 rounded-lg px-3 py-2.5 border border-green-200/50 dark:border-green-700/50">
             <div class="font-semibold mb-1">{{ $t('login.quickStartTitle') }}</div>
             <div class="space-y-1 ml-4">
               <div>{{ $t('login.emailPurpose') }}</div>
@@ -160,10 +160,16 @@
             </div>
           </div>
 
-          <!-- Warning when password becomes required -->
-          <div v-else class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
+          <!-- Warning when email is provided without password -->
+          <div v-if="passwordRequired && !registerPassword" class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
             <div class="font-semibold mb-1">🔒 Password required</div>
             <div class="ml-4">When providing an email, a password is required for account security and password reset functionality.</div>
+          </div>
+
+          <!-- Warning when password is provided without email -->
+          <div v-if="registerPassword && !registerEmail" class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
+            <div class="font-semibold mb-1">📧 Email required</div>
+            <div class="ml-4">When setting a password, an email is required for password reset functionality.</div>
           </div>
 
           <div class="opacity-60 focus-within:opacity-100 transition-opacity">
@@ -197,7 +203,7 @@
 
           <button
             type="submit"
-            :disabled="loading || usernameAvailable === false || (passwordRequired && !registerPassword)"
+            :disabled="loading || usernameAvailable !== true || (passwordRequired && !registerPassword) || (!!registerPassword && !registerEmail)"
             class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 rounded-xl font-bold transition-all hover:shadow-lg disabled:cursor-not-allowed"
           >
             {{ loading ? $t('login.creatingAccount') : $t('login.createAccount') }}
@@ -322,7 +328,7 @@ const checkingUsernameAvailability = ref(false)
 
 // Password becomes required when email is provided
 const passwordRequired = computed(() => {
-  return registerEmail.value && registerEmail.value.trim().length > 0
+  return !!(registerEmail.value && registerEmail.value.trim().length > 0)
 })
 
 // Handle login

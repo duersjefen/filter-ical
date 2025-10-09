@@ -4,18 +4,20 @@ Users router - User account management (register, login, profile).
 CONTRACT-DRIVEN: Implementation matches OpenAPI specification.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 
 from ..core.database import get_db
-from ..core.auth import get_current_user_id, require_user_auth
+from ..core.auth import get_current_user_id, require_user_auth, verify_admin_auth
 from ..core.rate_limit import limiter
 from ..models.user import User
 from ..models.domain import Domain
 from ..services import auth_service
+from ..services.domain_auth_service import set_admin_password, set_user_password, check_password_status
+from ..services.domain_access_service import get_user_unlocked_domains
 
 router = APIRouter()
 
@@ -71,6 +73,12 @@ class UpdateProfileRequest(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
     current_password: Optional[str] = None  # Required if changing password
+
+
+class SetDomainPasswordsRequest(BaseModel):
+    """Request body for domain owners to set passwords."""
+    admin_password: Optional[str] = None
+    user_password: Optional[str] = None
 
 
 # =============================================================================
@@ -518,3 +526,84 @@ async def get_user_domains(
         "password_access_domains": password_access_domains,
         "filter_domains": filter_domains
     }
+
+
+@router.get(
+    "/api/users/me/unlocked-domains",
+    summary="Get user's unlocked domains (password-authenticated access)",
+    description="Returns all domains the user has unlocked by entering admin or user passwords. This access persists across devices."
+)
+async def get_user_unlocked_domains_endpoint(
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all domains user has unlocked by entering passwords.
+
+    Returns list of domains with access_level and unlock timestamp.
+    This is account-based access that follows the user across devices.
+    """
+    unlocked = get_user_unlocked_domains(db, user_id)
+    return {"unlocked_domains": unlocked}
+
+
+@router.patch(
+    "/api/users/me/domains/{domain}/passwords",
+    summary="Set domain passwords (owner or global admin only)"
+)
+async def set_domain_passwords_as_owner(
+    domain: str,
+    request: SetDomainPasswordsRequest,
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Set or change domain passwords (owner or global admin access).
+
+    - Domain owner can set passwords for domains they own
+    - Global admin can set passwords for any domain
+    """
+    # Get domain
+    domain_obj = db.query(Domain).filter(Domain.domain_key == domain).first()
+    if not domain_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Domain '{domain}' not found"
+        )
+
+    # Check authorization: user is owner OR global admin
+    is_owner = domain_obj.owner_id == user_id
+    is_global_admin = False
+    try:
+        verify_admin_auth(authorization)
+        is_global_admin = True
+    except:
+        pass
+
+    if not is_owner and not is_global_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be the domain owner or global admin to manage passwords"
+        )
+
+    results = []
+
+    # Handle admin password
+    if request.admin_password:
+        success, error = set_admin_password(db, domain, request.admin_password)
+        if not success:
+            raise HTTPException(status_code=400, detail=f"Admin password set failed: {error}")
+        results.append("Admin password set")
+
+    # Handle user password
+    if request.user_password:
+        success, error = set_user_password(db, domain, request.user_password)
+        if not success:
+            raise HTTPException(status_code=400, detail=f"User password set failed: {error}")
+        results.append("User password set")
+
+    if not results:
+        return {"success": True, "message": "No changes requested"}
+
+    return {"success": True, "message": ", ".join(results)}

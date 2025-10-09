@@ -1,49 +1,57 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-      <!-- Header -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-6 mb-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <!-- Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+      <div class="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 px-6 py-4 border-b-2 border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
               My Profile
             </h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
               Manage your account and domains
             </p>
           </div>
           <div class="text-right">
-            <div class="text-sm text-gray-500 dark:text-gray-400">Username</div>
-            <div class="font-semibold text-gray-900 dark:text-gray-100">{{ user?.username || 'Not logged in' }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Username</div>
+            <div class="font-bold text-gray-900 dark:text-gray-100">{{ user?.username || 'Not logged in' }}</div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Not Logged In -->
-      <div v-if="!isLoggedIn" class="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-2xl p-6 text-center">
-        <p class="text-yellow-900 dark:text-yellow-200 font-semibold">
-          You must be logged in to view your profile
-        </p>
-        <button
-          @click="$router.push('/login')"
-          class="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-xl font-semibold transition"
-        >
-          Go to Login
-        </button>
-      </div>
+    <!-- Not Logged In -->
+    <div v-if="!isLoggedIn" class="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-xl p-6 text-center">
+      <p class="text-yellow-900 dark:text-yellow-200 font-semibold">
+        You must be logged in to view your profile
+      </p>
+      <button
+        @click="$router.push('/login')"
+        class="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-xl font-semibold transition"
+      >
+        Go to Login
+      </button>
+    </div>
 
-      <!-- Profile Content -->
-      <template v-else>
-        <!-- Account Settings -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+    <!-- Profile Content -->
+    <template v-else>
+      <!-- Account Settings -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Account Settings</h2>
+            <div>
+              <h2 class="text-lg font-bold text-white">Account Settings</h2>
+              <p class="text-xs text-purple-100">Manage your email and password</p>
+            </div>
           </div>
+        </div>
+
+        <div class="p-6">
 
           <div class="space-y-4">
             <div>
@@ -88,78 +96,255 @@
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <button
-                @click="updateAccount"
-                :disabled="updatingAccount"
-                class="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-semibold transition"
-              >
-                {{ updatingAccount ? 'Saving...' : (user?.email || user?.has_password ? 'Update Account' : 'Save Account Info') }}
-              </button>
+          <div class="flex gap-2">
+            <button
+              @click="updateAccount"
+              :disabled="updatingAccount"
+              class="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-semibold transition"
+            >
+              {{ updatingAccount ? 'Saving...' : (user?.email || user?.has_password ? 'Update Account' : 'Save Account Info') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <!-- Active Domains (Filters + Password Access) -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h2 class="text-lg font-bold text-white">
+                Active Domains ({{ activeDomains.length }})
+              </h2>
+              <p class="text-xs text-indigo-100">
+                Domains you're actively using with filters or password access
+              </p>
             </div>
           </div>
         </div>
 
-        <!-- Owned Domains -->
-        <div v-if="ownedDomains.length > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+        <div class="p-6">
+
+        <div v-if="activeDomains.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <p>You haven't interacted with any domains yet.</p>
+          <p class="text-sm mt-2">Create filters or unlock password-protected domains to get started.</p>
+        </div>
+
+        <div v-else class="space-y-3">
+          <div
+            v-for="domain in activeDomains"
+            :key="domain.domain_key"
+            class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all shadow-sm hover:shadow-md overflow-hidden"
+          >
+            <!-- Header -->
+            <div class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
+              <div class="flex-1">
+                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">
+                  {{ domain.name || domain.domain_key }}
+                </h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  <span class="font-mono">{{ domain.domain_key }}</span>
+                </p>
+              </div>
+              <button
+                @click="domain.access_level === 'admin' ? goToDomainAdmin(domain.domain_key) : goToDomain(domain.domain_key)"
+                class="p-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-800/50 rounded-lg transition-colors"
+                :title="domain.access_level === 'admin' ? 'Manage Domain' : 'View Domain'"
+              >
+                <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4">
+              <!-- Activity Badges -->
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-if="domain.filter_count"
+                  class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 font-semibold"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                  </svg>
+                  {{ domain.filter_count }} filter{{ domain.filter_count !== 1 ? 's' : '' }}
+                </span>
+
+                <span
+                  v-if="domain.access_level === 'admin'"
+                  class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 font-semibold"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                  </svg>
+                  Admin Access
+                </span>
+
+                <span
+                  v-else-if="domain.access_level === 'user'"
+                  class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-semibold"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                  </svg>
+                  User Access
+                </span>
+
+                <span
+                  v-if="domain.unlocked_at"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  Unlocked {{ new Date(domain.unlocked_at).toLocaleDateString() }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <!-- Admin Domains -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">
+                Admin Access ({{ adminDomains.length }})
+              </h2>
+              <p class="text-xs text-blue-100">Domains where you have admin privileges</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6">
+
+        <div v-if="adminDomains.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <p>You don't have admin access to any domains.</p>
+          <p class="text-sm mt-2">Domain owners can grant you admin access.</p>
+        </div>
+
+        <div v-else class="space-y-3">
+          <div
+            v-for="domain in adminDomains"
+            :key="domain.domain_key"
+            class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all shadow-sm hover:shadow-md overflow-hidden"
+          >
+            <!-- Header -->
+            <div class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
+              <div class="flex-1">
+                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">
+                  {{ domain.name || domain.domain_key }}
+                </h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  <span class="font-mono">{{ domain.domain_key }}</span> • Admin Role
+                </p>
+              </div>
+              <button
+                @click="goToDomainAdmin(domain.domain_key)"
+                class="p-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-800/50 rounded-lg transition-colors"
+                title="Manage Domain"
+              >
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <!-- Owned Domains -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
               </svg>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              My Domains ({{ ownedDomains.length }})
-            </h2>
+            <div>
+              <h2 class="text-lg font-bold text-white">
+                My Domains ({{ ownedDomains.length }})
+              </h2>
+              <p class="text-xs text-green-100">Domains you own and manage</p>
+            </div>
           </div>
+        </div>
+
+        <div class="p-6">
 
           <div v-if="loading" class="text-center py-8 text-gray-500 dark:text-gray-400">
             Loading...
           </div>
 
-          <div v-else class="space-y-4">
-            <div
-              v-for="domain in ownedDomains"
-              :key="domain.domain_key"
-              class="border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-green-400 dark:hover:border-green-600 transition"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">
-                    {{ domain.name || domain.domain_key }}
-                  </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Domain: <span class="font-mono">{{ domain.domain_key }}</span>
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    Status: {{ domain.status }}
-                  </p>
-                </div>
-                <div class="flex gap-2">
-                  <button
-                    @click="togglePasswordManagement(domain.domain_key)"
-                    class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                  >
-                    {{ showingPasswords === domain.domain_key ? 'Hide' : 'Manage' }} Passwords
-                  </button>
-                  <button
-                    @click="toggleAdminManagement(domain.domain_key)"
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                  >
-                    {{ showingAdmins === domain.domain_key ? 'Hide' : 'Manage' }} Admins
-                  </button>
-                  <button
-                    @click="goToDomain(domain.domain_key)"
-                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                  >
-                    View Domain
-                  </button>
-                </div>
-              </div>
+          <div v-else-if="ownedDomains.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <p>You don't own any domains yet.</p>
+            <p class="text-sm mt-2">Request a domain to get started!</p>
+          </div>
 
-              <!-- Password Management -->
-              <div v-if="showingPasswords === domain.domain_key" class="mt-4 pt-4 border-t-2 border-gray-200 dark:border-gray-700">
-                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Domain Passwords</h4>
+        <div v-else class="space-y-3">
+          <div
+            v-for="domain in ownedDomains"
+            :key="domain.domain_key"
+            class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-500 transition-all shadow-sm hover:shadow-md overflow-hidden"
+          >
+            <!-- Header -->
+            <div class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
+              <div class="flex-1">
+                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">
+                  {{ domain.name || domain.domain_key }}
+                </h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  <span class="font-mono">{{ domain.domain_key }}</span> • {{ domain.status }}
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="togglePasswordManagement(domain.domain_key)"
+                  class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  :title="(showingPasswords === domain.domain_key ? 'Hide' : 'Manage') + ' Passwords'"
+                >
+                  <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                  </svg>
+                </button>
+                <button
+                  @click="toggleAdminManagement(domain.domain_key)"
+                  class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  :title="(showingAdmins === domain.domain_key ? 'Hide' : 'Manage') + ' Admins'"
+                >
+                  <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                  </svg>
+                </button>
+                <button
+                  @click="goToDomain(domain.domain_key)"
+                  class="p-2 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-800/50 rounded-lg transition-colors"
+                  title="View Domain"
+                >
+                  <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Password Management -->
+            <div v-if="showingPasswords === domain.domain_key" class="p-4">
+              <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Domain Passwords</h4>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <!-- Admin Password -->
@@ -232,193 +417,67 @@
                     </button>
                   </div>
                 </div>
+            </div>
+
+            <!-- Admin Management -->
+            <div v-if="showingAdmins === domain.domain_key" class="p-4 border-t-2 border-gray-200 dark:border-gray-700">
+              <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Domain Admins</h4>
+
+              <div v-if="loadingAdmins" class="text-sm text-gray-500 dark:text-gray-400">
+                Loading admins...
               </div>
 
-              <!-- Admin Management -->
-              <div v-if="showingAdmins === domain.domain_key" class="mt-4 pt-4 border-t-2 border-gray-200 dark:border-gray-700">
-                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Domain Admins</h4>
-
-                <div v-if="loadingAdmins" class="text-sm text-gray-500 dark:text-gray-400">
-                  Loading admins...
-                </div>
-
-                <div v-else-if="domainAdmins[domain.domain_key]" class="space-y-2">
-                  <div
-                    v-for="admin in domainAdmins[domain.domain_key]"
-                    :key="admin.id"
-                    class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
-                  >
-                    <div>
-                      <div class="font-semibold text-gray-900 dark:text-gray-100">{{ admin.username }}</div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ admin.email }}</div>
-                    </div>
-                    <button
-                      @click="removeAdmin(domain.domain_key, admin.username)"
-                      :disabled="removingAdmin"
-                      class="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-3 py-1 rounded-lg text-sm font-semibold transition"
-                    >
-                      Remove
-                    </button>
+              <div v-else-if="domainAdmins[domain.domain_key]" class="space-y-2">
+                <div
+                  v-for="admin in domainAdmins[domain.domain_key]"
+                  :key="admin.id"
+                  class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
+                >
+                  <div>
+                    <div class="font-semibold text-gray-900 dark:text-gray-100">{{ admin.username }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ admin.email }}</div>
                   </div>
-
-                  <div v-if="domainAdmins[domain.domain_key].length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    No admins yet
-                  </div>
-                </div>
-
-                <div class="mt-4 flex gap-2">
-                  <input
-                    v-model="newAdminUsername"
-                    type="text"
-                    placeholder="Username to add as admin"
-                    class="flex-1 px-3 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
-                    @keyup.enter="addAdmin(domain.domain_key)"
-                  />
                   <button
-                    @click="addAdmin(domain.domain_key)"
-                    :disabled="!newAdminUsername || addingAdmin"
-                    class="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                    @click="removeAdmin(domain.domain_key, admin.username)"
+                    :disabled="removingAdmin"
+                    class="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-3 py-1 rounded-lg text-sm font-semibold transition"
                   >
-                    Add Admin
+                    Remove
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Admin Domains -->
-        <div v-if="adminDomains.length > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-              </svg>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Admin Access ({{ adminDomains.length }})
-            </h2>
-          </div>
-
-          <div class="space-y-4">
-            <div
-              v-for="domain in adminDomains"
-              :key="domain.domain_key"
-              class="border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-600 transition"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">
-                    {{ domain.name || domain.domain_key }}
-                  </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Domain: <span class="font-mono">{{ domain.domain_key }}</span>
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    Role: Admin
-                  </p>
+                <div v-if="domainAdmins[domain.domain_key].length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">
+                  No admins yet
                 </div>
+              </div>
+
+              <div class="mt-4 flex gap-2">
+                <input
+                  v-model="newAdminUsername"
+                  type="text"
+                  placeholder="Username to add as admin"
+                  class="flex-1 px-3 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
+                  @keyup.enter="addAdmin(domain.domain_key)"
+                />
                 <button
-                  @click="goToDomainAdmin(domain.domain_key)"
-                  class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                  @click="addAdmin(domain.domain_key)"
+                  :disabled="!newAdminUsername || addingAdmin"
+                  class="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                 >
-                  Admin Panel
+                  Add Admin
                 </button>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Password Access Domains -->
-        <div v-if="passwordAccessDomains.length > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-              </svg>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Password Access ({{ passwordAccessDomains.length }})
-            </h2>
-          </div>
-
-          <div class="space-y-4">
-            <div
-              v-for="domain in passwordAccessDomains"
-              :key="domain.domain_key"
-              class="border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-400 dark:hover:border-orange-600 transition"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">
-                    {{ domain.name || domain.domain_key }}
-                  </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Domain: <span class="font-mono">{{ domain.domain_key }}</span>
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    Access: {{ domain.access_level }}
-                  </p>
-                </div>
-                <button
-                  @click="domain.access_level === 'admin' ? goToDomainAdmin(domain.domain_key) : goToDomain(domain.domain_key)"
-                  class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                >
-                  {{ domain.access_level === 'admin' ? 'Admin Panel' : 'View Domain' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Filter Domains -->
-        <div v-if="filterDomains.length > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-              </svg>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              My Filters ({{ filterDomains.length }} domains)
-            </h2>
-          </div>
-
-          <div class="space-y-4">
-            <div
-              v-for="domain in filterDomains"
-              :key="domain.domain_key"
-              class="border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-indigo-400 dark:hover:border-indigo-600 transition"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">
-                    {{ domain.name || domain.domain_key }}
-                  </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Domain: <span class="font-mono">{{ domain.domain_key }}</span>
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    {{ domain.filter_count }} filter{{ domain.filter_count !== 1 ? 's' : '' }}
-                  </p>
-                </div>
-                <button
-                  @click="goToDomain(domain.domain_key)"
-                  class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                >
-                  View Domain
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
+      </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useHTTP } from '../composables/useHTTP'
@@ -455,6 +514,37 @@ const accountForm = ref({
 })
 const updatingAccount = ref(false)
 
+// Merge filter domains and password access domains
+const activeDomains = computed(() => {
+  const domainMap = new Map()
+
+  // Add filter domains
+  filterDomains.value.forEach(domain => {
+    domainMap.set(domain.domain_key, {
+      ...domain,
+      filter_count: domain.filter_count
+    })
+  })
+
+  // Merge password access domains
+  passwordAccessDomains.value.forEach(domain => {
+    const existing = domainMap.get(domain.domain_key)
+    if (existing) {
+      // Merge with existing
+      domainMap.set(domain.domain_key, {
+        ...existing,
+        access_level: domain.access_level,
+        unlocked_at: domain.unlocked_at
+      })
+    } else {
+      // Add new
+      domainMap.set(domain.domain_key, domain)
+    }
+  })
+
+  return Array.from(domainMap.values())
+})
+
 // Fetch user's domains
 const fetchDomains = async () => {
   if (!isLoggedIn.value) return
@@ -484,6 +574,7 @@ const fetchDomains = async () => {
     loading.value = false
   }
 }
+
 
 // Update account
 const updateAccount = async () => {

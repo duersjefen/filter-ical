@@ -1,16 +1,13 @@
 /**
  * Domain authentication composable for password-protected domains.
  *
- * Provides pure functions for client-side auth following functional principles.
- * Handles JWT tokens, localStorage, and authentication state management.
+ * Simplified authentication - requires user login.
+ * Domain access is saved to user's account in database.
  */
 
 import { ref, computed } from 'vue'
 import { useHTTP } from './useHTTP'
-
-const STORAGE_PREFIX = 'domain_auth_'
-const TOKEN_EXPIRY_DAYS = 30
-const REFRESH_THRESHOLD_DAYS = 25
+import { useAuth } from './useAuth'
 
 /**
  * Main composable for domain authentication.
@@ -27,17 +24,9 @@ export function useDomainAuth(domain) {
   const authError = ref(null)
   const authLoading = ref(false)
 
-  // Check authentication status on initialization
-  const checkAuth = () => {
-    isAdminAuthenticated.value = hasValidToken(domain, 'admin')
-    isUserAuthenticated.value = hasValidToken(domain, 'user')
-  }
-
-  // Initialize
-  checkAuth()
-
   /**
-   * Verify password and obtain JWT token.
+   * Verify password - requires user to be logged in.
+   * Access is saved to user's account in database.
    *
    * @param {string} password - Plain text password
    * @param {string} level - 'admin' or 'user'
@@ -47,13 +36,20 @@ export function useDomainAuth(domain) {
     authLoading.value = true
     authError.value = null
 
+    const { isLoggedIn } = useAuth()
+
+    // Check if user is logged in first
+    if (!isLoggedIn.value) {
+      authError.value = 'Please log in first to access this domain'
+      authLoading.value = false
+      return { success: false, error: 'Please log in first to access this domain' }
+    }
+
     try {
       const endpoint = `/api/domains/${domain}/auth/verify-${level}`
       const result = await post(endpoint, { password })
 
-      if (result.success && result.data.token) {
-        storeToken(domain, level, result.data.token)
-
+      if (result.success) {
         if (level === 'admin') {
           isAdminAuthenticated.value = true
           isUserAuthenticated.value = true // Admin has user access too
@@ -63,10 +59,17 @@ export function useDomainAuth(domain) {
 
         return { success: true, error: '' }
       } else {
-        authError.value = 'Invalid password'
-        return { success: false, error: 'Invalid password' }
+        authError.value = result.error || 'Invalid password'
+        return { success: false, error: result.error || 'Invalid password' }
       }
     } catch (error) {
+      // Handle 401 specifically - user needs to log in
+      if (error.response?.status === 401) {
+        const errorMsg = 'Please log in first to access this domain'
+        authError.value = errorMsg
+        return { success: false, error: errorMsg }
+      }
+
       const errorMsg = error.response?.data?.detail || 'Authentication failed'
       authError.value = errorMsg
       return { success: false, error: errorMsg }
@@ -148,18 +151,50 @@ export function useDomainAuth(domain) {
   }
 
   /**
-   * Logout and clear stored token.
+   * Check if currently logged-in user has access to this domain.
+   * Queries the user's domain access from the database.
    *
-   * @param {string} level - 'admin' or 'user'
+   * @returns {Promise<void>}
    */
-  const logout = (level) => {
-    clearToken(domain, level)
+  const checkAuth = async () => {
+    const { isLoggedIn } = useAuth()
 
-    if (level === 'admin') {
+    // If not logged in, no access
+    if (!isLoggedIn.value) {
+      isUserAuthenticated.value = false
       isAdminAuthenticated.value = false
+      return
+    }
+
+    try {
+      // Query user's domains to check access
+      const result = await get('/api/users/me/domains')
+
+      if (result.success && result.data) {
+        // Check if this domain is in any of the access lists
+        const hasAccess =
+          result.data.owned_domains?.some(d => d.domain_key === domain) ||
+          result.data.admin_domains?.some(d => d.domain_key === domain) ||
+          result.data.password_access_domains?.some(d => d.domain_key === domain)
+
+        if (hasAccess) {
+          // Check access level from password_access_domains
+          const passwordAccess = result.data.password_access_domains?.find(d => d.domain_key === domain)
+          if (passwordAccess?.access_level === 'admin') {
+            isAdminAuthenticated.value = true
+            isUserAuthenticated.value = true
+          } else {
+            isUserAuthenticated.value = true
+          }
+        } else {
+          isUserAuthenticated.value = false
+          isAdminAuthenticated.value = false
+        }
+      }
+    } catch (error) {
+      // On error, assume no access
       isUserAuthenticated.value = false
-    } else {
-      isUserAuthenticated.value = false
+      isAdminAuthenticated.value = false
     }
   }
 
@@ -177,121 +212,6 @@ export function useDomainAuth(domain) {
     removeAdminPassword,
     removeUserPassword,
     getPasswordStatus,
-    logout,
     checkAuth
   }
-}
-
-// Pure utility functions for token management
-
-/**
- * Store JWT token in localStorage.
- *
- * @param {string} domain - Domain key
- * @param {string} level - 'admin' or 'user'
- * @param {string} token - JWT token
- */
-export function storeToken(domain, level, token) {
-  const key = `${STORAGE_PREFIX}${domain}_${level}`
-  localStorage.setItem(key, token)
-}
-
-/**
- * Retrieve JWT token from localStorage.
- *
- * @param {string} domain - Domain key
- * @param {string} level - 'admin' or 'user'
- * @returns {string|null} Token or null if not found
- */
-export function getToken(domain, level) {
-  const key = `${STORAGE_PREFIX}${domain}_${level}`
-  return localStorage.getItem(key)
-}
-
-/**
- * Clear JWT token from localStorage.
- *
- * @param {string} domain - Domain key
- * @param {string} level - 'admin' or 'user'
- */
-export function clearToken(domain, level) {
-  const key = `${STORAGE_PREFIX}${domain}_${level}`
-  localStorage.removeItem(key)
-}
-
-/**
- * Parse JWT token payload (client-side only, no verification).
- *
- * @param {string} token - JWT token
- * @returns {object|null} Decoded payload or null
- */
-export function parseTokenPayload(token) {
-  if (!token) return null
-
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return null
-
-    const payload = parts[1]
-    const decoded = JSON.parse(atob(payload))
-    return decoded
-  } catch (error) {
-    return null
-  }
-}
-
-/**
- * Check if token is expired (client-side check).
- *
- * @param {string} token - JWT token
- * @returns {boolean} True if expired
- */
-export function isTokenExpired(token) {
-  const payload = parseTokenPayload(token)
-  if (!payload || !payload.exp) return true
-
-  const now = Math.floor(Date.now() / 1000)
-  return now >= payload.exp
-}
-
-/**
- * Check if domain has valid authentication token.
- *
- * @param {string} domain - Domain key
- * @param {string} level - 'admin' or 'user'
- * @returns {boolean} True if valid token exists
- */
-export function hasValidToken(domain, level) {
-  const token = getToken(domain, level)
-  if (!token) return false
-
-  return !isTokenExpired(token)
-}
-
-/**
- * Calculate token age in days.
- *
- * @param {string} token - JWT token
- * @returns {number} Age in days
- */
-export function calculateTokenAgeDays(token) {
-  const payload = parseTokenPayload(token)
-  if (!payload || !payload.iat) return 0
-
-  const now = Math.floor(Date.now() / 1000)
-  const ageSeconds = now - payload.iat
-  return ageSeconds / 86400
-}
-
-/**
- * Check if token should be refreshed (sliding window).
- *
- * @param {string} token - JWT token
- * @returns {boolean} True if should refresh
- */
-export function shouldRefreshToken(token) {
-  if (isTokenExpired(token)) return false
-
-  const age = calculateTokenAgeDays(token)
-  return age >= REFRESH_THRESHOLD_DAYS
 }
