@@ -388,8 +388,9 @@
               <div class="flex flex-col gap-2">
                 <button
                   @click="approveRequest(request.id)"
-                  :disabled="processing"
-                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
+                  :disabled="processing || !canApproveRequest(request.id)"
+                  :title="getApprovalDisabledReason(request.id)"
+                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   ✓ {{ $t('admin.panel.approve') }}
                 </button>
@@ -559,6 +560,9 @@ const loadRequests = async () => {
       headers: getAuthHeaders()
     })
     requests.value = response.data
+
+    // Auto-expand previews for all pending requests
+    await autoExpandPreviews()
   } catch (error) {
     console.error('Failed to load requests:', error)
     // Token might be expired, logout
@@ -798,6 +802,57 @@ const togglePreview = async (requestId) => {
       }
     } finally {
       icalPreviews.value[requestId].loading = false
+    }
+  }
+}
+
+const canApproveRequest = (requestId) => {
+  const preview = icalPreviews.value[requestId]
+
+  // If preview was checked and has error or 0 events, block approval
+  if (preview?.data) {
+    if (preview.data.error || preview.data.event_count === 0) {
+      return false
+    }
+  }
+
+  return true
+}
+
+const getApprovalDisabledReason = (requestId) => {
+  const preview = icalPreviews.value[requestId]
+
+  if (preview?.data?.error) {
+    return `Cannot approve: ${preview.data.error}`
+  }
+
+  if (preview?.data?.event_count === 0) {
+    return 'Cannot approve: Calendar has no events'
+  }
+
+  return ''
+}
+
+const autoExpandPreviews = async () => {
+  // Auto-expand and load previews for all pending requests
+  for (const request of pendingRequests.value) {
+    // Initialize and expand
+    icalPreviews.value[request.id] = { expanded: true, loading: true, data: null }
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/ical/preview`, {
+        calendar_url: request.calendar_url
+      })
+
+      icalPreviews.value[request.id].data = response.data
+    } catch (error) {
+      icalPreviews.value[request.id].data = {
+        event_count: 0,
+        events: [],
+        error: `Failed to load preview: ${error.response?.data?.detail || error.message}`
+      }
+    } finally {
+      icalPreviews.value[request.id].loading = false
     }
   }
 }
