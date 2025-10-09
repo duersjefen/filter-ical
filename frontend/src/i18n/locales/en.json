@@ -785,7 +785,7 @@
           "enabled": "Enabled",
           "disabled": "No Password Set"
         },
-        "passwordRequirements": "Password must be at least 8 characters",
+        "passwordRequirements": "Password must be at least 4 characters",
         "passwordMismatch": "Passwords do not match",
         "success": {
           "adminSet": "Admin password set successfully",
@@ -798,7 +798,7 @@
           "adminRemoved": "Failed to remove admin password",
           "userSet": "Failed to set user password",
           "userRemoved": "Failed to remove user password",
-          "tooShort": "Password must be at least 8 characters"
+          "tooShort": "Password must be at least 4 characters"
         },
         "confirm": {
           "removeAdmin": "Are you sure you want to remove the admin password? Anyone will be able to access the admin panel.",

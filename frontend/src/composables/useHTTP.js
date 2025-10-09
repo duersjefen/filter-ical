@@ -16,7 +16,7 @@ const createHttpClient = () => {
 
   // Request interceptor - inject JWT tokens
   client.interceptors.request.use((config) => {
-    // For domain endpoints: use domain-specific tokens
+    // For domain endpoints: use domain-specific tokens, fall back to user auth token
     const domainMatch = config.url?.match(/\/api\/domains\/([^/]+)/)
 
     if (domainMatch) {
@@ -26,6 +26,11 @@ const createHttpClient = () => {
       let token = getToken(domain, 'admin')
       if (!token || shouldRefreshToken(token)) {
         token = getToken(domain, 'user')
+      }
+
+      // Fall back to user's login token if no domain-specific token
+      if (!token) {
+        token = localStorage.getItem('auth_token')
       }
 
       if (token) {

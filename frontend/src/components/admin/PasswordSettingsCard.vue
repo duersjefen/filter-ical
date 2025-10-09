@@ -158,6 +158,7 @@ const emit = defineEmits(['toggle'])
 const { t } = useI18n()
 const notify = useNotification()
 const {
+  verifyPassword,
   setAdminPassword,
   setUserPassword,
   removeAdminPassword,
@@ -193,6 +194,18 @@ const handleSetAdminPassword = async () => {
   if (!canSetAdminPassword.value) return
 
   saving.value = true
+
+  // If no admin password is set, we need to first obtain an admin token
+  // The backend allows this when no password exists (backward compatibility)
+  if (!adminPasswordSet.value) {
+    const authResult = await verifyPassword('', 'admin')
+    if (!authResult.success) {
+      saving.value = false
+      notify.error('Failed to authenticate. Please refresh and try again.')
+      return
+    }
+  }
+
   const result = await setAdminPassword(adminPassword.value)
   saving.value = false
 
@@ -211,6 +224,18 @@ const handleSetUserPassword = async () => {
   if (!canSetUserPassword.value) return
 
   saving.value = true
+
+  // If no admin password is set, we need to first obtain an admin token
+  // The backend allows this when no password exists (backward compatibility)
+  if (!adminPasswordSet.value) {
+    const authResult = await verifyPassword('', 'admin')
+    if (!authResult.success) {
+      saving.value = false
+      notify.error('Failed to authenticate. Please refresh and try again.')
+      return
+    }
+  }
+
   const result = await setUserPassword(userPassword.value)
   saving.value = false
 
