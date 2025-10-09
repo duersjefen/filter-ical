@@ -36,13 +36,22 @@
       <template v-else>
         <!-- Account Settings -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Account Settings</h2>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Account Settings</h2>
+            <button
+              v-if="user?.email"
+              @click="$router.push('/reset-password')"
+              class="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 text-sm font-semibold transition"
+            >
+              Reset Password
+            </button>
           </div>
 
           <div class="space-y-4">
@@ -57,24 +66,26 @@
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Required for password reset</p>
             </div>
 
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">New Password</label>
-              <input
-                v-model="accountForm.newPassword"
-                type="password"
-                class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg"
-                placeholder="Leave blank to keep current"
-              />
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">New Password</label>
+                <input
+                  v-model="accountForm.newPassword"
+                  type="password"
+                  class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg"
+                  placeholder="Leave blank to keep current"
+                />
+              </div>
 
-            <div v-if="user?.email || accountForm.email">
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Current Password</label>
-              <input
-                v-model="accountForm.currentPassword"
-                type="password"
-                class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg"
-                placeholder="Required to change password"
-              />
+              <div v-if="user?.email || accountForm.email">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Current Password</label>
+                <input
+                  v-model="accountForm.currentPassword"
+                  type="password"
+                  class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg"
+                  placeholder="Required to change password"
+                />
+              </div>
             </div>
 
             <div class="flex gap-2">
@@ -85,13 +96,6 @@
               >
                 {{ updatingAccount ? 'Updating...' : 'Update Account' }}
               </button>
-            </div>
-
-            <div v-if="accountMessage" :class="[
-              'px-4 py-3 rounded-lg text-sm font-semibold',
-              accountMessageType === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-            ]">
-              {{ accountMessage }}
             </div>
           </div>
         </div>
@@ -194,13 +198,6 @@
                   >
                     Add Admin
                   </button>
-                </div>
-
-                <div v-if="adminMessage" :class="[
-                  'mt-3 px-3 py-2 rounded-lg text-sm font-semibold',
-                  adminMessageType === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-                ]">
-                  {{ adminMessage }}
                 </div>
               </div>
             </div>
@@ -342,10 +339,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useHTTP } from '../composables/useHTTP'
+import { useNotification } from '../composables/useNotification'
 
 const router = useRouter()
 const { user, isLoggedIn, fetchUser } = useAuth()
 const { get, post, del, patch } = useHTTP()
+const notify = useNotification()
 
 const loading = ref(false)
 const ownedDomains = ref([])
@@ -359,8 +358,6 @@ const domainAdmins = ref({})
 const newAdminUsername = ref('')
 const addingAdmin = ref(false)
 const removingAdmin = ref(false)
-const adminMessage = ref(null)
-const adminMessageType = ref('success')
 
 const accountForm = ref({
   email: '',
@@ -368,8 +365,6 @@ const accountForm = ref({
   currentPassword: ''
 })
 const updatingAccount = ref(false)
-const accountMessage = ref(null)
-const accountMessageType = ref('success')
 
 // Fetch user's domains
 const fetchDomains = async () => {
@@ -394,43 +389,44 @@ const fetchDomains = async () => {
 // Update account
 const updateAccount = async () => {
   updatingAccount.value = true
-  accountMessage.value = null
 
   try {
     const payload = {}
 
-    if (accountForm.value.email) {
-      payload.email = accountForm.value.email
+    // Only send email if it's different from current
+    const emailValue = accountForm.value.email.trim()
+    if (emailValue && emailValue !== user.value?.email) {
+      payload.email = emailValue
     }
 
+    // Send password if provided
     if (accountForm.value.newPassword) {
       payload.password = accountForm.value.newPassword
-      if (user.value?.email || accountForm.value.email) {
+      // Only send current_password if user has email
+      if (user.value?.email || payload.email) {
         payload.current_password = accountForm.value.currentPassword
       }
     }
 
     if (Object.keys(payload).length === 0) {
-      accountMessage.value = 'No changes to save'
-      accountMessageType.value = 'error'
+      notify.warning('No changes to save')
       return
     }
 
     const result = await patch('/api/users/me', payload)
 
     if (result.success) {
-      accountMessage.value = 'Account updated successfully'
-      accountMessageType.value = 'success'
+      notify.success('Account updated successfully')
+      accountForm.value.email = ''
       accountForm.value.newPassword = ''
       accountForm.value.currentPassword = ''
       await fetchUser()
     } else {
-      accountMessage.value = result.error || 'Failed to update account'
-      accountMessageType.value = 'error'
+      notify.error(result.error || 'Failed to update account')
     }
   } catch (error) {
-    accountMessage.value = 'Failed to update account'
-    accountMessageType.value = 'error'
+    console.error('Account update error:', error)
+    notify.error('Failed to update account')
   } finally {
     updatingAccount.value = false
   }
@@ -444,7 +440,6 @@ const toggleAdminManagement = async (domainKey) => {
   }
 
   showingAdmins.value = domainKey
-  adminMessage.value = null
   await fetchAdmins(domainKey)
 }
 
@@ -455,11 +450,12 @@ const fetchAdmins = async (domainKey) => {
     const result = await get(`/api/domains/${domainKey}/admins`)
     if (result.success) {
       domainAdmins.value[domainKey] = result.data.admins || []
+    } else {
+      notify.error('Failed to load admins')
     }
   } catch (error) {
     console.error('Failed to fetch admins:', error)
-    adminMessage.value = 'Failed to load admins'
-    adminMessageType.value = 'error'
+    notify.error('Failed to load admins')
   } finally {
     loadingAdmins.value = false
   }
@@ -470,7 +466,6 @@ const addAdmin = async (domainKey) => {
   if (!newAdminUsername.value.trim()) return
 
   addingAdmin.value = true
-  adminMessage.value = null
 
   try {
     const result = await post(`/api/domains/${domainKey}/admins`, {
@@ -478,17 +473,14 @@ const addAdmin = async (domainKey) => {
     })
 
     if (result.success) {
-      adminMessage.value = `Successfully added ${newAdminUsername.value} as admin`
-      adminMessageType.value = 'success'
+      notify.success(`Successfully added ${newAdminUsername.value} as admin`)
       newAdminUsername.value = ''
       await fetchAdmins(domainKey)
     } else {
-      adminMessage.value = result.error || 'Failed to add admin'
-      adminMessageType.value = 'error'
+      notify.error(result.error || 'Failed to add admin')
     }
   } catch (error) {
-    adminMessage.value = 'Failed to add admin'
-    adminMessageType.value = 'error'
+    notify.error('Failed to add admin')
   } finally {
     addingAdmin.value = false
   }
@@ -499,22 +491,18 @@ const removeAdmin = async (domainKey, username) => {
   if (!confirm(`Remove ${username} from admins?`)) return
 
   removingAdmin.value = true
-  adminMessage.value = null
 
   try {
     const result = await del(`/api/domains/${domainKey}/admins/${username}`)
 
     if (result.success) {
-      adminMessage.value = `Successfully removed ${username} from admins`
-      adminMessageType.value = 'success'
+      notify.success(`Successfully removed ${username} from admins`)
       await fetchAdmins(domainKey)
     } else {
-      adminMessage.value = result.error || 'Failed to remove admin'
-      adminMessageType.value = 'error'
+      notify.error(result.error || 'Failed to remove admin')
     }
   } catch (error) {
-    adminMessage.value = 'Failed to remove admin'
-    adminMessageType.value = 'error'
+    notify.error('Failed to remove admin')
   } finally {
     removingAdmin.value = false
   }
