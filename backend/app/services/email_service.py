@@ -299,9 +299,20 @@ https://filter-ical.de
         return False, error_msg
 
 
-async def send_domain_approval_email(request: DomainRequest, domain_key: str) -> Tuple[bool, str]:
+async def send_domain_approval_email(request: DomainRequest, domain_key: str, custom_message: str = None) -> Tuple[bool, str]:
     """Send approval email to user."""
     domain_url = f"https://filter-ical.de/{domain_key}"
+
+    custom_msg_html = ""
+    custom_msg_text = ""
+    if custom_message:
+        custom_msg_html = f"""
+        <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+          <p style="margin: 0; color: #1e40af;"><strong>Message from admin:</strong></p>
+          <p style="margin: 10px 0 0 0; color: #1e3a8a;">{custom_message}</p>
+        </div>
+        """
+        custom_msg_text = f"\n\nMessage from admin:\n{custom_message}\n"
 
     html_body = f"""
     <html>
@@ -311,6 +322,7 @@ async def send_domain_approval_email(request: DomainRequest, domain_key: str) ->
         </div>
         <p>Hi <strong>{request.username}</strong>,</p>
         <p>Your domain <strong>{domain_key}</strong> is now live!</p>
+        {custom_msg_html}
         <p>📍 <a href="{domain_url}">{domain_url}</a></p>
         <p>🔧 <a href="{domain_url}/admin">Manage your calendar</a></p>
       </body>
@@ -321,7 +333,7 @@ async def send_domain_approval_email(request: DomainRequest, domain_key: str) ->
 Hi {request.username},
 
 Your domain {domain_key} is now live!
-
+{custom_msg_text}
 📍 {domain_url}
 🔧 {domain_url}/admin
     """

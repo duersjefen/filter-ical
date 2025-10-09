@@ -99,6 +99,23 @@
             </div>
           </div>
 
+          <!-- Custom Message (Optional) -->
+          <div class="mb-4">
+            <label for="approval-message" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+              Custom Message (Optional)
+            </label>
+            <textarea
+              id="approval-message"
+              v-model="approvalMessage"
+              rows="3"
+              class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 resize-none"
+              placeholder="Add a personal message or instructions for the user (optional)..."
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              This will be included in the approval email if you choose to send one.
+            </p>
+          </div>
+
           <!-- Email Toggle -->
           <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
             <label class="flex items-center gap-3 cursor-pointer">
@@ -813,9 +830,18 @@ const cancelApproval = () => {
 const submitApproval = async () => {
   submittingApproval.value = true
   try {
+    const requestBody = {
+      send_email: sendApprovalEmail.value
+    }
+
+    // Only include message if it's not empty
+    if (approvalMessage.value.trim()) {
+      requestBody.message = approvalMessage.value.trim()
+    }
+
     await axios.patch(
       `${API_BASE_URL}/api/admin/domain-requests/${approvingRequestId.value}/approve`,
-      { send_email: sendApprovalEmail.value },
+      requestBody,
       {
         headers: getAuthHeaders()
       }

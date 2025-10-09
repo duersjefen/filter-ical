@@ -38,6 +38,7 @@ class ApproveRequestBody(BaseModel):
     """Optional body for approve request."""
     domain_key: Optional[str] = None
     send_email: bool = True
+    message: Optional[str] = None
 
 
 class RejectRequestBody(BaseModel):
@@ -225,7 +226,8 @@ async def approve_domain_request(
         if body and body.send_email:
             from ..services.email_service import send_domain_approval_email
             try:
-                await send_domain_approval_email(domain_request, domain_key)
+                custom_message = body.message if body and body.message else None
+                await send_domain_approval_email(domain_request, domain_key, custom_message)
             except Exception as e:
                 # Log but don't fail approval if email fails
                 print(f"Warning: Failed to send approval email: {e}")
