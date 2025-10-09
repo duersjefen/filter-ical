@@ -40,8 +40,8 @@
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors capitalize truncate">
-                  {{ domain.name }}
+                <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
+                  {{ domain.domain_key.charAt(0).toUpperCase() + domain.domain_key.slice(1) }}
                 </h3>
                 <!-- Filter count badge for logged-in users -->
                 <span v-if="getFilterCount(domain.domain_key) > 0" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md">
