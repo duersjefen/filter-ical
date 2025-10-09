@@ -104,8 +104,20 @@ class Settings(BaseSettings):
     
     @property
     def should_seed_demo_data(self) -> bool:
-        """Check if demo data should be seeded."""
+        """Check if demo data should be seeded (development only - DEPRECATED)."""
         return self.is_development and self.auto_seed_demo_data
+
+    @property
+    def should_auto_seed_empty_domains(self) -> bool:
+        """
+        Auto-seed empty domains from YAML in all environments.
+
+        Safe seed-if-empty behavior:
+        - YAML domains (exter): Seeds groups/assignments once when empty
+        - User domains: No YAML exists, safely skipped
+        - Already-seeded: Checks existing groups, skips re-seeding
+        """
+        return True  # Always enabled - safe due to existence checks
     
     @property
     def should_enable_background_tasks(self) -> bool:

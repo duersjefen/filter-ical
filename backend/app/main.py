@@ -88,9 +88,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️ Domain calendar setup warning: {e}")
     
-    # Seed domain configurations from YAML files
-    if settings.should_seed_demo_data:
-        print("🌱 Development environment - loading domain configurations from YAML...")
+    # Seed domain configurations from YAML files (seed-if-empty, runs in all environments)
+    if settings.should_auto_seed_empty_domains:
+        print("🌱 Auto-seeding empty domains from YAML configurations...")
         try:
             from .services.domain_config_service import seed_domain_from_yaml, list_available_domain_configs
             from .services.domain_service import auto_assign_events_with_rules
