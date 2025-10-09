@@ -45,6 +45,13 @@
               </span>
               <span class="text-yellow-300 text-xs font-semibold">Unsecured</span>
               <button
+                @click="navigateToProfile"
+                class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
+                title="My Profile"
+              >
+                Profile
+              </button>
+              <button
                 @click="handleLogout"
                 class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
                 :title="$t('username.logout')"
@@ -61,6 +68,13 @@
               <span class="text-white text-xs sm:text-sm font-medium">
                 {{ user.username }}
               </span>
+              <button
+                @click="navigateToProfile"
+                class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
+                title="My Profile"
+              >
+                Profile
+              </button>
               <button
                 @click="handleLogout"
                 class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
@@ -234,6 +248,13 @@
             </span>
             <span class="text-yellow-300 text-xs font-semibold">Unsecured</span>
             <button
+              @click="navigateToProfile"
+              class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
+              title="My Profile"
+            >
+              Profile
+            </button>
+            <button
               @click="handleLogout"
               class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
               :title="$t('username.logout')"
@@ -250,6 +271,13 @@
             <span class="text-white text-sm font-medium">
               {{ user.username }}
             </span>
+            <button
+              @click="navigateToProfile"
+              class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
+              title="My Profile"
+            >
+              Profile
+            </button>
             <button
               @click="handleLogout"
               class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
@@ -302,6 +330,11 @@ const contextMessage = computed(() => {
 // Navigate to login page
 const navigateToLogin = () => {
   router.push('/login')
+}
+
+// Navigate to profile page
+const navigateToProfile = () => {
+  router.push('/profile')
 }
 
 // Handle logout

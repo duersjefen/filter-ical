@@ -32,6 +32,10 @@ const routes = [
     path: '/reset-password',
     component: () => import('./views/PasswordResetView.vue')
   },
+  {
+    path: '/profile',
+    component: () => import('./views/UserProfileView.vue')
+  },
   // More specific routes MUST come before general ones
   {
     path: '/:domain/admin',
