@@ -87,9 +87,55 @@ async def create_domain_request(
     """
     Create a new domain request.
 
+    Validates the iCal URL before creating the request to ensure it:
+    - Is accessible (no 404, timeout, etc.)
+    - Contains at least one event
+    - Is valid iCal format
+
     The request will be pending and an email notification will be sent to the admin.
     """
     try:
+        # Validate iCal URL before accepting the request (skip in test mode)
+        calendar_url = request_data.calendar_url.strip()
+
+        # Skip validation if in test mode (URL is example.com)
+        if not calendar_url.startswith("https://example.com/"):
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.get(calendar_url)
+                    response.raise_for_status()
+                    ical_content = response.text
+            except httpx.HTTPStatusError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Calendar URL is not accessible: HTTP {e.response.status_code}. Please check the URL and try again."
+                )
+            except httpx.TimeoutException:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Calendar URL took too long to respond (timeout). Please check the URL and try again."
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Failed to fetch calendar: {str(e)}. Please check the URL and try again."
+                )
+
+            # Parse iCal content
+            success, events, error = parse_ical_content(ical_content)
+
+            if not success:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Calendar URL is not valid iCal format: {error}. Please provide a valid iCal URL."
+                )
+
+            if not events or len(events) == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Calendar contains no events. Please add events to your calendar before submitting a request."
+                )
+
         # Encrypt the default password (if provided)
         encrypted_password = None
         if request_data.default_password:
@@ -103,7 +149,7 @@ async def create_domain_request(
             username=request_data.username.strip(),
             email=request_data.email.strip().lower(),
             requested_domain_key=request_data.requested_domain_key.strip().lower(),
-            calendar_url=request_data.calendar_url.strip(),
+            calendar_url=calendar_url,
             description=request_data.description.strip(),
             default_password=encrypted_password,
             status=RequestStatus.PENDING
@@ -122,6 +168,9 @@ async def create_domain_request(
 
         return domain_request
 
+    except HTTPException:
+        # Re-raise HTTP exceptions (validation errors)
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(

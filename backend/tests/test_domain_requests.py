@@ -11,7 +11,10 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def sample_domain_request_data():
-    """Base domain request data for testing."""
+    """Base domain request data for testing.
+
+    Note: Using example.com URL which skips iCal validation in the endpoint.
+    """
     return {
         "username": "test_user",
         "email": "test@example.com",
