@@ -1231,6 +1231,52 @@ paths:
         '403':
           description: Account locked
 
+  /api/users/check/{username}:
+    get:
+      summary: Check username password requirement
+      description: |
+        Check if a username exists and whether it requires a password for login.
+        Returns 404 if username doesn't exist.
+
+        **Note:** This endpoint reveals which usernames exist in the system. This is
+        acceptable for this application because usernames are already public (used for
+        public calendar sharing). For applications requiring username privacy, this
+        endpoint should not be implemented.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Username to check
+      responses:
+        '200':
+          description: Username exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    description: The username that was checked
+                  exists:
+                    type: boolean
+                    description: Always true for successful response
+                  has_password:
+                    type: boolean
+                    description: True if account requires password for login
+                example:
+                  username: "john"
+                  exists: true
+                  has_password: true
+        '404':
+          description: Username not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /api/users/me:
     get:
       summary: Get current user profile

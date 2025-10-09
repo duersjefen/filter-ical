@@ -53,6 +53,7 @@
               {{ $t('login.username') }}
             </label>
             <input
+              ref="loginUsernameInput"
               v-model="loginUsername"
               type="text"
               required
@@ -61,8 +62,23 @@
             />
           </div>
 
-          <!-- Info: Password is optional -->
-          <div class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg px-3 py-2.5 border border-blue-200/50 dark:border-blue-700/50">
+          <!-- Info: Password requirement status -->
+          <div v-if="checkingUsername" class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-900/20 rounded-lg px-3 py-2.5 border border-gray-200/50 dark:border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <svg class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Checking username...</span>
+            </div>
+          </div>
+          <div v-else-if="usernameRequiresPassword === true" class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
+            🔒 This account requires a password
+          </div>
+          <div v-else-if="usernameRequiresPassword === false" class="mb-4 text-xs text-green-700 dark:text-green-300 bg-green-50/50 dark:bg-green-900/20 rounded-lg px-3 py-2.5 border border-green-200/50 dark:border-green-700/50">
+            ✓ This account has no password - just click login!
+          </div>
+          <div v-else class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg px-3 py-2.5 border border-blue-200/50 dark:border-blue-700/50">
             💡 {{ $t('login.passwordOptionalInfo') }}
           </div>
 
@@ -170,16 +186,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '../composables/useAuth'
+import { useHTTP } from '../composables/useHTTP'
 import LanguageToggle from '../components/LanguageToggle.vue'
 
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const { register, login } = useAuth()
+const { get } = useHTTP()
 
 // State
 const activeTab = ref('login')
@@ -188,8 +206,11 @@ const error = ref('')
 const success = ref('')
 
 // Login form
+const loginUsernameInput = ref(null) // Ref for auto-focus
 const loginUsername = ref('')
 const loginPassword = ref('')
+const usernameRequiresPassword = ref(null) // null = unknown, true/false = known
+const checkingUsername = ref(false)
 
 // Register form
 const registerUsername = ref('')
@@ -246,4 +267,49 @@ const handleRegister = async () => {
     error.value = result.error
   }
 }
+
+// Auto-focus username input on mount
+onMounted(() => {
+  if (loginUsernameInput.value) {
+    loginUsernameInput.value.focus()
+  }
+})
+
+// Check username password requirement with debouncing
+let usernameCheckTimeout = null
+watch(loginUsername, (newUsername) => {
+  // Clear previous timeout
+  if (usernameCheckTimeout) {
+    clearTimeout(usernameCheckTimeout)
+  }
+
+  // Reset state if username is empty
+  if (!newUsername || newUsername.trim().length < 3) {
+    usernameRequiresPassword.value = null
+    checkingUsername.value = false
+    return
+  }
+
+  // Start checking indicator
+  checkingUsername.value = true
+
+  // Debounce: wait 500ms after user stops typing
+  usernameCheckTimeout = setTimeout(async () => {
+    try {
+      const result = await get(`/api/users/check/${encodeURIComponent(newUsername.trim())}`)
+
+      if (result.success && result.data) {
+        usernameRequiresPassword.value = result.data.has_password
+      } else {
+        // Username doesn't exist yet - treat as no password required
+        usernameRequiresPassword.value = null
+      }
+    } catch (err) {
+      // If endpoint doesn't exist or error, silently fail
+      usernameRequiresPassword.value = null
+    } finally {
+      checkingUsername.value = false
+    }
+  }, 500)
+})
 </script>

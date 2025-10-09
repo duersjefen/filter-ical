@@ -277,6 +277,50 @@ async def login_user(
 
 
 # =============================================================================
+# Username Check (for login UX)
+# =============================================================================
+
+@router.get(
+    "/api/users/check/{username}",
+    summary="Check username password requirement",
+    description="Check if username exists and requires password. Used for login UX."
+)
+@limiter.limit("20/minute")
+async def check_username(
+    request: Request,
+    username: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Check if username exists and whether it requires a password.
+
+    This endpoint enables better UX by showing users whether they need
+    to enter a password before they attempt login.
+
+    Returns 404 if username doesn't exist.
+
+    Security note: This endpoint reveals which usernames exist in the system.
+    This is acceptable for this application because usernames are already public
+    (used for public calendar sharing). For applications requiring username privacy,
+    this endpoint should not be implemented.
+    """
+    # Get user
+    user = db.query(User).filter(User.username == username).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Username not found"
+        )
+
+    return {
+        "username": user.username,
+        "exists": True,
+        "has_password": user.password_hash is not None
+    }
+
+
+# =============================================================================
 # User Profile
 # =============================================================================
 
