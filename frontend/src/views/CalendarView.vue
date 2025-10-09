@@ -67,7 +67,7 @@
         :show-recurring-events-section="showRecurringEventsSection"
         :show-selected-only="showSelectedOnly"
         :search-term="recurringEventSearch"
-        :has-groups="appStore.hasGroups"
+        :has-groups="appStore.hasCustomGroups"
         :summary-text="getGroupBreakdownSummary()"
         :formatDateTime="formatDateTime"
         :formatDateRange="formatDateRange"
@@ -97,7 +97,7 @@
         :main-recurring-events="mainRecurringEvents"
         :single-recurring-events="singleRecurringEvents"
         :groups="appStore.groups"
-        :has-groups="appStore.hasGroups"
+        :has-groups="appStore.hasCustomGroups"
         @navigate-to-calendar="navigateToCalendar"
         @load-filter="loadFilterIntoPage"
       />
