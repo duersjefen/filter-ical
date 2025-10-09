@@ -49,8 +49,8 @@
       }"
     >
       <div class="p-3 sm:p-4">
-      <!-- Create/Update Form - Auto-show when events selected or groups subscribed -->
-      <div v-if="selectedRecurringEvents.length > 0 || (subscribedGroups && subscribedGroups.size > 0) || isUpdateMode" class="mb-6 p-4 rounded-lg border" 
+      <!-- Create/Update Form - Auto-show when events selected or groups subscribed, or for anonymous users to show login warning -->
+      <div v-if="selectedRecurringEvents.length > 0 || (subscribedGroups && subscribedGroups.size > 0) || isUpdateMode || !hasCustomUsername()" class="mb-6 p-4 rounded-lg border" 
            :class="isUpdateMode 
              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' 
              : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'">
@@ -608,23 +608,29 @@ const selectedSingleRecurringEventNames = computed(() => {
 
 // Show section if there are existing filtered calendars OR if events are selected
 // OR if user has ever interacted with events (to prevent disappearing during search/filter workflows)
+// OR if viewing a calendar (so anonymous users see login warning)
 const shouldShowSection = computed(() => {
   // Always show if there are existing filtered calendars
   if (filteredCalendars.value.length > 0) {
     return true
   }
-  
+
   // Show if events are currently selected
   if (props.selectedRecurringEvents.length > 0) {
     return true
   }
-  
+
   // Show if user has ever selected events in this session
   // This prevents the section from disappearing during search/filter operations
   if (hasEverHadRecurringEvents.value) {
     return true
   }
-  
+
+  // Always show if viewing a calendar so anonymous users see login warning
+  if (props.selectedCalendar?.id) {
+    return true
+  }
+
   return false
 })
 
