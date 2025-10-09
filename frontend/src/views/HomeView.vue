@@ -326,7 +326,7 @@
 <script setup>
 import { useAppStore } from '../stores/app'
 import { useRouter } from 'vue-router'
-import { onMounted, watch, ref, nextTick } from 'vue'
+import { onMounted, watch, ref, nextTick, computed } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
