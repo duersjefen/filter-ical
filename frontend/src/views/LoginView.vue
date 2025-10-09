@@ -266,7 +266,7 @@ const handleLogin = async () => {
 
   const result = await login(
     loginUsername.value,
-    loginPassword.value || null
+    loginPassword.value.trim() ? loginPassword.value : null
   )
 
   loading.value = false
@@ -336,21 +336,16 @@ watch(loginUsername, (newUsername) => {
 
   // Debounce: wait 500ms after user stops typing
   usernameCheckTimeout = setTimeout(async () => {
-    try {
-      const result = await get(`/api/users/check/${encodeURIComponent(newUsername.trim())}`)
+    const result = await get(`/api/users/check/${encodeURIComponent(newUsername.trim())}`)
 
-      if (result.success && result.data) {
-        usernameRequiresPassword.value = result.data.has_password
-      } else {
-        // Username doesn't exist yet - treat as no password required
-        usernameRequiresPassword.value = null
-      }
-    } catch (err) {
-      // If endpoint doesn't exist or error, silently fail
+    if (result.success && result.data) {
+      usernameRequiresPassword.value = result.data.has_password
+    } else {
+      // Username doesn't exist or error - reset to unknown
       usernameRequiresPassword.value = null
-    } finally {
-      checkingUsername.value = false
     }
+
+    checkingUsername.value = false
   }, 500)
 })
 
@@ -374,24 +369,20 @@ watch(registerUsername, (newUsername) => {
 
   // Debounce: wait 500ms after user stops typing
   usernameAvailabilityTimeout = setTimeout(async () => {
-    try {
-      const result = await get(`/api/users/check/${encodeURIComponent(newUsername.trim())}`)
+    const result = await get(`/api/users/check/${encodeURIComponent(newUsername.trim())}`)
 
-      if (result.success && result.data) {
-        // Username exists - not available
-        usernameAvailable.value = false
-      }
-    } catch (err) {
+    if (result.success && result.data) {
+      // Username exists - not available for registration
+      usernameAvailable.value = false
+    } else if (result.status === 404) {
       // 404 means username doesn't exist - available!
-      if (err.status === 404) {
-        usernameAvailable.value = true
-      } else {
-        // Other error - reset to unknown
-        usernameAvailable.value = null
-      }
-    } finally {
-      checkingUsernameAvailability.value = false
+      usernameAvailable.value = true
+    } else {
+      // Other error - reset to unknown
+      usernameAvailable.value = null
     }
+
+    checkingUsernameAvailability.value = false
   }, 500)
 })
 </script>
