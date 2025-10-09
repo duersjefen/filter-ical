@@ -68,41 +68,38 @@
       </ul>
     </div>
 
+    <!-- Authentication Notice -->
+    <div v-if="!canSubmitRequest" class="bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 dark:from-blue-900/30 dark:via-blue-800/30 dark:to-indigo-900/30 text-blue-900 dark:text-blue-200 px-6 py-5 rounded-2xl mb-6 border-2 border-blue-300 dark:border-blue-700 shadow-xl backdrop-blur-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <span class="font-bold text-sm sm:text-base">{{ needsEmailMessage }}</span>
+      </div>
+    </div>
+
     <!-- Request Form -->
     <form @submit.prevent="submitRequest" class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label for="email-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-            Email Address
-          </label>
-          <input
-            id="email-request"
-            v-model="formData.email"
-            type="email"
-            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
-            placeholder="your@email.com"
-            required
-          />
-        </div>
-
-        <div>
-          <label for="domain-key-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-            Desired Domain Key
-          </label>
-          <input
-            id="domain-key-request"
-            v-model="formData.requested_domain_key"
-            type="text"
-            pattern="[a-z0-9-]+"
-            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
-            placeholder="my-calendar"
-            minlength="3"
-            maxlength="100"
-            required
-          />
-          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Lowercase letters, numbers, hyphens only
-          </div>
+      <div>
+        <label for="domain-key-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+          Desired Domain Key
+        </label>
+        <input
+          id="domain-key-request"
+          v-model="formData.requested_domain_key"
+          type="text"
+          pattern="[a-z0-9-]+"
+          class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
+          placeholder="my-calendar"
+          minlength="3"
+          maxlength="100"
+          :disabled="!canSubmitRequest"
+          required
+        />
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Lowercase letters, numbers, hyphens only
         </div>
       </div>
 
@@ -116,6 +113,7 @@
           type="url"
           class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
           :placeholder="$t('domainRequest.form.calendarUrlPlaceholder')"
+          :disabled="!canSubmitRequest"
           required
         />
       </div>
@@ -137,6 +135,7 @@
           :placeholder="$t('domainRequest.form.descriptionPlaceholder')"
           minlength="10"
           maxlength="500"
+          :disabled="!canSubmitRequest"
           required
         ></textarea>
         <div class="flex items-center justify-between mt-1">
@@ -167,6 +166,7 @@
             placeholder="Leave blank for password-free access"
             minlength="4"
             maxlength="100"
+            :disabled="!canSubmitRequest"
           />
           <button
             v-if="formData.default_password"
@@ -206,11 +206,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useUsername } from '../../composables/useUsername'
+import { useAuth } from '../../composables/useAuth'
 import { useHTTP } from '../../composables/useHTTP'
 
 const { t } = useI18n()
-const { username } = useUsername()
+const { user, isLoggedIn } = useAuth()
 const { post } = useHTTP()
 
 const loading = ref(false)
@@ -219,11 +219,25 @@ const errorMessage = ref(null)
 const showPassword = ref(false)
 
 const formData = ref({
-  email: '',
   requested_domain_key: '',
   calendar_url: '',
   description: '',
   default_password: ''
+})
+
+// Check if user can submit (logged in with email)
+const canSubmitRequest = computed(() => {
+  return isLoggedIn.value && user.value?.email
+})
+
+const needsEmailMessage = computed(() => {
+  if (!isLoggedIn.value) {
+    return 'You must be logged in to request a domain'
+  }
+  if (!user.value?.email) {
+    return 'Please add an email to your profile before requesting a domain'
+  }
+  return null
 })
 
 // Validation computed properties
@@ -237,7 +251,7 @@ const isPasswordValid = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return formData.value.email &&
+  return canSubmitRequest.value &&
          formData.value.requested_domain_key &&
          formData.value.calendar_url &&
          isDescriptionValid.value &&
@@ -245,8 +259,8 @@ const isFormValid = computed(() => {
 })
 
 const submitRequest = async () => {
-  if (!username.value) {
-    errorMessage.value = t('domainRequest.errors.loginRequired')
+  if (!canSubmitRequest.value) {
+    errorMessage.value = needsEmailMessage.value
     return
   }
 
@@ -260,8 +274,6 @@ const submitRequest = async () => {
 
   try {
     const payload = {
-      username: username.value,
-      email: formData.value.email.toLowerCase(),
       requested_domain_key: formData.value.requested_domain_key.toLowerCase(),
       calendar_url: formData.value.calendar_url,
       description: formData.value.description
@@ -277,7 +289,6 @@ const submitRequest = async () => {
     if (result.success) {
       successMessage.value = t('domainRequest.success')
       // Clear form
-      formData.value.email = ''
       formData.value.requested_domain_key = ''
       formData.value.calendar_url = ''
       formData.value.description = ''
