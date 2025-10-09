@@ -42,9 +42,9 @@ const routes = [
     component: () => import('./views/AdminView.vue'),
     props: (route) => ({ domain: route.params.domain }),
     beforeEnter: (to, from, next) => {
-      // Check if user is logged in
-      const userStr = localStorage.getItem('user')
-      if (!userStr) {
+      // Check if user is logged in by checking for auth token
+      const authToken = localStorage.getItem('auth_token')
+      if (!authToken) {
         // Not logged in, redirect to login with return URL
         next({
           path: '/login',
