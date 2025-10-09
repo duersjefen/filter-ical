@@ -193,10 +193,27 @@ async def send_password_reset_email(user_email: str, username: str, reset_token:
     Returns:
         Tuple of (success, error_message)
     """
-    # Skip if email not configured
+    # Development mode - log email instead of sending
     if not settings.smtp_username:
-        logger.warning("Email not configured - skipping password reset email")
-        return False, "Email not configured"
+        # Use localhost URL in development
+        base_url = "http://localhost:8000" if settings.is_development else "https://filter-ical.de"
+        reset_url = f"{base_url}/reset-password?token={reset_token}"
+
+        logger.warning("=" * 80)
+        logger.warning("📧 DEVELOPMENT MODE - Password Reset Email (not sent)")
+        logger.warning("=" * 80)
+        logger.warning(f"To: {user_email}")
+        logger.warning(f"Subject: 🔐 Password Reset Request - Filter iCal")
+        logger.warning("-" * 80)
+        logger.warning(f"Hi {username},")
+        logger.warning("")
+        logger.warning("We received a request to reset your password.")
+        logger.warning("")
+        logger.warning(f"🔗 Reset Link: {reset_url}")
+        logger.warning("")
+        logger.warning("This link expires in 1 hour.")
+        logger.warning("=" * 80)
+        return True, ""  # Return success in development
 
     try:
         # Create reset URL
