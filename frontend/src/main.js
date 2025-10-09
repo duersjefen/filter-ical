@@ -40,7 +40,21 @@ const routes = [
   {
     path: '/:domain/admin',
     component: () => import('./views/AdminView.vue'),
-    props: (route) => ({ domain: route.params.domain })
+    props: (route) => ({ domain: route.params.domain }),
+    beforeEnter: (to, from, next) => {
+      // Check if user is logged in
+      const userStr = localStorage.getItem('user')
+      if (!userStr) {
+        // Not logged in, redirect to login with return URL
+        next({
+          path: '/login',
+          query: { redirect: to.fullPath }
+        })
+      } else {
+        // Logged in, allow access
+        next()
+      }
+    }
   },
   {
     path: '/:domain',
