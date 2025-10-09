@@ -385,24 +385,16 @@ async def apply_domain_assignment_rules(
 async def create_domain_filter(
     domain: str,
     filter_data: dict,
-    username: Optional[str] = Query(None),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Create filter for domain calendar."""
+    """Create filter for domain calendar (authentication required)."""
     try:
         # Verify domain exists in database
         verify_domain_exists(db, domain)
         # Validate request data
         if "name" not in filter_data:
             raise HTTPException(status_code=400, detail="Filter name is required")
-        
-        # Get user_id from username if provided
-        user_id = None
-        if username:
-            from ..models.user import User
-            user = db.query(User).filter(User.username == username).first()
-            if user:
-                user_id = user.id
 
         # Create filter
         success, filter_obj, error = create_filter(
@@ -496,10 +488,10 @@ async def update_domain_filter(
     domain: str,
     filter_id: int,
     filter_data: dict,
-    username: Optional[str] = Query(None),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Update an existing domain filter."""
+    """Update an existing domain filter (authentication required)."""
     try:
         # Verify domain exists in database
         verify_domain_exists(db, domain)
@@ -508,16 +500,8 @@ async def update_domain_filter(
         if not existing_filter or existing_filter.domain_key != domain:
             raise HTTPException(status_code=404, detail="Filter not found")
 
-        # Get user_id from username if provided
-        user_id = None
-        if username:
-            from ..models.user import User
-            user = db.query(User).filter(User.username == username).first()
-            if user:
-                user_id = user.id
-
         # Verify user owns this filter
-        if user_id and existing_filter.user_id != user_id:
+        if existing_filter.user_id != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
         # Update the filter
@@ -565,15 +549,15 @@ async def update_domain_filter(
 async def delete_domain_filter(
     domain: str,
     filter_id: int,
-    username: Optional[str] = Query(None),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Delete filter for domain calendar."""
+    """Delete filter for domain calendar (authentication required)."""
     try:
         # Verify domain exists in database
         verify_domain_exists(db, domain)
         # Delete filter
-        success, error = delete_filter(db, filter_id, domain_key=domain, username=username)
+        success, error = delete_filter(db, filter_id, domain_key=domain, user_id=user_id)
         if not success:
             if "not found" in error.lower():
                 raise HTTPException(status_code=404, detail="Filter not found")

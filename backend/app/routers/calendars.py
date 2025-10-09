@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from ..core.database import get_db
-from ..core.auth import get_current_user_id
+from ..core.auth import get_current_user_id, require_user_auth
 from ..i18n.utils import get_locale_from_request, format_error_message
 from ..services.calendar_service import (
     create_calendar, get_calendars, get_calendar_by_id, delete_calendar,
@@ -25,10 +25,10 @@ router = APIRouter()
 async def add_calendar(
     calendar_data: dict,
     request: Request,
-    user_id: Optional[int] = Depends(get_current_user_id),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Add a user calendar."""
+    """Add a user calendar (authentication required)."""
     try:
         # Validate request data
         locale = get_locale_from_request(request)
@@ -120,10 +120,10 @@ async def list_calendars(
 @router.post("/{calendar_id}/sync")
 async def sync_calendar_endpoint(
     calendar_id: int,
-    user_id: Optional[int] = Depends(get_current_user_id),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Manually sync calendar events from source."""
+    """Manually sync calendar events from source (authentication required)."""
     try:
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
@@ -150,10 +150,10 @@ async def sync_calendar_endpoint(
 @router.delete("/{calendar_id}")
 async def delete_user_calendar(
     calendar_id: int,
-    user_id: Optional[int] = Depends(get_current_user_id),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Delete a user calendar."""
+    """Delete a user calendar (authentication required)."""
     try:
         # Delete calendar
         success, error = delete_calendar(db, calendar_id, user_id=user_id)
@@ -215,10 +215,10 @@ async def get_calendar_events_endpoint(
 async def create_calendar_filter(
     calendar_id: int,
     filter_data: dict,
-    user_id: Optional[int] = Depends(get_current_user_id),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Create filter for user calendar."""
+    """Create filter for user calendar (authentication required)."""
     try:
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
@@ -320,10 +320,10 @@ async def update_calendar_filter(
     calendar_id: int,
     filter_id: int,
     filter_data: dict,
-    user_id: Optional[int] = Depends(get_current_user_id),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Update an existing calendar filter."""
+    """Update an existing calendar filter (authentication required)."""
     try:
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
@@ -382,10 +382,10 @@ async def update_calendar_filter(
 async def delete_calendar_filter(
     calendar_id: int,
     filter_id: int,
-    user_id: Optional[int] = Depends(get_current_user_id),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
-    """Delete filter for user calendar."""
+    """Delete filter for user calendar (authentication required)."""
     try:
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
