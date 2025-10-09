@@ -106,7 +106,7 @@
 
           <button
             type="button"
-            @click="$router.push('/reset-password')"
+            @click="showForgotPasswordModal = true"
             class="w-full text-sm text-purple-600 dark:text-purple-400 hover:underline"
           >
             {{ $t('login.forgotPassword') }}
@@ -215,6 +215,66 @@
         </div>
       </div>
     </div>
+
+    <!-- Forgot Password Modal -->
+    <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click.self="showForgotPasswordModal = false">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-200 dark:border-gray-700 p-8 max-w-md w-full">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Forgot Password?</h2>
+
+        <div v-if="resetEmailSent" class="text-center py-4">
+          <div class="text-5xl mb-4">✉️</div>
+          <p class="text-gray-700 dark:text-gray-300 mb-4">
+            If an account exists with that email, we've sent password reset instructions.
+          </p>
+          <button
+            @click="showForgotPasswordModal = false; resetEmailSent = false"
+            class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white py-3 rounded-xl font-bold transition-all"
+          >
+            Close
+          </button>
+        </div>
+
+        <form v-else @submit.prevent="handleForgotPassword" class="space-y-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Enter your email address and we'll send you a link to reset your password.
+          </p>
+
+          <div v-if="forgotPasswordError" class="p-3 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-lg border border-red-200 dark:border-red-700 text-sm">
+            {{ forgotPasswordError }}
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Email Address
+            </label>
+            <input
+              v-model="forgotPasswordEmail"
+              type="email"
+              required
+              class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              type="button"
+              @click="showForgotPasswordModal = false"
+              class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 py-3 rounded-xl font-bold transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="sendingResetEmail"
+              class="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 rounded-xl font-bold transition-all disabled:cursor-not-allowed"
+            >
+              {{ sendingResetEmail ? 'Sending...' : 'Send Reset Link' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -229,7 +289,7 @@ import LanguageToggle from '../components/LanguageToggle.vue'
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
-const { register, login } = useAuth()
+const { register, login, requestPasswordReset } = useAuth()
 const { get } = useHTTP()
 
 // State
@@ -237,6 +297,13 @@ const activeTab = ref('login')
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+
+// Forgot Password Modal
+const showForgotPasswordModal = ref(false)
+const forgotPasswordEmail = ref('')
+const sendingResetEmail = ref(false)
+const resetEmailSent = ref(false)
+const forgotPasswordError = ref('')
 
 // Login form
 const loginUsernameInput = ref(null) // Ref for auto-focus
@@ -306,6 +373,23 @@ const handleRegister = async () => {
     }, 500)
   } else {
     error.value = result.error
+  }
+}
+
+// Handle forgot password
+const handleForgotPassword = async () => {
+  forgotPasswordError.value = ''
+  sendingResetEmail.value = true
+
+  const result = await requestPasswordReset(forgotPasswordEmail.value)
+
+  sendingResetEmail.value = false
+
+  if (result.success) {
+    resetEmailSent.value = true
+    forgotPasswordEmail.value = ''
+  } else {
+    forgotPasswordError.value = result.error
   }
 }
 
