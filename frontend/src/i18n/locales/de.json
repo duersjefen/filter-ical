@@ -708,6 +708,17 @@
     }
   },
   "admin": {
+    "setupCard": {
+      "title": "Benutzerdefinierte Veranstaltungsgruppen einrichten",
+      "subtitle": "Organisieren Sie Ihre Veranstaltungen für bessere Verwaltung",
+      "noGroupsMessage": "Sie haben noch keine benutzerdefinierten Gruppen eingerichtet.",
+      "groupsBenefit": "Benutzerdefinierte Gruppen helfen bei der Organisation von Veranstaltungen, der Erstellung gefilterter Kalender und dem Teilen spezifischer Inhalte mit anderen.",
+      "benefitsTitle": "Was Sie mit Gruppen tun können:",
+      "benefit1": "Veranstaltungen in benutzerdefinierte Kategorien organisieren",
+      "benefit2": "Gefilterte Kalender-Abonnements erstellen",
+      "benefit3": "Spezifische Veranstaltungsgruppen mit anderen teilen",
+      "setupButton": "Zum Admin-Panel"
+    },
     "panel": {
       "title": "Admin-Panel",
       "subtitle": "Passwort erforderlich für Admin-Funktionen",

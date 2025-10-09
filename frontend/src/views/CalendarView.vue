@@ -47,7 +47,13 @@
         @switch-to-types="handleSwitchToTypes"
         @toggle-groups-section="showGroupsSection = !showGroupsSection"
       />
-      
+
+      <!-- Admin Setup Card - shown when no custom groups exist and user has admin access -->
+      <AdminSetupCard
+        :domain-context="props.domainContext"
+        :has-custom-groups="hasRealCustomGroups"
+      />
+
       <!-- Show Event Types Interface Based on User Choice -->
       <RecurringEventsCardsSection
         v-if="shouldShowTypes"
@@ -219,6 +225,8 @@ import {
   RecurringEventsCardsSection
 } from '../components/calendar'
 import EventGroupsSection from '../components/calendar/EventGroupsSection.vue'
+import AdminSetupCard from '../components/calendar/AdminSetupCard.vue'
+import { hasCustomGroups as checkHasCustomGroups } from '../utils/groups'
 
 // Lazy load heavy components for better initial page load
 const PreviewEventsSection = defineAsyncComponent(() =>
@@ -333,6 +341,11 @@ const shouldShowGroups = computed(() => {
 
 const shouldShowTypes = computed(() => {
   return !shouldShowGroups.value
+})
+
+// Check if there are custom (non-auto) groups
+const hasRealCustomGroups = computed(() => {
+  return checkHasCustomGroups(appStore.groups)
 })
 
 

@@ -27,17 +27,21 @@ async def get_user_filters(
     allowing the frontend to display domain navigation buttons for domains where
     the user has created filters.
 
-    Authentication via JWT token in Authorization header.
+    Authentication via JWT token in Authorization header (optional - returns empty for anonymous).
 
     Args:
-        user_id: User ID extracted from JWT token
+        user_id: User ID extracted from JWT token (None for anonymous users)
         db: Database session
 
     Returns:
         List of filter objects matching the OpenAPI Filter schema
     """
     try:
-        # Get all filters for the user (no calendar_id or domain_key filter)
+        # Return empty list for anonymous users
+        if not user_id:
+            return []
+
+        # Get all filters for the authenticated user
         filters = get_filters(db, user_id=user_id)
 
         # Transform to OpenAPI schema format
