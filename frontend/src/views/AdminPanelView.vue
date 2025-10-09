@@ -65,6 +65,72 @@
       </div>
     </div>
 
+    <!-- Approval Modal (Full-screen overlay) -->
+    <div v-if="showApproveModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="max-w-2xl w-full mx-4">
+        <div class="bg-gradient-to-br from-white via-white to-green-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-green-900/10 rounded-2xl shadow-xl border-2 border-gray-200/80 dark:border-gray-700/80 p-8">
+          <!-- Icon -->
+          <div class="flex items-center justify-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 rounded-2xl flex items-center justify-center shadow-lg">
+              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Title & Description -->
+          <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-2">
+            Approve Domain Request
+          </h2>
+          <p class="text-center text-gray-600 dark:text-gray-400 mb-6">
+            This will create the domain calendar and make it accessible to the user.
+          </p>
+
+          <!-- Info Box -->
+          <div class="bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-4 py-3 rounded-xl mb-6 border border-green-200 dark:border-green-700">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p class="font-semibold text-sm mb-1">✅ What happens next</p>
+                <p class="text-sm">The domain will be created immediately and the user will be able to access their calendar.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email Toggle -->
+          <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" v-model="sendApprovalEmail" class="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+              <div class="flex-1">
+                <span class="font-semibold text-gray-700 dark:text-gray-300">📧 Send email notification to user</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">User will receive their domain URL and admin panel link</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3">
+            <button
+              @click="cancelApproval"
+              :disabled="submittingApproval"
+              class="flex-1 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg disabled:shadow-sm disabled:transform-none"
+            >
+              Cancel
+            </button>
+            <button
+              @click="submitApproval"
+              :disabled="submittingApproval"
+              class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg disabled:shadow-sm disabled:transform-none"
+            >
+              {{ submittingApproval ? 'Approving...' : 'Confirm Approval' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Rejection Modal (Full-screen overlay) -->
     <div v-if="showRejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div class="max-w-2xl w-full mx-4">
@@ -100,7 +166,7 @@
           </div>
 
           <!-- Rejection Reason Textarea -->
-          <div class="mb-6">
+          <div class="mb-4">
             <label for="rejection-reason" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
               Rejection Reason
             </label>
@@ -115,6 +181,17 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Be specific and helpful - this helps users understand how to improve their request.
             </p>
+          </div>
+
+          <!-- Email Toggle -->
+          <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" v-model="sendRejectionEmail" class="w-5 h-5 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+              <div class="flex-1">
+                <span class="font-semibold text-gray-700 dark:text-gray-300">📧 Send email notification to user</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">User will receive your rejection reason via email</p>
+              </div>
+            </label>
           </div>
 
           <!-- Action Buttons -->
@@ -280,125 +357,139 @@
       </div>
 
       <!-- Requests List -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
-        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ $t('admin.panel.pendingRequests') || 'Pending Domain Requests' }}</h2>
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">📬 Pending Domain Requests</h2>
+          <span class="text-sm text-gray-600 dark:text-gray-400">{{ pendingRequests.length }} request{{ pendingRequests.length !== 1 ? 's' : '' }}</span>
         </div>
 
-        <div v-if="loading" class="p-12 text-center">
+        <div v-if="loading" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center">
           <div class="inline-block w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p class="mt-4 text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
         </div>
 
-        <div v-else-if="pendingRequests.length === 0" class="p-12 text-center">
+        <div v-else-if="pendingRequests.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center">
           <div class="text-6xl mb-4">📭</div>
           <p class="text-gray-600 dark:text-gray-400 font-semibold">{{ $t('admin.panel.noRequests') }}</p>
         </div>
 
-        <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-          <div v-for="request in pendingRequests" :key="request.id" class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 mb-2">
-                  <span class="font-bold text-lg text-gray-900 dark:text-gray-100">{{ request.username }}</span>
+        <div v-else class="space-y-4">
+          <div v-for="request in pendingRequests" :key="request.id" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm hover:shadow-md">
+
+            <!-- Request Header -->
+            <div class="px-5 py-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-lg flex items-center justify-center shadow-md">
+                  <span class="text-white font-bold text-lg">{{ request.username.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-900 dark:text-gray-100">{{ request.username }}</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ request.email }}</p>
+                </div>
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {{ formatDate(request.created_at) }}
+              </div>
+            </div>
+
+            <!-- Request Details -->
+            <div class="p-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <!-- Requested Domain -->
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-700">
+                  <p class="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">🔑 REQUESTED DOMAIN</p>
+                  <p class="font-mono font-bold text-purple-900 dark:text-purple-100">{{ request.requested_domain_key }}</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    <strong>📧 Email:</strong>
-                    <span class="ml-1">{{ request.email }}</span>
-                  </p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    <strong>🔑 Requested Domain:</strong>
-                    <span class="ml-1 font-mono font-semibold text-purple-600 dark:text-purple-400">{{ request.requested_domain_key }}</span>
-                  </p>
-                </div>
-
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 break-all">
-                  <strong>{{ $t('admin.panel.calendarUrl') }}:</strong>
-                  <a :href="request.calendar_url" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">
+                <!-- Calendar URL -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
+                  <p class="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">📅 CALENDAR URL</p>
+                  <a :href="request.calendar_url" target="_blank" class="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all">
                     {{ request.calendar_url }}
                   </a>
-                </p>
+                </div>
+              </div>
 
-                <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                  {{ request.description }}
-                </p>
+              <!-- Description -->
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-600">
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">📝 DESCRIPTION</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ request.description }}</p>
+              </div>
 
-                <!-- iCal Preview -->
-                <div class="mb-3">
-                  <button
-                    @click="togglePreview(request.id)"
-                    class="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
-                  >
-                    <span>{{ icalPreviews[request.id]?.expanded ? '▼' : '▶' }}</span>
-                    <span>{{ icalPreviews[request.id]?.expanded ? 'Hide' : 'Show' }} Calendar Preview</span>
-                  </button>
+              <!-- iCal Preview -->
+              <div class="mb-4">
+                <button
+                  @click="togglePreview(request.id)"
+                  class="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-2 transition-colors"
+                >
+                  <svg class="w-4 h-4" :class="{ 'rotate-90': icalPreviews[request.id]?.expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                  <span>{{ icalPreviews[request.id]?.expanded ? 'Hide' : 'Show' }} Calendar Preview</span>
+                </button>
 
-                  <div v-if="icalPreviews[request.id]?.expanded" class="mt-2">
-                    <!-- Loading State -->
-                    <div v-if="icalPreviews[request.id]?.loading" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <div class="flex items-center gap-2">
-                        <div class="inline-block w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-sm text-blue-700 dark:text-blue-300">Loading events...</span>
-                      </div>
+                <div v-if="icalPreviews[request.id]?.expanded" class="mt-3">
+                  <!-- Loading State -->
+                  <div v-if="icalPreviews[request.id]?.loading" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+                    <div class="flex items-center gap-2">
+                      <div class="inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Loading events...</span>
                     </div>
+                  </div>
 
-                    <!-- Error State -->
-                    <div v-else-if="icalPreviews[request.id]?.data?.error" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-700">
-                      <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-sm font-semibold text-red-800 dark:text-red-200">❌ Calendar Error</span>
-                      </div>
-                      <p class="text-sm text-red-700 dark:text-red-300">{{ icalPreviews[request.id].data.error }}</p>
+                  <!-- Error State -->
+                  <div v-else-if="icalPreviews[request.id]?.data?.error" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border-2 border-red-200 dark:border-red-700">
+                    <div class="flex items-center gap-2 mb-2">
+                      <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                      </svg>
+                      <span class="font-bold text-red-800 dark:text-red-200">Calendar Error</span>
                     </div>
+                    <p class="text-sm text-red-700 dark:text-red-300">{{ icalPreviews[request.id].data.error }}</p>
+                  </div>
 
-                    <!-- Success State -->
-                    <div v-else-if="icalPreviews[request.id]?.data" class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                      <div class="flex items-center gap-2 mb-3">
-                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-sm font-semibold text-green-800 dark:text-green-200">✅ Found {{ icalPreviews[request.id].data.event_count }} event{{ icalPreviews[request.id].data.event_count !== 1 ? 's' : '' }}</span>
-                      </div>
-                      <div v-if="icalPreviews[request.id].data.events.length > 0" class="space-y-2">
-                        <p class="text-xs text-green-700 dark:text-green-300 font-semibold mb-2">Preview (first {{ Math.min(5, icalPreviews[request.id].data.events.length) }} events):</p>
-                        <div v-for="(event, idx) in icalPreviews[request.id].data.events.slice(0, 5)" :key="idx" class="bg-white dark:bg-gray-800 p-2 rounded border border-green-200 dark:border-green-700">
-                          <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ event.title }}</p>
-                          <p v-if="event.start_time" class="text-xs text-gray-600 dark:text-gray-400">📅 {{ new Date(event.start_time).toLocaleDateString() }} {{ new Date(event.start_time).toLocaleTimeString() }}</p>
-                          <p v-if="event.location" class="text-xs text-gray-600 dark:text-gray-400">📍 {{ event.location }}</p>
-                        </div>
+                  <!-- Success State -->
+                  <div v-else-if="icalPreviews[request.id]?.data" class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border-2 border-green-200 dark:border-green-700">
+                    <div class="flex items-center gap-2 mb-3">
+                      <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                      </svg>
+                      <span class="font-bold text-green-800 dark:text-green-200">Found {{ icalPreviews[request.id].data.event_count }} event{{ icalPreviews[request.id].data.event_count !== 1 ? 's' : '' }}</span>
+                    </div>
+                    <div v-if="icalPreviews[request.id].data.events.length > 0" class="space-y-2">
+                      <p class="text-xs font-bold text-green-700 dark:text-green-300 mb-2">PREVIEW (first {{ Math.min(5, icalPreviews[request.id].data.events.length) }} events)</p>
+                      <div v-for="(event, idx) in icalPreviews[request.id].data.events.slice(0, 5)" :key="idx" class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-green-200 dark:border-green-700">
+                        <p class="font-semibold text-gray-900 dark:text-gray-100 mb-1">{{ event.title }}</p>
+                        <p v-if="event.start_time" class="text-xs text-gray-600 dark:text-gray-400">📅 {{ new Date(event.start_time).toLocaleDateString() }} {{ new Date(event.start_time).toLocaleTimeString() }}</p>
+                        <p v-if="event.location" class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">📍 {{ event.location }}</p>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ $t('admin.panel.submitted') }}: {{ formatDate(request.created_at) }}
-                </p>
-
-                <p v-if="request.domain_key" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {{ $t('admin.panel.domainKey') }}: <span class="font-mono font-bold">{{ request.domain_key }}</span>
-                </p>
               </div>
 
-              <div class="flex flex-col gap-2">
+              <!-- Action Buttons -->
+              <div class="flex gap-3 pt-4 border-t-2 border-gray-100 dark:border-gray-700">
                 <button
                   @click="approveRequest(request.id)"
                   :disabled="processing || !canApproveRequest(request.id)"
                   :title="getApprovalDisabledReason(request.id)"
-                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  class="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed shadow-md hover:shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
                 >
-                  ✓ {{ $t('admin.panel.approve') }}
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <span>{{ $t('admin.panel.approve') || 'Approve' }}</span>
                 </button>
                 <button
                   @click="rejectRequest(request.id)"
                   :disabled="processing"
-                  class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
+                  class="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed shadow-md hover:shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
                 >
-                  ✗ {{ $t('admin.panel.reject') }}
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  <span>{{ $t('admin.panel.reject') || 'Reject' }}</span>
                 </button>
               </div>
             </div>
@@ -537,6 +628,14 @@ const showRejectModal = ref(false)
 const rejectingRequestId = ref(null)
 const rejectionReason = ref('')
 const submittingRejection = ref(false)
+
+// Approval modal state
+const showApproveModal = ref(false)
+const approvingRequestId = ref(null)
+const approvalMessage = ref('')
+const sendApprovalEmail = ref(true)
+const sendRejectionEmail = ref(true)
+const submittingApproval = ref(false)
 
 // Computed stats
 // Only show pending requests (approved ones become domains, rejected ones are hidden)
@@ -697,12 +796,26 @@ const viewPassword = async (domainKey, type) => {
   }
 }
 
-const approveRequest = async (requestId) => {
-  processing.value = true
+const approveRequest = (requestId) => {
+  // Open approval modal
+  approvingRequestId.value = requestId
+  approvalMessage.value = ''
+  sendApprovalEmail.value = true
+  showApproveModal.value = true
+}
+
+const cancelApproval = () => {
+  showApproveModal.value = false
+  approvingRequestId.value = null
+  approvalMessage.value = ''
+}
+
+const submitApproval = async () => {
+  submittingApproval.value = true
   try {
     await axios.patch(
-      `${API_BASE_URL}/api/admin/domain-requests/${requestId}/approve`,
-      {},
+      `${API_BASE_URL}/api/admin/domain-requests/${approvingRequestId.value}/approve`,
+      { send_email: sendApprovalEmail.value },
       {
         headers: getAuthHeaders()
       }
@@ -710,10 +823,11 @@ const approveRequest = async (requestId) => {
     // Reload both requests and domains to show the new domain
     await Promise.all([loadRequests(), loadDomains()])
     notify.success(t('admin.panel.approvalSuccess') || 'Request approved successfully')
+    cancelApproval()
   } catch (error) {
     notify.error(t('admin.panel.approvalFailed'))
   } finally {
-    processing.value = false
+    submittingApproval.value = false
   }
 }
 
@@ -721,6 +835,7 @@ const rejectRequest = (requestId) => {
   // Open rejection modal
   rejectingRequestId.value = requestId
   rejectionReason.value = ''
+  sendRejectionEmail.value = true
   showRejectModal.value = true
 }
 
@@ -740,7 +855,10 @@ const submitRejection = async () => {
   try {
     await axios.patch(
       `${API_BASE_URL}/api/admin/domain-requests/${rejectingRequestId.value}/reject`,
-      { reason: rejectionReason.value.trim() },
+      {
+        reason: rejectionReason.value.trim(),
+        send_email: sendRejectionEmail.value
+      },
       {
         headers: getAuthHeaders()
       }

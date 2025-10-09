@@ -37,11 +37,13 @@ class AdminLoginResponse(BaseModel):
 class ApproveRequestBody(BaseModel):
     """Optional body for approve request."""
     domain_key: Optional[str] = None
+    send_email: bool = True
 
 
 class RejectRequestBody(BaseModel):
     """Optional body for reject request."""
     reason: Optional[str] = None
+    send_email: bool = True
 
 
 def generate_domain_key(username: str, db: Session) -> str:
@@ -219,6 +221,15 @@ async def approve_domain_request(
         db.commit()
         db.refresh(domain)
 
+        # 6. Send email notification if requested
+        if body and body.send_email:
+            from ..services.email_service import send_domain_approval_email
+            try:
+                await send_domain_approval_email(domain_request, domain_key)
+            except Exception as e:
+                # Log but don't fail approval if email fails
+                print(f"Warning: Failed to send approval email: {e}")
+
         return {
             "success": True,
             "message": "Domain request approved and domain created",
@@ -270,10 +281,22 @@ async def reject_domain_request(
         # Update request status
         domain_request.status = RequestStatus.REJECTED
         domain_request.reviewed_at = func.now()
+
+        rejection_reason = ""
         if body and body.reason:
             domain_request.rejection_reason = body.reason
+            rejection_reason = body.reason
 
         db.commit()
+
+        # Send email notification if requested
+        if body and body.send_email and rejection_reason:
+            from ..services.email_service import send_domain_rejection_email
+            try:
+                await send_domain_rejection_email(domain_request, rejection_reason)
+            except Exception as e:
+                # Log but don't fail rejection if email fails
+                print(f"Warning: Failed to send rejection email: {e}")
 
         return {
             "success": True,

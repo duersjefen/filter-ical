@@ -16,6 +16,41 @@ from ..models.domain_request import DomainRequest
 logger = logging.getLogger(__name__)
 
 
+async def _send_email(to_email: str, subject: str, html_body: str, text_body: str) -> Tuple[bool, str]:
+    """Helper function to send emails - DRY principle."""
+    if not settings.smtp_username:
+        logger.warning("Email not configured - skipping notification")
+        return True, ""
+
+    try:
+        message = MIMEMultipart("alternative")
+        message["Subject"] = subject
+        message["From"] = settings.smtp_from_email
+        message["To"] = to_email
+
+        part1 = MIMEText(text_body, "plain")
+        part2 = MIMEText(html_body, "html")
+        message.attach(part1)
+        message.attach(part2)
+
+        await aiosmtplib.send(
+            message,
+            hostname=settings.smtp_host,
+            port=settings.smtp_port,
+            username=settings.smtp_username,
+            password=settings.smtp_password,
+            start_tls=True,
+        )
+
+        logger.info(f"Email sent to {to_email}")
+        return True, ""
+
+    except Exception as e:
+        error_msg = f"Failed to send email: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+
+
 async def send_domain_request_notification(request: DomainRequest) -> Tuple[bool, str]:
     """
     Send email notification to admin when new domain request is submitted.
@@ -262,3 +297,73 @@ https://filter-ical.de
         error_msg = f"Failed to send password reset email: {str(e)}"
         logger.error(error_msg)
         return False, error_msg
+
+
+async def send_domain_approval_email(request: DomainRequest, domain_key: str) -> Tuple[bool, str]:
+    """Send approval email to user."""
+    domain_url = f"https://filter-ical.de/{domain_key}"
+
+    html_body = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
+          <h1 style="margin: 0; font-size: 24px;">✅ Domain Approved!</h1>
+        </div>
+        <p>Hi <strong>{request.username}</strong>,</p>
+        <p>Your domain <strong>{domain_key}</strong> is now live!</p>
+        <p>📍 <a href="{domain_url}">{domain_url}</a></p>
+        <p>🔧 <a href="{domain_url}/admin">Manage your calendar</a></p>
+      </body>
+    </html>
+    """
+
+    text_body = f"""
+Hi {request.username},
+
+Your domain {domain_key} is now live!
+
+📍 {domain_url}
+🔧 {domain_url}/admin
+    """
+
+    return await _send_email(
+        request.email,
+        "✅ Your Custom Domain is Live!",
+        html_body,
+        text_body
+    )
+
+
+async def send_domain_rejection_email(request: DomainRequest, reason: str) -> Tuple[bool, str]:
+    """Send rejection email to user."""
+    html_body = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
+          <h1 style="margin: 0; font-size: 24px;">Domain Request Update</h1>
+        </div>
+        <p>Hi <strong>{request.username}</strong>,</p>
+        <p>We're unable to approve your domain request at this time.</p>
+        <p><strong>Reason:</strong><br/>{reason}</p>
+        <p>Feel free to submit a new request after addressing these concerns.</p>
+      </body>
+    </html>
+    """
+
+    text_body = f"""
+Hi {request.username},
+
+We're unable to approve your domain request at this time.
+
+Reason:
+{reason}
+
+Feel free to submit a new request after addressing these concerns.
+    """
+
+    return await _send_email(
+        request.email,
+        "Domain Request Update",
+        html_body,
+        text_body
+    )
