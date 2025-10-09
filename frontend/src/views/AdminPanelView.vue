@@ -296,11 +296,13 @@
                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Calendar URL *</label>
                 <input
                   v-model="newDomain.calendar_url"
+                  @paste="handleCalendarUrlPaste"
+                  @blur="handleCalendarUrlBlur"
                   type="url"
                   placeholder="https://example.com/calendar.ics"
                   class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">iCal feed URL</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">iCal feed URL (auto-previews on paste)</p>
               </div>
 
               <!-- Admin Password -->
@@ -1365,6 +1367,11 @@ const autoFillDisplayName = () => {
 }
 
 const previewNewDomainCalendar = async () => {
+  // Don't preview if URL is empty or invalid
+  if (!newDomain.value.calendar_url || !newDomain.value.calendar_url.startsWith('http')) {
+    return
+  }
+
   newDomainPreview.value.loading = true
   newDomainPreview.value.data = null
 
@@ -1385,7 +1392,38 @@ const previewNewDomainCalendar = async () => {
   }
 }
 
+// Auto-preview handlers
+let previewTimeout = null
+
+const handleCalendarUrlPaste = () => {
+  // Wait a moment for paste to complete, then preview
+  setTimeout(() => {
+    previewNewDomainCalendar()
+  }, 100)
+}
+
+const handleCalendarUrlBlur = () => {
+  // Debounce preview on blur
+  clearTimeout(previewTimeout)
+  previewTimeout = setTimeout(() => {
+    if (newDomain.value.calendar_url && !newDomainPreview.value.data) {
+      previewNewDomainCalendar()
+    }
+  }, 300)
+}
+
 const createDomain = async () => {
+  // If preview hasn't been run yet, or if URL changed since last preview, run it first
+  if (!newDomainPreview.value.data || newDomainPreview.value.loading) {
+    await previewNewDomainCalendar()
+
+    // If preview shows an error, don't proceed
+    if (newDomainPreview.value.data?.error) {
+      notify.error('Cannot create domain: ' + newDomainPreview.value.data.error)
+      return
+    }
+  }
+
   creatingDomain.value = true
 
   try {
