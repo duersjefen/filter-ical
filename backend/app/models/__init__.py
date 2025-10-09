@@ -1,7 +1,6 @@
 # Database models
 from .calendar import Calendar, Event, Group, RecurringEventGroup, AssignmentRule, Filter, DomainBackup
 from .domain_request import DomainRequest, RequestStatus
-from .domain_auth import DomainAuth
 from .domain import Domain
 from .domain_admin import domain_admins
 from .app_settings import AppSettings
@@ -18,7 +17,6 @@ __all__ = [
     "DomainBackup",
     "DomainRequest",
     "RequestStatus",
-    "DomainAuth",
     "Domain",
     "domain_admins",
     "AppSettings",

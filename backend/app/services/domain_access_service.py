@@ -10,7 +10,7 @@ entry so they don't need to re-enter it on future visits.
 from typing import Optional, List
 from sqlalchemy.orm import Session
 
-from ..models.domain_auth import DomainAuth
+from ..models.domain import Domain
 from ..models.user_domain_access import UserDomainAccess
 from ..models.calendar import Calendar
 from ..services.domain_auth_service import decrypt_password
@@ -36,18 +36,18 @@ def check_user_has_domain_access(
 
     I/O Operation - Database query.
     """
-    # Get domain_auth entry to find calendar_id
-    domain_auth = db.query(DomainAuth).filter(
-        DomainAuth.domain_key == domain_key
+    # Get domain entry to find calendar_id
+    domain = db.query(Domain).filter(
+        Domain.domain_key == domain_key
     ).first()
 
-    if not domain_auth:
+    if not domain:
         return False
 
     # Check if domain requires password for this access level
     password_required = (
-        domain_auth.admin_password_hash if access_level == 'admin'
-        else domain_auth.user_password_hash
+        domain.admin_password_hash if access_level == 'admin'
+        else domain.user_password_hash
     )
 
     # If no password set, allow access
@@ -57,7 +57,7 @@ def check_user_has_domain_access(
     # Check user_domain_access table
     access = db.query(UserDomainAccess).filter(
         UserDomainAccess.user_id == user_id,
-        UserDomainAccess.calendar_id == domain_auth.calendar_id,
+        UserDomainAccess.calendar_id == domain.calendar_id,
         UserDomainAccess.access_level == access_level
     ).first()
 
@@ -88,24 +88,24 @@ def unlock_domain_for_user(
 
     I/O Operation - Database query and insert.
     """
-    # Get domain_auth entry
-    domain_auth = db.query(DomainAuth).filter(
-        DomainAuth.domain_key == domain_key
+    # Get domain entry
+    domain = db.query(Domain).filter(
+        Domain.domain_key == domain_key
     ).first()
 
-    if not domain_auth:
+    if not domain:
         return False, "Domain not found"
 
     # Get password hash for this access level
     password_hash = (
-        domain_auth.admin_password_hash if access_level == 'admin'
-        else domain_auth.user_password_hash
+        domain.admin_password_hash if access_level == 'admin'
+        else domain.user_password_hash
     )
 
     if not password_hash:
         # No password set, automatically grant access
         try:
-            _create_access_entry(db, user_id, domain_auth.calendar_id, access_level)
+            _create_access_entry(db, user_id, domain.calendar_id, access_level)
             return True, ""
         except Exception as e:
             return False, f"Failed to grant access: {str(e)}"
@@ -120,7 +120,7 @@ def unlock_domain_for_user(
 
     # Create access entry
     try:
-        _create_access_entry(db, user_id, domain_auth.calendar_id, access_level)
+        _create_access_entry(db, user_id, domain.calendar_id, access_level)
         return True, ""
     except Exception as e:
         return False, f"Failed to grant access: {str(e)}"
@@ -145,11 +145,11 @@ def get_user_unlocked_domains(
     # Query user_domain_access with joins to get domain_key
     results = (
         db.query(
-            DomainAuth.domain_key,
+            Domain.domain_key,
             UserDomainAccess.access_level,
             UserDomainAccess.unlocked_at
         )
-        .join(UserDomainAccess, DomainAuth.calendar_id == UserDomainAccess.calendar_id)
+        .join(UserDomainAccess, Domain.calendar_id == UserDomainAccess.calendar_id)
         .filter(UserDomainAccess.user_id == user_id)
         .all()
     )

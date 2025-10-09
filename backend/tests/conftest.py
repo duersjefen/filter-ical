@@ -91,7 +91,7 @@ def test_db_engine():
     # Import all models to register them with SQLAlchemy
     from app.models import (
         Calendar, Event, Group, RecurringEventGroup, AssignmentRule, Filter,
-        DomainRequest, DomainAuth, Domain, AppSettings, User, UserDomainAccess, DomainBackup
+        DomainRequest, Domain, AppSettings, User, UserDomainAccess, DomainBackup
     )
 
     # Create all tables

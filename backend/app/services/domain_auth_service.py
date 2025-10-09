@@ -8,7 +8,7 @@ Handles database queries, password management, and token generation.
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
-from ..models.domain_auth import DomainAuth
+from ..models.domain import Domain
 from ..data.domain_auth import (
     encrypt_password,
     decrypt_password,
@@ -21,44 +21,52 @@ from ..data.domain_auth import (
 from ..core.config import settings
 
 
-def get_domain_auth(db: Session, domain_key: str) -> Optional[DomainAuth]:
+def get_domain_auth(db: Session, domain_key: str) -> Optional[Domain]:
     """
-    Get domain auth record from database.
+    Get domain record from database.
 
     Args:
         db: Database session
         domain_key: Domain identifier
 
     Returns:
-        DomainAuth object or None if not found
+        Domain object or None if not found
 
     I/O Operation - Database query.
     """
-    return db.query(DomainAuth).filter(DomainAuth.domain_key == domain_key).first()
+    return db.query(Domain).filter(Domain.domain_key == domain_key).first()
 
 
-def get_or_create_domain_auth(db: Session, domain_key: str) -> DomainAuth:
+def get_or_create_domain_auth(db: Session, domain_key: str) -> Domain:
     """
-    Get or create domain auth record.
+    Get or create domain record.
+
+    Note: This function name is legacy. It now works with the unified Domain model.
+    For new domains, they should be created via proper domain creation workflow.
+    This is primarily for backward compatibility.
 
     Args:
         db: Database session
         domain_key: Domain identifier
 
     Returns:
-        DomainAuth object
+        Domain object
 
     I/O Operation - Database query/create.
     """
-    auth = get_domain_auth(db, domain_key)
+    domain = get_domain_auth(db, domain_key)
 
-    if not auth:
-        auth = DomainAuth(domain_key=domain_key)
-        db.add(auth)
+    if not domain:
+        # Create minimal domain record (primarily for backward compatibility)
+        domain = Domain(
+            domain_key=domain_key,
+            name=f"Domain {domain_key}"  # Default name
+        )
+        db.add(domain)
         db.commit()
-        db.refresh(auth)
+        db.refresh(domain)
 
-    return auth
+    return domain
 
 
 def set_admin_password(db: Session, domain_key: str, password: str) -> Tuple[bool, str]:
@@ -80,8 +88,8 @@ def set_admin_password(db: Session, domain_key: str, password: str) -> Tuple[boo
             return False, "Password must be at least 4 characters"
 
         encrypted = encrypt_password(password, settings.password_encryption_key)
-        auth = get_or_create_domain_auth(db, domain_key)
-        auth.admin_password_hash = encrypted
+        domain = get_or_create_domain_auth(db, domain_key)
+        domain.admin_password_hash = encrypted
 
         db.commit()
         return True, ""
@@ -110,8 +118,8 @@ def set_user_password(db: Session, domain_key: str, password: str) -> Tuple[bool
             return False, "Password must be at least 4 characters"
 
         encrypted = encrypt_password(password, settings.password_encryption_key)
-        auth = get_or_create_domain_auth(db, domain_key)
-        auth.user_password_hash = encrypted
+        domain = get_or_create_domain_auth(db, domain_key)
+        domain.user_password_hash = encrypted
 
         db.commit()
         return True, ""
@@ -135,12 +143,12 @@ def remove_admin_password(db: Session, domain_key: str) -> Tuple[bool, str]:
     I/O Operation - Database update.
     """
     try:
-        auth = get_domain_auth(db, domain_key)
+        domain = get_domain_auth(db, domain_key)
 
-        if not auth:
+        if not domain:
             return True, ""  # No password to remove
 
-        auth.admin_password_hash = None
+        domain.admin_password_hash = None
         db.commit()
         return True, ""
 
@@ -163,12 +171,12 @@ def remove_user_password(db: Session, domain_key: str) -> Tuple[bool, str]:
     I/O Operation - Database update.
     """
     try:
-        auth = get_domain_auth(db, domain_key)
+        domain = get_domain_auth(db, domain_key)
 
-        if not auth:
+        if not domain:
             return True, ""  # No password to remove
 
-        auth.user_password_hash = None
+        domain.user_password_hash = None
         db.commit()
         return True, ""
 
@@ -201,10 +209,10 @@ def verify_domain_password(
         if access_level not in ['admin', 'user']:
             return False, "Invalid access level"
 
-        auth = get_domain_auth(db, domain_key)
+        domain = get_domain_auth(db, domain_key)
 
         # No password set = no protection
-        if not auth:
+        if not domain:
             # Generate token even without password (backward compatibility)
             token = create_auth_token(
                 domain_key,
@@ -216,8 +224,8 @@ def verify_domain_password(
 
         # Check appropriate password hash
         password_hash = (
-            auth.admin_password_hash if access_level == 'admin'
-            else auth.user_password_hash
+            domain.admin_password_hash if access_level == 'admin'
+            else domain.user_password_hash
         )
 
         # No password set for this level = no protection
@@ -325,17 +333,17 @@ def check_password_status(db: Session, domain_key: str) -> dict:
 
     I/O Operation - Database query.
     """
-    auth = get_domain_auth(db, domain_key)
+    domain = get_domain_auth(db, domain_key)
 
-    if not auth:
+    if not domain:
         return {
             'admin_password_set': False,
             'user_password_set': False
         }
 
     return {
-        'admin_password_set': auth.admin_password_hash is not None,
-        'user_password_set': auth.user_password_hash is not None
+        'admin_password_set': domain.admin_password_hash is not None,
+        'user_password_set': domain.user_password_hash is not None
     }
 
 
@@ -351,17 +359,17 @@ def get_all_domains_auth_status(db: Session) -> list:
 
     I/O Operation - Database query.
     """
-    all_auth = db.query(DomainAuth).all()
+    all_domains = db.query(Domain).all()
 
     return [
         {
-            'domain_key': auth.domain_key,
-            'admin_password_set': auth.admin_password_hash is not None,
-            'user_password_set': auth.user_password_hash is not None,
-            'created_at': auth.created_at.isoformat() if auth.created_at else None,
-            'updated_at': auth.updated_at.isoformat() if auth.updated_at else None
+            'domain_key': domain.domain_key,
+            'admin_password_set': domain.admin_password_hash is not None,
+            'user_password_set': domain.user_password_hash is not None,
+            'created_at': domain.created_at.isoformat() if domain.created_at else None,
+            'updated_at': domain.updated_at.isoformat() if domain.updated_at else None
         }
-        for auth in all_auth
+        for domain in all_domains
     ]
 
 
@@ -380,17 +388,17 @@ def get_decrypted_password(db: Session, domain_key: str, password_type: str) -> 
     I/O Operation - Database query and decryption.
     """
     try:
-        auth = get_domain_auth(db, domain_key)
+        domain = get_domain_auth(db, domain_key)
 
-        if not auth:
+        if not domain:
             return False, "Domain not found"
 
         if password_type not in ['admin', 'user']:
             return False, "Invalid password type"
 
         encrypted = (
-            auth.admin_password_hash if password_type == 'admin'
-            else auth.user_password_hash
+            domain.admin_password_hash if password_type == 'admin'
+            else domain.user_password_hash
         )
 
         if not encrypted:

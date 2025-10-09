@@ -205,15 +205,9 @@ async def approve_domain_request(
         # 3. Link domain to calendar
         domain.calendar_id = calendar.id
 
-        # 4. Create DomainAuth record (for password authentication system)
-        from ..models.domain_auth import DomainAuth
-        domain_auth = DomainAuth(
-            domain_key=domain_key,
-            calendar_id=calendar.id,
-            admin_password_hash=domain_request.default_password,  # Already encrypted
-            user_password_hash=None
-        )
-        db.add(domain_auth)
+        # 4. Set initial password (already encrypted from domain request)
+        domain.admin_password_hash = domain_request.default_password
+        domain.user_password_hash = None
 
         # 5. Update request status
         domain_request.status = RequestStatus.APPROVED
@@ -349,10 +343,6 @@ async def delete_domain(
         )
 
     try:
-        # Delete DomainAuth record
-        from ..models.domain_auth import DomainAuth
-        db.query(DomainAuth).filter(DomainAuth.domain_key == domain_key).delete()
-
         # Delete calendar if exists (cascade will handle events)
         if domain.calendar_id:
             db.query(Calendar).filter(Calendar.id == domain.calendar_id).delete()

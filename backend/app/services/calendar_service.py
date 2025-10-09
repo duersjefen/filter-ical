@@ -57,13 +57,16 @@ def create_calendar(db: Session, name: str, source_url: str,
         name: Calendar name
         source_url: iCal source URL
         calendar_type: "user" or "domain"
-        domain_key: Domain key for domain calendars (creates DomainAuth entry)
+        domain_key: Domain key (legacy parameter, now unused - domain linking handled elsewhere)
         user_id: User ID for user scoping
 
     Returns:
         Tuple of (success, calendar_obj, error_message)
 
     I/O Operation - Database creation with validation.
+
+    Note: For domain calendars, the calendar_id is set in the domains table separately.
+    This function only creates the Calendar record itself.
     """
     # Validate data using pure function
     is_valid, error_msg = validate_calendar_data(name, source_url)
@@ -82,17 +85,6 @@ def create_calendar(db: Session, name: str, source_url: str,
         # Create database object
         calendar = Calendar(**calendar_data)
         db.add(calendar)
-        db.flush()  # Get calendar.id without committing
-
-        # For domain calendars, create DomainAuth entry
-        if calendar_type == "domain" and domain_key:
-            from ..models.domain_auth import DomainAuth
-            domain_auth = DomainAuth(
-                domain_key=domain_key,
-                calendar_id=calendar.id
-            )
-            db.add(domain_auth)
-
         db.commit()
         db.refresh(calendar)
 
