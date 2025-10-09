@@ -696,6 +696,17 @@
     }
   },
   "admin": {
+    "setupCard": {
+      "title": "Set up custom event groups",
+      "subtitle": "Organize your events for better management",
+      "noGroupsMessage": "You haven't set up any custom groups yet.",
+      "groupsBenefit": "Custom groups help organize events, create filtered calendars, and share specific content with others.",
+      "benefitsTitle": "What you can do with groups:",
+      "benefit1": "Organize events into custom categories",
+      "benefit2": "Create filtered calendar subscriptions",
+      "benefit3": "Share specific event groups with others",
+      "setupButton": "Go to Admin Panel"
+    },
     "panel": {
       "title": "Admin Panel",
       "subtitle": "Password required to access admin features",

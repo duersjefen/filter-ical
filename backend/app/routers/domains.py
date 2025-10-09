@@ -13,7 +13,7 @@ import yaml
 
 from ..core.database import get_db
 from ..core.config import settings
-from ..core.auth import require_user_auth
+from ..core.auth import require_user_auth, get_current_user_id
 from ..models.domain import Domain
 from ..services.domain_service import (
     load_domains_config, ensure_domain_calendar_exists,
@@ -90,19 +90,34 @@ def verify_domain_exists(db: Session, domain_key: str) -> Domain:
 
 
 @router.get("/{domain}")
-async def get_domain_config(domain: str, db: Session = Depends(get_db)):
-    """Get domain configuration from database."""
+async def get_domain_config(
+    domain: str,
+    db: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user_id)
+):
+    """Get domain configuration from database with optional user access info."""
     try:
         # Verify domain exists in database
         domain_obj = verify_domain_exists(db, domain)
 
+        # Determine user's access level if authenticated
+        is_owner = False
+        is_admin = False
+        if user_id:
+            is_owner = domain_obj.owner_id == user_id
+            is_admin = any(admin.id == user_id for admin in domain_obj.admins)
+
         return {
             "success": True,
             "data": {
+                "id": domain_obj.id,
                 "domain_key": domain_obj.domain_key,
                 "name": domain_obj.name,
                 "calendar_url": domain_obj.calendar_url,
-                "status": domain_obj.status
+                "status": domain_obj.status,
+                "is_owner": is_owner,
+                "is_admin": is_admin,
+                "has_admin_access": is_owner or is_admin
             }
         }
 
@@ -431,13 +446,18 @@ async def create_domain_filter(
 @router.get("/{domain}/filters")
 async def get_domain_filters(
     domain: str,
-    user_id: int = Depends(require_user_auth),
+    user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """List filters for domain calendar."""
+    """List filters for domain calendar (authentication optional - returns user's filters if authenticated)."""
     try:
         # Verify domain exists in database
         verify_domain_exists(db, domain)
+
+        # Only get filters if user is authenticated
+        if not user_id:
+            return []
+
         # Get filters for authenticated user
         filters = get_filters(db, domain_key=domain, user_id=user_id)
         

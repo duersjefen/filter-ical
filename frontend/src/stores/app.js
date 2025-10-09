@@ -8,6 +8,7 @@ import { ref, computed } from 'vue'
 import { useHTTP } from '../composables/useHTTP'
 import { useUsername } from '../composables/useUsername'
 import { API_ENDPOINTS } from '../constants/api'
+import { hasCustomGroups } from '../utils/groups'
 
 export const useAppStore = defineStore('app', () => {
   // ===============================================
@@ -488,9 +489,7 @@ export const useAppStore = defineStore('app', () => {
     if (result.success) {
       // Use backend format directly - no complex conversion needed
       const domainData = result.data
-      
-      hasGroups.value = domainData.groups && domainData.groups.length > 0
-      
+
       // Simple direct mapping - keep backend structure
       groups.value = {}
       if (domainData.groups) {
@@ -504,7 +503,11 @@ export const useAppStore = defineStore('app', () => {
           }
         })
       }
-      
+
+      // Only set hasGroups to true if there are custom (non-auto) groups
+      // Auto-created groups have IDs >= 9998
+      hasGroups.value = hasCustomGroups(groups.value)
+
 
     }
 
