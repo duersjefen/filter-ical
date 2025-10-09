@@ -4,7 +4,10 @@
     "loadingEvents": "Loading events...",
     "pleaseWait": "Please wait while we fetch your calendar data",
     "welcome": "Welcome, {username}!",
+    "success": "Success",
     "error": "Error",
+    "info": "Information",
+    "ok": "OK",
     "clear": "Clear",
     "search": "Search",
     "all": "All",
@@ -832,6 +835,20 @@
         "success": "Passwords updated successfully",
         "error": "Failed to update passwords"
       }
+    },
+    "domains": {
+      "createSuccess": "Domain \"{domainKey}\" created successfully!",
+      "createErrorDuplicate": "Domain key \"{domainKey}\" already exists. Please choose a different domain key.",
+      "createErrorUserNotFound": "User \"{username}\" not found. Please check the username.",
+      "createErrorValidation": "Validation error: {detail}",
+      "invalidFormat": "Invalid domain key format or URL",
+      "createError": "Failed to create domain: {detail}",
+      "assignOwnerSuccess": "Domain \"{domainKey}\" assigned to {username}",
+      "assignOwnerError": "Failed to assign owner: {detail}",
+      "removeOwnerSuccess": "Owner removed from domain \"{domainKey}\"",
+      "removeOwnerError": "Failed to remove owner: {detail}",
+      "removeOwnerTitle": "Remove Owner",
+      "removeOwnerConfirm": "Remove owner from domain \"{domainKey}\"?"
     }
   }
 }

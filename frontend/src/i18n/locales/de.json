@@ -4,7 +4,10 @@
     "loadingEvents": "Events werden geladen...",
     "pleaseWait": "Bitte warten Sie, während wir Ihre Kalenderdaten abrufen",
     "welcome": "Willkommen, {username}!",
+    "success": "Erfolg",
     "error": "Fehler",
+    "info": "Information",
+    "ok": "OK",
     "clear": "Löschen",
     "search": "Suchen",
     "all": "Alle",
@@ -844,6 +847,20 @@
         "success": "Passwörter erfolgreich aktualisiert",
         "error": "Passwörter konnten nicht aktualisiert werden"
       }
+    },
+    "domains": {
+      "createSuccess": "Domain \"{domainKey}\" erfolgreich erstellt!",
+      "createErrorDuplicate": "Domain-Schlüssel \"{domainKey}\" existiert bereits. Bitte wählen Sie einen anderen Domain-Schlüssel.",
+      "createErrorUserNotFound": "Benutzer \"{username}\" nicht gefunden. Bitte überprüfen Sie den Benutzernamen.",
+      "createErrorValidation": "Validierungsfehler: {detail}",
+      "invalidFormat": "Ungültiges Domain-Schlüssel-Format oder URL",
+      "createError": "Fehler beim Erstellen der Domain: {detail}",
+      "assignOwnerSuccess": "Domain \"{domainKey}\" wurde {username} zugewiesen",
+      "assignOwnerError": "Fehler beim Zuweisen des Besitzers: {detail}",
+      "removeOwnerSuccess": "Besitzer von Domain \"{domainKey}\" entfernt",
+      "removeOwnerError": "Fehler beim Entfernen des Besitzers: {detail}",
+      "removeOwnerTitle": "Besitzer entfernen",
+      "removeOwnerConfirm": "Besitzer von Domain \"{domainKey}\" entfernen?"
     }
   }
 }

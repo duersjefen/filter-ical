@@ -1336,7 +1336,7 @@ const createDomain = async () => {
     )
 
     // Success - reset form and reload domains
-    alert(`✅ Domain "${response.data.domain_key}" created successfully!`)
+    notify.success(t('admin.domains.createSuccess', { domainKey: response.data.domain_key }))
 
     // Reset form
     newDomain.value = {
@@ -1354,13 +1354,13 @@ const createDomain = async () => {
     console.error('Failed to create domain:', error)
 
     if (error.response?.status === 409) {
-      alert(`❌ Domain key "${newDomain.value.domain_key}" already exists. Please choose a different domain key.`)
+      notify.error(t('admin.domains.createErrorDuplicate', { domainKey: newDomain.value.domain_key }))
     } else if (error.response?.status === 404) {
-      alert(`❌ User "${newDomain.value.owner_username}" not found. Please check the username.`)
+      notify.error(t('admin.domains.createErrorUserNotFound', { username: newDomain.value.owner_username }))
     } else if (error.response?.status === 422) {
-      alert(`❌ Validation error: ${error.response?.data?.detail || 'Invalid domain key format or URL'}`)
+      notify.error(t('admin.domains.createErrorValidation', { detail: error.response?.data?.detail || t('admin.domains.invalidFormat') }))
     } else {
-      alert(`❌ Failed to create domain: ${error.response?.data?.detail || error.message}`)
+      notify.error(t('admin.domains.createError', { detail: error.response?.data?.detail || error.message }))
     }
   } finally {
     creatingDomain.value = false
@@ -1424,7 +1424,7 @@ const assignOwner = async (domainKey, userId, username) => {
       }
     )
 
-    alert(`✅ Domain "${domainKey}" assigned to ${username}`)
+    notify.success(t('admin.domains.assignOwnerSuccess', { domainKey, username }))
 
     // Update local domain list
     const domain = domains.value.find(d => d.domain_key === domainKey)
@@ -1436,39 +1436,43 @@ const assignOwner = async (domainKey, userId, username) => {
     cancelOwnerAssignment()
   } catch (error) {
     console.error('Failed to assign owner:', error)
-    alert(`❌ Failed to assign owner: ${error.response?.data?.detail || error.message}`)
+    notify.error(t('admin.domains.assignOwnerError', { detail: error.response?.data?.detail || error.message }))
   }
 }
 
-const removeOwner = async (domainKey) => {
-  if (!confirm(`Remove owner from domain "${domainKey}"?`)) {
-    return
-  }
+const removeOwner = (domainKey) => {
+  confirmDialogData.value = {
+    title: t('admin.domains.removeOwnerTitle'),
+    message: t('admin.domains.removeOwnerConfirm', { domainKey }),
+    confirmText: t('common.remove'),
+    onConfirm: async () => {
+      try {
+        const token = localStorage.getItem('admin_token')
+        await axios.patch(
+          `${API_BASE_URL}/api/admin/domains/${domainKey}/owner`,
+          { user_id: null },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
 
-  try {
-    const token = localStorage.getItem('admin_token')
-    await axios.patch(
-      `${API_BASE_URL}/api/admin/domains/${domainKey}/owner`,
-      { user_id: null },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+        notify.success(t('admin.domains.removeOwnerSuccess', { domainKey }))
+
+        // Update local domain list
+        const domain = domains.value.find(d => d.domain_key === domainKey)
+        if (domain) {
+          domain.owner_username = null
+          domain.owner_id = null
         }
+      } catch (error) {
+        console.error('Failed to remove owner:', error)
+        notify.error(t('admin.domains.removeOwnerError', { detail: error.response?.data?.detail || error.message }))
       }
-    )
-
-    alert(`✅ Owner removed from domain "${domainKey}"`)
-
-    // Update local domain list
-    const domain = domains.value.find(d => d.domain_key === domainKey)
-    if (domain) {
-      domain.owner_username = null
-      domain.owner_id = null
     }
-  } catch (error) {
-    console.error('Failed to remove owner:', error)
-    alert(`❌ Failed to remove owner: ${error.response?.data?.detail || error.message}`)
   }
+  confirmDialog.value?.open()
 }
 
 const autoExpandPreviews = async () => {
