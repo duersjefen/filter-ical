@@ -200,8 +200,13 @@ async def send_password_reset_email(user_email: str, username: str, reset_token:
 
     logger.info(f"📧 Attempting to send password reset email to {user_email}")
     try:
-        # Create reset URL (use localhost in development)
-        base_url = "http://localhost:8000" if settings.is_development else "https://filter-ical.de"
+        # Create reset URL based on environment
+        if settings.is_development:
+            base_url = "http://localhost:8000"
+        elif settings.is_staging:
+            base_url = "https://staging.filter-ical.de"
+        else:
+            base_url = "https://filter-ical.de"
         reset_url = f"{base_url}/reset-password?token={reset_token}"
 
         # Create email message
@@ -410,8 +415,13 @@ async def send_admin_password_reset_email(email: str, reset_token: str) -> Tuple
 
     logger.info(f"📧 Attempting to send admin password reset email to {email}")
     try:
-        # Create reset URL (use localhost in development)
-        base_url = "http://localhost:8000" if settings.is_development else "https://filter-ical.de"
+        # Create reset URL based on environment
+        if settings.is_development:
+            base_url = "http://localhost:8000"
+        elif settings.is_staging:
+            base_url = "https://staging.filter-ical.de"
+        else:
+            base_url = "https://filter-ical.de"
         reset_url = f"{base_url}/admin/reset-password?token={reset_token}"
 
         # Create HTML email body
