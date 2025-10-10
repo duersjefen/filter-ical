@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { API_BASE_URL } from '@/config/api'
+import { API_BASE_URL } from '../constants/api'
 
 export const useAdminStore = defineStore('admin', () => {
   const adminToken = ref(localStorage.getItem('admin_token') || null)
