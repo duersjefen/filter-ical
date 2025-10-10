@@ -20,7 +20,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: production
-    container_name: ${BACKEND_CONTAINER:-filter-ical-backend}
+    container_name: filter-ical-backend${ENVIRONMENT:+-}${ENVIRONMENT}
     restart: unless-stopped
     networks:
       - platform
@@ -51,7 +51,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ""
-    container_name: ${FRONTEND_CONTAINER:-filter-ical-frontend}
+    container_name: filter-ical-frontend${ENVIRONMENT:+-}${ENVIRONMENT}
     restart: unless-stopped
     networks:
       - platform
