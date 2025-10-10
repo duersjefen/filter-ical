@@ -91,16 +91,34 @@ aws ssm send-command \
 echo ""
 echo "✅ Deployment command sent successfully!"
 echo ""
-echo "📋 Monitor deployment:"
-echo "  aws ssm list-command-invocations --region $REGION --instance-id $INSTANCE_ID --details | head -50"
-echo ""
-echo "Or connect interactively:"
-echo "  aws ssm start-session --target $INSTANCE_ID --region $REGION"
-echo ""
-echo "🔍 Test deployment:"
+echo "⏳ Waiting for deployment to complete (60s)..."
+sleep 60
+
+# Perform health check
+echo "🔍 Checking health..."
 if [ "$ENVIRONMENT" = "production" ]; then
-    echo "  curl https://filter-ical.de"
+    HEALTH_URL="https://filter-ical.de/health"
 else
-    echo "  curl https://staging.filter-ical.de"
+    HEALTH_URL="https://staging.filter-ical.de/health"
+fi
+
+if curl -f -s "$HEALTH_URL" > /dev/null 2>&1; then
+    echo "✅ Deployment successful - health check passed"
+    echo ""
+    echo "🌐 Application is live:"
+    if [ "$ENVIRONMENT" = "production" ]; then
+        echo "  https://filter-ical.de"
+    else
+        echo "  https://staging.filter-ical.de"
+    fi
+else
+    echo "❌ Health check failed - deployment may have issues"
+    echo ""
+    echo "🔍 Debug with:"
+    echo "  make logs-$ENVIRONMENT"
+    echo ""
+    echo "Or connect interactively:"
+    echo "  aws ssm start-session --target $INSTANCE_ID --region $REGION"
+    exit 1
 fi
 echo ""
