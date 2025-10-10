@@ -22,7 +22,10 @@ For app-specific development and deployment, see below.
 2. **Make minimum implementation** → Code only what's needed to pass tests
 3. **Refactor safely** → `make test` ensures no regression
 4. **Test & Commit** → Always run `make test` and commit after completing features/fixes
-5. **Deploy** → `make deploy-staging` or `make deploy-production` (both via SSM)
+5. **Deploy** → `make test` → `make deploy-staging` or `make deploy-production`
+   - Tests catch code issues before deployment
+   - Automatic health check catches deployment issues
+   - Use `make logs-staging` or `make logs-production` if health check fails
 
 ### Quick Reference
 ```bash
@@ -37,8 +40,11 @@ make test                  # Run unit tests
 make test-all              # Run complete test suite (unit + integration + E2E)
 
 # Deployment
-make deploy-staging        # Deploy to staging via SSM (builds on server)
-make deploy-production     # Deploy to production via SSM (builds on server)
+make deploy-staging        # Run tests → deploy to staging (auto health check)
+make deploy-production     # Run tests → deploy to production (auto health check)
+SKIP_TESTS=1 make deploy-staging   # Emergency deploy (skip tests)
+make logs-staging          # View staging logs (if deployment fails)
+make logs-production       # View production logs (if deployment fails)
 make status                # Check deployment status
 
 # Local Development URLs

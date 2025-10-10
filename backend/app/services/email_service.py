@@ -461,14 +461,6 @@ async def send_admin_password_reset_email(email: str, reset_token: str) -> Tuple
               </p>
             </div>
 
-            <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-              <p style="color: #991b1b; margin: 0; font-size: 14px;">
-                <strong>🔴 Critical:</strong> After resetting your password, you must update the
-                <code style="background: #fee; padding: 2px 6px; border-radius: 3px;">ADMIN_PASSWORD</code>
-                environment variable on the server to persist the change across restarts.
-              </p>
-            </div>
-
             <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
               <p style="color: #6c757d; margin: 0; font-size: 13px;">
                 If you didn't request this password reset, please ignore this email.
@@ -496,9 +488,6 @@ Reset your password by visiting this link:
 {reset_url}
 
 ⚠️ IMPORTANT: This link expires in 1 hour for security reasons.
-
-🔴 CRITICAL: After resetting your password, you must update the ADMIN_PASSWORD
-environment variable on the server to persist the change across restarts.
 
 If you didn't request this password reset, you can safely ignore this email.
 

@@ -84,19 +84,41 @@ def generate_domain_key(username: str, db: Session) -> str:
     summary="Admin login to get JWT token",
     description="Authenticate with admin password and receive a JWT token valid for 30 days"
 )
-async def admin_login(request: AdminLoginRequest):
+async def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate with admin password and get a JWT token.
 
     Returns a token that can be used for 30 days without re-entering the password.
+    Password is stored in database (admin_settings table).
     """
     from ..core.config import settings
+    from ..models.admin import AdminSettings
+    from passlib.context import CryptContext
 
-    # Verify password using constant-time comparison
-    is_password_correct = secrets.compare_digest(
-        request.password.encode("utf-8"),
-        settings.admin_password.encode("utf-8")
-    )
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    # Get admin password from database
+    admin_settings = db.query(AdminSettings).filter(AdminSettings.id == 1).first()
+
+    if not admin_settings:
+        # First-time login: seed password from .env to database
+        # Verify against .env password
+        is_password_correct = secrets.compare_digest(
+            request.password.encode("utf-8"),
+            settings.admin_password.encode("utf-8")
+        )
+
+        if is_password_correct:
+            # Seed database with .env password
+            admin_settings = AdminSettings(
+                id=1,
+                password_hash=pwd_context.hash(settings.admin_password)
+            )
+            db.add(admin_settings)
+            db.commit()
+    else:
+        # Verify password against database hash
+        is_password_correct = pwd_context.verify(request.password, admin_settings.password_hash)
 
     if not is_password_correct:
         raise HTTPException(
@@ -1127,19 +1149,34 @@ async def reset_admin_password(
         )
 
     try:
-        # Update admin password in environment (runtime only)
-        # NOTE: This updates the runtime setting but doesn't persist to .env
-        # Admin will need to update ADMIN_PASSWORD env var on server
-        settings.admin_password = new_password
+        from ..models.admin import AdminSettings
+        from passlib.context import CryptContext
+
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+        # Get or create admin settings
+        admin_settings = db.query(AdminSettings).filter(AdminSettings.id == 1).first()
+
+        if not admin_settings:
+            # Create admin settings if it doesn't exist (shouldn't happen after migration)
+            admin_settings = AdminSettings(
+                id=1,
+                password_hash=pwd_context.hash(new_password)
+            )
+            db.add(admin_settings)
+        else:
+            # Update password hash in database
+            admin_settings.password_hash = pwd_context.hash(new_password)
 
         # Mark token as used
         token.used = 1
+
+        # Commit all changes
         db.commit()
 
-        # NOTE: Inform admin they need to update environment variable
         return {
             "success": True,
-            "message": "Admin password reset successfully. IMPORTANT: Update ADMIN_PASSWORD environment variable on server to persist this change."
+            "message": "Admin password reset successfully. Your new password is now active."
         }
 
     except Exception as e:

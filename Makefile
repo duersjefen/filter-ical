@@ -194,10 +194,41 @@ migrate-stamp: ## Mark database as being at specific version (usage: make migrat
 ##
 
 deploy-staging: ## Deploy to staging via SSM (builds on server)
-	@./deploy.sh staging
+	@$(MAKE) deploy ENV=staging
 
 deploy-production: ## Deploy to production via SSM (builds on server)
-	@./deploy.sh production
+	@$(MAKE) deploy ENV=production
+
+deploy: ## Internal: Run tests, then deploy (use SKIP_TESTS=1 to skip)
+ifndef SKIP_TESTS
+	@echo "🧪 Running tests before deployment..."
+	@$(MAKE) test
+	@echo "✅ Tests passed!"
+	@echo ""
+endif
+	@./deploy.sh $(ENV)
+
+logs-staging: ## View staging backend logs (Ctrl+C to exit)
+	@if [ ! -f .env.ec2 ]; then \
+		echo "❌ .env.ec2 not found"; \
+		exit 1; \
+	fi
+	@. .env.ec2 && \
+		echo "🔍 Connecting to staging logs (Ctrl+C to exit)..." && \
+		aws ssm start-session --target $$EC2_INSTANCE_ID --region eu-north-1 \
+			--document-name AWS-StartInteractiveCommand \
+			--parameters command="docker logs -f filter-ical-backend-staging"
+
+logs-production: ## View production backend logs (Ctrl+C to exit)
+	@if [ ! -f .env.ec2 ]; then \
+		echo "❌ .env.ec2 not found"; \
+		exit 1; \
+	fi
+	@. .env.ec2 && \
+		echo "🔍 Connecting to production logs (Ctrl+C to exit)..." && \
+		aws ssm start-session --target $$EC2_INSTANCE_ID --region eu-north-1 \
+			--document-name AWS-StartInteractiveCommand \
+			--parameters command="docker logs -f filter-ical-backend"
 
 status: ## Check deployment status
 	@echo "📊 Recent deployments:"
