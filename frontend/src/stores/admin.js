@@ -27,7 +27,7 @@ export const useAdminStore = defineStore('admin', () => {
   }
 
   async function login(password) {
-    const response = await fetch(`${API_BASE_URL}/admin/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -52,7 +52,7 @@ export const useAdminStore = defineStore('admin', () => {
   // Domain YAML Configuration Management
 
   async function listDomainConfigs() {
-    const response = await fetch(`${API_BASE_URL}/admin/domain-configs`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/domain-configs`, {
       headers: getAuthHeaders()
     })
 
@@ -66,7 +66,7 @@ export const useAdminStore = defineStore('admin', () => {
 
   async function getDomainConfig(domainKey, format = 'yaml') {
     const response = await fetch(
-      `${API_BASE_URL}/admin/domain-configs/${domainKey}?format=${format}`,
+      `${API_BASE_URL}/api/admin/domain-configs/${domainKey}?format=${format}`,
       {
         headers: getAuthHeaders()
       }
@@ -86,7 +86,7 @@ export const useAdminStore = defineStore('admin', () => {
 
   async function downloadDomainConfig(domainKey) {
     const response = await fetch(
-      `${API_BASE_URL}/admin/domain-configs/${domainKey}`,
+      `${API_BASE_URL}/api/admin/domain-configs/${domainKey}`,
       {
         headers: getAuthHeaders()
       }
@@ -119,7 +119,7 @@ export const useAdminStore = defineStore('admin', () => {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/admin/domain-configs/${domainKey}`,
+      `${API_BASE_URL}/api/admin/domain-configs/${domainKey}`,
       {
         method: 'POST',
         headers,
@@ -137,7 +137,7 @@ export const useAdminStore = defineStore('admin', () => {
 
   async function seedDomainFromConfig(domainKey, forceReseed = false) {
     const response = await fetch(
-      `${API_BASE_URL}/admin/domain-configs/${domainKey}/seed`,
+      `${API_BASE_URL}/api/admin/domain-configs/${domainKey}/seed`,
       {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -155,7 +155,7 @@ export const useAdminStore = defineStore('admin', () => {
 
   async function deleteDomainConfig(domainKey) {
     const response = await fetch(
-      `${API_BASE_URL}/admin/domain-configs/${domainKey}`,
+      `${API_BASE_URL}/api/admin/domain-configs/${domainKey}`,
       {
         method: 'DELETE',
         headers: getAuthHeaders()
@@ -173,7 +173,7 @@ export const useAdminStore = defineStore('admin', () => {
   // Admin Password Reset
 
   async function requestPasswordReset() {
-    const response = await fetch(`${API_BASE_URL}/admin/request-password-reset`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/request-password-reset`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -189,7 +189,7 @@ export const useAdminStore = defineStore('admin', () => {
   }
 
   async function resetPassword(token, newPassword) {
-    const response = await fetch(`${API_BASE_URL}/admin/reset-password`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/reset-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
