@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from ..core.database import get_db
-from ..services.calendar_service import get_filter_by_uuid, get_calendar_events
-from ..data.calendar import apply_filter_to_events, transform_events_for_export
+from ..services.calendar_service import get_filter_by_uuid, get_calendar_events, apply_filter_to_events
+from ..data.calendar import transform_events_for_export
 
 router = APIRouter()
 
@@ -63,8 +63,8 @@ async def export_filtered_calendar(
         else:
             events_data = events
         
-        # Apply filter to events using pure function (pass db session for domain filters)
-        filtered_events = apply_filter_to_events(events_data, filter_obj.__dict__, db_session=db)
+        # Apply filter to events using service layer (handles DB queries for domain filters)
+        filtered_events = apply_filter_to_events(db, events_data, filter_obj.__dict__)
 
         # Transform events to iCal format using pure function
         ical_content = transform_events_for_export(filtered_events, filter_obj.name)

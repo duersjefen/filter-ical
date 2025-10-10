@@ -459,21 +459,23 @@ class TestEventExport:
         assert "UID:test-uid-123" in result
     
     def test_apply_filter_to_events(self):
-        """Test applying filter to events."""
+        """Test applying filter to events (personal calendar filter)."""
         events = [
             {"id": 1, "title": "Event 1"},
             {"id": 2, "title": "Event 2"},
             {"id": 3, "title": "Event 3"}
         ]
-        
+
+        # Personal calendar filter (no domain_key)
         filter_data = {"subscribed_event_ids": ["Event 1", "Event 3"]}
-        
+
+        # Personal filters don't need group_event_titles
         result = apply_filter_to_events(events, filter_data)
-        
+
         assert len(result) == 2
         assert result[0]["id"] == 1
         assert result[1]["id"] == 3
-    
+
     def test_apply_filter_to_events_empty_filter(self):
         """Test applying empty filter to events."""
         events = [{"id": 1, "title": "Event 1"}]
@@ -482,6 +484,35 @@ class TestEventExport:
         result = apply_filter_to_events(events, filter_data)
 
         assert len(result) == 0
+
+    def test_apply_filter_to_events_domain_filter(self):
+        """Test applying filter to events (domain calendar filter with groups)."""
+        events = [
+            {"id": 1, "title": "Event A"},
+            {"id": 2, "title": "Event B"},
+            {"id": 3, "title": "Event C"},
+            {"id": 4, "title": "Event D"}
+        ]
+
+        # Domain calendar filter (has domain_key)
+        filter_data = {
+            "domain_key": "test-domain",
+            "subscribed_group_ids": [1, 2],  # Groups containing Event A and B
+            "subscribed_event_ids": ["Event C"],  # Manual whitelist
+            "unselected_event_ids": ["Event B"]  # Manual blacklist
+        }
+
+        # Pre-resolved group titles (simulates what service layer would query from DB)
+        group_event_titles = {"Event A", "Event B"}
+
+        # Formula: (group_titles ∪ subscribed_event_ids) - unselected_event_ids
+        # = ({Event A, Event B} ∪ {Event C}) - {Event B}
+        # = {Event A, Event C}
+        result = apply_filter_to_events(events, filter_data, group_event_titles=group_event_titles)
+
+        assert len(result) == 2
+        assert result[0]["title"] == "Event A"
+        assert result[1]["title"] == "Event C"
 
     def test_transform_events_with_dtstart_dtend(self):
         """Test that exported events always have DTSTART and DTEND fields."""

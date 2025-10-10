@@ -10,11 +10,11 @@ from typing import Dict, List, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from ..models.calendar import Calendar, Event, Filter
+from ..models.calendar import Calendar, Event, Filter, RecurringEventGroup
 from ..data.calendar import (
     create_calendar_data, update_calendar_data, mark_calendar_fetched,
     create_event_data, create_filter_data, validate_calendar_data,
-    validate_filter_data
+    validate_filter_data, apply_filter_to_events as apply_filter_pure
 )
 from ..data.ical_parser import parse_ical_content
 
@@ -467,3 +467,49 @@ def delete_filter(db: Session, filter_id: int, calendar_id: Optional[int] = None
     except Exception as e:
         db.rollback()
         return False, f"Database error: {str(e)}"
+
+
+def apply_filter_to_events(db: Session, events: List[Dict[str, Any]],
+                           filter_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Apply filter criteria to events list (Service layer wrapper).
+
+    IMPERATIVE SHELL - Performs I/O (database queries) then calls pure function.
+
+    For domain filters, queries database to resolve group event titles,
+    then delegates to pure data layer function.
+
+    For personal filters, directly delegates to pure function (no I/O needed).
+
+    Args:
+        db: Database session
+        events: List of all events
+        filter_data: Filter configuration dict
+
+    Returns:
+        Filtered list of events
+
+    I/O Operation - Queries database for domain filter group assignments.
+    """
+    is_domain_filter = filter_data.get("domain_key") is not None
+
+    # Domain filters: Query database for group titles
+    if is_domain_filter:
+        subscribed_group_ids = filter_data.get("subscribed_group_ids", [])
+        domain_key = filter_data.get("domain_key")
+
+        # Query database for event titles in subscribed groups (I/O operation)
+        group_titles = set()
+        if subscribed_group_ids:
+            assignments = db.query(RecurringEventGroup).filter(
+                RecurringEventGroup.domain_key == domain_key,
+                RecurringEventGroup.group_id.in_(subscribed_group_ids)
+            ).all()
+
+            group_titles = {assignment.recurring_event_title for assignment in assignments}
+
+        # Call pure function with resolved data
+        return apply_filter_pure(events, filter_data, group_event_titles=group_titles)
+
+    # Personal filters: No I/O needed, call pure function directly
+    return apply_filter_pure(events, filter_data)

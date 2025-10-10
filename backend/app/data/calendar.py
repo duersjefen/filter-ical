@@ -234,9 +234,11 @@ def create_filter_data(name: str, calendar_id: Optional[int] = None,
 
 
 def apply_filter_to_events(events: List[Dict[str, Any]], filter_data: Dict[str, Any],
-                          db_session=None) -> List[Dict[str, Any]]:
+                          group_event_titles: Optional[set] = None) -> List[Dict[str, Any]]:
     """
     Apply filter criteria to events list using the three-list model.
+
+    ✅ PURE FUNCTION - No side effects, no I/O, deterministic output.
 
     For DOMAIN CALENDARS (three-list model):
       - subscribed_group_ids: All events in these groups (including future ones)
@@ -250,40 +252,28 @@ def apply_filter_to_events(events: List[Dict[str, Any]], filter_data: Dict[str, 
 
     Args:
         events: List of all events
-        filter_data: Filter configuration
-        db_session: Database session (required for domain filters to query group assignments)
+        filter_data: Filter configuration dict
+        group_event_titles: Pre-resolved set of event titles in subscribed groups
+                           (required for domain filters, None for personal filters)
 
     Returns:
-        Filtered list of events
+        Filtered list of events (new list, original unchanged)
 
-    Pure function (with I/O for group lookups) - returns new filtered list.
+    Pure function - same inputs always produce same outputs, no I/O.
     """
     is_domain_filter = filter_data.get("domain_key") is not None
 
     # Domain filters: use three-list model
     if is_domain_filter:
-        if db_session is None:
-            raise ValueError("db_session is required for domain filter operations")
+        if group_event_titles is None:
+            raise ValueError("group_event_titles is required for domain filter operations")
 
         # Get the three lists
-        subscribed_group_ids = filter_data.get("subscribed_group_ids", [])
         subscribed_event_ids = filter_data.get("subscribed_event_ids", [])
         unselected_event_ids = filter_data.get("unselected_event_ids", [])
-        domain_key = filter_data.get("domain_key")
-
-        # Query database for event titles in subscribed groups
-        group_titles = set()
-        if subscribed_group_ids:
-            from ..models.calendar import RecurringEventGroup
-            assignments = db_session.query(RecurringEventGroup).filter(
-                RecurringEventGroup.domain_key == domain_key,
-                RecurringEventGroup.group_id.in_(subscribed_group_ids)
-            ).all()
-
-            group_titles = {assignment.recurring_event_title for assignment in assignments}
 
         # Apply three-list formula: (group_titles ∪ subscribed_event_ids) - unselected_event_ids
-        included_titles = (group_titles | set(subscribed_event_ids)) - set(unselected_event_ids)
+        included_titles = (group_event_titles | set(subscribed_event_ids)) - set(unselected_event_ids)
 
         # If no titles to include, return empty
         if not included_titles:
