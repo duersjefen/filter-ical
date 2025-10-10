@@ -1,76 +1,43 @@
 version: '3.8'
 
-# =============================================================================
-# Filter-iCal - Production Deployment
-# =============================================================================
-# Builds from local Dockerfiles and joins platform network
-# =============================================================================
-
-networks:
-  platform:
-    external: true
-    name: platform
-
 services:
-  # ===========================================================================
-  # Backend (Python FastAPI)
-  # ===========================================================================
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      target: production
-    container_name: filter-ical-backend${ENVIRONMENT:+-}${ENVIRONMENT}
-    restart: unless-stopped
-    env_file:
-      - .env
+    build: ./backend
+    env_file: .env.${ENVIRONMENT}
     networks:
       - platform
-    expose:
-      - "3000"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    labels:
-      - "project=filter-ical"
-      - "component=backend"
-      - "environment=${ENVIRONMENT:-production}"
 
-  # ===========================================================================
-  # Frontend (Vue 3 + nginx)
-  # ===========================================================================
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: ""
-    container_name: filter-ical-frontend${ENVIRONMENT:+-}${ENVIRONMENT}
-    restart: unless-stopped
+    build: ./frontend
     networks:
       - platform
-    expose:
-      - "80"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     logging:
-      driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    labels:
-      - "project=filter-ical"
-      - "component=frontend"
-      - "environment=${ENVIRONMENT:-production}"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  platform:
+    external: true
