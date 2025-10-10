@@ -25,6 +25,10 @@ const routes = [
     component: () => import('./views/AdminPanelView.vue')
   },
   {
+    path: '/admin/reset-password',
+    component: () => import('./views/AdminResetPasswordView.vue')
+  },
+  {
     path: '/login',
     component: () => import('./views/LoginView.vue')
   },

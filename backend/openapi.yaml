@@ -1832,6 +1832,314 @@ paths:
         '404':
           description: Domain or user not found
 
+  # Admin Domain YAML Configuration Management
+  /admin/domain-configs:
+    get:
+      summary: List available domain YAML configurations (admin only)
+      description: Get list of all .yaml files in domains/ directory with database sync status
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      responses:
+        '200':
+          description: List of domain configuration files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        domain_key:
+                          type: string
+                          example: "exter"
+                        file_name:
+                          type: string
+                          example: "exter.yaml"
+                        file_size:
+                          type: integer
+                          example: 15432
+                          description: "File size in bytes"
+                        modified_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          example: "2025-10-10T14:30:00"
+                        exists_in_database:
+                          type: boolean
+                          example: true
+                          description: "Whether Domain record exists in database"
+                        has_groups:
+                          type: boolean
+                          example: true
+                          description: "Whether groups have been seeded from this config"
+                        status:
+                          type: string
+                          nullable: true
+                          example: "active"
+                          description: "Domain status if it exists in database"
+                  total:
+                    type: integer
+                    example: 3
+        '401':
+          description: Unauthorized - invalid admin authentication
+
+  /admin/domain-configs/{domain_key}:
+    get:
+      summary: Download/view domain YAML configuration (admin only)
+      description: Get the raw YAML content of a domain configuration file
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: domain_key
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "exter"
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [yaml, json]
+            default: yaml
+          description: "Response format: 'yaml' returns file download, 'json' returns parsed JSON"
+      responses:
+        '200':
+          description: Configuration file content
+          content:
+            application/x-yaml:
+              schema:
+                type: string
+                example: |
+                  domain:
+                    name: "Exter Kalendar"
+                    calendar_url: "https://widgets.bcc.no/ical.ics"
+                  groups:
+                    - id: "fussball"
+                      name: "Fußball"
+            application/json:
+              schema:
+                type: object
+                description: "Parsed YAML configuration (when format=json)"
+        '404':
+          description: Configuration file not found
+        '401':
+          description: Unauthorized
+
+    post:
+      summary: Upload/update domain YAML configuration (admin only)
+      description: Upload a new or update existing domain configuration YAML file with validation
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: domain_key
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9_-]+$'
+            example: "exter"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "YAML file to upload"
+      responses:
+        '200':
+          description: Configuration uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Configuration file 'exter.yaml' uploaded successfully"
+                  domain_key:
+                    type: string
+                    example: "exter"
+                  file_size:
+                    type: integer
+                    example: 15432
+        '422':
+          description: Invalid YAML or missing required sections
+        '401':
+          description: Unauthorized
+
+    delete:
+      summary: Delete domain YAML configuration file (admin only)
+      description: Delete a domain configuration YAML file from the server (creates backup)
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: domain_key
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "exter"
+      responses:
+        '200':
+          description: Configuration file deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Configuration file 'exter.yaml' deleted (backed up to exter.yaml.20251010_143000)"
+        '400':
+          description: Cannot delete domains registry file
+        '404':
+          description: Configuration file not found
+        '401':
+          description: Unauthorized
+
+  /admin/domain-configs/{domain_key}/seed:
+    post:
+      summary: Seed database from domain YAML configuration (admin only)
+      description: Create Domain record and seed groups/assignments from YAML file. Auto-creates Domain if it doesn't exist.
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: domain_key
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "exter"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force_reseed:
+                  type: boolean
+                  default: false
+                  description: "If true, overwrites existing groups. If false and groups exist, returns error."
+      responses:
+        '200':
+          description: Domain seeded successfully or already seeded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Successfully imported 12 groups, 114 assignments, 2 rules"
+                  domain_key:
+                    type: string
+                    example: "exter"
+        '404':
+          description: Configuration file not found
+        '401':
+          description: Unauthorized
+        '500':
+          description: Seeding failed
+
+  # Admin Password Reset
+  /admin/request-password-reset:
+    post:
+      summary: Request admin password reset email
+      description: Send password reset link to configured admin email address (info@paiss.me)
+      tags:
+        - admin
+      responses:
+        '200':
+          description: Reset email sent (always returns success to prevent email enumeration)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "If an admin account exists, a password reset email has been sent"
+        '429':
+          description: Too many reset requests (rate limited)
+
+  /admin/reset-password:
+    post:
+      summary: Reset admin password with token
+      description: Reset admin password using token from email
+      tags:
+        - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - new_password
+              properties:
+                token:
+                  type: string
+                  example: "abc123def456"
+                  description: "Reset token from email"
+                new_password:
+                  type: string
+                  example: "my-new-secure-password"
+                  minLength: 8
+                  description: "New admin password (minimum 8 characters)"
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Admin password reset successfully"
+        '400':
+          description: Invalid or expired token
+        '422':
+          description: Password validation failed
+
 components:
   securitySchemes:
     AdminPassword:

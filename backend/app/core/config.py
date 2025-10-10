@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     smtp_username: str = ""  # Set via SMTP_USERNAME env var
     smtp_password: str = ""  # Set via SMTP_PASSWORD env var
     smtp_from_email: str = "noreply@filter-ical.de"
-    admin_email: str = ""  # Set via ADMIN_EMAIL env var - receives domain request notifications
+    admin_email: str = ""  # Set via ADMIN_EMAIL env var (info@paiss.me) - receives domain requests & password resets
     
     # Paths
     base_dir: Path = Path(__file__).parent.parent.parent

@@ -390,3 +390,120 @@ Feel free to submit a new request after addressing these concerns.
         html_body,
         text_body
     )
+
+
+async def send_admin_password_reset_email(email: str, reset_token: str) -> Tuple[bool, str]:
+    """
+    Send admin password reset email.
+
+    Args:
+        email: Admin email address
+        reset_token: Password reset token
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    # Skip if email not configured
+    if not settings.smtp_username:
+        logger.warning("Email not configured - skipping admin password reset email")
+        return False, "Email not configured"
+
+    logger.info(f"📧 Attempting to send admin password reset email to {email}")
+    try:
+        # Create reset URL (use localhost in development)
+        base_url = "http://localhost:8000" if settings.is_development else "https://filter-ical.de"
+        reset_url = f"{base_url}/admin/reset-password?token={reset_token}"
+
+        # Create HTML email body
+        html_body = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
+              <h1 style="margin: 0; font-size: 24px;">🔐 Admin Password Reset</h1>
+            </div>
+
+            <div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+              <p style="color: #2d3748; margin-top: 0;">Hi <strong>Admin</strong>,</p>
+
+              <p style="color: #2d3748;">
+                A password reset was requested for the Filter iCal admin panel.
+              </p>
+
+              <p style="color: #2d3748;">
+                Click the button below to reset your admin password:
+              </p>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_url}" style="background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                  Reset Admin Password
+                </a>
+              </div>
+
+              <p style="color: #718096; font-size: 12px;">
+                Or copy and paste this link into your browser:<br/>
+                <a href="{reset_url}" style="color: #9333ea; word-break: break-all;">{reset_url}</a>
+              </p>
+            </div>
+
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <p style="color: #856404; margin: 0; font-size: 14px;">
+                <strong>⚠️ Important:</strong> This link expires in 1 hour for security reasons.
+              </p>
+            </div>
+
+            <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <p style="color: #991b1b; margin: 0; font-size: 14px;">
+                <strong>🔴 Critical:</strong> After resetting your password, you must update the
+                <code style="background: #fee; padding: 2px 6px; border-radius: 3px;">ADMIN_PASSWORD</code>
+                environment variable on the server to persist the change across restarts.
+              </p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <p style="color: #6c757d; margin: 0; font-size: 13px;">
+                If you didn't request this password reset, please ignore this email.
+                Your password will remain unchanged.
+              </p>
+            </div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #a0aec0; font-size: 12px;">
+              <p>This is an automated email from Filter iCal Admin</p>
+              <p style="margin-top: 10px;">
+                <a href="https://filter-ical.de/admin" style="color: #9333ea; text-decoration: none;">filter-ical.de/admin</a>
+              </p>
+            </div>
+          </body>
+        </html>
+        """
+
+        # Create plain text version
+        text_body = f"""
+Admin Password Reset - Filter iCal
+
+A password reset was requested for the Filter iCal admin panel.
+
+Reset your password by visiting this link:
+{reset_url}
+
+⚠️ IMPORTANT: This link expires in 1 hour for security reasons.
+
+🔴 CRITICAL: After resetting your password, you must update the ADMIN_PASSWORD
+environment variable on the server to persist the change across restarts.
+
+If you didn't request this password reset, you can safely ignore this email.
+
+---
+This is an automated email from Filter iCal Admin
+filter-ical.de/admin
+        """
+
+        return await _send_email(
+            email,
+            "🔐 Admin Password Reset - Filter iCal",
+            html_body,
+            text_body
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to send admin password reset email: {e}")
+        return False, str(e)
