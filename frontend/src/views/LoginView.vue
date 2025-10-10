@@ -290,6 +290,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '../composables/useAuth'
 import { useHTTP } from '../composables/useHTTP'
+import { useApiErrors } from '../composables/useApiErrors'
+import { useValidation } from '../composables/useValidation'
 import LanguageToggle from '../components/LanguageToggle.vue'
 
 const router = useRouter()
@@ -297,11 +299,12 @@ const route = useRoute()
 const { t } = useI18n()
 const { register, login, requestPasswordReset } = useAuth()
 const { get } = useHTTP()
+const { error, setError, clearError } = useApiErrors()
+const { isValidEmail } = useValidation()
 
 // State
 const activeTab = ref('login')
 const loading = ref(false)
-const error = ref('')
 const success = ref('')
 
 // Forgot Password Modal
@@ -334,7 +337,7 @@ const passwordRequired = computed(() => {
 // Handle login
 const handleLogin = async () => {
   loading.value = true
-  error.value = ''
+  clearError()
   success.value = ''
 
   const result = await login(
@@ -352,14 +355,14 @@ const handleLogin = async () => {
       router.push(redirect)
     }, 500)
   } else {
-    error.value = result.error
+    setError(result.error)
   }
 }
 
 // Handle register
 const handleRegister = async () => {
   loading.value = true
-  error.value = ''
+  clearError()
   success.value = ''
 
   const result = await register(
@@ -378,7 +381,7 @@ const handleRegister = async () => {
       router.push(redirect)
     }, 500)
   } else {
-    error.value = result.error
+    setError(result.error)
   }
 }
 

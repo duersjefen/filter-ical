@@ -80,15 +80,18 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
+import { useValidation } from '@/composables/useValidation'
+import { useApiErrors } from '@/composables/useApiErrors'
 
 const route = useRoute()
 const router = useRouter()
 const adminStore = useAdminStore()
+const { isValidPassword, passwordsMatch } = useValidation()
+const { error, setError, clearError } = useApiErrors()
 
 const newPassword = ref('')
 const confirmPassword = ref('')
 const resetting = ref(false)
-const error = ref('')
 const success = ref(false)
 const successMessage = ref('')
 
@@ -98,23 +101,23 @@ onMounted(() => {
   token.value = route.query.token || ''
 
   if (!token.value) {
-    error.value = 'Invalid reset link - no token provided'
+    setError('Invalid reset link - no token provided')
   }
 })
 
 async function resetPassword() {
-  if (newPassword.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match'
+  if (!passwordsMatch(newPassword.value, confirmPassword.value)) {
+    setError('Passwords do not match')
     return
   }
 
-  if (newPassword.value.length < 8) {
-    error.value = 'Password must be at least 8 characters'
+  if (!isValidPassword(newPassword.value, 8)) {
+    setError('Password must be at least 8 characters')
     return
   }
 
   resetting.value = true
-  error.value = ''
+  clearError()
 
   try {
     const response = await adminStore.resetPassword(token.value, newPassword.value)
@@ -126,7 +129,7 @@ async function resetPassword() {
       router.push('/admin')
     }, 3000)
   } catch (err) {
-    error.value = err.message || 'Failed to reset password'
+    setError(err.message || 'Failed to reset password')
   } finally {
     resetting.value = false
   }

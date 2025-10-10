@@ -9,9 +9,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from sqlalchemy.orm import Session
 import jwt
 
 from .config import settings
+from .database import get_db
 
 security = HTTPBasic()
 
@@ -228,3 +230,46 @@ def require_user_auth(authorization: Optional[str] = Header(None)) -> int:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
+
+# =============================================================================
+# Domain Verification Dependency
+# =============================================================================
+
+async def get_verified_domain(
+    domain: str,
+    db: Session = Depends(get_db)
+):
+    """
+    FastAPI dependency: Verify domain exists and return domain object.
+
+    Raises HTTPException 404 if domain not found.
+
+    Usage in routers:
+        @router.get("/{domain}/events")
+        async def get_events(domain_obj: Domain = Depends(get_verified_domain)):
+            # domain_obj is guaranteed to exist
+            pass
+
+    Args:
+        domain: Domain key from URL path parameter
+        db: Database session (injected)
+
+    Returns:
+        Domain object from database
+
+    Raises:
+        HTTPException 404: Domain not found
+    """
+    from sqlalchemy import select
+    from ..models.domain import Domain
+
+    stmt = select(Domain).where(Domain.domain_key == domain)
+    domain_obj = db.scalar(stmt)
+
+    if not domain_obj:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Domain '{domain}' not found"
+        )
+
+    return domain_obj

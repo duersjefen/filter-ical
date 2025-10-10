@@ -83,168 +83,84 @@
     <!-- Request Form -->
     <form @submit.prevent="submitRequest" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label for="domain-key-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-            Desired Domain Key
-          </label>
-          <input
-            id="domain-key-request"
-            v-model="formData.requested_domain_key"
-            type="text"
-            pattern="[a-z0-9-]+"
-            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
-            placeholder="my-calendar"
-            minlength="3"
-            maxlength="100"
-            :disabled="!canSubmitRequest"
-            required
-          />
-          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Lowercase letters, numbers, hyphens only
-          </div>
-        </div>
+        <FormInput
+          id="domain-key-request"
+          v-model="formData.requested_domain_key"
+          label="Desired Domain Key"
+          type="text"
+          pattern="[a-z0-9-]+"
+          placeholder="my-calendar"
+          minlength="3"
+          maxlength="100"
+          :disabled="!canSubmitRequest"
+          required
+          helper-text="Lowercase letters, numbers, hyphens only"
+        />
 
-        <div>
-          <label for="calendar-url-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-            {{ $t('domainRequest.form.calendarUrl') }}
-          </label>
-          <input
-            id="calendar-url-request"
-            v-model="formData.calendar_url"
-            type="url"
-            class="w-full px-4 py-3.5 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"
-            :placeholder="$t('domainRequest.form.calendarUrlPlaceholder')"
-            :disabled="!canSubmitRequest"
-            required
-          />
-        </div>
+        <FormInput
+          id="calendar-url-request"
+          v-model="formData.calendar_url"
+          :label="$t('domainRequest.form.calendarUrl')"
+          type="url"
+          :placeholder="$t('domainRequest.form.calendarUrlPlaceholder')"
+          :disabled="!canSubmitRequest"
+          required
+        />
       </div>
 
       <!-- Passwords: Side by Side -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Admin Password -->
-        <div>
-          <label for="admin-password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-            Admin Password *
-          </label>
-          <div class="relative">
-            <input
-              id="admin-password-request"
-              v-model="formData.default_password"
-              :type="showAdminPassword ? 'text' : 'password'"
-              :class="[
-                'w-full px-4 py-3.5 pr-12 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500',
-                formData.default_password && !isAdminPasswordValid
-                  ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
-                  : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
-              ]"
-              placeholder="Min 4 characters"
-              minlength="4"
-              maxlength="100"
-              :disabled="!canSubmitRequest"
-              required
-            />
-            <button
-              v-if="formData.default_password"
-              type="button"
-              @click="showAdminPassword = !showAdminPassword"
-              class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-              :title="showAdminPassword ? 'Hide password' : 'Show password'"
-            >
-              <svg v-if="showAdminPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-              </svg>
-              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-              </svg>
-            </button>
-          </div>
-          <div v-if="formData.default_password && !isAdminPasswordValid" class="mt-1 text-xs text-red-600 dark:text-red-400 font-semibold">
-            {{ $t('domainRequest.errors.passwordTooShort') }}
-          </div>
-        </div>
-
-        <!-- User Password -->
-        <div>
-          <label for="user-password-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-            User Password <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
-          </label>
-          <div class="relative">
-            <input
-              id="user-password-request"
-              v-model="formData.user_password"
-              :type="showUserPassword ? 'text' : 'password'"
-              :class="[
-                'w-full px-4 py-3.5 pr-12 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500',
-                formData.user_password && !isUserPasswordValid
-                  ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
-                  : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
-              ]"
-              placeholder="Leave blank if none"
-              minlength="4"
-              maxlength="100"
-              :disabled="!canSubmitRequest"
-            />
-            <button
-              v-if="formData.user_password"
-              type="button"
-              @click="showUserPassword = !showUserPassword"
-              class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-              :title="showUserPassword ? 'Hide password' : 'Show password'"
-            >
-              <svg v-if="showUserPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-              </svg>
-              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-              </svg>
-            </button>
-          </div>
-          <div v-if="formData.user_password && !isUserPasswordValid" class="mt-1 text-xs text-red-600 dark:text-red-400 font-semibold">
-            {{ $t('domainRequest.errors.passwordTooShort') }}
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label for="description-request" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-          {{ $t('domainRequest.form.description') }}
-        </label>
-        <textarea
-          id="description-request"
-          v-model="formData.description"
-          rows="4"
-          :class="[
-            'w-full px-4 py-3.5 border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all duration-200 focus:outline-none focus:ring-4 shadow-sm font-medium placeholder-gray-400 dark:placeholder-gray-500 resize-none',
-            formData.description && !isDescriptionValid
-              ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-100 dark:focus:ring-red-900/50'
-              : 'border-gray-300 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900/50 hover:border-gray-400 dark:hover:border-gray-500'
-          ]"
-          :placeholder="$t('domainRequest.form.descriptionPlaceholder')"
-          minlength="10"
-          maxlength="500"
+        <FormInput
+          id="admin-password-request"
+          v-model="formData.default_password"
+          label="Admin Password"
+          type="password"
+          placeholder="Min 4 characters"
+          minlength="4"
+          maxlength="100"
           :disabled="!canSubmitRequest"
           required
-        ></textarea>
-        <div class="flex items-center justify-between mt-1">
-          <div v-if="formData.description && !isDescriptionValid" class="text-xs text-red-600 dark:text-red-400 font-semibold">
-            {{ $t('domainRequest.errors.descriptionTooShort') }}
-          </div>
-          <div v-else class="text-xs text-gray-500 dark:text-gray-400">
-            {{ formData.description.length }} / 500 {{ $t('domainRequest.form.characters') }}
-          </div>
-        </div>
+          :error="formData.default_password && !isAdminPasswordValid ? $t('domainRequest.errors.passwordTooShort') : ''"
+        />
+
+        <FormInput
+          id="user-password-request"
+          v-model="formData.user_password"
+          label="User Password"
+          optional="Optional"
+          type="password"
+          placeholder="Leave blank if none"
+          minlength="4"
+          maxlength="100"
+          :disabled="!canSubmitRequest"
+          :error="formData.user_password && !isUserPasswordValid ? $t('domainRequest.errors.passwordTooShort') : ''"
+        />
       </div>
 
-      <button
+      <FormTextarea
+        id="description-request"
+        v-model="formData.description"
+        :label="$t('domainRequest.form.description')"
+        :placeholder="$t('domainRequest.form.descriptionPlaceholder')"
+        rows="4"
+        minlength="10"
+        maxlength="500"
+        :disabled="!canSubmitRequest"
+        required
+        :error="formData.description && !isDescriptionValid ? $t('domainRequest.errors.descriptionTooShort') : ''"
+      />
+
+      <BaseButton
         type="submit"
+        variant="success"
+        size="lg"
+        full-width
         :disabled="loading || !isFormValid"
-        class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed text-white border-none px-6 py-3.5 rounded-xl cursor-pointer text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-100 shadow-lg hover:shadow-xl disabled:shadow-sm disabled:transform-none"
+        :loading="loading"
+        :loading-text="$t('domainRequest.form.submitting')"
       >
-        {{ loading ? $t('domainRequest.form.submitting') : $t('domainRequest.form.submit') }}
-      </button>
+        {{ $t('domainRequest.form.submit') }}
+      </BaseButton>
     </form>
   </div>
 </template>
@@ -254,6 +170,9 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '../../composables/useAuth'
 import { useHTTP } from '../../composables/useHTTP'
+import FormInput from '../shared/FormInput.vue'
+import FormTextarea from '../shared/FormTextarea.vue'
+import BaseButton from '../shared/BaseButton.vue'
 
 const { t } = useI18n()
 const { user, isLoggedIn } = useAuth()
@@ -262,8 +181,6 @@ const { post } = useHTTP()
 const loading = ref(false)
 const successMessage = ref(null)
 const errorMessage = ref(null)
-const showAdminPassword = ref(false)
-const showUserPassword = ref(false)
 
 const formData = ref({
   requested_domain_key: '',
@@ -349,8 +266,6 @@ const submitRequest = async () => {
       formData.value.description = ''
       formData.value.default_password = ''
       formData.value.user_password = ''
-      showAdminPassword.value = false
-      showUserPassword.value = false
     } else {
       errorMessage.value = result.error || t('domainRequest.errors.submissionFailed')
     }

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..core.database import get_db
+from ..core.error_handlers import handle_endpoint_errors
 from ..core.rate_limit import limiter
 from ..models.user import User
 from ..services import auth_service
@@ -38,6 +39,7 @@ class MessageResponse(BaseModel):
     description="Send password reset email to user"
 )
 @limiter.limit("3/minute")
+@handle_endpoint_errors
 async def request_password_reset(
     request: Request,
     body: PasswordResetRequestBody,
@@ -89,6 +91,7 @@ async def request_password_reset(
     description="Reset user password using token from email"
 )
 @limiter.limit("5/minute")
+@handle_endpoint_errors
 async def reset_password(
     request: Request,
     body: PasswordResetBody,
@@ -132,6 +135,7 @@ async def reset_password(
     summary="Verify reset token",
     description="Check if reset token is valid"
 )
+@handle_endpoint_errors
 async def verify_reset_token(
     request: Request,
     token: str,

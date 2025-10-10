@@ -192,6 +192,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuth } from '../../composables/useAuth'
+import { useApiErrors } from '../../composables/useApiErrors'
 
 const props = defineProps({
   show: {
@@ -203,11 +204,11 @@ const props = defineProps({
 const emit = defineEmits(['close', 'success'])
 
 const { register, login, requestPasswordReset } = useAuth()
+const { error, setError, clearError } = useApiErrors()
 
 // State
 const activeTab = ref('login')
 const loading = ref(false)
-const error = ref('')
 const success = ref('')
 
 // Login form
@@ -226,7 +227,7 @@ const forgotEmail = ref('')
 // Handle login
 const handleLogin = async () => {
   loading.value = true
-  error.value = ''
+  clearError()
   success.value = ''
 
   const result = await login(
@@ -246,9 +247,9 @@ const handleLogin = async () => {
     // Check if error is about password requirement
     if (result.error.includes('Password required')) {
       showLoginPassword.value = true
-      error.value = result.error
+      setError(result.error)
     } else {
-      error.value = result.error
+      setError(result.error)
     }
   }
 }
@@ -256,7 +257,7 @@ const handleLogin = async () => {
 // Handle register
 const handleRegister = async () => {
   loading.value = true
-  error.value = ''
+  clearError()
   success.value = ''
 
   const result = await register(
@@ -274,14 +275,14 @@ const handleRegister = async () => {
       emit('close')
     }, 500)
   } else {
-    error.value = result.error
+    setError(result.error)
   }
 }
 
 // Handle forgot password
 const handleForgotPassword = async () => {
   loading.value = true
-  error.value = ''
+  clearError()
   success.value = ''
 
   const result = await requestPasswordReset(forgotEmail.value)
@@ -291,7 +292,7 @@ const handleForgotPassword = async () => {
   if (result.success) {
     success.value = 'Password reset link sent! Check your email.'
   } else {
-    error.value = result.error
+    setError(result.error)
   }
 }
 </script>

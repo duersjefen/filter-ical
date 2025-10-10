@@ -16,13 +16,15 @@
         <p class="text-blue-700 dark:text-blue-200 text-sm mb-4 leading-relaxed">
           {{ $t('domainAdmin.exportDescription') }}
         </p>
-        <button
-          @click="$emit('export-configuration')"
+        <BaseButton
+          variant="primary"
+          size="lg"
+          full-width
           :disabled="loading"
-          class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 sm:px-4 sm:py-2 rounded-lg font-medium transition-colors duration-200 text-base sm:text-sm min-h-[44px] sm:min-h-0"
+          @click="$emit('export-configuration')"
         >
           {{ $t('domainAdmin.exportConfiguration') }}
-        </button>
+        </BaseButton>
       </div>
 
       <!-- Import Configuration -->
@@ -54,13 +56,15 @@
         <p class="text-red-700 dark:text-red-200 text-sm mb-4 leading-relaxed">
           {{ $t('domainAdmin.resetDescription') }}
         </p>
-        <button
-          @click="$emit('reset-configuration-confirm')"
+        <BaseButton
+          variant="danger"
+          size="lg"
+          full-width
           :disabled="loading"
-          class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-3 sm:px-4 sm:py-2 rounded-lg font-medium transition-colors duration-200 text-base sm:text-sm min-h-[44px] sm:min-h-0"
+          @click="$emit('reset-configuration-confirm')"
         >
           {{ $t('domainAdmin.resetConfiguration') }}
-        </button>
+        </BaseButton>
       </div>
     </div>
   </AdminCardWrapper>
@@ -68,11 +72,13 @@
 
 <script>
 import AdminCardWrapper from './AdminCardWrapper.vue'
+import BaseButton from '../shared/BaseButton.vue'
 
 export default {
   name: 'ConfigurationCard',
   components: {
-    AdminCardWrapper
+    AdminCardWrapper,
+    BaseButton
   },
   props: {
     expanded: {

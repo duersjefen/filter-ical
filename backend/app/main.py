@@ -198,9 +198,21 @@ def create_application() -> FastAPI:
         print("📋 Contract loaded: OpenAPI specification overrides auto-generation")
     
     # Import and include routers
-    from .routers import calendars, domains, ical_export, test, filters, domain_requests, admin, domain_auth, app_settings, users, auth, ical
+    from .routers import (
+        calendars, domains, ical_export, test, filters, domain_requests, admin,
+        domain_auth, app_settings, users, auth, ical,
+        domain_events, domain_groups, domain_assignment_rules, domain_filters,
+        domain_config, domain_backups, domain_admins
+    )
     app.include_router(calendars.router, prefix="/api/calendars", tags=["calendars"])
     app.include_router(domains.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_events.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_groups.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_assignment_rules.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_filters.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_config.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_backups.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_admins.router, prefix="/api/domains", tags=["domains"])
     app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
     app.include_router(ical.router, prefix="/api", tags=["ical"])
     app.include_router(filters.router, prefix="/api/filters", tags=["filters"])

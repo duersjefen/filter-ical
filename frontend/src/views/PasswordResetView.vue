@@ -104,16 +104,19 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { useValidation } from '../composables/useValidation'
+import { useApiErrors } from '../composables/useApiErrors'
 
 const route = useRoute()
 const { verifyResetToken, resetPassword } = useAuth()
+const { isValidPassword, passwordsMatch } = useValidation()
+const { error, setError, clearError } = useApiErrors()
 
 // State
 const token = ref(route.query.token)
 const verifying = ref(true)
 const tokenValid = ref(false)
 const loading = ref(false)
-const error = ref('')
 const resetSuccess = ref(false)
 
 // Form fields
@@ -133,23 +136,23 @@ onMounted(async () => {
   tokenValid.value = result.success
 
   if (!result.success) {
-    error.value = result.error
+    setError(result.error)
   }
 })
 
 // Handle password reset
 const handleReset = async () => {
-  error.value = ''
+  clearError()
 
   // Validate passwords match
-  if (newPassword.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match'
+  if (!passwordsMatch(newPassword.value, confirmPassword.value)) {
+    setError('Passwords do not match')
     return
   }
 
   // Validate password length
-  if (newPassword.value.length < 4) {
-    error.value = 'Password must be at least 4 characters'
+  if (!isValidPassword(newPassword.value, 4)) {
+    setError('Password must be at least 4 characters')
     return
   }
 
@@ -162,7 +165,7 @@ const handleReset = async () => {
   if (result.success) {
     resetSuccess.value = true
   } else {
-    error.value = result.error
+    setError(result.error)
   }
 }
 </script>

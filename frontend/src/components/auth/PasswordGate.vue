@@ -93,6 +93,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useDomainAuth } from '@/composables/useDomainAuth'
+import { useApiErrors } from '@/composables/useApiErrors'
 
 const props = defineProps({
   domain: {
@@ -129,22 +130,22 @@ const props = defineProps({
 const emit = defineEmits(['authenticated', 'back'])
 
 const { verifyPassword, authLoading, authError } = useDomainAuth(props.domain)
+const { error, setError, clearError } = useApiErrors()
 
 const password = ref('')
 const showPassword = ref(false)
 const loading = ref(false)
-const error = ref(null)
 
 const handleSubmit = async () => {
   loading.value = true
-  error.value = null
+  clearError()
 
   const result = await verifyPassword(password.value, props.accessLevel)
 
   if (result.success) {
     emit('authenticated')
   } else {
-    error.value = result.error || authError.value || 'Invalid password'
+    setError(result.error || authError.value || 'Invalid password')
     password.value = '' // Clear password on error
   }
 
