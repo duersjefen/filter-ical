@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { createRouter, createWebHistory } from 'vue-router';
+import { createI18n } from 'vue-i18n';
 import App from '../src/App.vue';
 
 // Mock components for testing
@@ -12,10 +13,29 @@ const MockLoginView = { template: '<div data-testid="login-view"><h1>iCal Viewer
 const MockHomeView = { template: '<div data-testid="home-view"><nav>Navigation</nav><main>Home Content</main></div>' };
 const MockCalendarView = { template: '<div data-testid="calendar-view">Calendar</div>' };
 
+// Create mock i18n instance
+const createMockI18n = () => {
+  return createI18n({
+    legacy: false,
+    locale: 'en',
+    fallbackLocale: 'en',
+    messages: {
+      en: {
+        // Add minimal translations needed for tests
+        app: {
+          title: 'iCal Viewer'
+        }
+      }
+    },
+    globalInjection: true
+  });
+};
+
 describe('App Component', () => {
   let wrapper;
   let pinia;
   let router;
+  let i18n;
 
   beforeEach(async () => {
     // Create test router
@@ -32,11 +52,14 @@ describe('App Component', () => {
     // Create pinia store
     pinia = createPinia();
 
+    // Create i18n instance
+    i18n = createMockI18n();
+
     // Mock the store initialization
     const mockStore = {
       initializeApp: vi.fn()
     };
-    
+
     // Mock the composable
     vi.doMock('../src/composables/useDarkMode', () => ({
       useDarkMode: () => ({
@@ -45,10 +68,10 @@ describe('App Component', () => {
       })
     }));
 
-    // Mount component with router and pinia
+    // Mount component with router, pinia, and i18n
     wrapper = mount(App, {
       global: {
-        plugins: [router, pinia],
+        plugins: [router, pinia, i18n],
         stubs: {
           RouterView: {
             template: '<div data-testid="router-view"><h1>iCal Viewer</h1><nav>Navigation</nav><main>Main Content</main></div>'
@@ -82,6 +105,9 @@ describe('App Component', () => {
   });
 
   it('handles responsive design classes', () => {
-    expect(wrapper.classes()).toContain('min-h-screen');
+    // The root div has id="app" and should have min-h-screen class
+    const appDiv = wrapper.find('#app');
+    expect(appDiv.exists()).toBe(true);
+    expect(appDiv.classes()).toContain('min-h-screen');
   });
 });

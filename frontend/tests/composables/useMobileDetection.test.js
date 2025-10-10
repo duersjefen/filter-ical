@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { defineComponent, h } from 'vue'
+import { mount } from '@vue/test-utils'
 import { useMobileDetection } from '@/composables/useMobileDetection'
 
 // Mock window.innerWidth
@@ -8,103 +10,109 @@ Object.defineProperty(window, 'innerWidth', {
   value: 1024,
 })
 
-// Mock addEventListener/removeEventListener
-let mockEventListeners = {}
-window.addEventListener = vi.fn((event, callback) => {
-  if (!mockEventListeners[event]) {
-    mockEventListeners[event] = []
-  }
-  mockEventListeners[event].push(callback)
-})
-
-window.removeEventListener = vi.fn((event, callback) => {
-  if (mockEventListeners[event]) {
-    const index = mockEventListeners[event].indexOf(callback)
-    if (index > -1) {
-      mockEventListeners[event].splice(index, 1)
-    }
-  }
-})
-
-const triggerResize = () => {
-  if (mockEventListeners.resize) {
-    mockEventListeners.resize.forEach(callback => callback())
-  }
-}
-
 describe('useMobileDetection', () => {
+  let addEventListenerSpy
+  let removeEventListenerSpy
+
   beforeEach(() => {
-    mockEventListeners = {}
-    vi.clearAllMocks()
+    // Spy on actual window methods
+    addEventListenerSpy = vi.spyOn(window, 'addEventListener')
+    removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
+    vi.restoreAllMocks()
   })
+
+  // Helper to create a test component that uses the composable
+  const createTestComponent = () => {
+    return defineComponent({
+      setup() {
+        const detection = useMobileDetection()
+        return { ...detection }
+      },
+      render() {
+        return h('div')
+      }
+    })
+  }
 
   it('should detect desktop screen as not mobile', () => {
     window.innerWidth = 1024
-    const { isMobile, screenWidth } = useMobileDetection()
-    
-    expect(isMobile.value).toBe(false)
-    expect(screenWidth.value).toBe(1024)
+    const wrapper = mount(createTestComponent())
+
+    expect(wrapper.vm.isMobile).toBe(false)
+    expect(wrapper.vm.screenWidth).toBe(1024)
+
+    wrapper.unmount()
   })
 
   it('should detect mobile screen as mobile', () => {
     window.innerWidth = 375
-    const { isMobile, screenWidth } = useMobileDetection()
-    
-    expect(isMobile.value).toBe(true)
-    expect(screenWidth.value).toBe(375)
+    const wrapper = mount(createTestComponent())
+
+    expect(wrapper.vm.isMobile).toBe(true)
+    expect(wrapper.vm.screenWidth).toBe(375)
+
+    wrapper.unmount()
   })
 
-  it('should detect tablet screen (768px) as mobile', () => {
+  it('should detect tablet screen (768px) as desktop (boundary)', () => {
     window.innerWidth = 768
-    const { isMobile, screenWidth } = useMobileDetection()
-    
-    // 768px is exactly the md breakpoint, so it should still be considered mobile
-    expect(isMobile.value).toBe(true)
-    expect(screenWidth.value).toBe(768)
+    const wrapper = mount(createTestComponent())
+
+    // 768px is exactly the md breakpoint - code checks < 768, so 768 is desktop
+    expect(wrapper.vm.isMobile).toBe(false)
+    expect(wrapper.vm.screenWidth).toBe(768)
+
+    wrapper.unmount()
   })
 
   it('should detect screen above 768px as desktop', () => {
     window.innerWidth = 769
-    const { isMobile, screenWidth } = useMobileDetection()
-    
-    expect(isMobile.value).toBe(false)
-    expect(screenWidth.value).toBe(769)
+    const wrapper = mount(createTestComponent())
+
+    expect(wrapper.vm.isMobile).toBe(false)
+    expect(wrapper.vm.screenWidth).toBe(769)
+
+    wrapper.unmount()
   })
 
-  it('should update when window is resized', () => {
+  it('should update when window is resized', async () => {
     // Start with desktop
     window.innerWidth = 1024
-    const { isMobile, screenWidth } = useMobileDetection()
-    
-    expect(isMobile.value).toBe(false)
-    expect(screenWidth.value).toBe(1024)
-    
+    const wrapper = mount(createTestComponent())
+
+    expect(wrapper.vm.isMobile).toBe(false)
+    expect(wrapper.vm.screenWidth).toBe(1024)
+
     // Resize to mobile
     window.innerWidth = 375
-    triggerResize()
-    
-    expect(isMobile.value).toBe(true)
-    expect(screenWidth.value).toBe(375)
-    
+    window.dispatchEvent(new Event('resize'))
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.vm.isMobile).toBe(true)
+    expect(wrapper.vm.screenWidth).toBe(375)
+
     // Resize back to desktop
     window.innerWidth = 1200
-    triggerResize()
-    
-    expect(isMobile.value).toBe(false)
-    expect(screenWidth.value).toBe(1200)
+    window.dispatchEvent(new Event('resize'))
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.vm.isMobile).toBe(false)
+    expect(wrapper.vm.screenWidth).toBe(1200)
+
+    wrapper.unmount()
   })
 
   it('should add and remove event listeners', () => {
-    const { isMobile } = useMobileDetection()
-    
+    const wrapper = mount(createTestComponent())
+
     // Should have added resize listener
-    expect(window.addEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
-    
-    // When component unmounts, should remove listener
-    // This is tested implicitly - the composable sets up the listener cleanup
+    expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function))
+
+    // Unmount and check cleanup
+    wrapper.unmount()
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function))
   })
 })
