@@ -51,9 +51,9 @@ async def list_all_domains(db: Session = Depends(get_db)):
         # Build response with group counts and password status
         response = []
         for domain in domains:
-            # Count groups for this domain using domain_key (legacy field, used by all endpoints)
-            from ..models.calendar import Group
-            group_count = db.query(Group).filter(Group.domain_key == domain.domain_key).count()
+            # Count groups using the FK relationship (domain_id)
+            # Migration populate_group_domain_ids ensures all groups have domain_id set
+            group_count = len(domain.groups) if domain.groups else 0
 
             response.append({
                 "domain_key": domain.domain_key,
