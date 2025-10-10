@@ -70,6 +70,8 @@ aws ssm send-command \
         'git fetch origin',
         'git reset --hard origin/main',
         'git pull origin main',
+        'echo \"📝 Copying environment-specific .env file...\"',
+        'cp .env.$ENVIRONMENT .env',
         'echo \"🔨 Building Docker images...\"',
         'BACKEND_CONTAINER=$BACKEND_CONTAINER FRONTEND_CONTAINER=$FRONTEND_CONTAINER ENVIRONMENT=$ENVIRONMENT docker-compose build',
         'echo \"🚀 Starting containers...\"',
