@@ -40,6 +40,8 @@ yarn-error.log*
 .env.*.local
 # .env.development contains SMTP credentials
 .env.development
+# EC2 instance ID for SSM deployment
+.env.ec2
 *.pem
 *.key
 

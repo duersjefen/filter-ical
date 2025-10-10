@@ -37,7 +37,7 @@ Filter-iCal allows users to:
 - AWS EC2 (eu-north-1)
 - Docker containerization
 - Nginx reverse proxy with Let's Encrypt SSL
-- GitHub Actions CI/CD
+- SSM-based deployment (builds on server)
 
 ---
 
@@ -173,30 +173,42 @@ make test
 # 3. Commit changes
 git add .
 git commit -m "Add feature X"
+git push origin main  # Optional: backup to GitHub
 
-# 4. Push to master (triggers staging deployment)
-git push origin master
+# 4. Deploy to staging via SSM (builds on server)
+make deploy-staging
 
 # 5. Verify on staging
 curl https://staging.filter-ical.de/health
 
-# 6. Deploy to production
+# 6. Deploy to production via SSM
 make deploy-production
-# → Opens GitHub Actions for manual approval
+```
+
+### Prerequisites for Deployment
+
+1. **EC2 Instance**: Running Amazon Linux 2023 in eu-north-1
+2. **AWS CLI**: Configured with SSM permissions
+3. **Instance ID**: Set in `.env.ec2` (copy from `.env.ec2.example`)
+
+```bash
+# Create .env.ec2 file
+cp .env.ec2.example .env.ec2
+# Edit and add your EC2_INSTANCE_ID
 ```
 
 ### Infrastructure
 
-**AWS EC2**: i-01647c3d9af4fe9fc (13.62.136.72)
-- **Region**: eu-north-1
-- **OS**: Amazon Linux 2
+**AWS EC2**: eu-north-1
+- **OS**: Amazon Linux 2023
 - **Services**: Docker, nginx, certbot
+- **Deployment**: SSM (AWS Systems Manager)
 
-**GitHub Actions CI/CD**:
-- Automated builds on push
-- Docker image publishing to GHCR
-- Zero-downtime deployments
-- Automatic health checks and rollback
+**SSM-Based Deployment**:
+- Builds Docker images on server (no registry needed)
+- Connects via AWS Systems Manager (no SSH)
+- Automatic database migrations
+- Zero-downtime container updates
 
 ---
 

@@ -190,52 +190,14 @@ migrate-stamp: ## Mark database as being at specific version (usage: make migrat
 	@echo "✅ Database stamped to $(version)"
 
 ##
-## 🚀 Deployment Commands (Platform-Driven)
+## 🚀 Deployment Commands (SSM-Based)
 ##
 
-deploy-staging: ## Deploy to staging (triggers continuous deployment pipeline)
-	@echo "🎭 Continuous Deployment Pipeline Starting..."
-	@echo ""
-	@echo "📋 Checking git status..."
-	@if [ -n "$$(git status --porcelain)" ]; then \
-		echo "⚠️  You have uncommitted changes. Commit first:"; \
-		echo "   git add . && git commit -m 'Your message'"; \
-		exit 1; \
-	fi
-	@echo "📤 Pushing to main (triggers continuous deployment)..."
-	@git push origin main
-	@echo ""
-	@echo "🔄 Continuous Deployment Pipeline:"
-	@echo "  1. Build Docker images (filter-ical repo) ⏳"
-	@echo "  2. Notify platform repo ⏳"
-	@echo "  3. Deploy to staging ⏳"
-	@echo "  4. Auto-queue production ⏸️  (requires approval)"
-	@echo ""
-	@echo "👀 Monitor build:  https://github.com/duersjefen/filter-ical/actions"
-	@echo "👀 Monitor deploy: https://github.com/duersjefen/multi-tenant-platform/actions"
-	@echo ""
-	@echo "🔍 Test staging: https://staging.filter-ical.de"
-	@echo ""
-	@echo "✅ When staging looks good, approve production:"
-	@echo "   cd ../multi-tenant-platform"
-	@echo "   make approve-production project=filter-ical"
+deploy-staging: ## Deploy to staging via SSM (builds on server)
+	@./deploy.sh staging
 
-deploy-production: ## Approve pending production deployment
-	@echo "🚀 Production Deployment Approval"
-	@echo ""
-	@echo "ℹ️  Production auto-queues after staging succeeds"
-	@echo ""
-	@echo "📖 To approve production deployment:"
-	@echo "  1. Test staging: https://staging.filter-ical.de"
-	@echo "  2. Approve deployment:"
-	@echo "     cd ../multi-tenant-platform"
-	@echo "     make approve-production project=filter-ical"
-	@echo ""
-	@echo "Or approve via GitHub UI:"
-	@echo "  https://github.com/duersjefen/multi-tenant-platform/actions"
-	@echo "  → Click 'Review deployments' → Approve 'production'"
-	@echo ""
-	@exit 1
+deploy-production: ## Deploy to production via SSM (builds on server)
+	@./deploy.sh production
 
 status: ## Check deployment status
 	@echo "📊 Recent deployments:"

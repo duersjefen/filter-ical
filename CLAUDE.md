@@ -11,7 +11,7 @@ Production-ready Python + Vue 3 web application with comprehensive TDD workflow 
 2. **Make minimum implementation** → Code only what's needed to pass tests
 3. **Refactor safely** → `make test` ensures no regression
 4. **Test & Commit** → Always run `make test` and commit after completing features/fixes
-5. **Deploy** → `make deploy-staging` (auto) or `make deploy-production` (manual approval)
+5. **Deploy** → `make deploy-staging` or `make deploy-production` (both via SSM)
 
 ### Quick Reference
 ```bash
@@ -26,8 +26,8 @@ make test                  # Run unit tests
 make test-all              # Run complete test suite (unit + integration + E2E)
 
 # Deployment
-make deploy-staging        # Deploy to staging (auto-deploy on push to master)
-make deploy-production     # Deploy to production (requires manual approval)
+make deploy-staging        # Deploy to staging via SSM (builds on server)
+make deploy-production     # Deploy to production via SSM (builds on server)
 make status                # Check deployment status
 
 # Local Development URLs
@@ -148,29 +148,29 @@ return { get user() { return appStore.user } }
 - **Staging:** https://staging.filter-ical.de
 - **AWS:** EC2 i-01647c3d9af4fe9fc (13.62.136.72)
 
-### Multi-Tenant Platform Architecture
-**CRITICAL:** filter-ical is deployed via the [multi-tenant-platform](../multi-tenant-platform) system.
+### SSM-Based Deployment Architecture
+**CRITICAL:** filter-ical uses SSM (AWS Systems Manager) for deployment.
 
 **Repository Structure:**
 ```
-~/Desktop/
-├── filter-ical/              # This repository (application code)
+~/Documents/Projects/
+├── filter-ical/              # This repository (application code + deployment)
 │   ├── backend/              # FastAPI application
 │   ├── frontend/             # Vue 3 application
-│   └── CLAUDE.md            # This file
-└── multi-tenant-platform/    # Platform repository (deployment configs)
-    └── configs/filter-ical/  # filter-ical deployment configuration
-        ├── docker-compose.yml    # Container orchestration
-        ├── .env.staging          # Staging environment variables
-        ├── .env.production       # Production environment variables
-        └── nginx.conf            # Reverse proxy configuration
+│   ├── deploy.sh             # SSM deployment script
+│   ├── docker-compose.yml    # Container orchestration
+│   ├── .env.ec2              # EC2 instance ID (gitignored)
+│   └── CLAUDE.md             # This file
+└── multi-tenant-platform/    # Platform repository (shared infrastructure)
+    └── platform/nginx/sites/ # Nginx configuration
+        └── filter-ical.conf  # filter-ical routing config
 ```
 
 **How Deployment Works:**
-1. **Code Changes** → Pushed to `filter-ical` GitHub repo
-2. **GitHub Actions** → Builds Docker images and pushes to ghcr.io
-3. **Deployment Script** → Pulls configs from `multi-tenant-platform` repo
-4. **Docker Compose** → Orchestrates container deployment on EC2
+1. **Code Changes** → Pushed to `filter-ical` GitHub repo (for backup/version control)
+2. **Deploy Command** → `make deploy-staging` or `make deploy-production` (from local machine)
+3. **SSM Execution** → Connects to EC2, pulls code, builds Docker images, starts containers
+4. **No Registry** → Builds fresh on server every time (2-5 min)
 
 **Container Networking:**
 - Both frontend and backend join the `platform` Docker network
@@ -179,13 +179,13 @@ return { get user() { return appStore.user } }
 - This allows seamless communication between containers
 
 **Environment Variables:**
-- **Backend:** Configured via `.env.{environment}` files in platform repo
-- **Frontend:** `VITE_API_URL` set in `.env.{environment}` files
+- EC2 instance ID in `.env.ec2` (local only, gitignored)
+- Environment-specific container names set during deployment
 
-**Key Files to Update:**
-- Application code: `filter-ical` repository
-- Deployment config: `multi-tenant-platform/configs/filter-ical/`
-- Never commit environment secrets to `filter-ical` repo
+**Key Files:**
+- Application code: `backend/`, `frontend/`
+- Deployment: `deploy.sh`, `docker-compose.yml`, `Makefile`
+- Platform nginx: `../multi-tenant-platform/platform/nginx/sites/filter-ical.conf`
 
 ### Database Migrations
 **MANDATORY: Use Alembic for all schema changes**

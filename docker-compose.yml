@@ -1,0 +1,74 @@
+version: '3.8'
+
+# =============================================================================
+# Filter-iCal - Production Deployment
+# =============================================================================
+# Builds from local Dockerfiles and joins platform network
+# =============================================================================
+
+networks:
+  platform:
+    external: true
+    name: platform
+
+services:
+  # ===========================================================================
+  # Backend (Python FastAPI)
+  # ===========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: ${BACKEND_CONTAINER:-filter-ical-backend}
+    restart: unless-stopped
+    networks:
+      - platform
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "project=filter-ical"
+      - "component=backend"
+      - "environment=${ENVIRONMENT:-production}"
+
+  # ===========================================================================
+  # Frontend (Vue 3 + nginx)
+  # ===========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    container_name: ${FRONTEND_CONTAINER:-filter-ical-frontend}
+    restart: unless-stopped
+    networks:
+      - platform
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "project=filter-ical"
+      - "component=frontend"
+      - "environment=${ENVIRONMENT:-production}"
