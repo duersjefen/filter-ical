@@ -4,28 +4,19 @@ Production-ready Python + Vue 3 web application with comprehensive TDD workflow 
 
 ---
 
-## 🔗 PLATFORM INFRASTRUCTURE
+## 🔗 DOCUMENTATION HIERARCHY
 
-**This app is deployed on the multi-tenant platform.**
+**Global principles (TDD, architecture, critical behaviors):**
+→ `/Users/martijn/Documents/Projects/CLAUDE.md`
 
-For platform-level changes (nginx routing, SSL certificates, database, shared infrastructure):
-→ **See:** `/Users/martijn/Documents/Projects/multi-tenant-platform/CLAUDE.md`
+**Platform infrastructure (nginx, SSL, deployment):**
+→ `/Users/martijn/Documents/Projects/multi-tenant-platform/CLAUDE.md`
 
-For app-specific development and deployment, see below.
+**This file:** Filter-iCal specific configuration and deployment details only.
 
 ---
 
-## 🎯 CORE PROJECT PRINCIPLES
-
-### Development Workflow (TDD-First)
-1. **Write failing test FIRST** → `@pytest.mark.future` tests drive implementation
-2. **Make minimum implementation** → Code only what's needed to pass tests
-3. **Refactor safely** → `make test` ensures no regression
-4. **Test & Commit** → Always run `make test` and commit after completing features/fixes
-5. **Deploy** → `make test` → `make deploy-staging` or `make deploy-production`
-   - Tests catch code issues before deployment
-   - Automatic health check catches deployment issues
-   - Use `make logs-staging` or `make logs-production` if health check fails
+## ⚙️ FILTER-ICAL CONFIGURATION
 
 ### Quick Reference
 ```bash
@@ -57,110 +48,6 @@ make status                # Check deployment status
 # NEVER use manual server commands - always use Makefile
 # NOTE: Servers have hot-reloading - no restart needed for code changes
 ```
-
----
-
-## 🏗️ MANDATORY ARCHITECTURE PRINCIPLES
-
-### 1. Clean Code Organization
-**✅ NAMING RULES:**
-- Name what it IS, not what it WAS → `useAPI.js` not `useUnifiedAPI.js`
-- No historical memory → No `New`, `Updated`, `Fixed`, `Unified`, `Merged`
-- Present-tense documentation → Describe current functionality only
-- Flat structure when possible → `/composables/useAPI.js` not `/composables/api/useAPI.js`
-
-### 2. Contract-Driven Development
-**THE MOST IMPORTANT LESSON: OpenAPI specifications are immutable contracts**
-
-```
-OpenAPI Contract → Implementation Freedom → Frontend Independence
-```
-
-**✅ Workflow:**
-1. Write OpenAPI specification → Define exact API behavior
-2. Write contract tests → Validate implementation matches spec
-3. Implement backend → Code to pass contract tests
-4. Frontend uses contracts → Never depends on backend implementation
-
-**Benefits:** Complete backend refactoring freedom without breaking frontend.
-
-### 3. Functional Programming Architecture
-**"Functional Core, Imperative Shell" Pattern**
-
-```
-app/data/           # PURE FUNCTIONS ONLY (business logic)
-app/main.py         # I/O ORCHESTRATION (side effects)
-src/composables/    # PURE FUNCTIONS ONLY (data transformations)  
-src/stores/         # STATE + I/O (reactive boundaries)
-```
-
-**✅ Rules:**
-- Pure functions in `/data/` and `/composables/` directories
-- NO classes for business logic - functions only
-- Explicit data flow - no hidden dependencies
-- Immutable data transformations - return new objects
-
-### 4. Test-First Development
-**✅ TDD Workflow:**
-- Unit tests → Pure functions, business logic
-- Integration tests → Component interactions, API endpoints  
-- E2E tests → Real user workflows (HEADLESS ONLY)
-- Contract tests → API compliance with OpenAPI specs
-
-**Vue 3 + Pinia Reactivity Fix:**
-```javascript
-// ✅ CORRECT - Use computed for reactive delegation
-const user = computed({
-  get() { return appStore.user },
-  set(value) { appStore.user = value }
-})
-
-// ❌ WRONG - Simple getters break reactivity
-return { get user() { return appStore.user } }
-```
-
----
-
-## 🔧 CRITICAL BEHAVIORS
-
-### User Notification System
-**Notify user when Claude can't continue (finished or needs input):**
-```bash
-~/bin/claude-notify "message" "type"
-```
-
-**Types:** `success`, `task_complete`, `milestone`, `error`, `question`, `approval_needed`, `input_needed`
-
-**When to notify:**
-- ✅ All tasks complete - nothing left to do
-- ✅ Waiting for input - need decision/approval/clarification
-- ✅ Blocked/error - can't proceed without help
-- ❌ Don't notify on routine mid-task updates
-
-### Systematic Debugging
-**2-Failure Rule:** After 2 failed attempts, IMMEDIATELY find root cause
-- Stop micro-debugging → Address system-level issues
-- Frontend: Use Vue DevTools (available in Vite dev server) for reactive debugging
-- AI-accessible debugging → Unit tests, E2E tests, HTML debug panels (NOT console.log)
-
-### Professional Guidance
-**Must challenge:** Architectural shortcuts, security issues, performance anti-patterns
-**Template:** *"This approach will cause [problems] because [reasons]. Instead, [better solution] which [benefits]."*
-
-### Parallel Agent Orchestration
-**For complex tasks, use 6 agents in parallel (Task tool):**
-1. **Research** - Analyze existing patterns (Read, Grep, Glob)
-2. **Backend** - FastAPI implementation (pure functions + routers)
-3. **Frontend** - Vue 3 components + composables
-4. **Tests** - pytest + Vitest (TDD-first with @pytest.mark.future)
-5. **Security** - SQL injection, XSS, auth validation
-6. **Architecture** - Validate filter-ical principles compliance
-
-**Trigger:** User says "ultrathink" or requests comprehensive implementation
-
-**Workflow:** Spawn all 6 agents → run in parallel → synthesize results → present unified plan
-
-**Speed:** 60% faster than sequential (9 min vs 25 min for features)
 
 ---
 
