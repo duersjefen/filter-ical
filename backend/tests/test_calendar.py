@@ -332,55 +332,55 @@ class TestFilterData:
     
     def test_validate_filter_data_valid_user_filter(self):
         """Test validating valid user filter data."""
-        is_valid, error = validate_filter_data(
+        result = validate_filter_data(
             name="Test Filter",
             calendar_id=1,
             subscribed_event_ids=[1, 2]
         )
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_filter_data_valid_domain_filter(self):
         """Test validating valid domain filter data."""
-        is_valid, error = validate_filter_data(
+        result = validate_filter_data(
             name="Domain Filter",
             domain_key="test_domain",
             subscribed_group_ids=[1, 2]
         )
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_filter_data_empty_name(self):
         """Test validating filter with empty name."""
-        is_valid, error = validate_filter_data(
+        result = validate_filter_data(
             name="",
             calendar_id=1
         )
         
-        assert is_valid is False
-        assert "name is required" in error
+        assert result.is_success is False
+        assert "name is required" in result.error
     
     def test_validate_filter_data_both_calendar_and_domain(self):
         """Test validating filter with both calendar_id and domain_key."""
-        is_valid, error = validate_filter_data(
+        result = validate_filter_data(
             name="Invalid Filter",
             calendar_id=1,
             domain_key="test_domain"
         )
         
-        assert is_valid is False
-        assert "cannot be both user and domain filter" in error
+        assert result.is_success is False
+        assert "cannot be both user and domain filter" in result.error
     
     def test_validate_filter_data_neither_calendar_nor_domain(self):
         """Test validating filter with neither calendar_id nor domain_key."""
-        is_valid, error = validate_filter_data(
+        result = validate_filter_data(
             name="Invalid Filter"
         )
         
-        assert is_valid is False
-        assert "must specify either calendar_id or domain_key" in error
+        assert result.is_success is False
+        assert "must specify either calendar_id or domain_key" in result.error
 
 
 @pytest.mark.unit
@@ -389,44 +389,44 @@ class TestCalendarValidation:
     
     def test_validate_calendar_data_valid(self):
         """Test validating valid calendar data."""
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name="Test Calendar",
             source_url="https://example.com/cal.ics"
         )
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_calendar_data_empty_name(self):
         """Test validating calendar with empty name."""
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name="",
             source_url="https://example.com/cal.ics"
         )
         
-        assert is_valid is False
-        assert "name is required" in error
+        assert result.is_success is False
+        assert "name is required" in result.error
     
     def test_validate_calendar_data_invalid_url(self):
         """Test validating calendar with invalid URL."""
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name="Test Calendar",
             source_url="not-a-url"
         )
         
-        assert is_valid is False
-        assert "valid HTTP/HTTPS URL" in error
+        assert result.is_success is False
+        assert "valid HTTP/HTTPS URL" in result.error
     
     def test_validate_calendar_data_invalid_type(self):
         """Test validating calendar with invalid type."""
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name="Test Calendar",
             source_url="https://example.com/cal.ics",
             calendar_type="invalid"
         )
         
-        assert is_valid is False
-        assert "must be 'user' or 'domain'" in error
+        assert result.is_success is False
+        assert "must be 'user' or 'domain'" in result.error
 
 
 @pytest.mark.unit

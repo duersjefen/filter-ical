@@ -69,9 +69,9 @@ def create_calendar(db: Session, name: str, source_url: str,
     This function only creates the Calendar record itself.
     """
     # Validate data using pure function
-    is_valid, error_msg = validate_calendar_data(name, source_url)
-    if not is_valid:
-        return False, None, error_msg
+    validation_result = validate_calendar_data(name, source_url)
+    if not validation_result.is_success:
+        return False, None, validation_result.error
 
     try:
         # Create calendar data using pure function (no domain_key in calendar)
@@ -220,9 +220,10 @@ async def sync_calendar_events(db: Session, calendar: Calendar) -> Tuple[bool, i
             return False, 0, error
         
         # Parse iCal content using pure function
-        parse_success, events_data, parse_error = parse_ical_content(ical_content)
-        if not parse_success:
-            return False, 0, parse_error
+        parse_result = parse_ical_content(ical_content)
+        if not parse_result.is_success:
+            return False, 0, parse_result.error
+        events_data = parse_result.value
         
         # Filter out events older than 1 week (much simpler approach)
         one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
@@ -313,15 +314,15 @@ def create_filter(db: Session, name: str, calendar_id: Optional[int] = None,
     I/O Operation - Database creation with validation.
     """
     # Validate data using pure function
-    is_valid, error_msg = validate_filter_data(
+    validation_result = validate_filter_data(
         name=name,
         calendar_id=calendar_id,
         domain_key=domain_key,
         subscribed_event_ids=subscribed_event_ids,
         subscribed_group_ids=subscribed_group_ids
     )
-    if not is_valid:
-        return False, None, error_msg
+    if not validation_result.is_success:
+        return False, None, validation_result.error
 
     try:
         # Create filter data using pure function

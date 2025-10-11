@@ -42,13 +42,13 @@ domains:
     name: "Another Domain"
 """
         
-        success, config, error = load_domain_config(yaml_content)
-        
-        assert success is True
-        assert error == ""
-        assert "domains" in config
-        assert "test_domain" in config["domains"]
-        assert config["domains"]["test_domain"]["name"] == "Test Domain"
+        result = load_domain_config(yaml_content)
+
+        assert result.is_success is True
+        assert result.error == ""
+        assert "domains" in result.value
+        assert "test_domain" in result.value["domains"]
+        assert result.value["domains"]["test_domain"]["name"] == "Test Domain"
     
     def test_load_domain_config_invalid_yaml(self):
         """Test loading invalid YAML content."""
@@ -59,11 +59,10 @@ domains:
     invalid: [unclosed
 """
         
-        success, config, error = load_domain_config(invalid_yaml)
-        
-        assert success is False
-        assert config == {}
-        assert "Failed to parse domain configuration" in error
+        result = load_domain_config(invalid_yaml)
+
+        assert result.is_success is False
+        assert "Failed to parse domain configuration" in result.error
     
     def test_load_domain_config_missing_domains_key(self):
         """Test loading YAML without domains key."""
@@ -72,19 +71,17 @@ other_config:
   setting: value
 """
         
-        success, config, error = load_domain_config(yaml_content)
-        
-        assert success is False
-        assert config == {}
-        assert "missing 'domains' key" in error
+        result = load_domain_config(yaml_content)
+
+        assert result.is_success is False
+        assert "missing 'domains' key" in result.error
     
     def test_load_domain_config_empty(self):
         """Test loading empty YAML content."""
-        success, config, error = load_domain_config("")
-        
-        assert success is False
-        assert config == {}
-        assert "missing 'domains' key" in error
+        result = load_domain_config("")
+
+        assert result.is_success is False
+        assert "missing 'domains' key" in result.error
     
     def test_get_domain_config_existing(self):
         """Test getting configuration for existing domain."""
@@ -422,111 +419,111 @@ class TestValidation:
     
     def test_validate_group_data_valid(self):
         """Test validating valid group data."""
-        is_valid, error = validate_group_data("Test Group", "test_domain")
-        
-        assert is_valid is True
-        assert error == ""
+        result = validate_group_data("Test Group", "test_domain")
+
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_group_data_empty_name(self):
         """Test validating group data with empty name."""
-        is_valid, error = validate_group_data("", "test_domain")
-        
-        assert is_valid is False
-        assert "Group name is required" in error
+        result = validate_group_data("", "test_domain")
+
+        assert result.is_success is False
+        assert "Group name is required" in result.error
     
     def test_validate_group_data_whitespace_name(self):
         """Test validating group data with whitespace-only name."""
-        is_valid, error = validate_group_data("   ", "test_domain")
+        result = validate_group_data("   ", "test_domain")
         
-        assert is_valid is False
-        assert "Group name is required" in error
+        assert result.is_success is False
+        assert "Group name is required" in result.error
     
     def test_validate_group_data_long_name(self):
         """Test validating group data with too long name."""
         long_name = "x" * 256  # Longer than 255 characters
-        is_valid, error = validate_group_data(long_name, "test_domain")
+        result = validate_group_data(long_name, "test_domain")
         
-        assert is_valid is False
-        assert "255 characters or less" in error
+        assert result.is_success is False
+        assert "255 characters or less" in result.error
     
     def test_validate_group_data_empty_domain_key(self):
         """Test validating group data with empty domain key."""
-        is_valid, error = validate_group_data("Test Group", "")
+        result = validate_group_data("Test Group", "")
         
-        assert is_valid is False
-        assert "Domain key is required" in error
+        assert result.is_success is False
+        assert "Domain key is required" in result.error
     
     def test_validate_group_data_none_values(self):
         """Test validating group data with None values."""
-        is_valid, error = validate_group_data(None, None)
+        result = validate_group_data(None, None)
         
-        assert is_valid is False
-        assert "Group name is required" in error
+        assert result.is_success is False
+        assert "Group name is required" in result.error
     
     def test_validate_assignment_rule_data_valid_title_contains(self):
         """Test validating valid title_contains rule."""
-        is_valid, error = validate_assignment_rule_data("title_contains", "meeting", 1)
+        result = validate_assignment_rule_data("title_contains", "meeting", 1)
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_assignment_rule_data_valid_description_contains(self):
         """Test validating valid description_contains rule."""
-        is_valid, error = validate_assignment_rule_data("description_contains", "project", 2)
+        result = validate_assignment_rule_data("description_contains", "project", 2)
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_assignment_rule_data_invalid_rule_type(self):
         """Test validating rule with invalid rule type."""
-        is_valid, error = validate_assignment_rule_data("invalid_type", "test", 1)
+        result = validate_assignment_rule_data("invalid_type", "test", 1)
         
-        assert is_valid is False
-        assert "Rule type must be one of" in error
-        assert "title_contains" in error
-        assert "description_contains" in error
+        assert result.is_success is False
+        assert "Rule type must be one of" in result.error
+        assert "title_contains" in result.error
+        assert "description_contains" in result.error
     
     def test_validate_assignment_rule_data_empty_rule_value(self):
         """Test validating rule with empty rule value."""
-        is_valid, error = validate_assignment_rule_data("title_contains", "", 1)
+        result = validate_assignment_rule_data("title_contains", "", 1)
         
-        assert is_valid is False
-        assert "Rule value is required" in error
+        assert result.is_success is False
+        assert "Rule value is required" in result.error
     
     def test_validate_assignment_rule_data_whitespace_rule_value(self):
         """Test validating rule with whitespace-only rule value."""
-        is_valid, error = validate_assignment_rule_data("title_contains", "   ", 1)
+        result = validate_assignment_rule_data("title_contains", "   ", 1)
         
-        assert is_valid is False
-        assert "Rule value is required" in error
+        assert result.is_success is False
+        assert "Rule value is required" in result.error
     
     def test_validate_assignment_rule_data_invalid_target_group_id(self):
         """Test validating rule with invalid target group ID."""
-        is_valid, error = validate_assignment_rule_data("title_contains", "test", 0)
+        result = validate_assignment_rule_data("title_contains", "test", 0)
         
-        assert is_valid is False
-        assert "positive integer" in error
+        assert result.is_success is False
+        assert "positive integer" in result.error
     
     def test_validate_assignment_rule_data_negative_target_group_id(self):
         """Test validating rule with negative target group ID."""
-        is_valid, error = validate_assignment_rule_data("title_contains", "test", -1)
+        result = validate_assignment_rule_data("title_contains", "test", -1)
         
-        assert is_valid is False
-        assert "positive integer" in error
+        assert result.is_success is False
+        assert "positive integer" in result.error
     
     def test_validate_assignment_rule_data_string_target_group_id(self):
         """Test validating rule with string target group ID."""
-        is_valid, error = validate_assignment_rule_data("title_contains", "test", "1")
+        result = validate_assignment_rule_data("title_contains", "test", "1")
         
-        assert is_valid is False
-        assert "positive integer" in error
+        assert result.is_success is False
+        assert "positive integer" in result.error
     
     def test_validate_assignment_rule_data_valid_category_contains(self):
         """Test validating valid category_contains rule."""
-        is_valid, error = validate_assignment_rule_data("category_contains", "Event", 1)
+        result = validate_assignment_rule_data("category_contains", "Event", 1)
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
 
 
 @pytest.mark.unit

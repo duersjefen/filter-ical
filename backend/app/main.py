@@ -10,7 +10,7 @@ Integrated with Docker workflow for rapid development.
 import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from slowapi import _rate_limit_exceeded_handler
@@ -20,6 +20,7 @@ from .core.config import settings
 from .core.database import Base, engine
 from .core.scheduler import start_scheduler, stop_scheduler
 from .core.rate_limit import limiter
+from .core.error_handlers import http_exception_handler
 
 
 def load_openapi_spec() -> Optional[Dict[str, Any]]:
@@ -172,6 +173,9 @@ def create_application() -> FastAPI:
     # Rate limiting
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # RFC 7807 Problem Details - Global exception handler for consistent error format
+    app.add_exception_handler(HTTPException, http_exception_handler)
 
     # Security headers middleware
     from .core.security_headers import SecurityHeadersMiddleware

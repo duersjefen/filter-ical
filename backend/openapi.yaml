@@ -2617,10 +2617,60 @@ components:
 
     Error:
       type: object
+      description: |
+        RFC 7807 Problem Details for HTTP APIs.
+
+        This is the standard error response format for all API errors.
+        Provides machine-readable error information with:
+        - type: URI identifying the specific error type
+        - title: Human-readable summary of the error type
+        - status: HTTP status code
+        - detail: Human-readable explanation specific to this occurrence
+        - instance: URI of the request that caused the error
+        - trace_id: Unique identifier for debugging and tracing
+
+        Reference: https://datatracker.ietf.org/doc/html/rfc7807
+      required:
+        - type
+        - title
+        - status
+        - detail
       properties:
-        error:
+        type:
           type: string
-          example: "Invalid calendar URL"
+          format: uri
+          description: "URI reference identifying the problem type"
+          example: "https://filter-ical.de/errors/calendar-not-found"
+        title:
+          type: string
+          description: "Short, human-readable summary of the problem type"
+          example: "Calendar Not Found"
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+          description: "HTTP status code"
+          example: 404
         detail:
           type: string
-          example: "The provided URL is not a valid iCal endpoint"
+          description: "Human-readable explanation specific to this occurrence"
+          example: "Calendar with ID '123' does not exist"
+        instance:
+          type: string
+          format: uri
+          description: "URI reference identifying the specific occurrence"
+          example: "/api/calendars/123"
+        trace_id:
+          type: string
+          format: uuid
+          description: "Unique identifier for tracing this error"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      additionalProperties: true
+      example:
+        type: "https://filter-ical.de/errors/validation-error"
+        title: "Validation Error"
+        status: 400
+        detail: "Calendar name is required"
+        instance: "/api/calendars"
+        trace_id: "550e8400-e29b-41d4-a716-446655440000"
+        field: "name"

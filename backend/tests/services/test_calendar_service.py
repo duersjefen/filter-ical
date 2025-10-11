@@ -11,6 +11,7 @@ from unittest.mock import Mock, MagicMock, patch, AsyncMock
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 import httpx
+from app.core.result import ok, fail
 
 from app.services.calendar_service import (
     fetch_ical_content,
@@ -360,7 +361,7 @@ class TestSyncCalendarEvents:
         with patch('app.services.calendar_service.fetch_ical_content', new_callable=AsyncMock) as mock_fetch:
             with patch('app.services.calendar_service.parse_ical_content') as mock_parse:
                 mock_fetch.return_value = (True, "ical_content", "")
-                mock_parse.return_value = (True, mock_event_data, "")
+                mock_parse.return_value = ok(mock_event_data)
 
                 success, count, error = await sync_calendar_events(mock_db, mock_calendar)
 
@@ -393,7 +394,7 @@ class TestSyncCalendarEvents:
         with patch('app.services.calendar_service.fetch_ical_content', new_callable=AsyncMock) as mock_fetch:
             with patch('app.services.calendar_service.parse_ical_content') as mock_parse:
                 mock_fetch.return_value = (True, "ical_content", "")
-                mock_parse.return_value = (False, [], "Parse error")
+                mock_parse.return_value = fail("Parse error")
 
                 success, count, error = await sync_calendar_events(mock_db, mock_calendar)
 
@@ -428,7 +429,7 @@ class TestSyncCalendarEvents:
         with patch('app.services.calendar_service.fetch_ical_content', new_callable=AsyncMock) as mock_fetch:
             with patch('app.services.calendar_service.parse_ical_content') as mock_parse:
                 mock_fetch.return_value = (True, "ical_content", "")
-                mock_parse.return_value = (True, mock_event_data, "")
+                mock_parse.return_value = ok(mock_event_data)
 
                 success, count, error = await sync_calendar_events(mock_db, mock_calendar)
 

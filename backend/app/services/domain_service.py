@@ -23,24 +23,27 @@ from .calendar_service import get_calendar_by_domain, sync_calendar_events
 def load_domains_config(config_path: Path) -> Tuple[bool, Dict[str, Any], str]:
     """
     Load domain configuration from file.
-    
+
     Args:
         config_path: Path to domains.yaml file
-        
+
     Returns:
         Tuple of (success, config_dict, error_message)
-        
+
     I/O Operation - File reading with error handling.
     """
     try:
         if not config_path.exists():
             return False, {}, f"Domain configuration file not found: {config_path}"
-        
+
         with open(config_path, 'r') as f:
             config_content = f.read()
-        
+
         # Use pure function to parse content
-        return load_domain_config(config_content)
+        result = load_domain_config(config_content)
+        if not result.is_success:
+            return False, {}, result.error
+        return True, result.value, ""
         
     except Exception as e:
         return False, {}, f"Error reading domain configuration: {str(e)}"
@@ -174,9 +177,9 @@ def create_group(db: Session, domain_key: str, name: str) -> Tuple[bool, Optiona
     I/O Operation - Database creation with validation.
     """
     # Validate data using pure function
-    is_valid, error_msg = validate_group_data(name, domain_key)
-    if not is_valid:
-        return False, None, error_msg
+    validation_result = validate_group_data(name, domain_key)
+    if not validation_result.is_success:
+        return False, None, validation_result.error
 
     try:
         # Get domain_id from domain_key
@@ -269,9 +272,9 @@ def create_assignment_rule(db: Session, domain_key: str, rule_type: str,
     I/O Operation - Database creation with validation.
     """
     # Validate data using pure function
-    is_valid, error_msg = validate_assignment_rule_data(rule_type, rule_value, target_group_id)
-    if not is_valid:
-        return False, None, error_msg
+    validation_result = validate_assignment_rule_data(rule_type, rule_value, target_group_id)
+    if not validation_result.is_success:
+        return False, None, validation_result.error
 
     try:
         # Get domain_id from domain_key
@@ -519,9 +522,9 @@ def update_group(db: Session, group_id: int, domain_key: str, name: str) -> Tupl
     I/O Operation - Database update with validation.
     """
     # Validate data using pure function
-    is_valid, error_msg = validate_group_data(name, domain_key)
-    if not is_valid:
-        return False, None, error_msg
+    validation_result = validate_group_data(name, domain_key)
+    if not validation_result.is_success:
+        return False, None, validation_result.error
     
     try:
         # Get existing group

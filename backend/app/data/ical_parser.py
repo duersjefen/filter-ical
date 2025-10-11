@@ -12,34 +12,35 @@ import logging
 from datetime import datetime, timezone, date
 from typing import Dict, List, Any, Optional, Tuple
 from icalendar import Calendar as ICalCalendar, Event as ICalEvent
+from app.core.result import Result, ok, fail
 
 
-def parse_ical_content(ical_content: str) -> Tuple[bool, List[Dict[str, Any]], str]:
+def parse_ical_content(ical_content: str) -> Result[List[Dict[str, Any]]]:
     """
     Parse iCal content string into structured event data.
-    
+
     Args:
         ical_content: Raw iCal content string
-        
+
     Returns:
-        Tuple of (success, events_list, error_message)
-        
+        Result containing events list or error message
+
     Pure function - no side effects, same input always produces same output.
     """
     try:
         calendar = ICalCalendar.from_ical(ical_content)
         events = []
-        
+
         for component in calendar.walk():
             if component.name == "VEVENT":
                 event_data = _extract_event_data(component, ical_content)
                 if event_data:
                     events.append(event_data)
-        
-        return True, events, ""
-        
+
+        return ok(events)
+
     except Exception as e:
-        return False, [], f"Failed to parse iCal content: {str(e)}"
+        return fail(f"Failed to parse iCal content: {str(e)}")
 
 
 def _extract_event_data(ical_event: ICalEvent, raw_ical: str) -> Optional[Dict[str, Any]]:
@@ -302,26 +303,26 @@ def group_events_by_title(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, A
 
 
 
-def validate_ical_url(url: str) -> Tuple[bool, str]:
+def validate_ical_url(url: str) -> Result[None]:
     """
     Validate iCal URL format.
-    
+
     Args:
         url: URL to validate
-        
+
     Returns:
-        Tuple of (is_valid, error_message)
-        
+        Result indicating success or validation error
+
     Pure function - no network access, just format validation.
     """
     if not url or not isinstance(url, str):
-        return False, "URL is required"
-    
+        return fail("URL is required")
+
     url = url.strip()
-    
+
     if not url.startswith(('http://', 'https://')):
-        return False, "URL must start with http:// or https://"
-    
+        return fail("URL must start with http:// or https://")
+
     # Basic URL format validation
     url_pattern = re.compile(
         r'^https?://'  # http:// or https://
@@ -330,37 +331,37 @@ def validate_ical_url(url: str) -> Tuple[bool, str]:
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-    
+
     if not url_pattern.match(url):
-        return False, "Invalid URL format"
-    
-    return True, ""
+        return fail("Invalid URL format")
+
+    return ok(None)
 
 
-def validate_calendar_data(name: str, source_url: str) -> Tuple[bool, str]:
+def validate_calendar_data(name: str, source_url: str) -> Result[None]:
     """
     Validate calendar creation data.
-    
+
     Args:
         name: Calendar name
         source_url: Calendar source URL
-        
+
     Returns:
-        Tuple of (is_valid, error_message)
-        
+        Result indicating success or validation error
+
     Pure function - validation without side effects.
     """
     if not name or not isinstance(name, str) or not name.strip():
-        return False, "Calendar name is required"
-    
+        return fail("Calendar name is required")
+
     if len(name.strip()) > 255:
-        return False, "Calendar name must be 255 characters or less"
-    
-    url_valid, url_error = validate_ical_url(source_url)
-    if not url_valid:
-        return False, f"Invalid source URL: {url_error}"
-    
-    return True, ""
+        return fail("Calendar name must be 255 characters or less")
+
+    url_result = validate_ical_url(source_url)
+    if not url_result.is_success:
+        return fail(f"Invalid source URL: {url_result.error}")
+
+    return ok(None)
 
 
 

@@ -8,6 +8,7 @@ All calendar business logic without I/O operations.
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional, Tuple
+from app.core.result import Result, ok, fail
 
 
 def create_calendar_data(name: str, source_url: str, calendar_type: str = "user",
@@ -472,82 +473,82 @@ def _generate_vevent_from_data(event: Dict[str, Any]) -> List[str]:
     return lines
 
 
-def validate_filter_data(name: str, calendar_id: Optional[int] = None, 
+def validate_filter_data(name: str, calendar_id: Optional[int] = None,
                         domain_key: Optional[str] = None,
                         subscribed_event_ids: Optional[List[int]] = None,
-                        subscribed_group_ids: Optional[List[int]] = None) -> Tuple[bool, str]:
+                        subscribed_group_ids: Optional[List[int]] = None) -> Result[None]:
     """
     Validate filter creation data.
-    
+
     Args:
         name: Filter name
         calendar_id: Calendar ID for user filters
         domain_key: Domain key for domain filters
         subscribed_event_ids: Event IDs list
         subscribed_group_ids: Group IDs list
-        
+
     Returns:
-        Tuple of (is_valid, error_message)
-        
+        Result indicating success or validation error
+
     Pure function - validation without side effects.
     """
     if not name or not isinstance(name, str) or not name.strip():
-        return False, "Filter name is required"
-    
+        return fail("Filter name is required")
+
     if len(name.strip()) > 255:
-        return False, "Filter name must be 255 characters or less"
-    
+        return fail("Filter name must be 255 characters or less")
+
     # Must have either calendar_id or domain_key, not both
     if calendar_id and domain_key:
-        return False, "Filter cannot be both user and domain filter"
-    
+        return fail("Filter cannot be both user and domain filter")
+
     if not calendar_id and not domain_key:
-        return False, "Filter must specify either calendar_id or domain_key"
-    
+        return fail("Filter must specify either calendar_id or domain_key")
+
     # Validate event IDs if provided
     if subscribed_event_ids and not isinstance(subscribed_event_ids, list):
-        return False, "Subscribed event IDs must be a list"
-    
+        return fail("Subscribed event IDs must be a list")
+
     # Validate group IDs if provided
     if subscribed_group_ids and not isinstance(subscribed_group_ids, list):
-        return False, "Subscribed group IDs must be a list"
-    
+        return fail("Subscribed group IDs must be a list")
+
     # Group IDs only valid for domain filters
     if subscribed_group_ids and not domain_key:
-        return False, "Group subscriptions only valid for domain filters"
-    
-    return True, ""
+        return fail("Group subscriptions only valid for domain filters")
+
+    return ok(None)
 
 
-def validate_calendar_data(name: str, source_url: str, calendar_type: str = "user") -> Tuple[bool, str]:
+def validate_calendar_data(name: str, source_url: str, calendar_type: str = "user") -> Result[None]:
     """
     Validate calendar creation data.
-    
+
     Args:
         name: Calendar name
         source_url: iCal source URL
         calendar_type: Calendar type ("user" or "domain")
-        
+
     Returns:
-        Tuple of (is_valid, error_message)
-        
+        Result indicating success or validation error
+
     Pure function - validation without side effects.
     """
     if not name or not isinstance(name, str) or not name.strip():
-        return False, "Calendar name is required"
-    
+        return fail("Calendar name is required")
+
     if len(name.strip()) > 255:
-        return False, "Calendar name must be 255 characters or less"
-    
+        return fail("Calendar name must be 255 characters or less")
+
     if not source_url or not isinstance(source_url, str) or not source_url.strip():
-        return False, "Calendar source URL is required"
-    
+        return fail("Calendar source URL is required")
+
     # Basic URL validation
     url = source_url.strip().lower()
     if not (url.startswith('http://') or url.startswith('https://')):
-        return False, "Calendar source URL must be a valid HTTP/HTTPS URL"
-    
+        return fail("Calendar source URL must be a valid HTTP/HTTPS URL")
+
     if calendar_type not in ['user', 'domain']:
-        return False, "Calendar type must be 'user' or 'domain'"
-    
-    return True, ""
+        return fail("Calendar type must be 'user' or 'domain'")
+
+    return ok(None)

@@ -302,9 +302,9 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
             group_name = group_config['name']
             
             # Validate group data
-            is_valid, error_msg = validate_group_data(group_name, domain_key)
-            if not is_valid:
-                return False, f"Invalid group '{group_name}' (ID: {semantic_id}): {error_msg}"
+            validation_result = validate_group_data(group_name, domain_key)
+            if not validation_result.is_success:
+                return False, f"Invalid group '{group_name}' (ID: {semantic_id}): {validation_result.error}"
             
             # Create group
             group_data = create_group_data(domain_key, group_name)
@@ -339,13 +339,13 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
             db_group_id = id_mapping[semantic_group_id]
             
             # Validate rule data
-            is_valid, error_msg = validate_assignment_rule_data(
+            validation_result = validate_assignment_rule_data(
                 rule_config['rule_type'],
                 rule_config['rule_value'],
                 db_group_id
             )
-            if not is_valid:
-                return False, f"Invalid assignment rule: {error_msg}"
+            if not validation_result.is_success:
+                return False, f"Invalid assignment rule: {validation_result.error}"
             
             # Create rule
             rule_data = create_assignment_rule_data(

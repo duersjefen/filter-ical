@@ -54,14 +54,14 @@ END:VCALENDAR"""
     
     def test_parse_ical_content_valid(self, sample_ical_content):
         """Test parsing valid iCal content."""
-        success, events, error = parse_ical_content(sample_ical_content)
+        result = parse_ical_content(sample_ical_content)
         
-        assert success is True
-        assert error == ""
-        assert len(events) == 2
+        assert result.is_success is True
+        assert result.error == ""
+        assert len(result.value) == 2
         
         # Check first event
-        event1 = events[0]
+        event1 = result.value[0]
         assert event1["title"] == "Test Event"
         assert event1["description"] == "Test Description"
         assert event1["location"] == "Test Location"
@@ -71,25 +71,23 @@ END:VCALENDAR"""
         assert "raw_ical" in event1
         
         # Check second event
-        event2 = events[1]
+        event2 = result.value[1]
         assert event2["title"] == "Another Event"
         assert event2["uid"] == "test-event-2"
     
     def test_parse_ical_content_invalid(self, invalid_ical_content):
         """Test parsing invalid iCal content."""
-        success, events, error = parse_ical_content(invalid_ical_content)
+        result = parse_ical_content(invalid_ical_content)
         
-        assert success is False
-        assert len(events) == 0
-        assert "Failed to parse iCal content" in error
+        assert result.is_success is False
+        assert "Failed to parse iCal content" in result.error
     
     def test_parse_ical_content_empty(self):
         """Test parsing empty iCal content."""
-        success, events, error = parse_ical_content("")
+        result = parse_ical_content("")
         
-        assert success is False
-        assert len(events) == 0
-        assert "Failed to parse iCal content" in error
+        assert result.is_success is False
+        assert "Failed to parse iCal content" in result.error
     
     def test_parse_ical_content_minimal_event(self):
         """Test parsing iCal with minimal event data."""
@@ -102,12 +100,12 @@ DTSTART:20250923T100000Z
 END:VEVENT
 END:VCALENDAR"""
         
-        success, events, error = parse_ical_content(ical_content)
+        result = parse_ical_content(ical_content)
+
+        assert result.is_success is True
+        assert len(result.value) == 1
         
-        assert success is True
-        assert len(events) == 1
-        
-        event = events[0]
+        event = result.value[0]
         assert event["title"] == "Minimal Event"
         assert event["uid"] == "minimal-event"
         assert event["description"] == ""
@@ -193,79 +191,79 @@ class TestValidation:
     
     def test_validate_ical_url_valid_https(self):
         """Test validating valid HTTPS iCal URL."""
-        is_valid, error = validate_ical_url("https://calendar.example.com/cal.ics")
+        result = validate_ical_url("https://calendar.example.com/cal.ics")
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_ical_url_valid_http(self):
         """Test validating valid HTTP iCal URL."""
-        is_valid, error = validate_ical_url("http://calendar.example.com/cal.ics")
+        result = validate_ical_url("http://calendar.example.com/cal.ics")
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_ical_url_invalid_protocol(self):
         """Test validating URL with invalid protocol."""
-        is_valid, error = validate_ical_url("ftp://calendar.example.com/cal.ics")
+        result = validate_ical_url("ftp://calendar.example.com/cal.ics")
         
-        assert is_valid is False
-        assert "URL must start with http:// or https://" in error
+        assert result.is_success is False
+        assert "URL must start with http:// or https://" in result.error
     
     def test_validate_ical_url_empty(self):
         """Test validating empty URL."""
-        is_valid, error = validate_ical_url("")
+        result = validate_ical_url("")
         
-        assert is_valid is False
-        assert "URL is required" in error
+        assert result.is_success is False
+        assert "URL is required" in result.error
     
     def test_validate_ical_url_not_string(self):
         """Test validating non-string URL."""
-        is_valid, error = validate_ical_url(None)
+        result = validate_ical_url(None)
         
-        assert is_valid is False
-        assert "URL is required" in error
+        assert result.is_success is False
+        assert "URL is required" in result.error
     
     def test_validate_calendar_data_valid(self):
         """Test validating valid calendar data."""
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name="Test Calendar",
             source_url="https://example.com/cal.ics"
         )
         
-        assert is_valid is True
-        assert error == ""
+        assert result.is_success is True
+        assert result.error == ""
     
     def test_validate_calendar_data_empty_name(self):
         """Test validating calendar data with empty name."""
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name="",
             source_url="https://example.com/cal.ics"
         )
         
-        assert is_valid is False
-        assert "Calendar name is required" in error
+        assert result.is_success is False
+        assert "Calendar name is required" in result.error
     
     def test_validate_calendar_data_long_name(self):
         """Test validating calendar data with too long name."""
         long_name = "x" * 256  # Longer than 255 characters
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name=long_name,
             source_url="https://example.com/cal.ics"
         )
         
-        assert is_valid is False
-        assert "255 characters or less" in error
+        assert result.is_success is False
+        assert "255 characters or less" in result.error
     
     def test_validate_calendar_data_invalid_url(self):
         """Test validating calendar data with invalid URL."""
-        is_valid, error = validate_calendar_data(
+        result = validate_calendar_data(
             name="Test Calendar",
             source_url="not-a-url"
         )
         
-        assert is_valid is False
-        assert "URL must start with http:// or https://" in error
+        assert result.is_success is False
+        assert "URL must start with http:// or https://" in result.error
 
 
 @pytest.mark.unit

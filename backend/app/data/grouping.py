@@ -7,28 +7,29 @@ All grouping business logic without I/O operations.
 
 import yaml
 from typing import Dict, List, Any, Optional, Tuple
+from app.core.result import Result, ok, fail
 
 
-def load_domain_config(config_content: str) -> Tuple[bool, Dict[str, Any], str]:
+def load_domain_config(config_content: str) -> Result[Dict[str, Any]]:
     """
     Parse domain configuration from YAML content.
-    
+
     Args:
         config_content: Raw YAML configuration string
-        
+
     Returns:
-        Tuple of (success, config_dict, error_message)
-        
+        Result containing config dict or error message
+
     Pure function - deterministic parsing.
     """
     try:
         config = yaml.safe_load(config_content)
         if not config or 'domains' not in config:
-            return False, {}, "Invalid domain configuration: missing 'domains' key"
-        
-        return True, config, ""
+            return fail("Invalid domain configuration: missing 'domains' key")
+
+        return ok(config)
     except yaml.YAMLError as e:
-        return False, {}, f"Failed to parse domain configuration: {str(e)}"
+        return fail(f"Failed to parse domain configuration: {str(e)}")
 
 
 def get_domain_config(domain_key: str, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -537,55 +538,55 @@ def build_domain_events_response(grouped_events: Dict[str, List[Dict[str, Any]]]
     }
 
 
-def validate_group_data(name: str, domain_key: str) -> Tuple[bool, str]:
+def validate_group_data(name: str, domain_key: str) -> Result[None]:
     """
     Validate group creation data.
-    
+
     Args:
         name: Group name
         domain_key: Domain identifier
-        
+
     Returns:
-        Tuple of (is_valid, error_message)
-        
+        Result indicating success or validation error
+
     Pure function - validation without side effects.
     """
     if not name or not isinstance(name, str) or not name.strip():
-        return False, "Group name is required"
-    
+        return fail("Group name is required")
+
     if len(name.strip()) > 255:
-        return False, "Group name must be 255 characters or less"
-    
+        return fail("Group name must be 255 characters or less")
+
     if not domain_key or not isinstance(domain_key, str) or not domain_key.strip():
-        return False, "Domain key is required"
-    
-    return True, ""
+        return fail("Domain key is required")
+
+    return ok(None)
 
 
-def validate_assignment_rule_data(rule_type: str, rule_value: str, 
-                                 target_group_id: int) -> Tuple[bool, str]:
+def validate_assignment_rule_data(rule_type: str, rule_value: str,
+                                 target_group_id: int) -> Result[None]:
     """
     Validate assignment rule creation data.
-    
+
     Args:
         rule_type: Type of rule
         rule_value: Value to match
         target_group_id: Target group ID
-        
+
     Returns:
-        Tuple of (is_valid, error_message)
-        
+        Result indicating success or validation error
+
     Pure function - validation without side effects.
     """
     valid_rule_types = ['title_contains', 'description_contains', 'category_contains']
-    
+
     if rule_type not in valid_rule_types:
-        return False, f"Rule type must be one of: {', '.join(valid_rule_types)}"
-    
+        return fail(f"Rule type must be one of: {', '.join(valid_rule_types)}")
+
     if not rule_value or not isinstance(rule_value, str) or not rule_value.strip():
-        return False, "Rule value is required"
-    
+        return fail("Rule value is required")
+
     if not isinstance(target_group_id, int) or target_group_id <= 0:
-        return False, "Target group ID must be a positive integer"
-    
-    return True, ""
+        return fail("Target group ID must be a positive integer")
+
+    return ok(None)
