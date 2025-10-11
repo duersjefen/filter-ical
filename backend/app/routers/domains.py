@@ -6,7 +6,7 @@ Implements domain listing and configuration endpoints from OpenAPI specification
 
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
@@ -25,8 +25,12 @@ async def list_all_domains(db: Session = Depends(get_db)):
     PUBLIC ENDPOINT - No authentication required.
     Returns basic domain information including group counts.
     """
-    # Query all domains from database
-    domains = db.query(Domain).filter(Domain.status == "active").all()
+    # PERFORMANCE: Eager load groups to avoid N+1 query pattern
+    # Before: 1 + N queries (1 for domains, 1 per domain for groups)
+    # After: 2 queries total (1 for domains, 1 for all groups)
+    domains = db.query(Domain).options(
+        selectinload(Domain.groups)
+    ).filter(Domain.status == "active").all()
 
     # Build response with group counts and password status
     response = []

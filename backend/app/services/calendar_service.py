@@ -499,6 +499,7 @@ def apply_filter_to_events(db: Session, events: List[Dict[str, Any]],
         subscribed_group_ids = filter_data.get("subscribed_group_ids", [])
         domain_key = filter_data.get("domain_key")
 
+        # PERFORMANCE: Single query for all group assignments (no N+1)
         # Query database for event titles in subscribed groups (I/O operation)
         group_titles = set()
         if subscribed_group_ids:

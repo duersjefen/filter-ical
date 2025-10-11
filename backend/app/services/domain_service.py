@@ -6,7 +6,7 @@ IMPERATIVE SHELL - Orchestrates pure functions with I/O operations.
 
 from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
 
 from ..models.calendar import Calendar, Event, Group, RecurringEventGroup, AssignmentRule
@@ -149,17 +149,21 @@ def get_domain_events(db: Session, domain_key: str) -> List[Dict[str, Any]]:
 def get_domain_groups(db: Session, domain_key: str) -> List[Group]:
     """
     Get groups for domain.
-    
+
     Args:
         db: Database session
         domain_key: Domain identifier
-        
+
     Returns:
         List of group objects
-        
+
     I/O Operation - Database query.
     """
-    return db.query(Group).filter(Group.domain_key == domain_key).all()
+    # PERFORMANCE: Eager load recurring events to avoid N+1 query pattern
+    # This is useful when groups are accessed with their recurring events
+    return db.query(Group).options(
+        selectinload(Group.recurring_event_groups)
+    ).filter(Group.domain_key == domain_key).all()
 
 
 def create_group(db: Session, domain_key: str, name: str) -> Tuple[bool, Optional[Group], str]:

@@ -1,13 +1,14 @@
-# Frontend Dockerfile for Vue 3 + nginx
-FROM node:22-alpine AS build
+# Multi-stage build for Vue 3 frontend
+# Stage 1: Build application
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first (cache layer)
 COPY package*.json ./
 
 # Install dependencies (including dev dependencies needed for build)
-RUN npm ci
+RUN npm ci --prefer-offline --no-audit
 
 # Copy source code
 COPY . .
@@ -19,7 +20,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 # Build the application
 RUN npm run build
 
-# Production stage
+# Stage 2: Production runtime with nginx
 # Using nginx-brotli image for better compression (20-30% smaller than gzip)
 # v1.28.0 is based on nginx 1.28.0 stable + brotli module
 FROM fholzer/nginx-brotli:v1.28.0
@@ -30,8 +31,18 @@ RUN apk add --no-cache curl
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy built app from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy built app from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Configure permissions for non-root nginx user
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid
+
+# Run as non-root user
+USER nginx
 
 # Expose port
 EXPOSE 80

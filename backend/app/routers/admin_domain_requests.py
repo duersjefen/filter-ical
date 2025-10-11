@@ -5,7 +5,7 @@ CONTRACT-DRIVEN: Implementation matches OpenAPI specification exactly.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 from pydantic import BaseModel
 from typing import List, Optional

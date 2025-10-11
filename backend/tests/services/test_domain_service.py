@@ -247,7 +247,8 @@ class TestGetDomainGroups:
 
         mock_groups = [mock_group1, mock_group2]
 
-        mock_db.query.return_value.filter.return_value.all.return_value = mock_groups
+        # Mock chain now includes .options() for eager loading
+        mock_db.query.return_value.options.return_value.filter.return_value.all.return_value = mock_groups
 
         groups = get_domain_groups(mock_db, "test-domain")
 
@@ -257,7 +258,8 @@ class TestGetDomainGroups:
     def test_get_domain_groups_empty(self):
         """Test when domain has no groups."""
         mock_db = Mock(spec=Session)
-        mock_db.query.return_value.filter.return_value.all.return_value = []
+        # Mock chain now includes .options() for eager loading
+        mock_db.query.return_value.options.return_value.filter.return_value.all.return_value = []
 
         groups = get_domain_groups(mock_db, "test-domain")
 
