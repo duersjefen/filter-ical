@@ -194,9 +194,19 @@ migrate-stamp: ## Mark database as being at specific version (usage: make migrat
 ##
 
 deploy-staging: ## Deploy to staging via SSM (builds on server)
+ifndef SKIP_PUSH
+	@echo "📤 Pushing to GitHub..."
+	@git push origin main || (echo "❌ Push failed. Use SKIP_PUSH=1 to deploy without pushing." && exit 1)
+	@echo ""
+endif
 	@$(MAKE) deploy ENV=staging
 
 deploy-production: ## Deploy to production via SSM (builds on server)
+ifndef SKIP_PUSH
+	@echo "📤 Pushing to GitHub..."
+	@git push origin main || (echo "❌ Push failed. Use SKIP_PUSH=1 to deploy without pushing." && exit 1)
+	@echo ""
+endif
 	@$(MAKE) deploy ENV=production
 
 deploy: ## Internal: Run tests, then deploy (use SKIP_TESTS=1 to skip)

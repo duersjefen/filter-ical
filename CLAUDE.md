@@ -39,10 +39,11 @@ make reset-db              # Reset local database
 make test                  # Run unit tests
 make test-all              # Run complete test suite (unit + integration + E2E)
 
-# Deployment
-make deploy-staging        # Run tests → deploy to staging (auto health check)
-make deploy-production     # Run tests → deploy to production (auto health check)
-SKIP_TESTS=1 make deploy-staging   # Emergency deploy (skip tests)
+# Deployment (auto-pushes to GitHub before deploying)
+make deploy-staging        # Push → test → deploy to staging (auto health check)
+make deploy-production     # Push → test → deploy to production (auto health check)
+SKIP_PUSH=1 make deploy-staging    # Deploy without pushing to GitHub
+SKIP_TESTS=1 make deploy-staging   # Emergency deploy (skip tests, still pushes)
 make logs-staging          # View staging logs (if deployment fails)
 make logs-production       # View production logs (if deployment fails)
 make status                # Check deployment status
