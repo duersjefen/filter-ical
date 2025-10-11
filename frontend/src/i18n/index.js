@@ -1,45 +1,40 @@
 import { createI18n } from 'vue-i18n'
-
-// Lazy-load locales on demand instead of loading all upfront
-// This reduces the initial bundle size
-const messages = {}
+import enMessages from './locales/en.json'
+import deMessages from './locales/de.json'
 
 // Detect browser language or default to English
 const getBrowserLocale = () => {
-  const navigatorLocale = navigator.languages 
-    ? navigator.languages[0] 
+  const navigatorLocale = navigator.languages
+    ? navigator.languages[0]
     : navigator.language
-  
+
   if (navigatorLocale) {
     const trimmedLocale = navigatorLocale.trim().split(/-|_/)[0]
     return trimmedLocale
   }
-  
+
   return 'en'
 }
 
 // Get saved locale from localStorage or use browser locale
 const getSavedLocale = () => {
-  return localStorage.getItem('locale') || getBrowserLocale()
+  const savedLocale = localStorage.getItem('locale') || getBrowserLocale()
+  // Validate locale is supported
+  return ['en', 'de'].includes(savedLocale) ? savedLocale : 'en'
 }
 
-// Load a locale dynamically
-export const loadLocale = async (locale) => {
-  // Return if already loaded
-  if (i18n.global.availableLocales.includes(locale)) {
-    return
-  }
-
-  // Load the locale messages
-  const messages = await import(`./locales/${locale}.json`)
-  i18n.global.setLocaleMessage(locale, messages.default)
+// Preload both locales to prevent race conditions
+// This ensures translations are always available immediately
+const messages = {
+  en: enMessages,
+  de: deMessages
 }
 
 const i18n = createI18n({
   legacy: false, // Use Composition API mode
   locale: getSavedLocale(),
   fallbackLocale: 'en',
-  messages, // Start with empty messages
+  messages, // Preloaded messages for both locales
   globalInjection: true,
   pluralizationRules: {
     'en': (choice) => {
@@ -53,13 +48,13 @@ const i18n = createI18n({
   }
 })
 
-// Load the initial locale
-loadLocale(getSavedLocale())
-
-// Save locale changes to localStorage and load if needed
-export const setLocale = async (locale) => {
-  // Load the locale if not already loaded
-  await loadLocale(locale)
+// Save locale changes to localStorage
+export const setLocale = (locale) => {
+  // Validate locale is supported
+  if (!['en', 'de'].includes(locale)) {
+    console.warn(`Unsupported locale: ${locale}, falling back to 'en'`)
+    locale = 'en'
+  }
 
   // Update the locale (handle both ref and string types)
   if (typeof i18n.global.locale === 'object' && 'value' in i18n.global.locale) {
