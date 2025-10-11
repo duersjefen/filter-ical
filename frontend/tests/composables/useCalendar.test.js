@@ -7,7 +7,7 @@
  * - Integration tests with stores
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import { useCalendar } from '../../src/composables/useCalendar'
@@ -42,6 +42,26 @@ describe('useCalendar', () => {
     setActivePinia(pinia)
     appStore = useAppStore()
     selectionStore = useSelectionStore()
+
+    // Mock browser APIs for file download (used in generateIcalFile)
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url-12345')
+    global.URL.revokeObjectURL = vi.fn()
+
+    // Mock document.createElement for download link
+    const mockAnchor = {
+      href: '',
+      download: '',
+      click: vi.fn(),
+      remove: vi.fn()
+    }
+    vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor)
+    vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
+    vi.spyOn(document.body, 'removeChild').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    // Restore all mocks to prevent test pollution
+    vi.restoreAllMocks()
   })
 
   describe('Initialization', () => {
