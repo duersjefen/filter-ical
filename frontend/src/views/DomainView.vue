@@ -169,8 +169,6 @@ export default {
     const findDomainCalendar = async (domainConfig) => {
       // Return the correct domain calendar ID format that matches backend database
       const domainCalendarId = `cal_domain_${props.domain}`
-      console.log(`✅ Using domain calendar: ${domainCalendarId}`)
-      console.log('💡 Domain events loaded directly from domain endpoint')
       return domainCalendarId
     }
 

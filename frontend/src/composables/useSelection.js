@@ -1,9 +1,8 @@
 /**
- * Unified Selection Composable
- * Single interface for all selection operations across the application
- * 
- * Replaces: useCalendar's selection logic, useEventSelection, useUnifiedSelection
- * Uses: selectionStore as single source of truth with app store integration
+ * Selection Composable
+ * Single interface for all selection operations across the application.
+ *
+ * Uses selectionStore as single source of truth with app store integration.
  */
 import { useSelectionStore } from '../stores/selectionStore'
 import { useAppStore } from '../stores/app'

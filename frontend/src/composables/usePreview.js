@@ -27,21 +27,8 @@ export function usePreview() {
     const allEvents = appStore.allEventsFromGroups || []
     const selection = selectionStore.selectedRecurringEvents
 
-    console.log('🔍 Preview computing:', {
-      allEventsCount: allEvents.length,
-      selectionCount: selection.length,
-      firstEventTitle: allEvents[0]?.title,
-      firstEventFields: allEvents[0] ? Object.keys(allEvents[0]) : []
-    })
-
     const selectedEvents = filterEventsBySelection(allEvents, selection)
     const futureEvents = filterFutureEvents(selectedEvents)
-
-    console.log('📊 Preview filtered:', {
-      selectedEventsCount: selectedEvents.length,
-      futureEventsCount: futureEvents.length,
-      firstFutureEventTitle: futureEvents[0]?.title
-    })
 
     return futureEvents
   })

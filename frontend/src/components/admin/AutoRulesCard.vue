@@ -738,34 +738,25 @@ export default {
        */
       const categories = []
       if (!rawICal || typeof rawICal !== 'string') {
-        console.log('No raw_ical data or invalid format:', rawICal)
         return categories
       }
-      
+
       // Split by both \n and actual newlines to handle different formats
       const lines = rawICal.split(/\r?\n/)
-      console.log('Processing', lines.length, 'lines from raw_ical')
-      
+
       for (const line of lines) {
         const trimmedLine = line.trim()
-        
-        // Debug: Log any line containing CATEGOR
-        if (trimmedLine.toUpperCase().includes('CATEGOR')) {
-          console.log('Found CATEGORY-related line:', trimmedLine)
-        }
-        
+
         // Match CATEGORY: or CATEGORIES: lines (case insensitive)
         const categoryMatch = trimmedLine.match(/^CATEGOR(?:Y|IES):\s*(.+)$/i)
         if (categoryMatch) {
           const category = categoryMatch[1].trim()
           if (category) {
-            console.log('✅ Extracted category:', category)
             categories.push(category)
           }
         }
       }
-      
-      console.log('📋 Final extracted categories:', categories)
+
       return categories
     }
     

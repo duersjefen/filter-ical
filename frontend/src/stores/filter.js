@@ -67,7 +67,7 @@ export const useFilterStore = defineStore('filter', () => {
   const saveFilter = async (name, config) => {
     const filterName = name || `Filter ${config.selectedRecurringEvents?.length || 0} types`
 
-    const newFilter = {
+    const filter = {
       id: 'filter_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
       name: filterName,
       config: config,
@@ -75,9 +75,9 @@ export const useFilterStore = defineStore('filter', () => {
     }
 
     // Add to filters list
-    savedFilters.value.push(newFilter)
+    savedFilters.value.push(filter)
 
-    return { success: true, data: newFilter }
+    return { success: true, data: filter }
   }
 
   const deleteFilter = async (filterId) => {

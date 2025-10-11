@@ -67,7 +67,6 @@ export function useUsername() {
       
       // Trigger username change callbacks for data source switching
       if (newUsername !== oldUsername) {
-        console.log('🔄 Username changed:', { from: oldUsername, to: newUsername })
         usernameChangeCallbacks.forEach(callback => {
           try {
             callback(newUsername, oldUsername)

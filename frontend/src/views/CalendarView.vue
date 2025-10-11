@@ -352,36 +352,25 @@ const hasRealCustomGroups = computed(() => {
 
 // Handle view mode changes
 const handleViewModeChange = (newMode) => {
-  console.log('🔄 ViewMode change requested:', newMode, 'current:', viewMode.value)
   viewMode.value = newMode
   saveViewModePreference(newMode)
-  console.log('✅ ViewMode updated to:', viewMode.value)
 }
 
-// Specific switch handlers with debugging
+// Specific switch handlers
 const handleSwitchToTypes = () => {
-  console.log('🔄 switch-to-types event fired')
   handleViewModeChange('types')
 }
 
 const handleSwitchToGroups = () => {
-  console.log('🔄 switch-to-groups event fired') 
   handleViewModeChange('groups')
 }
 
 // Simple, direct data loading with proper error handling
 const loadCalendarData = async (calendarId) => {
-  console.log('🔄 Loading calendar data for:', calendarId)
   clearError() // Use API composable's error clearing
-  
-  console.log('🔄 Initial state:', {
-    loading: loading.value,
-    eventsLength: events.value.length,
-    recurringEventsKeys: recurringEvents.value ? Object.keys(recurringEvents.value).length : 'null'
-  })
-  
+
   try {
-    
+
     // For domain calendars, create a system-managed calendar reference
     // Domain calendars are NOT user calendars and should not be mixed with user calendar lists
     if (String(calendarId).startsWith('cal_domain_') || (props.domainContext && String(calendarId).startsWith('cal_'))) {
@@ -423,7 +412,6 @@ const loadCalendarData = async (calendarId) => {
     }
     
     // Simplified: Load groups data directly - no conversion needed
-    console.log('🔄 Loading groups data...')
     const isDomainCalendar = props.domainContext || String(calendarId).startsWith('cal_domain_')
     let domainName = null
     
@@ -441,12 +429,6 @@ const loadCalendarData = async (calendarId) => {
       const numericCalendarId = typeof calendarId === 'string' ? parseInt(calendarId, 10) : calendarId
       await appStore.loadCalendarGroups(numericCalendarId)
     }
-    
-    console.log('✅ Groups loaded:', {
-      isDomainCalendar: appStore.isDomainCalendar,
-      hasCustomGroups: appStore.hasCustomGroups,
-      groupsCount: appStore.groups ? Object.keys(appStore.groups).length : 0
-    })
 
     // Extract events and recurringEvents from loaded groups - no API conversion needed
     const extractedRecurringEvents = {}
@@ -475,22 +457,8 @@ const loadCalendarData = async (calendarId) => {
         
         recurringEvents.value = extractedRecurringEvents
         events.value = allEvents
-        
-        console.log('✅ Data extracted from groups:', {
-          recurringEventsCount: Object.keys(extractedRecurringEvents).length,
-          eventsCount: allEvents.length,
-          recurringEventNames: Object.keys(extractedRecurringEvents)
-        })
       } else {
         // No groups - this is a personal calendar, extract from appStore directly
-        console.log('📊 Personal calendar - checking appStore data:', {
-          hasEvents: !!appStore.events,
-          eventsLength: appStore.events?.length || 0,
-          hasRecurringEvents: !!appStore.recurringEvents,
-          recurringEventsKeys: appStore.recurringEvents ? Object.keys(appStore.recurringEvents).length : 0,
-          eventsType: Array.isArray(appStore.events) ? 'array' : typeof appStore.events,
-          recurringEventsType: typeof appStore.recurringEvents
-        })
 
         // Validate and extract personal calendar data with proper checks
         const hasValidEvents = appStore.events && Array.isArray(appStore.events) && appStore.events.length > 0
@@ -502,20 +470,6 @@ const loadCalendarData = async (calendarId) => {
           // Create COPIES of the data to avoid reference issues
           events.value = [...appStore.events]
           recurringEvents.value = { ...appStore.recurringEvents }
-
-          console.log('✅ Personal calendar data extracted:', {
-            eventsCount: events.value.length,
-            recurringEventsCount: Object.keys(recurringEvents.value).length,
-            recurringEventNames: Object.keys(recurringEvents.value).slice(0, 5),
-            firstEvent: events.value[0]?.title,
-            firstEventStructure: events.value[0] ? Object.keys(events.value[0]) : [],
-            firstEventDates: events.value[0] ? {
-              start: events.value[0].start,
-              dtstart: events.value[0].dtstart,
-              end: events.value[0].end,
-              dtend: events.value[0].dtend
-            } : null
-          })
         } else {
           // No valid data - clear and log warning
           recurringEvents.value = {}
@@ -533,37 +487,10 @@ const loadCalendarData = async (calendarId) => {
       console.error('❌ Error extracting data from groups:', extractError)
       throw extractError
     }
-      
-      // Debug the conditional rendering requirements
-      console.log('🎯 Conditional rendering check:', {
-        loading: loading.value,
-        eventsLength: events.value.length,
-        recurringEventsExists: !!recurringEvents.value,
-        recurringEventsKeysLength: Object.keys(recurringEvents.value).length,
-        shouldShow: !loading.value && events.value.length > 0 && recurringEvents.value && Object.keys(recurringEvents.value).length > 0
-      })
-
-      // Groups already loaded above
-      
-      // Debug: Force re-render check
-      console.log('🐛 DEBUG: Calendar type reactivity check:', {
-        isDomainCalendar: appStore.isDomainCalendar,
-        hasCustomGroups: appStore.hasCustomGroups,
-        groupsCount: Object.keys(appStore.groups || {}).length
-      })
-      
-    console.log('✅ Calendar data loaded successfully')
   } catch (error) {
     console.error('❌ Failed to load calendar data:', error)
     setError(error.message || 'Failed to load calendar data')
   }
-  
-  console.log('🏁 Loading complete. Final state:', {
-    loading: loading.value,
-    eventsLength: events.value.length,
-    recurringEventsKeys: recurringEvents.value ? Object.keys(recurringEvents.value).length : 'null',
-    shouldShow: !loading.value && events.value.length > 0 && recurringEvents.value && Object.keys(recurringEvents.value).length > 0
-  })
 }
 
 // clearError is now provided by API composable
@@ -591,67 +518,42 @@ const loadFilterIntoPage = (filterData) => {
       const groupIdStr = groupId.toString()
       subscribeToGroup(groupIdStr)
     })
-    console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.groups.length} subscribed groups`)
   }
-  
+
   // Handle individual recurring event selections
   if (filterData.recurringEvents && filterData.recurringEvents.length > 0) {
     filterData.recurringEvents.forEach(recurringEventName => {
       unifiedToggleRecurringEvent(recurringEventName)
     })
-    console.log(`Loaded filter "${filterData.calendarName}" with ${filterData.recurringEvents.length} individual recurring events`)
   }
-  
-  console.log(`Loaded filter "${filterData.calendarName}" - Groups: ${filterData.groups?.length || 0}, Events: ${filterData.recurringEvents?.length || 0}`)
 }
 
 // Handle selection changes from the new multi-level selection system (old complex)
 const handleSelectionChanged = (selection) => {
-  console.log('📊 Selection changed:', selection)
-  
   // Resolve hierarchical group selections into a flat list of event types
   const resolvedRecurringEvents = resolveGroupSelectionsToRecurringEvents(selection)
-  console.log('📋 Resolved recurring events:', resolvedRecurringEvents)
-  
+
   // Update the selectedRecurringEvents to integrate with existing filter system
   selectedRecurringEvents.value = resolvedRecurringEvents
 }
 
 // Handle selection changes from the dual selection system
 const handleGroupSelectionChanged = (selectionData) => {
-  console.log('🎯 Unified selection changed:', selectionData)
-  
   // Extract data from the unified selection format
   const { groups, recurringEvents, events, subscribedGroups } = selectionData
-  
-  console.log('🔧 Processing unified selection:', {
-    subscribedGroups: subscribedGroups,
-    groups: groups,
-    recurringEvents: recurringEvents,
-    events: events
-  })
-  
+
   // Store legacy selectedGroups for compatibility (will be removed later)
   selectedGroups.value = groups || []
-  
+
   // Note: No need to manually update selectedRecurringEvents here anymore
   // The unified system handles this automatically through useEventSelection
   // The Events and Groups views now share the same selection state
-  
-  console.log('✅ Unified selection system updated')
 }
 
-// Handle selection changes from the enhanced selection system  
+// Handle selection changes from the enhanced selection system
 const handleSimpleSelectionChanged = (selectionData) => {
-  console.log('📊 Enhanced selection changed:', selectionData)
-  
   if (selectionData.mode === 'enhanced') {
     // Handle enhanced selection data with both groups and individual event types
-    console.log('🔧 Processing enhanced selection:', {
-      recurringEvents: selectionData.selectedRecurringEvents,
-      groups: selectionData.selectedGroups
-    })
-    
     // Store both selected groups and individual event types
     selectedRecurringEvents.value = selectionData.selectedRecurringEvents
     selectedGroups.value = selectionData.selectedGroups
@@ -779,16 +681,11 @@ const handleUnsubscribeAllGroups = () => {
 }
 
 onMounted(async () => {
-  if (import.meta.env.DEV) {
-    console.log('🚀 CalendarView mounted with public-first access - DEBUG MODE')
-  }
-  
   // Initialize app state (loads calendars from localStorage)
   appStore.initializeApp()
 
   const calendarId = props.id || route.params.id
-  console.log('Calendar ID from route:', calendarId)
-  
+
   if (calendarId) {
     await loadCalendarData(calendarId)
     // Update the calendar ID in the composable for proper filter persistence
@@ -799,7 +696,6 @@ onMounted(async () => {
 // Watch for route changes to update calendar ID for filter persistence
 watch(() => props.id || route.params.id, (newCalendarId, oldCalendarId) => {
   if (newCalendarId && newCalendarId !== oldCalendarId) {
-    console.log('🔄 Route changed, updating calendar ID:', newCalendarId)
     updateCalendarId(newCalendarId)
     loadCalendarData(newCalendarId)
   }
@@ -808,7 +704,6 @@ watch(() => props.id || route.params.id, (newCalendarId, oldCalendarId) => {
 // Watch for selection changes and auto-deactivate "Show Selected Only" when no events are selected
 watch(() => unifiedSelectedRecurringEvents.value.length, (newLength) => {
   if (newLength === 0 && showSelectedOnly.value) {
-    console.log('🔄 Auto-deactivating "Show Selected Only" - no events selected')
     showSelectedOnly.value = false
   }
 }, { immediate: true }) // Run immediately to handle page load state
@@ -817,7 +712,6 @@ watch(() => unifiedSelectedRecurringEvents.value.length, (newLength) => {
 watch([() => unifiedSelectedRecurringEvents.value, () => showSelectedOnly.value], ([selection, showSelected]) => {
   // If showSelectedOnly is active but no events are selected, deactivate it
   if (showSelected && selection.length === 0) {
-    console.log('🔄 Safety check: Auto-deactivating "Show Selected Only" - no events selected on mount')
     showSelectedOnly.value = false
   }
 }, { immediate: true })

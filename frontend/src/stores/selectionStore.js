@@ -1,11 +1,8 @@
 /**
- * Unified Selection Store - Single Source of Truth
- * 
- * This store replaces the dual selection systems that were causing sync issues:
- * - useCalendar's selectedRecurringEvents (Events view)
- * - useEventSelection's state (Groups view)
- * 
- * Now both views share identical selection state through this centralized store.
+ * Selection Store - Single Source of Truth
+ *
+ * Centralized selection state shared across all views.
+ * Both Events and Groups views use this store for consistent selection state.
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -464,17 +461,6 @@ export const useSelectionStore = defineStore('selection', () => {
     isGroupPartiallySelected,
     getGroupSelectionState,
     toggleGroupSelection,
-    getGroupBreakdownSummary,
-    
-    // Legacy compatibility (temporarily maintain old names for gradual migration)
-    selectedRecurringEvents: selectedRecurringEvents,
-    expandedRecurringEvents: expandedRecurringEvents,
-    effectiveSelectedRecurringEvents: effectiveSelectedRecurringEvents,
-    isRecurringEventSelected: isRecurringEventSelected,
-    toggleRecurringEvent: toggleRecurringEvent,
-    selectRecurringEvents: selectRecurringEvents,
-    deselectRecurringEvents: deselectRecurringEvents,
-    replaceSelection: replaceSelection,
-    isRecurringEventEffectivelySelected: isRecurringEventEffectivelySelected
+    getGroupBreakdownSummary
   }
 })

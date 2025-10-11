@@ -102,7 +102,6 @@ export function useFilteredCalendarAPI() {
     const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
     
     if (!hasCustomUsername) {
-      console.log('👤 User is anonymous - clearing filtered calendars')
       filteredCalendars.value = []
       return
     }
@@ -209,9 +208,9 @@ export function useFilteredCalendarAPI() {
     const result = await post(endpoint, payload)
     
     creating.value = false
-    
+
     if (result.success && result.data) {
-      const newFilter = {
+      const filter = {
         id: result.data.id,
         name: result.data.name,
         calendar_id: result.data.calendar_id,
@@ -229,7 +228,7 @@ export function useFilteredCalendarAPI() {
         created_at: result.data.created_at,
         updated_at: result.data.updated_at
       }
-      filteredCalendars.value.push(newFilter)
+      filteredCalendars.value.push(filter)
       return true
     } else {
       console.error('Error creating filtered calendar:', result.error)

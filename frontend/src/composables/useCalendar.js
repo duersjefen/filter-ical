@@ -44,8 +44,6 @@ export function useCalendar(eventsData = null, recurringEventsData = null, initi
   // Watch for calendar changes - reset filter state
   watch(calendarId, (newCalendarId, oldCalendarId) => {
     if (oldCalendarId !== null && oldCalendarId !== newCalendarId) {
-      console.log(`🔄 Calendar changed from ${oldCalendarId} to ${newCalendarId} - resetting filters`)
-      
       // Reset filters when switching calendars
       selectedRecurringEvents.value = new Set()
       recurringEventSearch.value = ''

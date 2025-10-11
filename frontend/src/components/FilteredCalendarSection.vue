@@ -414,7 +414,6 @@ watch(() => props.selectedCalendar, async (newCalendar) => {
 
 watch(() => getUserId(), async (newUserId, oldUserId) => {
   if (newUserId !== oldUserId) {
-    console.log('🔄 User changed in FilteredCalendarSection - reloading filtered calendars')
     if (props.selectedCalendar?.id) {
       await loadFilteredCalendars(props.selectedCalendar.id)
     }
