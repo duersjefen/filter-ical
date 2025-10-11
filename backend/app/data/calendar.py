@@ -240,15 +240,52 @@ def apply_filter_to_events(events: List[Dict[str, Any]], filter_data: Dict[str, 
 
     ✅ PURE FUNCTION - No side effects, no I/O, deterministic output.
 
-    For DOMAIN CALENDARS (three-list model):
-      - subscribed_group_ids: All events in these groups (including future ones)
-      - subscribed_event_ids: Manual whitelist (event titles NOT in subscribed groups)
-      - unselected_event_ids: Manual blacklist (event titles FROM subscribed groups to exclude)
-      - Formula: included_titles = (group_titles ∪ subscribed_event_ids) - unselected_event_ids
+    Algorithm (DOMAIN CALENDARS - Three-List Model):
+    ================================================
+    Domain filters use a three-list formula to determine included events:
 
-    For PERSONAL CALENDARS:
-      - If include_future_events=True: Include all events matching subscribed titles
-      - If include_future_events=False: Only include events created before filter
+        included_titles = (group_titles ∪ subscribed_event_ids) - unselected_event_ids
+
+    Where:
+      - group_titles: All event titles from subscribed groups (base set)
+      - subscribed_event_ids: Individual event titles to add (whitelist)
+      - unselected_event_ids: Event titles to exclude (blacklist)
+
+    Precedence Rules:
+    -----------------
+    1. unselected_event_ids has HIGHEST priority (explicit exclusion always wins)
+    2. subscribed_event_ids adds individual events to subscription (additive)
+    3. group_titles provides base set from subscribed groups (foundation)
+
+    Why This Approach:
+    ------------------
+    - Users need ability to subscribe to groups but exclude specific events
+    - Individual event subscriptions should be additive (not just from groups)
+    - Explicit exclusions must always win (UX expectation for "unselect")
+
+    Example:
+    --------
+    >>> events = [{"title": "A"}, {"title": "B"}, {"title": "C"}]
+    >>> filter_data = {
+    ...     "subscribed_group_ids": [1],    # Group 1 has events A, B
+    ...     "subscribed_event_ids": ["C"],  # Add C explicitly
+    ...     "unselected_event_ids": ["B"]   # But exclude B
+    ... }
+    >>> group_titles = {"A", "B"}  # Events in group 1
+    >>> result = apply_filter_to_events(events, filter_data, group_titles)
+    >>> # Result: [A, C]  (B excluded, C added)
+
+    Algorithm (PERSONAL CALENDARS - Include Future Events):
+    ========================================================
+    Personal filters use include_future_events flag:
+      - If True: Include all events matching subscribed titles (dynamic)
+      - If False: Only events created before filter (frozen snapshot)
+
+    Why This Approach:
+    ------------------
+    - Users want option to freeze calendar at point in time
+    - Dynamic mode includes future recurring instances automatically
+    - Frozen mode prevents surprise additions to shared calendar links
 
     Args:
         events: List of all events

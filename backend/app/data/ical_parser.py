@@ -194,20 +194,51 @@ def _extract_raw_event(raw_ical: str, uid: str) -> str:
 def normalize_event_title(title: str) -> str:
     """
     Normalize event title for consistent grouping.
-    
-    Handles common title formatting issues that prevent proper grouping:
-    - Invisible/non-breaking whitespace characters
-    - Multiple consecutive spaces
-    - Leading/trailing whitespace
-    - Unicode normalization (converts to NFC form)
-    - Tab characters and other whitespace variations
-    
+
+    Algorithm:
+    ----------
+    1. Unicode normalization (NFC canonical form)
+    2. Replace all whitespace variants with single spaces
+    3. Collapse multiple consecutive spaces
+    4. Strip leading/trailing whitespace
+    5. Handle empty results with fallback
+
+    Why This Approach:
+    ------------------
+    Different calendar systems produce titles that LOOK identical but have
+    different internal representations. This causes recurring events to be
+    split into multiple groups incorrectly.
+
+    Problems Solved:
+    ----------------
+    - "Math Class" with regular space vs "\u00A0" (non-breaking space)
+    - "Math  Class" with double space vs "Math Class" with single space
+    - "Math\tClass" with tab vs "Math Class" with space
+    - Composed vs decomposed Unicode (é as single char vs e + combining accent)
+    - Trailing whitespace causing "Math Class " != "Math Class"
+
+    Unicode NFC Normalization:
+    --------------------------
+    Converts characters to their canonical composed form:
+    - "e\u0301" (e + combining acute) → "é" (single character)
+    - Ensures visually identical text is byte-for-byte identical
+    - Critical for reliable string comparison and grouping
+
+    Example:
+    --------
+    >>> normalize_event_title("Math\u00A0Class  ")  # Non-breaking space + double space + trailing
+    "Math Class"
+    >>> normalize_event_title("Café")  # With composed é
+    "Café"
+    >>> normalize_event_title("Cafe\u0301")  # With decomposed é (e + combining accent)
+    "Café"  # Same result after NFC normalization
+
     Args:
         title: Raw event title string
-        
+
     Returns:
         Normalized title string suitable for grouping
-        
+
     Pure function - deterministic normalization for consistent grouping.
     """
     if not title or not isinstance(title, str):

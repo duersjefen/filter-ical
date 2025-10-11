@@ -19,6 +19,7 @@ from app.data.grouping import (
     apply_assignment_rules,
     build_domain_events_response,
     build_domain_events_with_auto_groups,
+    assign_ungrouped_to_auto_groups,
     validate_group_data,
     validate_assignment_rule_data,
     _extract_categories_from_raw_ical,
@@ -773,7 +774,7 @@ END:VEVENT"""
             {
                 "title": "Deutschland Training",
                 "raw_ical": """BEGIN:VEVENT
-SUMMARY:Deutschland Training  
+SUMMARY:Deutschland Training
 CATEGORY:Deutschland
 END:VEVENT"""
             },
@@ -784,7 +785,7 @@ SUMMARY:Regular Meeting
 END:VEVENT"""
             }
         ]
-        
+
         rules = [
             {
                 "rule_type": "category_contains",
@@ -792,16 +793,229 @@ END:VEVENT"""
                 "target_group_id": 1
             },
             {
-                "rule_type": "category_contains", 
+                "rule_type": "category_contains",
                 "rule_value": "Deutschland",
                 "target_group_id": 2
             }
         ]
-        
+
         assignments = apply_assignment_rules(events, rules)
-        
+
         assert 1 in assignments
         assert 2 in assignments
         assert "BCC Community Event" in assignments[1]
         assert "Deutschland Training" in assignments[2]
         assert len(assignments) == 2  # Only events with categories get assigned
+
+
+@pytest.mark.unit
+class TestAssignmentRulesEdgeCases:
+    """Edge case tests for assignment rule application logic."""
+
+    def test_apply_assignment_rules_overlapping_multi_rule_match(self):
+        """Edge case: Event matches multiple rules, first rule wins."""
+        events = [
+            {
+                "title": "Math Exam Review",
+                "description": "Important math review for exam"
+            }
+        ]
+
+        rules = [
+            {"rule_type": "title_contains", "rule_value": "exam", "target_group_id": 1},
+            {"rule_type": "title_contains", "rule_value": "math", "target_group_id": 2},
+            {"rule_type": "description_contains", "rule_value": "important", "target_group_id": 3}
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # Should only match first rule (group 1)
+        assert 1 in result
+        assert 2 not in result
+        assert 3 not in result
+        assert "Math Exam Review" in result[1]
+
+    def test_apply_assignment_rules_partial_title_match(self):
+        """Edge case: Rule matches substring in title."""
+        events = [
+            {"title": "Weekly Math Class", "description": ""},
+            {"title": "Mathematics 101", "description": ""},
+            {"title": "Math", "description": ""}
+        ]
+
+        rules = [
+            {"rule_type": "title_contains", "rule_value": "math", "target_group_id": 1}
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # All three should match (case-insensitive substring match)
+        assert 1 in result
+        assert len(result[1]) == 3
+        assert "Weekly Math Class" in result[1]
+        assert "Mathematics 101" in result[1]
+        assert "Math" in result[1]
+
+    def test_apply_assignment_rules_empty_rule_value(self):
+        """Edge case: Rule with empty value matches nothing."""
+        events = [
+            {"title": "Event", "description": "description"}
+        ]
+
+        rules = [
+            {"rule_type": "title_contains", "rule_value": "", "target_group_id": 1}
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # Empty rule value should match everything (empty string is in all strings)
+        assert 1 in result
+        assert "Event" in result[1]
+
+    def test_apply_assignment_rules_missing_description_field(self):
+        """Edge case: Event without description field, description_contains rule."""
+        events = [
+            {"title": "Event Without Description"}
+            # Missing description field
+        ]
+
+        rules = [
+            {"rule_type": "description_contains", "rule_value": "test", "target_group_id": 1}
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # Should not match (missing field defaults to empty string)
+        assert result == {}
+
+    def test_apply_assignment_rules_recurring_events_grouped_correctly(self):
+        """Edge case: Recurring events (same title) only appear once in assignments."""
+        events = [
+            {"title": "Weekly Meeting", "description": ""},
+            {"title": "Weekly Meeting", "description": ""},
+            {"title": "Weekly Meeting", "description": ""},
+            {"title": "Daily Standup", "description": ""}
+        ]
+
+        rules = [
+            {"rule_type": "title_contains", "rule_value": "meeting", "target_group_id": 1}
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # Should only have "Weekly Meeting" once (grouped by title)
+        assert 1 in result
+        assert len(result[1]) == 1
+        assert "Weekly Meeting" in result[1]
+
+    def test_assign_ungrouped_empty_list(self):
+        """Edge case: Empty ungrouped events list."""
+        recurring_group, unique_group = assign_ungrouped_to_auto_groups([], "test-domain")
+
+        assert recurring_group['id'] == 9998
+        assert unique_group['id'] == 9999
+        assert recurring_group['recurring_events'] == []
+        assert unique_group['recurring_events'] == []
+
+    def test_assign_ungrouped_all_recurring(self):
+        """Edge case: All ungrouped events are recurring (count > 1)."""
+        ungrouped = [
+            {"title": "Event A", "event_count": 5},
+            {"title": "Event B", "event_count": 3},
+            {"title": "Event C", "event_count": 2}
+        ]
+
+        recurring_group, unique_group = assign_ungrouped_to_auto_groups(ungrouped, "test-domain")
+
+        # All events should be in recurring group
+        assert len(recurring_group['recurring_events']) == 3
+        assert len(unique_group['recurring_events']) == 0
+
+    def test_assign_ungrouped_all_unique(self):
+        """Edge case: All ungrouped events are unique (count == 1)."""
+        ungrouped = [
+            {"title": "Event A", "event_count": 1},
+            {"title": "Event B", "event_count": 1},
+            {"title": "Event C", "event_count": 1}
+        ]
+
+        recurring_group, unique_group = assign_ungrouped_to_auto_groups(ungrouped, "test-domain")
+
+        # All events should be in unique group
+        assert len(recurring_group['recurring_events']) == 0
+        assert len(unique_group['recurring_events']) == 3
+
+    def test_assign_ungrouped_exactly_count_1_boundary(self):
+        """Edge case: Events with exactly count=1 go to unique, count=2 to recurring."""
+        ungrouped = [
+            {"title": "Once", "event_count": 1},
+            {"title": "Twice", "event_count": 2}
+        ]
+
+        recurring_group, unique_group = assign_ungrouped_to_auto_groups(ungrouped, "test-domain")
+
+        # Boundary: count=1 unique, count>1 recurring
+        assert len(unique_group['recurring_events']) == 1
+        assert unique_group['recurring_events'][0]["title"] == "Once"
+
+        assert len(recurring_group['recurring_events']) == 1
+        assert recurring_group['recurring_events'][0]["title"] == "Twice"
+
+    def test_build_domain_events_with_auto_groups_no_ungrouped(self):
+        """Edge case: All events are grouped (no ungrouped events)."""
+        grouped_events = {
+            "Event A": {
+                "title": "Event A",
+                "event_count": 2,
+                "events": [{"id": 1}, {"id": 2}]
+            }
+        }
+
+        groups_data = [
+            {"id": 1, "name": "Group 1"}
+        ]
+
+        recurring_assignments = [
+            {"group_id": 1, "recurring_event_title": "Event A"}
+        ]
+
+        result = build_domain_events_with_auto_groups(
+            grouped_events,
+            groups_data,
+            recurring_assignments,
+            "test-domain"
+        )
+
+        # Should have 1 custom group, no auto-groups
+        assert len(result['groups']) == 1
+        assert result['groups'][0]['id'] == 1
+
+    def test_build_domain_events_with_auto_groups_only_auto(self):
+        """Edge case: No custom groups, only auto-groups."""
+        grouped_events = {
+            "Event A": {
+                "title": "Event A",
+                "event_count": 5,
+                "events": [{"id": 1}]
+            },
+            "Event B": {
+                "title": "Event B",
+                "event_count": 1,
+                "events": [{"id": 2}]
+            }
+        }
+
+        groups_data = []  # No custom groups
+        recurring_assignments = []
+
+        result = build_domain_events_with_auto_groups(
+            grouped_events,
+            groups_data,
+            recurring_assignments,
+            "test-domain"
+        )
+
+        # Should have 2 auto-groups (recurring and unique)
+        assert len(result['groups']) == 2
+        assert result['groups'][0]['id'] == 9998  # Recurring
+        assert result['groups'][1]['id'] == 9999  # Unique

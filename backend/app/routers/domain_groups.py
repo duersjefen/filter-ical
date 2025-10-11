@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
 from ..core.auth import get_verified_domain
+from ..core.messages import ErrorMessages
 from ..models.domain import Domain
 from ..services.domain_service import (
     get_domain_groups, create_group, assign_recurring_events_to_group,
@@ -53,7 +54,7 @@ async def create_domain_group(
     """Create a new group (admin)."""
     # Validate request data
     if "name" not in group_data:
-        raise HTTPException(status_code=400, detail="Group name is required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.GROUP_NAME_REQUIRED)
 
     # Create group
     success, group, error = create_group(db, domain_obj.domain_key, group_data["name"])
@@ -79,7 +80,7 @@ async def update_domain_group(
     """Update group (admin)."""
     # Validate request data
     if "name" not in group_data:
-        raise HTTPException(status_code=400, detail="Group name is required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.GROUP_NAME_REQUIRED)
 
     # Update group
     success, group, error = update_group(db, group_id, domain_obj.domain_key, group_data["name"])
@@ -128,11 +129,11 @@ async def assign_recurring_events(
     """Manually assign recurring events to group (admin)."""
     # Validate request data
     if "recurring_event_titles" not in assignment_data:
-        raise HTTPException(status_code=400, detail="recurring_event_titles is required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLES_REQUIRED)
 
     event_titles = assignment_data["recurring_event_titles"]
     if not isinstance(event_titles, list):
-        raise HTTPException(status_code=400, detail="recurring_event_titles must be an array")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLES_MUST_BE_ARRAY)
 
     # Assign events to group
     success, count, error = assign_recurring_events_to_group(db, domain_obj.domain_key, group_id, event_titles)
@@ -155,11 +156,11 @@ async def remove_events_from_group(
     """Remove events from specific group (admin)."""
     # Validate request data
     if "recurring_event_titles" not in removal_data:
-        raise HTTPException(status_code=400, detail="recurring_event_titles is required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLES_REQUIRED)
 
     event_titles = removal_data["recurring_event_titles"]
     if not isinstance(event_titles, list):
-        raise HTTPException(status_code=400, detail="recurring_event_titles must be an array")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLES_MUST_BE_ARRAY)
 
     # Remove events from specific group
     success, count, error = remove_events_from_specific_group(db, domain_obj.domain_key, group_id, event_titles)
@@ -213,13 +214,13 @@ async def bulk_assign_events_to_group(
     """Bulk assign multiple events to a group (admin)."""
     # Validate request data
     if "group_id" not in assignment_data or "recurring_event_titles" not in assignment_data:
-        raise HTTPException(status_code=400, detail="group_id and recurring_event_titles are required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.GROUP_ID_AND_EVENTS_REQUIRED)
 
     group_id = assignment_data["group_id"]
     event_titles = assignment_data["recurring_event_titles"]
 
     if not isinstance(event_titles, list):
-        raise HTTPException(status_code=400, detail="recurring_event_titles must be an array")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLES_MUST_BE_ARRAY)
 
     # Bulk assign events to group
     success, count, error = assign_recurring_events_to_group(db, domain_obj.domain_key, group_id, event_titles)
@@ -242,12 +243,12 @@ async def bulk_unassign_events(
     """Bulk unassign multiple events from their current groups (admin)."""
     # Validate request data
     if "recurring_event_titles" not in assignment_data:
-        raise HTTPException(status_code=400, detail="recurring_event_titles is required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLES_REQUIRED)
 
     event_titles = assignment_data["recurring_event_titles"]
 
     if not isinstance(event_titles, list):
-        raise HTTPException(status_code=400, detail="recurring_event_titles must be an array")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLES_MUST_BE_ARRAY)
 
     # Bulk unassign events
     success, count, error = bulk_unassign_recurring_events(db, domain_obj.domain_key, event_titles)
@@ -270,7 +271,7 @@ async def unassign_single_event(
     """Unassign a single event from its current group (admin)."""
     # Validate request data
     if "recurring_event_title" not in assignment_data:
-        raise HTTPException(status_code=400, detail="recurring_event_title is required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.RECURRING_EVENT_TITLE_REQUIRED)
 
     event_title = assignment_data["recurring_event_title"]
 

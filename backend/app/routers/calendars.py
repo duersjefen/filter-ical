@@ -11,6 +11,7 @@ from sqlalchemy import func
 
 from ..core.database import get_db
 from ..core.auth import get_current_user_id, require_user_auth
+from ..core.messages import ErrorMessages
 from ..i18n.utils import get_locale_from_request, format_error_message
 from ..services.calendar_service import (
     create_calendar, get_calendars, get_calendar_by_id, delete_calendar,
@@ -128,7 +129,7 @@ async def sync_calendar_endpoint(
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
-            raise HTTPException(status_code=404, detail="Calendar not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.CALENDAR_NOT_FOUND)
             
         # Sync calendar events
         sync_success, event_count, sync_error = await sync_calendar_events(db, calendar)
@@ -159,7 +160,7 @@ async def delete_user_calendar(
         success, error = delete_calendar(db, calendar_id, user_id=user_id)
         if not success:
             if "not found" in error.lower():
-                raise HTTPException(status_code=404, detail="Calendar not found")
+                raise HTTPException(status_code=404, detail=ErrorMessages.CALENDAR_NOT_FOUND)
             else:
                 raise HTTPException(status_code=400, detail=error)
         
@@ -183,8 +184,8 @@ async def get_calendar_events_endpoint(
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
-            raise HTTPException(status_code=404, detail="Calendar not found")
-        
+            raise HTTPException(status_code=404, detail=ErrorMessages.CALENDAR_NOT_FOUND)
+
         # Get events
         events = get_calendar_events(db, calendar_id)
         
@@ -223,11 +224,11 @@ async def create_calendar_filter(
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
-            raise HTTPException(status_code=404, detail="Calendar not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.CALENDAR_NOT_FOUND)
 
         # Validate request data
         if "name" not in filter_data:
-            raise HTTPException(status_code=400, detail="Filter name is required")
+            raise HTTPException(status_code=400, detail=ErrorMessages.FILTER_NAME_REQUIRED)
 
         # Create filter
         success, filter_obj, error = create_filter(
@@ -280,7 +281,7 @@ async def get_calendar_filters(
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
-            raise HTTPException(status_code=404, detail="Calendar not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.CALENDAR_NOT_FOUND)
 
         # Get filters
         filters = get_filters(db, calendar_id=calendar_id, user_id=user_id)
@@ -328,16 +329,16 @@ async def update_calendar_filter(
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
-            raise HTTPException(status_code=404, detail="Calendar not found")
-        
+            raise HTTPException(status_code=404, detail=ErrorMessages.CALENDAR_NOT_FOUND)
+
         # Get existing filter to verify it exists and user has access
         existing_filter = get_filter_by_id(db, filter_id)
         if not existing_filter or existing_filter.calendar_id != calendar_id:
-            raise HTTPException(status_code=404, detail="Filter not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.FILTER_NOT_FOUND)
 
         # Verify user owns this filter
         if user_id and existing_filter.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(status_code=403, detail=ErrorMessages.ACCESS_DENIED)
         
         # Update the filter
         if "name" in filter_data:
@@ -390,13 +391,13 @@ async def delete_calendar_filter(
         # Verify calendar exists and user has access
         calendar = get_calendar_by_id(db, calendar_id, user_id=user_id)
         if not calendar:
-            raise HTTPException(status_code=404, detail="Calendar not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.CALENDAR_NOT_FOUND)
 
         # Delete filter
         success, error = delete_filter(db, filter_id, calendar_id=calendar_id, user_id=user_id)
         if not success:
             if "not found" in error.lower():
-                raise HTTPException(status_code=404, detail="Filter not found")
+                raise HTTPException(status_code=404, detail=ErrorMessages.FILTER_NOT_FOUND)
             else:
                 raise HTTPException(status_code=400, detail=error)
         

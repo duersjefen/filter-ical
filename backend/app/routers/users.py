@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from ..core.database import get_db
 from ..core.auth import get_current_user_id, require_user_auth, verify_admin_auth
 from ..core.rate_limit import limiter
+from ..core.messages import ErrorMessages, SuccessMessages
 from ..models.user import User
 from ..models.domain import Domain
 from ..services import auth_service
@@ -125,7 +126,7 @@ async def register_user(
         if not user_data.email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email address is required when setting a password (needed for password reset)"
+                detail=ErrorMessages.EMAIL_REQUIRED_FOR_PASSWORD
             )
 
     # Check if username already exists
@@ -133,7 +134,7 @@ async def register_user(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Username already taken"
+            detail=ErrorMessages.USERNAME_TAKEN
         )
 
     # Check if email already exists (if provided)
@@ -142,7 +143,7 @@ async def register_user(
         if existing_email:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered"
+                detail=ErrorMessages.EMAIL_REGISTERED
             )
 
     # Hash password if provided
@@ -211,7 +212,7 @@ async def login_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password"
+            detail=ErrorMessages.INVALID_USERNAME_OR_PASSWORD
         )
 
     # Check if account is locked
@@ -235,7 +236,7 @@ async def login_user(
         if not login_data.password:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Password required for this account"
+                detail=ErrorMessages.PASSWORD_REQUIRED_FOR_ACCOUNT
             )
 
         # Verify password
@@ -318,7 +319,7 @@ async def check_username(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Username not found"
+            detail=ErrorMessages.USERNAME_NOT_FOUND
         )
 
     return {
@@ -347,7 +348,7 @@ async def get_current_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail=ErrorMessages.USER_NOT_FOUND
         )
 
     return UserResponse(
@@ -376,7 +377,7 @@ async def update_user_profile(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail=ErrorMessages.USER_NOT_FOUND
         )
 
     # Update email if provided
@@ -395,7 +396,7 @@ async def update_user_profile(
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="Email already taken"
+                    detail=ErrorMessages.EMAIL_TAKEN
                 )
 
         user.email = request.email if request.email else None
@@ -411,7 +412,7 @@ async def update_user_profile(
         if not user.email and request.email is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email address is required when setting a password (needed for password reset)"
+                detail=ErrorMessages.EMAIL_REQUIRED_FOR_PASSWORD
             )
 
         # If user already has a password, verify current password
@@ -419,13 +420,13 @@ async def update_user_profile(
             if not request.current_password:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Current password required to change password"
+                    detail=ErrorMessages.CURRENT_PASSWORD_REQUIRED
                 )
 
             if not auth_service.verify_password(request.current_password, user.password_hash):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Current password is incorrect"
+                    detail=ErrorMessages.CURRENT_PASSWORD_INCORRECT
                 )
 
         # Hash and set new password
@@ -458,7 +459,7 @@ async def get_user_domains(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail=ErrorMessages.USER_NOT_FOUND
         )
 
     # Get owned domains
@@ -569,7 +570,7 @@ async def set_domain_passwords_as_owner(
     if not domain_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Domain '{domain}' not found"
+            detail=ErrorMessages.DOMAIN_NOT_FOUND.format(domain=domain)
         )
 
     # Check authorization: user is owner OR global admin
@@ -584,7 +585,7 @@ async def set_domain_passwords_as_owner(
     if not is_owner and not is_global_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be the domain owner or global admin to manage passwords"
+            detail=ErrorMessages.ACCESS_DENIED_OWNER_OR_GLOBAL_ADMIN
         )
 
     results = []
@@ -604,6 +605,6 @@ async def set_domain_passwords_as_owner(
         results.append("User password set")
 
     if not results:
-        return {"success": True, "message": "No changes requested"}
+        return {"success": True, "message": SuccessMessages.NO_CHANGES_REQUESTED}
 
     return {"success": True, "message": ", ".join(results)}

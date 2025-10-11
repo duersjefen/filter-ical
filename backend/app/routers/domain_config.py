@@ -13,6 +13,7 @@ from ..core.database import get_db
 from ..core.config import settings
 from ..core.error_handlers import handle_endpoint_errors
 from ..core.auth import get_verified_domain
+from ..core.messages import ErrorMessages
 from ..models.domain import Domain
 from ..services.domain_config_service import (
     export_domain_configuration, import_domain_configuration,
@@ -71,7 +72,7 @@ async def import_domain_config(
 
     # Validate required fields in import
     if not isinstance(config_data, dict):
-        raise HTTPException(status_code=400, detail="Configuration must be an object/dictionary")
+        raise HTTPException(status_code=400, detail=ErrorMessages.CONFIGURATION_MUST_BE_OBJECT)
 
     required_sections = ["domain", "groups", "assignments", "rules"]
     for section in required_sections:

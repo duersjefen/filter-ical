@@ -135,18 +135,57 @@ def create_assignment_rule_data(domain_key: str, rule_type: str, rule_value: str
     }
 
 
-def apply_assignment_rules(events: List[Dict[str, Any]], 
+def apply_assignment_rules(events: List[Dict[str, Any]],
                           assignment_rules: List[Dict[str, Any]]) -> Dict[int, List[str]]:
     """
     Apply assignment rules to events and return group assignments.
-    
+
+    Algorithm:
+    ----------
+    Processes unique event titles (grouped by recurring events) and applies
+    assignment rules to determine which group each event belongs to.
+
+    Rule Matching Process:
+    1. Group events by title to identify recurring events
+    2. For each unique title, use first event as representative
+    3. Test assignment rules in order until one matches
+    4. First matching rule wins - subsequent rules ignored
+
+    Precedence:
+    -----------
+    Rules are evaluated in the order they appear in assignment_rules list.
+    This allows admins to create priority-based grouping:
+    - More specific rules should come first (e.g., "title_contains: Exam")
+    - More general rules should come last (e.g., "title_contains: Class")
+
+    Why This Approach:
+    ------------------
+    - First-match prevents ambiguous multi-group assignments
+    - Rule ordering gives admins explicit control over precedence
+    - Using representative event is efficient (no need to check all instances)
+    - Supports multiple rule types (title_contains, description_contains, category_contains)
+
+    Example:
+    --------
+    >>> events = [
+    ...     {"title": "Math Exam", "description": "Final exam"},
+    ...     {"title": "Math Class", "description": "Regular class"}
+    ... ]
+    >>> rules = [
+    ...     {"rule_type": "title_contains", "rule_value": "exam", "target_group_id": 1},
+    ...     {"rule_type": "title_contains", "rule_value": "math", "target_group_id": 2}
+    ... ]
+    >>> result = apply_assignment_rules(events, rules)
+    >>> # Result: {1: ["Math Exam"], 2: ["Math Class"]}
+    >>> # "Math Exam" matches first rule (1), so second rule (2) not applied
+
     Args:
         events: List of events to process
         assignment_rules: List of assignment rule data
-        
+
     Returns:
         Dictionary mapping group_id -> list of event titles to assign
-        
+
     Pure function - rule application logic.
     """
     group_assignments = {}
@@ -267,18 +306,54 @@ def create_auto_group_data(domain_key: str, group_type: str) -> Dict[str, Any]:
     }
 
 
-def assign_ungrouped_to_auto_groups(ungrouped_events: List[Dict[str, Any]], 
+def assign_ungrouped_to_auto_groups(ungrouped_events: List[Dict[str, Any]],
                                   domain_key: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """
     Create auto-groups and assign ungrouped events to them.
-    
+
+    Algorithm:
+    ----------
+    Categorizes events that don't match any custom group into two auto-created groups:
+    1. "📅 Other Recurring Events" (event_count > 1) - ID: 9998
+    2. "🎯 Special Events" (event_count == 1) - ID: 9999
+
+    Why These Groups:
+    -----------------
+    - Ensures ALL events appear in some group (no orphaned events)
+    - High numeric IDs (9998, 9999) ensure auto-groups appear last in UI
+    - Recurring vs unique distinction helps users understand event patterns
+    - Auto-groups are visually distinct with emojis and special naming
+
+    Why This Approach:
+    ------------------
+    - Prevents UX confusion from "ungrouped" events section
+    - Maintains consistent group-based navigation pattern
+    - Makes it obvious which events need manual grouping
+    - Preserves filtering contract (all events must be in a group)
+
+    Edge Cases:
+    -----------
+    - Empty ungrouped_events: Returns auto-groups with empty recurring_events lists
+    - All events recurring: unique_auto_group will have empty list
+    - All events unique: recurring_auto_group will have empty list
+
+    Example:
+    --------
+    >>> ungrouped = [
+    ...     {"title": "Weekly Meeting", "event_count": 5},
+    ...     {"title": "One-time Conference", "event_count": 1}
+    ... ]
+    >>> recurring_group, unique_group = assign_ungrouped_to_auto_groups(ungrouped, "school")
+    >>> # recurring_group['id'] == 9998, contains "Weekly Meeting"
+    >>> # unique_group['id'] == 9999, contains "One-time Conference"
+
     Args:
         ungrouped_events: List of ungrouped event data
         domain_key: Domain identifier
-        
+
     Returns:
         Tuple of (recurring_auto_group, unique_auto_group) with events assigned
-        
+
     Pure function - data categorization logic.
     """
     # Create auto-groups

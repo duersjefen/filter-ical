@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from ..core.database import get_db
+from ..core.messages import ErrorMessages
 from ..services.calendar_service import get_filter_by_uuid, get_calendar_events, apply_filter_to_events
 from ..data.calendar import transform_events_for_export
 
@@ -25,7 +26,7 @@ async def export_filtered_calendar(
         # Get filter by UUID
         filter_obj = get_filter_by_uuid(db, uuid)
         if not filter_obj:
-            raise HTTPException(status_code=404, detail="Filter not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.FILTER_NOT_FOUND)
         
         # Get events based on filter type (with graceful degradation)
         try:
@@ -38,7 +39,7 @@ async def export_filtered_calendar(
                 events_data = get_domain_events(db, filter_obj.domain_key)
                 events = events_data  # Already in dictionary format
             else:
-                raise HTTPException(status_code=400, detail="Invalid filter configuration")
+                raise HTTPException(status_code=400, detail=ErrorMessages.INVALID_FILTER_CONFIGURATION)
         except Exception as events_error:
             # Graceful degradation for database issues (return empty calendar)
             print(f"⚠️ Events retrieval error for filter {uuid}: {events_error}")

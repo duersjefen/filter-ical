@@ -12,6 +12,7 @@ from sqlalchemy import func
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
 from ..core.auth import require_user_auth, get_current_user_id, get_verified_domain
+from ..core.messages import ErrorMessages
 from ..models.domain import Domain
 from ..services.calendar_service import get_filters, create_filter, delete_filter, get_filter_by_id
 
@@ -50,7 +51,7 @@ async def create_domain_filter(
     """Create filter for domain calendar (authentication required)."""
     # Validate request data
     if "name" not in filter_data:
-        raise HTTPException(status_code=400, detail="Filter name is required")
+        raise HTTPException(status_code=400, detail=ErrorMessages.FILTER_NAME_REQUIRED)
 
     # Create filter
     success, filter_obj, error = create_filter(
@@ -101,11 +102,11 @@ async def update_domain_filter(
         # Get existing filter to verify it exists and user has access
         existing_filter = get_filter_by_id(db, filter_id)
         if not existing_filter or existing_filter.domain_key != domain_obj.domain_key:
-            raise HTTPException(status_code=404, detail="Filter not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.FILTER_NOT_FOUND)
 
         # Verify user owns this filter
         if existing_filter.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(status_code=403, detail=ErrorMessages.ACCESS_DENIED)
 
         # Update the filter
         if "name" in filter_data:
@@ -140,7 +141,7 @@ async def delete_domain_filter(
     success, error = delete_filter(db, filter_id, domain_key=domain_obj.domain_key, user_id=user_id)
     if not success:
         if "not found" in error.lower():
-            raise HTTPException(status_code=404, detail="Filter not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.FILTER_NOT_FOUND)
         else:
             raise HTTPException(status_code=400, detail=error)
 

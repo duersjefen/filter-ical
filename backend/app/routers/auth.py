@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
 from ..core.rate_limit import limiter
+from ..core.messages import ErrorMessages
 from ..models.user import User
 from ..services import auth_service
 from ..services.email_service import send_password_reset_email
@@ -104,14 +105,14 @@ async def reset_password(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
+            detail=ErrorMessages.INVALID_OR_EXPIRED_RESET_TOKEN
         )
 
     # Validate token
     if not auth_service.is_reset_token_valid(user, body.token):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
+            detail=ErrorMessages.INVALID_OR_EXPIRED_RESET_TOKEN
         )
 
     # Validate new password
@@ -147,7 +148,7 @@ async def verify_reset_token(
     if not user or not auth_service.is_reset_token_valid(user, token):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired token"
+            detail=ErrorMessages.INVALID_OR_EXPIRED_TOKEN
         )
 
     return MessageResponse(message="Token is valid")

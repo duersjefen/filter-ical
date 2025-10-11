@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
 from ..core.auth import require_user_auth, get_verified_domain
+from ..core.messages import ErrorMessages
 from ..models.domain import Domain
 
 router = APIRouter()
@@ -30,7 +31,7 @@ async def list_domain_admins(
     if not is_owner and not is_admin:
         raise HTTPException(
             status_code=403,
-            detail="Access denied. Only domain owner or admins can view admin list."
+            detail=ErrorMessages.ACCESS_DENIED_OWNER_OR_ADMIN_VIEW
         )
 
     # Get owner info
@@ -71,12 +72,12 @@ async def add_domain_admin(
         if domain_obj.owner_id != user_id:
             raise HTTPException(
                 status_code=403,
-                detail="Access denied. Only domain owner can add admins."
+                detail=ErrorMessages.ACCESS_DENIED_OWNER_ADD_ADMINS
             )
 
         # Validate request
         if "username" not in request_data:
-            raise HTTPException(status_code=400, detail="username is required")
+            raise HTTPException(status_code=400, detail=ErrorMessages.USERNAME_REQUIRED)
 
         username = request_data["username"].strip()
 
@@ -88,11 +89,11 @@ async def add_domain_admin(
 
         # Check if already admin
         if user_to_add in domain_obj.admins:
-            raise HTTPException(status_code=409, detail=f"User '{username}' is already an admin")
+            raise HTTPException(status_code=409, detail=ErrorMessages.USER_ALREADY_ADMIN.format(username=username))
 
         # Check if trying to add owner as admin
         if user_to_add.id == domain_obj.owner_id:
-            raise HTTPException(status_code=400, detail="Domain owner is already admin by default")
+            raise HTTPException(status_code=400, detail=ErrorMessages.DOMAIN_OWNER_ALREADY_ADMIN)
 
         # Add admin
         domain_obj.admins.append(user_to_add)
@@ -121,18 +122,18 @@ async def remove_domain_admin(
         if domain_obj.owner_id != user_id:
             raise HTTPException(
                 status_code=403,
-                detail="Access denied. Only domain owner can remove admins."
+                detail=ErrorMessages.ACCESS_DENIED_OWNER_REMOVE_ADMINS
             )
 
         # Find user to remove
         from ..models.user import User
         user_to_remove = db.query(User).filter(User.username == username).first()
         if not user_to_remove:
-            raise HTTPException(status_code=404, detail=f"User '{username}' not found")
+            raise HTTPException(status_code=404, detail=ErrorMessages.USER_NOT_FOUND)
 
         # Check if user is admin
         if user_to_remove not in domain_obj.admins:
-            raise HTTPException(status_code=404, detail=f"User '{username}' is not an admin")
+            raise HTTPException(status_code=404, detail=ErrorMessages.USER_NOT_ADMIN.format(username=username))
 
         # Remove admin
         domain_obj.admins.remove(user_to_remove)

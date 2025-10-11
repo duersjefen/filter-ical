@@ -439,3 +439,200 @@ class TestTokenValidation:
         token_data = {'domain_key': 'test_domain'}  # Missing access_level, exp, iat
 
         assert validate_token_for_domain(token_data, 'test_domain', 'admin') is False
+
+
+@pytest.mark.unit
+class TestTokenExpiryEdgeCases:
+    """Edge case tests for token expiry and age calculations."""
+
+    def test_is_token_expired_exactly_at_expiry(self):
+        """Edge case: Token expires at exact current moment."""
+        now = datetime.now(timezone.utc)
+
+        token_data = {
+            'exp': now.timestamp(),  # Expires right now
+            'iat': (now - timedelta(days=30)).timestamp()
+        }
+
+        # At exact expiry moment, token should be considered expired
+        assert is_token_expired(token_data) is True
+
+    def test_is_token_expired_one_second_before_expiry(self):
+        """Edge case: Token expires in one second (not expired yet)."""
+        now = datetime.now(timezone.utc)
+        expires_in_one_second = now + timedelta(seconds=1)
+
+        token_data = {
+            'exp': expires_in_one_second.timestamp(),
+            'iat': now.timestamp()
+        }
+
+        assert is_token_expired(token_data) is False
+
+    def test_is_token_expired_one_second_after_expiry(self):
+        """Edge case: Token expired one second ago."""
+        now = datetime.now(timezone.utc)
+        expired_one_second_ago = now - timedelta(seconds=1)
+
+        token_data = {
+            'exp': expired_one_second_ago.timestamp(),
+            'iat': (now - timedelta(days=30)).timestamp()
+        }
+
+        assert is_token_expired(token_data) is True
+
+    def test_calculate_token_age_exactly_zero(self):
+        """Edge case: Token issued exactly now (age = 0)."""
+        now = datetime.now(timezone.utc)
+
+        token_data = {
+            'iat': now.timestamp(),
+            'exp': (now + timedelta(days=30)).timestamp()
+        }
+
+        age = calculate_token_age_days(token_data)
+        assert age < 0.001  # Less than 1.5 minutes old
+
+    def test_calculate_token_age_exactly_30_days(self):
+        """Edge case: Token issued exactly 30 days ago."""
+        now = datetime.now(timezone.utc)
+        thirty_days_ago = now - timedelta(days=30)
+
+        token_data = {
+            'iat': thirty_days_ago.timestamp(),
+            'exp': now.timestamp()  # Expires now
+        }
+
+        age = calculate_token_age_days(token_data)
+        assert 29.9 <= age <= 30.1  # Within margin
+
+    def test_should_refresh_exactly_at_threshold(self):
+        """Edge case: Token age exactly equals refresh threshold."""
+        now = datetime.now(timezone.utc)
+        issued = now - timedelta(days=25)  # Exactly 25 days old
+
+        token_data = {
+            'iat': issued.timestamp(),
+            'exp': (issued + timedelta(days=30)).timestamp()
+        }
+
+        # At exact threshold, should refresh
+        assert should_refresh_token(token_data, refresh_threshold_days=25) is True
+
+    def test_should_refresh_one_day_before_threshold(self):
+        """Edge case: Token age one day before refresh threshold."""
+        now = datetime.now(timezone.utc)
+        issued = now - timedelta(days=24)  # 24 days old
+
+        token_data = {
+            'iat': issued.timestamp(),
+            'exp': (issued + timedelta(days=30)).timestamp()
+        }
+
+        # One day before threshold, should not refresh yet
+        assert should_refresh_token(token_data, refresh_threshold_days=25) is False
+
+    def test_should_refresh_one_day_after_threshold(self):
+        """Edge case: Token age one day after refresh threshold."""
+        now = datetime.now(timezone.utc)
+        issued = now - timedelta(days=26)  # 26 days old
+
+        token_data = {
+            'iat': issued.timestamp(),
+            'exp': (issued + timedelta(days=30)).timestamp()
+        }
+
+        # One day after threshold, should refresh
+        assert should_refresh_token(token_data, refresh_threshold_days=25) is True
+
+    def test_should_refresh_expired_token_returns_false(self):
+        """Edge case: Expired tokens cannot be refreshed (return False)."""
+        now = datetime.now(timezone.utc)
+        issued = now - timedelta(days=31)
+        expired = issued + timedelta(days=30)  # Expired 1 day ago
+
+        token_data = {
+            'iat': issued.timestamp(),
+            'exp': expired.timestamp()
+        }
+
+        # Expired tokens should NOT be refreshed (they're invalid)
+        assert should_refresh_token(token_data) is False
+
+    def test_should_refresh_token_about_to_expire(self):
+        """Edge case: Token expires in 1 day (past threshold, should refresh)."""
+        now = datetime.now(timezone.utc)
+        issued = now - timedelta(days=29)  # 29 days old, expires tomorrow
+
+        token_data = {
+            'iat': issued.timestamp(),
+            'exp': (issued + timedelta(days=30)).timestamp()
+        }
+
+        # Should refresh (29 days >= 25 days threshold)
+        assert should_refresh_token(token_data, refresh_threshold_days=25) is True
+
+    def test_validate_token_exactly_at_expiry_moment(self):
+        """Edge case: Validate token at exact expiry moment."""
+        now = datetime.now(timezone.utc)
+
+        token_data = {
+            'domain_key': 'test_domain',
+            'access_level': 'admin',
+            'iat': (now - timedelta(days=30)).timestamp(),
+            'exp': now.timestamp()  # Expires right now
+        }
+
+        # At exact expiry, should fail validation
+        assert validate_token_for_domain(token_data, 'test_domain', 'admin') is False
+
+
+@pytest.mark.unit
+class TestPasswordEncryptionEdgeCases:
+    """Edge case tests for password encryption."""
+
+    TEST_ENCRYPTION_KEY = "P-EOqzNBZhEg8QVf2pWq9xY7tR5uKmN3oJlHbFcGdVw="
+
+    def test_encrypt_password_with_special_characters(self):
+        """Edge case: Password with special characters."""
+        password = "!@#$%^&*()_+-=[]{}|;:',.<>?/~`"
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
+        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
+
+        assert decrypted == password
+
+    def test_encrypt_password_with_unicode(self):
+        """Edge case: Password with Unicode characters."""
+        password = "пароль密码🔒"
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
+        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
+
+        assert decrypted == password
+
+    def test_encrypt_password_very_long(self):
+        """Edge case: Very long password (1000 characters)."""
+        password = "a" * 1000
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
+        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
+
+        assert decrypted == password
+        assert len(decrypted) == 1000
+
+    def test_decrypt_password_wrong_key_raises_error(self):
+        """Edge case: Decrypting with wrong key raises ValueError."""
+        password = "test_password"
+        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
+
+        wrong_key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+        with pytest.raises(ValueError, match="Invalid encrypted password"):
+            decrypt_password(encrypted, wrong_key)
+
+    def test_verify_password_with_whitespace(self):
+        """Edge case: Password with leading/trailing whitespace."""
+        password_with_spaces = "  password with spaces  "
+        encrypted = encrypt_password(password_with_spaces, self.TEST_ENCRYPTION_KEY)
+
+        # Exact match required (spaces preserved)
+        assert verify_password(password_with_spaces, encrypted, self.TEST_ENCRYPTION_KEY) is True
+        assert verify_password("password with spaces", encrypted, self.TEST_ENCRYPTION_KEY) is False

@@ -488,8 +488,138 @@ class TestTitleNormalization:
         assert norwegisch_group["event_count"] == 4
         assert len(norwegisch_group["events"]) == 4
         
-        # Should have 1 event in the Different Event group  
+        # Should have 1 event in the Different Event group
         assert "Different Event" in grouped
         different_group = grouped["Different Event"]
         assert different_group["event_count"] == 1
         assert len(different_group["events"]) == 1
+
+
+@pytest.mark.unit
+class TestNormalizeEventTitleEdgeCases:
+    """Edge case tests for normalize_event_title - complex title normalization."""
+
+    def test_normalize_empty_string(self):
+        """Edge case: Empty string returns 'Untitled'."""
+        assert normalize_event_title("") == "Untitled"
+
+    def test_normalize_whitespace_only(self):
+        """Edge case: Whitespace-only string returns 'Untitled'."""
+        assert normalize_event_title("   ") == "Untitled"
+        assert normalize_event_title("\t\n") == "Untitled"
+        assert normalize_event_title("\u00A0\u00A0") == "Untitled"  # Non-breaking spaces
+
+    def test_normalize_none_input(self):
+        """Edge case: None input returns 'Untitled'."""
+        assert normalize_event_title(None) == "Untitled"
+
+    def test_normalize_non_string_input(self):
+        """Edge case: Non-string input returns 'Untitled'."""
+        assert normalize_event_title(123) == "Untitled"
+        assert normalize_event_title([]) == "Untitled"
+        assert normalize_event_title({}) == "Untitled"
+
+    def test_normalize_mixed_unicode_spaces(self):
+        """Edge case: Mixed types of Unicode whitespace characters."""
+        title = "Event\u00A0with\u2000various\u2028whitespace\u3000types"
+        normalized = normalize_event_title(title)
+        # All whitespace should collapse to single spaces
+        assert normalized == "Event with various whitespace types"
+
+    def test_normalize_multiple_consecutive_spaces(self):
+        """Edge case: Multiple consecutive spaces collapse to single space."""
+        assert normalize_event_title("Event     with     gaps") == "Event with gaps"
+        assert normalize_event_title("Event          many          spaces") == "Event many spaces"
+
+    def test_normalize_leading_trailing_spaces(self):
+        """Edge case: Leading and trailing spaces are removed."""
+        assert normalize_event_title("  Event Name  ") == "Event Name"
+        assert normalize_event_title("\t\tEvent Name\t\t") == "Event Name"
+
+    def test_normalize_unicode_nfc_composed(self):
+        """Edge case: Unicode NFC normalization with composed characters."""
+        # Composed form (single character é)
+        composed = "Café"
+        assert normalize_event_title(composed) == "Café"
+
+    def test_normalize_unicode_nfc_decomposed(self):
+        """Edge case: Unicode NFC normalization with decomposed characters."""
+        # Decomposed form (e + combining acute accent)
+        decomposed = "Cafe\u0301"  # e + combining acute accent
+        normalized = normalize_event_title(decomposed)
+        # Should normalize to composed form
+        assert normalized == "Café"
+
+    def test_normalize_unicode_nfc_identical_output(self):
+        """Edge case: Composed and decomposed Unicode normalize to same result."""
+        composed = "Café"
+        decomposed = "Cafe\u0301"
+
+        # Both should produce identical normalized output
+        assert normalize_event_title(composed) == normalize_event_title(decomposed)
+
+    def test_normalize_tabs_to_spaces(self):
+        """Edge case: Tab characters convert to single spaces."""
+        assert normalize_event_title("Event\twith\ttabs") == "Event with tabs"
+        assert normalize_event_title("Event\t\twith\t\ttabs") == "Event with tabs"
+
+    def test_normalize_newlines_to_spaces(self):
+        """Edge case: Newline characters convert to single spaces."""
+        assert normalize_event_title("Event\nwith\nnewlines") == "Event with newlines"
+        assert normalize_event_title("Event\r\nwith\r\nCRLF") == "Event with CRLF"
+
+    def test_normalize_zero_width_characters(self):
+        """Edge case: Zero-width spaces and joiners are handled."""
+        title = "Event\u200Bwith\u200Bzero\u200Bwidth"  # Zero-width spaces
+        normalized = normalize_event_title(title)
+        # Zero-width spaces should be removed/collapsed
+        assert "Event" in normalized
+        assert "with" in normalized
+
+    def test_normalize_very_long_title(self):
+        """Edge case: Very long title is preserved."""
+        long_title = "A" * 500
+        normalized = normalize_event_title(long_title)
+        assert normalized == long_title
+        assert len(normalized) == 500
+
+    def test_normalize_special_characters_preserved(self):
+        """Edge case: Special characters (non-whitespace) are preserved."""
+        title = "Event!@#$%^&*()_+-=[]{}|;:',.<>?/~`"
+        normalized = normalize_event_title(title)
+        assert normalized == title
+
+    def test_normalize_emoji_preserved(self):
+        """Edge case: Emoji characters are preserved."""
+        title = "📅 Weekly Meeting 🎉"
+        normalized = normalize_event_title(title)
+        assert normalized == title
+
+    def test_normalize_mixed_language_characters(self):
+        """Edge case: Mixed language characters (Latin, Cyrillic, CJK)."""
+        title = "Math класс 数学"
+        normalized = normalize_event_title(title)
+        assert normalized == title
+
+    def test_normalize_rtl_languages(self):
+        """Edge case: Right-to-left language text (Arabic, Hebrew)."""
+        title = "درس الرياضيات"  # Arabic
+        normalized = normalize_event_title(title)
+        assert normalized == title
+
+    def test_normalize_idempotent(self):
+        """Edge case: Normalizing twice produces same result (idempotent)."""
+        title = "  Event  with   spaces  "
+        normalized_once = normalize_event_title(title)
+        normalized_twice = normalize_event_title(normalized_once)
+        assert normalized_once == normalized_twice
+
+    def test_normalize_single_character(self):
+        """Edge case: Single character title."""
+        assert normalize_event_title("A") == "A"
+        assert normalize_event_title(" B ") == "B"
+
+    def test_normalize_numbers_only(self):
+        """Edge case: Title with only numbers."""
+        assert normalize_event_title("12345") == "12345"
+        assert normalize_event_title(" 678 ") == "678"

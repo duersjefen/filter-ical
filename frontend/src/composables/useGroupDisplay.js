@@ -35,6 +35,47 @@ export function useGroupDisplay() {
     return `${groupIcon} ${groupName}`
   }
 
+  /**
+   * Calculate group subscription/selection status for UI display.
+   *
+   * Algorithm (Tri-State Selection Logic):
+   * =======================================
+   * Group status is determined by combination of subscription and selection:
+   *
+   * Status Priority (highest to lowest):
+   * 1. 'subscribed': Group is explicitly subscribed (green highlight)
+   * 2. 'allSelected': 100% of events selected but not subscribed (blue highlight)
+   * 3. 'partial': Some events selected (1-99%) but not subscribed (light blue)
+   * 4. 'notSelected': No events selected and not subscribed (gray)
+   *
+   * Why This Approach:
+   * ------------------
+   * - "Subscribed" status has highest priority (explicit user choice)
+   * - Tri-state matches checkbox UI expectations (all/some/none)
+   * - Empty groups default to 'notSelected' for UX clarity
+   * - Visual hierarchy guides users to understand group state at a glance
+   *
+   * Edge Cases:
+   * -----------
+   * - Empty group (totalCount = 0): Always returns 'notSelected'
+   * - Subscribed group: Always returns 'subscribed' regardless of selection
+   * - All selected (100%): Returns 'allSelected' only if not subscribed
+   * - Partial (1-99%): Returns 'partial' only if not subscribed
+   *
+   * Example:
+   * --------
+   * Group with 5 events:
+   * - subscribed=true, selectedCount=3: returns 'subscribed' (green)
+   * - subscribed=false, selectedCount=5: returns 'allSelected' (blue)
+   * - subscribed=false, selectedCount=3: returns 'partial' (light blue)
+   * - subscribed=false, selectedCount=0: returns 'notSelected' (gray)
+   *
+   * @param {number|string} groupId - Group ID to check status for
+   * @param {Object} groups - Groups data object (keyed by group ID)
+   * @param {Set} subscribedGroups - Set of subscribed group IDs
+   * @param {Array} selectedRecurringEvents - Array of selected event titles
+   * @returns {string} Translated status text ('subscribed', 'allSelected', 'partial', 'notSelected')
+   */
   const getGroupSubscriptionStatus = (groupId, groups, subscribedGroups, selectedRecurringEvents) => {
     const isSubscribed = subscribedGroups && subscribedGroups.has(groupId)
     const selectedCount = getGroupSelectedCount(groupId, groups, selectedRecurringEvents)

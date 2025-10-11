@@ -239,6 +239,45 @@ def should_refresh_token(token_data: Dict[str, Any], refresh_threshold_days: int
     """
     Determine if a token should be refreshed (sliding window).
 
+    Algorithm (Sliding Window Token Refresh):
+    ==========================================
+    Tokens have 30-day expiry, but we refresh at 25 days to maintain
+    continuous access without forcing re-authentication.
+
+    Token Lifecycle:
+    ----------------
+    Day 0:   Token created, 30-day expiry set
+    Day 1-24: Token accepted, no refresh needed
+    Day 25-29: Token accepted, refresh suggested (sliding window)
+    Day 30+:   Token expired, authentication required
+
+    Why This Approach:
+    ------------------
+    - Prevents session interruption for active users
+    - Balances security (regular rotation) with UX (no forced re-auth)
+    - 5-day buffer prevents edge cases near expiry
+    - Expired tokens cannot be refreshed (security requirement)
+
+    Security Rationale:
+    -------------------
+    - Regular token rotation limits damage from token theft
+    - Sliding window keeps active users continuously authenticated
+    - Hard expiry enforces re-authentication for inactive users
+    - Cannot refresh expired tokens (forces fresh authentication)
+
+    Example:
+    --------
+    >>> token_data = {"iat": 1609459200, "exp": 1612051200}  # 30-day token
+    >>> # Day 24: Token age = 24 days
+    >>> should_refresh_token(token_data, refresh_threshold_days=25)
+    False  # Not old enough yet
+    >>> # Day 26: Token age = 26 days
+    >>> should_refresh_token(token_data, refresh_threshold_days=25)
+    True  # Time to refresh
+    >>> # Day 31: Token expired
+    >>> should_refresh_token(token_data, refresh_threshold_days=25)
+    False  # Expired tokens cannot be refreshed
+
     Args:
         token_data: Decoded JWT payload
         refresh_threshold_days: Refresh tokens older than this (default: 25 days)

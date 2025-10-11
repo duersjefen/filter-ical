@@ -13,6 +13,7 @@ import yaml
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
 from ..core.auth import get_verified_domain
+from ..core.messages import SuccessMessages
 from ..models.domain import Domain
 from ..services.backup_service import (
     create_backup, list_backups, get_backup, delete_backup, restore_backup
@@ -106,7 +107,7 @@ async def delete_domain_backup(
 
     return {
         "success": True,
-        "message": "Backup deleted successfully"
+        "message": SuccessMessages.BACKUP_DELETED
     }
 
 
@@ -132,7 +133,7 @@ async def restore_domain_backup(
 
     return {
         "success": True,
-        "message": "Domain restored from backup",
+        "message": SuccessMessages.BACKUP_RESTORED,
         "auto_backup_id": auto_backup_id
     }
 

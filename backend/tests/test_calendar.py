@@ -570,3 +570,225 @@ END:VEVENT"""
         assert "DTSTART:20250930T180000Z" in result
         assert "DTEND:20250930T190000Z" in result
         assert "SUMMARY:Malformed Event" in result
+
+
+@pytest.mark.unit
+class TestApplyFilterEdgeCases:
+    """Edge case tests for apply_filter_to_events - complex filtering logic."""
+
+    def test_apply_filter_empty_events_list(self):
+        """Edge case: Empty events list should return empty."""
+        filter_data = {
+            "subscribed_event_ids": ["Event 1", "Event 2"]
+        }
+
+        result = apply_filter_to_events([], filter_data)
+
+        assert result == []
+
+    def test_apply_filter_domain_empty_events_list(self):
+        """Edge case: Domain filter with empty events list."""
+        filter_data = {
+            "domain_key": "test-domain",
+            "subscribed_group_ids": [1],
+            "subscribed_event_ids": [],
+            "unselected_event_ids": []
+        }
+        group_event_titles = {"Event 1"}
+
+        result = apply_filter_to_events([], filter_data, group_event_titles=group_event_titles)
+
+        assert result == []
+
+    def test_apply_filter_all_events_excluded(self):
+        """Edge case: All events in unselected_event_ids (blacklist wins)."""
+        events = [
+            {"id": 1, "title": "Event A"},
+            {"id": 2, "title": "Event B"},
+            {"id": 3, "title": "Event C"}
+        ]
+
+        filter_data = {
+            "domain_key": "test-domain",
+            "subscribed_group_ids": [1],
+            "subscribed_event_ids": [],
+            "unselected_event_ids": ["Event A", "Event B", "Event C"]  # All excluded
+        }
+        group_event_titles = {"Event A", "Event B", "Event C"}
+
+        result = apply_filter_to_events(events, filter_data, group_event_titles=group_event_titles)
+
+        assert result == []
+
+    def test_apply_filter_conflicting_rules_unselected_wins(self):
+        """Edge case: Event both in subscribed_event_ids and unselected_event_ids - unselected wins."""
+        events = [
+            {"id": 1, "title": "Conflicting Event"},
+            {"id": 2, "title": "Normal Event"}
+        ]
+
+        filter_data = {
+            "domain_key": "test-domain",
+            "subscribed_group_ids": [],
+            "subscribed_event_ids": ["Conflicting Event", "Normal Event"],  # Whitelist
+            "unselected_event_ids": ["Conflicting Event"]  # Also blacklisted
+        }
+        group_event_titles = set()
+
+        # Formula: (group_titles ∪ subscribed_event_ids) - unselected_event_ids
+        # = ({} ∪ {Conflicting Event, Normal Event}) - {Conflicting Event}
+        # = {Normal Event}
+        result = apply_filter_to_events(events, filter_data, group_event_titles=group_event_titles)
+
+        assert len(result) == 1
+        assert result[0]["title"] == "Normal Event"
+
+    def test_apply_filter_domain_empty_group_titles(self):
+        """Edge case: Domain filter with empty group_event_titles set."""
+        events = [
+            {"id": 1, "title": "Event A"},
+            {"id": 2, "title": "Event B"}
+        ]
+
+        filter_data = {
+            "domain_key": "test-domain",
+            "subscribed_group_ids": [1],
+            "subscribed_event_ids": ["Event A"],
+            "unselected_event_ids": []
+        }
+        group_event_titles = set()  # Empty group
+
+        # Formula: ({} ∪ {Event A}) - {} = {Event A}
+        result = apply_filter_to_events(events, filter_data, group_event_titles=group_event_titles)
+
+        assert len(result) == 1
+        assert result[0]["title"] == "Event A"
+
+    def test_apply_filter_domain_no_whitelist_no_groups(self):
+        """Edge case: Domain filter with no subscribed events and no groups."""
+        events = [
+            {"id": 1, "title": "Event A"}
+        ]
+
+        filter_data = {
+            "domain_key": "test-domain",
+            "subscribed_group_ids": [],
+            "subscribed_event_ids": [],  # No whitelist
+            "unselected_event_ids": []
+        }
+        group_event_titles = set()  # No groups
+
+        # Formula: ({} ∪ {}) - {} = {} (empty)
+        result = apply_filter_to_events(events, filter_data, group_event_titles=group_event_titles)
+
+        assert result == []
+
+    def test_apply_filter_domain_missing_group_titles_raises_error(self):
+        """Edge case: Domain filter without group_event_titles parameter raises error."""
+        events = [{"id": 1, "title": "Event A"}]
+
+        filter_data = {
+            "domain_key": "test-domain",
+            "subscribed_group_ids": [1],
+            "subscribed_event_ids": [],
+            "unselected_event_ids": []
+        }
+
+        with pytest.raises(ValueError, match="group_event_titles is required"):
+            apply_filter_to_events(events, filter_data, group_event_titles=None)
+
+    def test_apply_filter_personal_include_future_events_false(self):
+        """Edge case: Personal filter with include_future_events=False (frozen mode)."""
+        filter_created_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        events = [
+            {
+                "id": 1,
+                "title": "Old Event",
+                "created_at": datetime(2024, 12, 1, tzinfo=timezone.utc)  # Created before filter
+            },
+            {
+                "id": 2,
+                "title": "Old Event",
+                "created_at": datetime(2025, 2, 1, tzinfo=timezone.utc)  # Created after filter
+            }
+        ]
+
+        filter_data = {
+            "subscribed_event_ids": ["Old Event"],
+            "include_future_events": False,  # Frozen mode
+            "created_at": filter_created_at
+        }
+
+        result = apply_filter_to_events(events, filter_data)
+
+        # Should only include event created before filter
+        assert len(result) == 1
+        assert result[0]["id"] == 1
+
+    def test_apply_filter_personal_include_future_events_true(self):
+        """Edge case: Personal filter with include_future_events=True (dynamic mode)."""
+        filter_created_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        events = [
+            {
+                "id": 1,
+                "title": "Recurring Event",
+                "created_at": datetime(2024, 12, 1, tzinfo=timezone.utc)
+            },
+            {
+                "id": 2,
+                "title": "Recurring Event",
+                "created_at": datetime(2025, 2, 1, tzinfo=timezone.utc)
+            }
+        ]
+
+        filter_data = {
+            "subscribed_event_ids": ["Recurring Event"],
+            "include_future_events": True,  # Dynamic mode
+            "created_at": filter_created_at
+        }
+
+        result = apply_filter_to_events(events, filter_data)
+
+        # Should include all events regardless of creation date
+        assert len(result) == 2
+
+    def test_apply_filter_personal_missing_created_at_field(self):
+        """Edge case: Event without created_at field when filter uses frozen mode."""
+        events = [
+            {
+                "id": 1,
+                "title": "No Timestamp Event"
+                # Missing created_at field
+            }
+        ]
+
+        filter_data = {
+            "subscribed_event_ids": ["No Timestamp Event"],
+            "include_future_events": False,
+            "created_at": datetime(2025, 1, 1, tzinfo=timezone.utc)
+        }
+
+        result = apply_filter_to_events(events, filter_data)
+
+        # Events without created_at are included (can't determine if they're "future")
+        assert len(result) == 1
+
+    def test_apply_filter_event_title_exact_match(self):
+        """Edge case: Filter matching requires exact title match."""
+        events = [
+            {"id": 1, "title": "Meeting"},
+            {"id": 2, "title": "Meeting Room"},  # Similar but not exact
+            {"id": 3, "title": "Weekly Meeting"}  # Similar but not exact
+        ]
+
+        filter_data = {
+            "subscribed_event_ids": ["Meeting"]
+        }
+
+        result = apply_filter_to_events(events, filter_data)
+
+        # Should only match exact "Meeting" title
+        assert len(result) == 1
+        assert result[0]["id"] == 1
