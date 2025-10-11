@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from ..core.database import get_db
 from ..core.auth import verify_admin_auth
+from ..core.messages import ErrorMessages, SuccessMessages
 from ..models.domain_request import DomainRequest, RequestStatus
 from ..models.calendar import Calendar
 from ..models.domain import Domain
@@ -81,14 +82,14 @@ async def approve_domain_request(
     if not domain_request:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Domain request not found"
+            detail=ErrorMessages.DOMAIN_REQUEST_NOT_FOUND
         )
 
     # Check if already reviewed
     if domain_request.status != RequestStatus.PENDING:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Request already {domain_request.status.value}"
+            detail=ErrorMessages.REQUEST_ALREADY_REVIEWED.format(status=domain_request.status.value)
         )
 
     # Use requested domain key or allow admin override
@@ -102,7 +103,7 @@ async def approve_domain_request(
     if existing_domain:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Domain key '{domain_key}' already exists"
+            detail=ErrorMessages.DOMAIN_KEY_EXISTS_SPECIFIC.format(domain_key=domain_key)
         )
 
     try:
@@ -167,7 +168,7 @@ async def approve_domain_request(
 
         return {
             "success": True,
-            "message": "Domain request approved and domain created",
+            "message": SuccessMessages.DOMAIN_REQUEST_APPROVED,
             "domain_key": domain_key,
             "calendar_id": calendar.id,
             "domain_id": domain.id
@@ -177,7 +178,7 @@ async def approve_domain_request(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to approve request: {str(e)}"
+            detail=ErrorMessages.APPROVE_REQUEST_FAILED.format(error=str(e))
         )
 
 
@@ -202,14 +203,14 @@ async def reject_domain_request(
     if not domain_request:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Domain request not found"
+            detail=ErrorMessages.DOMAIN_REQUEST_NOT_FOUND
         )
 
     # Check if already reviewed
     if domain_request.status != RequestStatus.PENDING:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Request already {domain_request.status.value}"
+            detail=ErrorMessages.REQUEST_ALREADY_REVIEWED.format(status=domain_request.status.value)
         )
 
     try:
@@ -235,12 +236,12 @@ async def reject_domain_request(
 
         return {
             "success": True,
-            "message": "Domain request rejected"
+            "message": SuccessMessages.DOMAIN_REQUEST_REJECTED
         }
 
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to reject request: {str(e)}"
+            detail=ErrorMessages.REJECT_REQUEST_FAILED.format(error=str(e))
         )

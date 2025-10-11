@@ -12,6 +12,7 @@ import secrets
 from ..core.database import get_db
 from ..core.auth import create_admin_token
 from ..core.config import settings
+from ..core.messages import ErrorMessages, SuccessMessages, InfoMessages
 from ..models.admin_password_reset import AdminPasswordResetToken
 
 router = APIRouter()
@@ -72,7 +73,7 @@ async def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db))
     if not is_password_correct:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin password"
+            detail=ErrorMessages.INVALID_ADMIN_PASSWORD
         )
 
     # Generate JWT token with 30-day expiry
@@ -102,7 +103,7 @@ async def request_admin_password_reset(db: Session = Depends(get_db)):
             # Still return success to prevent enumeration
             return {
                 "success": True,
-                "message": "If an admin account exists, a password reset email has been sent"
+                "message": InfoMessages.PASSWORD_RESET_EMAIL_SENT
             }
 
         # Create reset token
@@ -124,7 +125,7 @@ async def request_admin_password_reset(db: Session = Depends(get_db)):
 
         return {
             "success": True,
-            "message": "If an admin account exists, a password reset email has been sent"
+            "message": InfoMessages.PASSWORD_RESET_EMAIL_SENT
         }
 
     except Exception as e:
@@ -132,7 +133,7 @@ async def request_admin_password_reset(db: Session = Depends(get_db)):
         # Still return success to prevent enumeration
         return {
             "success": True,
-            "message": "If an admin account exists, a password reset email has been sent"
+            "message": InfoMessages.PASSWORD_RESET_EMAIL_SENT
         }
 
 
@@ -154,7 +155,7 @@ async def reset_admin_password(
     if "token" not in reset_data or "new_password" not in reset_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="token and new_password are required"
+            detail=ErrorMessages.TOKEN_AND_PASSWORD_REQUIRED
         )
 
     token_string = reset_data["token"]
@@ -164,7 +165,7 @@ async def reset_admin_password(
     if len(new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Password must be at least 8 characters long"
+            detail=ErrorMessages.PASSWORD_MIN_LENGTH.format(min_length=8)
         )
 
     # Find token
@@ -175,15 +176,15 @@ async def reset_admin_password(
     if not token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
+            detail=ErrorMessages.INVALID_OR_EXPIRED_RESET_TOKEN
         )
 
     # Validate token
     if not token.is_valid:
         if token.used:
-            detail = "Reset token has already been used"
+            detail = ErrorMessages.RESET_TOKEN_USED
         else:
-            detail = "Reset token has expired"
+            detail = ErrorMessages.RESET_TOKEN_EXPIRED
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -218,12 +219,12 @@ async def reset_admin_password(
 
         return {
             "success": True,
-            "message": "Admin password reset successfully. Your new password is now active."
+            "message": SuccessMessages.PASSWORD_RESET_COMPLETE
         }
 
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to reset password: {str(e)}"
+            detail=ErrorMessages.PASSWORD_RESET_FAILED.format(error=str(e))
         )

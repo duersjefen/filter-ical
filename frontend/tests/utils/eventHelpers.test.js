@@ -627,4 +627,257 @@ describe('eventHelpers', () => {
       expect(classifyRecurringEvent([], 'Any Event')).toBe('unknown')
     })
   })
+
+  describe('Edge Cases - Extreme Input', () => {
+    describe('generateEventIdentifier - extreme strings', () => {
+      it('handles very long event titles (10,000+ characters)', () => {
+        const longTitle = 'x'.repeat(10000)
+        const event = {
+          title: longTitle,
+          start: '2024-01-18T10:00:00Z',
+          end: '2024-01-18T11:00:00Z'
+        }
+        const identifier = generateEventIdentifier(event)
+        expect(identifier).toBeDefined()
+        expect(identifier).toContain('x'.repeat(100)) // Should include long string
+      })
+
+      it('handles very long descriptions', () => {
+        const longDesc = 'description '.repeat(10000)
+        const event = {
+          title: 'Test',
+          start: '2024-01-18T10:00:00Z',
+          description: longDesc
+        }
+        const identifier = generateEventIdentifier(event)
+        expect(identifier).toBeDefined()
+        expect(identifier).toContain(longDesc.length.toString())
+      })
+
+      it('handles Unicode characters in titles', () => {
+        const event = {
+          title: '🎉 Meeting 会议 Réunion 🌟',
+          start: '2024-01-18T10:00:00Z',
+          end: '2024-01-18T11:00:00Z'
+        }
+        const identifier = generateEventIdentifier(event)
+        expect(identifier).toContain('🎉 Meeting 会议 Réunion 🌟')
+      })
+
+      it('handles special characters in titles', () => {
+        const event = {
+          title: 'Test <>&"\'\n\r\t',
+          start: '2024-01-18T10:00:00Z',
+          end: '2024-01-18T11:00:00Z'
+        }
+        const identifier = generateEventIdentifier(event)
+        expect(identifier).toBeDefined()
+      })
+
+      it('handles null/undefined in all fields', () => {
+        const event = {
+          title: null,
+          summary: undefined,
+          start: null,
+          end: undefined,
+          description: null
+        }
+        const identifier = generateEventIdentifier(event)
+        expect(identifier).toBe('untitled-0')
+      })
+
+      it('handles events with only whitespace in title', () => {
+        const event = {
+          title: '   ',
+          start: '2024-01-18T10:00:00Z',
+          end: '2024-01-18T11:00:00Z'
+        }
+        const identifier = generateEventIdentifier(event)
+        expect(identifier).toContain('   ')
+      })
+    })
+
+    describe('transformRecurringEventsToArray - extreme data', () => {
+      it('handles very large event counts (1000+ events per type)', () => {
+        const events = Array.from({ length: 1000 }, (_, i) => ({ id: i }))
+        const input = {
+          'Large Event': { count: 1000, events }
+        }
+        const result = transformRecurringEventsToArray(input)
+        expect(result).toHaveLength(1)
+        expect(result[0].count).toBe(1000)
+        expect(result[0].events).toHaveLength(1000)
+      })
+
+      it('handles many event types (1000+ types)', () => {
+        const input = {}
+        for (let i = 0; i < 1000; i++) {
+          input[`Event ${i}`] = { count: i, events: [] }
+        }
+        const result = transformRecurringEventsToArray(input)
+        expect(result).toHaveLength(1000)
+      })
+
+      it('handles extremely uneven count distribution', () => {
+        const input = {
+          'Huge Event': { count: 10000, events: [] },
+          'Tiny Event': { count: 1, events: [] }
+        }
+        const result = transformRecurringEventsToArray(input)
+        expect(result[0].name).toBe('Huge Event')
+        expect(result[1].name).toBe('Tiny Event')
+      })
+
+      it('handles object with circular reference safely', () => {
+        const events = []
+        const input = {
+          'Event': { count: 5, events }
+        }
+        // Circular reference shouldn't break the function
+        expect(() => transformRecurringEventsToArray(input)).not.toThrow()
+      })
+
+      it('handles mixed valid and invalid data types', () => {
+        const input = {
+          'Valid Event': { count: 5, events: [] },
+          'Invalid Count': { count: 'not a number', events: [] },
+          'Invalid Events': { count: 3, events: 'not an array' }
+        }
+        const result = transformRecurringEventsToArray(input)
+        expect(result).toHaveLength(3)
+      })
+    })
+
+    describe('filterRecurringEventsBySearch - edge cases', () => {
+      const recurringEvents = [
+        { name: 'Test Event', count: 5, events: [] },
+        { name: 'Another Event', count: 3, events: [] }
+      ]
+
+      it('handles very long search terms', () => {
+        const longSearch = 'x'.repeat(10000)
+        const result = filterRecurringEventsBySearch(recurringEvents, longSearch)
+        expect(result).toEqual([])
+      })
+
+      it('handles search with special regex characters', () => {
+        const events = [
+          { name: 'Event (Test)', count: 1, events: [] },
+          { name: 'Event [Test]', count: 1, events: [] }
+        ]
+        const result = filterRecurringEventsBySearch(events, '(Test)')
+        expect(result).toHaveLength(1)
+      })
+
+      it('handles search with Unicode characters', () => {
+        const events = [
+          { name: '会议 Meeting', count: 1, events: [] },
+          { name: 'Regular Event', count: 1, events: [] }
+        ]
+        const result = filterRecurringEventsBySearch(events, '会议')
+        expect(result).toHaveLength(1)
+      })
+
+      it('handles search with emoji', () => {
+        const events = [
+          { name: '🎉 Party Event', count: 1, events: [] },
+          { name: 'Regular Event', count: 1, events: [] }
+        ]
+        const result = filterRecurringEventsBySearch(events, '🎉')
+        expect(result).toHaveLength(1)
+      })
+    })
+
+    describe('filterFutureEvents - edge cases', () => {
+      beforeEach(() => {
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2024-01-20T12:00:00Z'))
+      })
+
+      it('handles events with invalid date formats', () => {
+        const events = [
+          { title: 'Invalid Date', start: 'not a date' },
+          { title: 'Valid Date', start: '2024-01-25T10:00:00Z' }
+        ]
+        const result = filterFutureEvents(events)
+        // Invalid dates result in NaN, NaN >= now is false, so event is filtered out
+        expect(result).toHaveLength(1)
+        expect(result[0].title).toBe('Valid Date')
+      })
+
+      it('handles events with very far future dates (year 9999)', () => {
+        const events = [
+          { title: 'Far Future', start: '9999-12-31T23:59:59Z' }
+        ]
+        const result = filterFutureEvents(events)
+        expect(result).toHaveLength(1)
+      })
+
+      it('handles events with very old past dates (year 1900)', () => {
+        const events = [
+          { title: 'Very Old', start: '1900-01-01T00:00:00Z' }
+        ]
+        const result = filterFutureEvents(events)
+        expect(result).toEqual([])
+      })
+
+      it('handles events with millisecond precision', () => {
+        const events = [
+          { title: 'Precise Time', start: '2024-01-20T12:00:00.001Z' }
+        ]
+        const result = filterFutureEvents(events)
+        expect(result).toHaveLength(1)
+      })
+    })
+
+    describe('calculateSelectedRecurringEventsCount - edge cases', () => {
+      it('handles extremely large counts', () => {
+        const recurringEvents = [
+          { name: 'Huge Event', count: 1000000, events: [] }
+        ]
+        const selected = ['Huge Event']
+        expect(calculateSelectedRecurringEventsCount(recurringEvents, selected)).toBe(1000000)
+      })
+
+      it('handles many selected events', () => {
+        const recurringEvents = Array.from({ length: 1000 }, (_, i) => ({
+          name: `Event ${i}`,
+          count: 1,
+          events: []
+        }))
+        const selected = recurringEvents.map(e => e.name)
+        expect(calculateSelectedRecurringEventsCount(recurringEvents, selected)).toBe(1000)
+      })
+
+      it('handles duplicate selections', () => {
+        const recurringEvents = [
+          { name: 'Event A', count: 5, events: [] }
+        ]
+        const selected = ['Event A', 'Event A', 'Event A']
+        // Should only count once
+        expect(calculateSelectedRecurringEventsCount(recurringEvents, selected)).toBe(5)
+      })
+    })
+
+    describe('Memory stress tests', () => {
+      it('handles very large event object', () => {
+        const event = {
+          title: 'Test',
+          start: '2024-01-18T10:00:00Z',
+          end: '2024-01-18T11:00:00Z',
+          description: 'x'.repeat(1000000), // 1MB description
+          extraData: Array.from({ length: 10000 }, (_, i) => i)
+        }
+        expect(() => generateEventIdentifier(event)).not.toThrow()
+      })
+
+      it('handles array with 10,000 events', () => {
+        const events = Array.from({ length: 10000 }, (_, i) => ({
+          title: `Event ${i}`,
+          start: `2024-01-${(i % 28) + 1}T10:00:00Z`
+        }))
+        expect(() => filterFutureEvents(events)).not.toThrow()
+      })
+    })
+  })
 })

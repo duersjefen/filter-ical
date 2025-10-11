@@ -41,7 +41,7 @@
         v-if="shouldShowGroups"
         :has-groups="appStore.hasCustomGroups"
         :groups="appStore.groups"
-        :domain-id="props.domainContext?.id || 'default'"
+        :domain-id="props.domainContext?.id ? String(props.domainContext.id) : 'default'"
         :show-groups-section="showGroupsSection"
         @selection-changed="handleGroupSelectionChanged"
         @switch-to-types="handleSwitchToTypes"

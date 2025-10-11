@@ -24,6 +24,13 @@ const createMockI18n = () => {
         // Add minimal translations needed for tests
         app: {
           title: 'iCal Viewer'
+        },
+        footer: {
+          donateButton: 'Support Server & Development Costs',
+          paypalNotice: 'Help cover hosting & development costs.',
+          voluntaryNotice: 'All donations are voluntary and appreciated.',
+          copyright: '© 2025 PAISS',
+          madeWith: 'Made with ❤️ for the community'
         }
       }
     },

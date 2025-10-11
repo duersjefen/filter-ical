@@ -131,6 +131,8 @@ class ErrorMessages:
     USER_ALREADY_ADMIN = "User '{username}' is already an admin"
     USER_NOT_ADMIN = "User '{username}' is not an admin"
     DOMAIN_KEY_EXISTS = "Domain key already exists"
+    DOMAIN_KEY_EXISTS_SPECIFIC = "Domain key '{domain_key}' already exists"
+    REQUEST_ALREADY_REVIEWED = "Request already {status}"
 
     # ==========================================================================
     # 500 INTERNAL SERVER ERROR - Server errors
@@ -151,6 +153,9 @@ class ErrorMessages:
     USER_PASSWORD_SET_FAILED = "User password set failed: {error}"
     ADMIN_PASSWORD_REMOVAL_FAILED = "Admin password removal failed: {error}"
     USER_PASSWORD_REMOVAL_FAILED = "User password removal failed: {error}"
+    APPROVE_REQUEST_FAILED = "Failed to approve request: {error}"
+    REJECT_REQUEST_FAILED = "Failed to reject request: {error}"
+    PASSWORD_RESET_FAILED = "Failed to reset password: {error}"
 
 
 class SuccessMessages:
@@ -195,6 +200,7 @@ class SuccessMessages:
     USER_PASSWORD_SET = "User password set successfully"
     ADMIN_PASSWORD_REMOVED = "Admin password removed successfully"
     USER_PASSWORD_REMOVED = "User password removed successfully"
+    PASSWORD_RESET_COMPLETE = "Admin password reset successfully. Your new password is now active."
 
     # User operations
     USER_REGISTERED = "User registered successfully"
@@ -204,7 +210,7 @@ class SuccessMessages:
     # Admin operations
     ADMIN_ADDED = "Admin added successfully"
     ADMIN_REMOVED = "Admin removed successfully"
-    DOMAIN_REQUEST_APPROVED = "Domain request approved and calendar created"
+    DOMAIN_REQUEST_APPROVED = "Domain request approved and domain created"
     DOMAIN_REQUEST_REJECTED = "Domain request rejected"
 
     # Configuration operations
@@ -213,6 +219,13 @@ class SuccessMessages:
     CONFIG_SYNCED = "Configuration synced successfully"
     CONFIG_RESET = "Configuration reset to baseline"
     CONFIG_IMPORTED = "Successfully imported {groups} groups, {assignments} assignments, {rules} rules"
+
+    # Background operations
+    BACKGROUND_SYNC_TRIGGERED = "Background sync triggered manually"
+
+    # Authentication operations
+    AUTH_SUCCESSFUL = "Authentication successful"
+    AUTH_ALREADY_AUTHENTICATED = "Already authenticated (previously unlocked)"
 
     # Generic success
     OPERATION_SUCCESSFUL = "Operation successful"

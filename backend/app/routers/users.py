@@ -222,7 +222,7 @@ async def login_user(
             minutes_remaining = int((user.account_locked_until - now).total_seconds() / 60)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Account locked due to too many failed login attempts. Try again in {minutes_remaining} minutes."
+                detail=ErrorMessages.ACCOUNT_LOCKED.format(minutes=minutes_remaining)
             )
         else:
             # Lockout expired - reset
@@ -250,14 +250,14 @@ async def login_user(
                 db.commit()
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Account locked due to too many failed login attempts. Try again in {LOCKOUT_DURATION_MINUTES} minutes."
+                    detail=ErrorMessages.ACCOUNT_LOCKED.format(minutes=LOCKOUT_DURATION_MINUTES)
                 )
 
             db.commit()
             attempts_remaining = MAX_FAILED_ATTEMPTS - user.failed_login_attempts
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid username or password. {attempts_remaining} attempts remaining before lockout."
+                detail=ErrorMessages.LOGIN_ATTEMPTS_REMAINING.format(attempts=attempts_remaining)
             )
     else:
         # Username-only account - no password check needed

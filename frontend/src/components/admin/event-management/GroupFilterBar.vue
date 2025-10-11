@@ -59,7 +59,8 @@
         <span v-if="editingGroupId !== group.id" class="truncate max-w-[120px] sm:max-w-none">{{ group.name }}</span>
         <input
           v-else
-          v-model="editingGroupName"
+          :value="editingGroupName"
+          @input="$emit('update:editingGroupName', $event.target.value)"
           @keyup.enter="$emit('save-group-edit', group.id)"
           @keyup.escape="$emit('cancel-group-edit')"
           @blur="$emit('save-group-edit', group.id)"
@@ -82,7 +83,8 @@
       <!-- Add Group Form -->
       <div v-else class="flex items-center gap-2 w-full sm:w-auto sm:inline-flex">
         <input
-          v-model="newGroupName"
+          :value="newGroupName"
+          @input="$emit('update:newGroupName', $event.target.value)"
           @keyup.enter="$emit('create-group')"
           @keyup.escape="$emit('cancel-add-group')"
           @blur="handleAddGroupBlur"
@@ -132,7 +134,9 @@ export default {
     'create-group',
     'cancel-add-group',
     'save-group-edit',
-    'cancel-group-edit'
+    'cancel-group-edit',
+    'update:editingGroupName',
+    'update:newGroupName'
   ],
   setup(props, { emit }) {
     const { t } = useI18n()

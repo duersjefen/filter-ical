@@ -11,6 +11,7 @@ from typing import Optional, List
 
 from ..core.database import get_db
 from ..core.auth import verify_admin_password, verify_admin_auth, require_user_auth
+from ..core.messages import ErrorMessages, SuccessMessages
 from ..services.domain_auth_service import (
     verify_domain_password,
     set_admin_password,
@@ -95,14 +96,14 @@ def verify_domain_admin_jwt(
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header required",
+            detail=ErrorMessages.AUTHORIZATION_HEADER_REQUIRED,
             headers={"WWW-Authenticate": "Bearer"}
         )
 
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization header format. Use: Bearer <token>",
+            detail=ErrorMessages.INVALID_AUTHORIZATION_HEADER,
             headers={"WWW-Authenticate": "Bearer"}
         )
 
@@ -113,7 +114,7 @@ def verify_domain_admin_jwt(
     if not valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
+            detail=ErrorMessages.INVALID_OR_EXPIRED_TOKEN,
             headers={"WWW-Authenticate": "Bearer"}
         )
 
@@ -144,7 +145,7 @@ async def verify_admin_password_endpoint(
     if has_access:
         return VerifyPasswordResponse(
             success=True,
-            message="Already authenticated (previously unlocked)"
+            message=SuccessMessages.AUTH_ALREADY_AUTHENTICATED
         )
 
     # Verify password and save access
@@ -153,7 +154,7 @@ async def verify_admin_password_endpoint(
     if unlock_success:
         return VerifyPasswordResponse(
             success=True,
-            message="Authentication successful"
+            message=SuccessMessages.AUTH_SUCCESSFUL
         )
     else:
         raise HTTPException(
@@ -184,7 +185,7 @@ async def verify_user_password_endpoint(
     if has_access:
         return VerifyPasswordResponse(
             success=True,
-            message="Already authenticated (previously unlocked)"
+            message=SuccessMessages.AUTH_ALREADY_AUTHENTICATED
         )
 
     # Verify password and save access
@@ -193,7 +194,7 @@ async def verify_user_password_endpoint(
     if unlock_success:
         return VerifyPasswordResponse(
             success=True,
-            message="Authentication successful"
+            message=SuccessMessages.AUTH_SUCCESSFUL
         )
     else:
         raise HTTPException(
@@ -221,7 +222,7 @@ async def set_admin_password_endpoint(
     success, error = set_admin_password(db, domain, request.password)
 
     if success:
-        return {"success": True, "message": "Admin password set successfully"}
+        return {"success": True, "message": SuccessMessages.ADMIN_PASSWORD_SET}
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -248,7 +249,7 @@ async def set_user_password_endpoint(
     success, error = set_user_password(db, domain, request.password)
 
     if success:
-        return {"success": True, "message": "User password set successfully"}
+        return {"success": True, "message": SuccessMessages.USER_PASSWORD_SET}
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -273,7 +274,7 @@ async def remove_admin_password_endpoint(
     success, error = remove_admin_password(db, domain)
 
     if success:
-        return {"success": True, "message": "Admin password removed successfully"}
+        return {"success": True, "message": SuccessMessages.ADMIN_PASSWORD_REMOVED}
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -298,7 +299,7 @@ async def remove_user_password_endpoint(
     success, error = remove_user_password(db, domain)
 
     if success:
-        return {"success": True, "message": "User password removed successfully"}
+        return {"success": True, "message": SuccessMessages.USER_PASSWORD_REMOVED}
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -388,7 +389,7 @@ async def set_domain_passwords_endpoint(
         results.append("User password set")
 
     if not results:
-        return {"success": True, "message": "No changes requested"}
+        return {"success": True, "message": SuccessMessages.NO_CHANGES_REQUESTED}
 
     return {"success": True, "message": ", ".join(results)}
 

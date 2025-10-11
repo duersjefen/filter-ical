@@ -6,11 +6,19 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
+import { createI18n } from 'vue-i18n'
 import AdminCardWrapper from '@/components/admin/AdminCardWrapper.vue'
 
 describe('AdminCardWrapper - Mount Tests', () => {
+  let i18n
+
   beforeEach(() => {
     setActivePinia(createPinia())
+    i18n = createI18n({
+      legacy: false,
+      locale: 'en',
+      messages: { en: {} }
+    })
   })
 
   const defaultProps = {
@@ -24,10 +32,7 @@ describe('AdminCardWrapper - Mount Tests', () => {
     const wrapper = mount(AdminCardWrapper, {
       props: defaultProps,
       global: {
-        plugins: [createPinia()],
-        mocks: {
-          $t: (key) => key
-        }
+        plugins: [createPinia(), i18n]
       },
       slots: {
         default: '<div>Card content</div>'
@@ -41,10 +46,7 @@ describe('AdminCardWrapper - Mount Tests', () => {
     const wrapper = mount(AdminCardWrapper, {
       props: defaultProps,
       global: {
-        plugins: [createPinia()],
-        mocks: {
-          $t: (key) => key
-        }
+        plugins: [createPinia(), i18n]
       }
     })
 
@@ -56,10 +58,7 @@ describe('AdminCardWrapper - Mount Tests', () => {
     const wrapper = mount(AdminCardWrapper, {
       props: defaultProps,
       global: {
-        plugins: [createPinia()],
-        mocks: {
-          $t: (key) => key
-        }
+        plugins: [createPinia(), i18n]
       }
     })
 
@@ -70,10 +69,7 @@ describe('AdminCardWrapper - Mount Tests', () => {
     const wrapper = mount(AdminCardWrapper, {
       props: defaultProps,
       global: {
-        plugins: [createPinia()],
-        mocks: {
-          $t: (key) => key
-        }
+        plugins: [createPinia(), i18n]
       },
       slots: {
         default: '<div>Card content</div>'
@@ -91,10 +87,7 @@ describe('AdminCardWrapper - Mount Tests', () => {
         expanded: true
       },
       global: {
-        plugins: [createPinia()],
-        mocks: {
-          $t: (key) => key
-        }
+        plugins: [createPinia(), i18n]
       },
       slots: {
         default: '<div>Card content</div>'
@@ -109,10 +102,7 @@ describe('AdminCardWrapper - Mount Tests', () => {
     const wrapper = mount(AdminCardWrapper, {
       props: defaultProps,
       global: {
-        plugins: [createPinia()],
-        mocks: {
-          $t: (key) => key
-        }
+        plugins: [createPinia(), i18n]
       }
     })
 
