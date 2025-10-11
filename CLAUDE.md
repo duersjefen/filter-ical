@@ -147,6 +147,21 @@ return { get user() { return appStore.user } }
 **Must challenge:** Architectural shortcuts, security issues, performance anti-patterns
 **Template:** *"This approach will cause [problems] because [reasons]. Instead, [better solution] which [benefits]."*
 
+### Parallel Agent Orchestration
+**For complex tasks, use 6 agents in parallel (Task tool):**
+1. **Research** - Analyze existing patterns (Read, Grep, Glob)
+2. **Backend** - FastAPI implementation (pure functions + routers)
+3. **Frontend** - Vue 3 components + composables
+4. **Tests** - pytest + Vitest (TDD-first with @pytest.mark.future)
+5. **Security** - SQL injection, XSS, auth validation
+6. **Architecture** - Validate filter-ical principles compliance
+
+**Trigger:** User says "ultrathink" or requests comprehensive implementation
+
+**Workflow:** Spawn all 6 agents → run in parallel → synthesize results → present unified plan
+
+**Speed:** 60% faster than sequential (9 min vs 25 min for features)
+
 ---
 
 ## 🚢 INFRASTRUCTURE
@@ -169,41 +184,16 @@ return { get user() { return appStore.user } }
 ### SSM-Based Deployment Architecture
 **CRITICAL:** filter-ical uses SSM (AWS Systems Manager) for deployment.
 
-**Repository Structure:**
-```
-~/Documents/Projects/
-├── filter-ical/              # This repository (application code + deployment)
-│   ├── backend/              # FastAPI application
-│   ├── frontend/             # Vue 3 application
-│   ├── deploy.sh             # SSM deployment script
-│   ├── docker-compose.yml    # Container orchestration
-│   ├── .env.ec2              # EC2 instance ID (gitignored)
-│   └── CLAUDE.md             # This file
-└── multi-tenant-platform/    # Platform repository (shared infrastructure)
-    └── platform/nginx/sites/ # Nginx configuration
-        └── filter-ical.conf  # filter-ical routing config
-```
-
-**How Deployment Works:**
-1. **Code Changes** → Pushed to `filter-ical` GitHub repo (for backup/version control)
-2. **Deploy Command** → `make deploy-staging` or `make deploy-production` (from local machine)
-3. **SSM Execution** → Connects to EC2, pulls code, builds Docker images, starts containers
-4. **No Registry** → Builds fresh on server every time (2-5 min)
-
-**Container Networking:**
-- Both frontend and backend join the `platform` Docker network
-- Backend has network alias `backend` for DNS resolution
-- Frontend nginx uses Docker's internal DNS to proxy `/api/*` requests to `backend:3000`
-- This allows seamless communication between containers
-
-**Environment Variables:**
-- EC2 instance ID in `.env.ec2` (local only, gitignored)
-- Environment-specific container names set during deployment
+**How It Works:**
+1. `make deploy-staging` → Tests pass → Push to GitHub → SSM connects to EC2
+2. EC2 pulls code, builds Docker images, starts containers (2-5 min)
+3. Containers join `platform` Docker network with DNS resolution
 
 **Key Files:**
-- Application code: `backend/`, `frontend/`
+- Application: `backend/`, `frontend/`
 - Deployment: `deploy.sh`, `docker-compose.yml`, `Makefile`
 - Platform nginx: `../multi-tenant-platform/platform/nginx/sites/filter-ical.conf`
+- EC2 instance ID: `.env.ec2` (gitignored)
 
 ### Database Migrations
 **MANDATORY: Use Alembic for all schema changes**
@@ -246,9 +236,3 @@ alembic upgrade head
 - Manual database schema changes
 
 **PURPOSE:** This architecture ensures 100% testability, zero frontend coupling, fearless refactoring, and production reliability.
-
-### Development Tips
-- Dev servers usually already running - check with `make health` before starting
-- Don't rerun `make dev` when servers are still running
-- Use `make stop` to cleanly stop all services
-- Always use `make deploy-staging` / `make deploy-production` instead of manual GitHub Actions commands
