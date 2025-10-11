@@ -47,11 +47,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
+# Create user first
+RUN useradd -m -u 1000 appuser
+
+# Copy Python packages from builder to appuser's home
+COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
 # Add local Python packages to PATH
-ENV PATH=/root/.local/bin:$PATH
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Create backward compatibility symlink for platform deploy.sh
 # Platform script uses: cd /app/backend && alembic upgrade head
@@ -59,19 +62,16 @@ ENV PATH=/root/.local/bin:$PATH
 RUN ln -s /app /app/backend
 
 # Copy application code
-COPY app/ ./app/
-COPY openapi.yaml ./
-COPY domains/ ./domains/
-COPY alembic/ ./alembic/
-COPY alembic.ini ./
+COPY --chown=appuser:appuser app/ ./app/
+COPY --chown=appuser:appuser openapi.yaml ./
+COPY --chown=appuser:appuser domains/ ./domains/
+COPY --chown=appuser:appuser alembic/ ./alembic/
+COPY --chown=appuser:appuser alembic.ini ./
 
 # Create directories for data persistence
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data && chown -R appuser:appuser /app/data
 
-# Non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /root/.local
+# Switch to non-root user
 USER appuser
 
 # Health check
