@@ -6,8 +6,8 @@ REGION="eu-north-1"
 
 # Load EC2 instance ID from shared platform config
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/../.env.ec2" ]; then
-    source "$SCRIPT_DIR/../.env.ec2"
+if [ -f "$SCRIPT_DIR/../multi-tenant-platform/.env.ec2" ]; then
+    source "$SCRIPT_DIR/../multi-tenant-platform/.env.ec2"
 fi
 
 INSTANCE_ID="${EC2_INSTANCE_ID}"
