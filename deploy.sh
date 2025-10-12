@@ -53,7 +53,7 @@ COMMAND_ID=$(aws ssm send-command \
         'export DOCKER_BUILDKIT=1',
         'export GIT_COMMIT=\$(git rev-parse --short HEAD)',
         'docker-compose -p \$PROJECT_NAME build --build-arg GIT_COMMIT=\$GIT_COMMIT',
-        'docker-compose -p \$PROJECT_NAME up -d',
+        'docker-compose -p \$PROJECT_NAME up -d --force-recreate',
         'echo \"⏳ Waiting for backend...\"',
         'sleep 10',
         'echo \"📊 Running migrations...\"',
