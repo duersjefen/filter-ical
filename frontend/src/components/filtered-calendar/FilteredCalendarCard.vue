@@ -88,7 +88,7 @@
         <div class="flex flex-col sm:flex-row gap-2 mt-3">
           <div class="flex gap-2 flex-1">
             <button
-              @click="$emit('copy-url')"
+              @click="$emit('copy-url', calendar)"
               class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md border"
               :class="copySuccess
                 ? 'bg-green-500 text-white hover:bg-green-600 border-green-400 hover:border-green-500'

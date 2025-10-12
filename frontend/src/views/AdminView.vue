@@ -518,6 +518,9 @@ export default {
         hasInitiallyLoaded = true
         await checkPasswordProtection()
 
+        // Check if user already has access (e.g., granted admin privileges)
+        await checkAuth()
+
         // Only load data if authenticated or no password required
         if (!requiresAdminAuth.value || isAdminAuthenticated.value) {
           loadAllAdminData()
