@@ -55,8 +55,8 @@ SECRET_KEY=staging-secret-key-CHANGE-ME
 JWT_SECRET_KEY=staging-jwt-secret-CHANGE-ME-64-chars-minimum
 PASSWORD_ENCRYPTION_KEY=RBB6nbzfUieauhDQIxzNfEtxOXFP7zkACTKgZ7iVF-E=
 
-# Admin
-ADMIN_PASSWORD=CHANGE-ME-staging
+# Admin (will be reset via admin panel after deployment)
+ADMIN_PASSWORD=temporary-will-reset-after-deployment
 ADMIN_EMAIL=info@paiss.me
 
 # SMTP Email Configuration
@@ -104,8 +104,8 @@ SECRET_KEY=production-secret-key-CHANGE-ME
 JWT_SECRET_KEY=production-jwt-secret-CHANGE-ME-64-chars-minimum
 PASSWORD_ENCRYPTION_KEY=IXcnyFN65lorghxsYz_Dd_X-eX3mMS94tOfnNzz5Jmc=
 
-# Admin
-ADMIN_PASSWORD=CHANGE-ME-production
+# Admin (will be reset via admin panel after deployment)
+ADMIN_PASSWORD=temporary-will-reset-after-deployment
 ADMIN_EMAIL=info@paiss.me
 
 # SMTP Email Configuration
@@ -135,8 +135,8 @@ echo "⚠️  CRITICAL NEXT STEPS:"
 echo "1. SSH into EC2 and update placeholder values:"
 echo "   aws ssm start-session --target $EC2_INSTANCE_ID --region $REGION"
 echo "   cd /opt/apps/filter-ical"
-echo "   nano .env.staging    # Update DATABASE_URL, JWT_SECRET_KEY, passwords"
-echo "   nano .env.production # Update DATABASE_URL, JWT_SECRET_KEY, passwords"
+echo "   nano .env.staging    # Update DATABASE_URL, JWT_SECRET_KEY, SMTP_PASSWORD"
+echo "   nano .env.production # Update DATABASE_URL, JWT_SECRET_KEY, SMTP_PASSWORD"
 echo ""
 echo "2. Generate strong keys:"
 echo "   JWT_SECRET_KEY:  python3 -c \"import secrets; print(secrets.token_urlsafe(64))\""
@@ -147,3 +147,7 @@ echo ""
 echo "4. Deploy:"
 echo "   make deploy-staging"
 echo "   make deploy-production"
+echo ""
+echo "5. After deployment, reset admin password:"
+echo "   Visit: https://staging.filter-ical.de/admin (or production URL)"
+echo "   Use 'reset password' feature to set your admin password"
