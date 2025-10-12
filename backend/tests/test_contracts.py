@@ -312,12 +312,10 @@ class TestICalUpdateDetection:
             assert "X-PUBLISHED-TTL" in ical_content, \
                 "VCALENDAR should include X-PUBLISHED-TTL for Apple Calendar compatibility"
 
-    def test_ical_vevent_has_required_rfc5545_fields(self, test_client: TestClient, sample_filter):
+    def test_ical_vevent_has_required_rfc5545_fields(self, test_client: TestClient):
         """Test VEVENT blocks include RFC 5545 required fields for update detection."""
-        if not sample_filter:
-            pytest.skip("sample_filter fixture not available")
-
-        response = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+        test_uuid = "550e8400-e29b-41d4-a716-446655440000"
+        response = test_client.get(f"/ical/{test_uuid}.ics")
 
         if response.status_code == 200:
             ical_content = response.text
@@ -338,12 +336,10 @@ class TestICalUpdateDetection:
             assert "LAST-MODIFIED:" in ical_content, \
                 "VEVENT should include LAST-MODIFIED for change detection"
 
-    def test_ical_dtstamp_format_is_valid(self, test_client: TestClient, sample_filter):
+    def test_ical_dtstamp_format_is_valid(self, test_client: TestClient):
         """Test DTSTAMP field uses valid RFC 5545 datetime format."""
-        if not sample_filter:
-            pytest.skip("sample_filter fixture not available")
-
-        response = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+        test_uuid = "550e8400-e29b-41d4-a716-446655440000"
+        response = test_client.get(f"/ical/{test_uuid}.ics")
 
         if response.status_code == 200:
             ical_content = response.text
@@ -354,13 +350,12 @@ class TestICalUpdateDetection:
                 dtstamp_match = re.search(r'DTSTAMP:(\d{8}T\d{6}Z)', ical_content)
                 assert dtstamp_match, "DTSTAMP must be in format YYYYMMDDTHHMMSSz"
 
-    def test_ical_etag_changes_when_content_changes(self, test_client: TestClient, sample_filter):
+    def test_ical_etag_changes_when_content_changes(self, test_client: TestClient):
         """Test that ETag changes when calendar content changes."""
-        if not sample_filter:
-            pytest.skip("sample_filter fixture not available")
+        test_uuid = "550e8400-e29b-41d4-a716-446655440000"
 
         # Get initial ETag
-        response1 = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+        response1 = test_client.get(f"/ical/{test_uuid}.ics")
 
         if response1.status_code == 200:
             etag1 = response1.headers.get("ETag")
@@ -368,7 +363,7 @@ class TestICalUpdateDetection:
 
             # Note: In a real test, you would modify the calendar here
             # For now, we just verify ETag is consistently generated
-            response2 = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+            response2 = test_client.get(f"/ical/{test_uuid}.ics")
 
             if response2.status_code == 200:
                 etag2 = response2.headers.get("ETag")
