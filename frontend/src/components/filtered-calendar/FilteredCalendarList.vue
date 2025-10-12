@@ -14,7 +14,7 @@
         v-for="calendar in filteredCalendars"
         :key="calendar.id"
         :calendar="calendar"
-        :copy-success="copySuccessId === calendar.id"
+        :copy-success="copySuccessId === String(calendar.id)"
         :updating="updatingId === calendar.id"
         @copy-url="$emit('copy-url', calendar)"
         @update-filter="$emit('update-filter', calendar)"

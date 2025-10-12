@@ -75,7 +75,7 @@
           :show-empty-state="selectedRecurringEvents.length === 0 && !isUpdateMode"
           :copy-success-id="copySuccess"
           :updating-id="updatingCalendarId"
-          @copy-url="copyToClipboard(getFullExportUrl($event))"
+          @copy-url="copyToClipboard($event)"
           @update-filter="loadFilterIntoPage"
           @delete="deleteFilteredCalendar"
           @save-name="handleSaveName"
@@ -373,10 +373,16 @@ const exitUpdateMode = () => {
   createForm.value.name = ''
 }
 
-const copyToClipboard = async (url) => {
+const copyToClipboard = async (calendar) => {
+  const url = getFullExportUrl(calendar)
+  if (!url) {
+    console.error('Cannot copy: no URL available')
+    return
+  }
+
   try {
     await navigator.clipboard.writeText(url)
-    copySuccess.value = url
+    copySuccess.value = String(calendar.id)
     setTimeout(() => {
       copySuccess.value = null
     }, 2000)
@@ -388,7 +394,7 @@ const copyToClipboard = async (url) => {
     textArea.select()
     document.execCommand('copy')
     document.body.removeChild(textArea)
-    copySuccess.value = url
+    copySuccess.value = String(calendar.id)
     setTimeout(() => {
       copySuccess.value = null
     }, 2000)
