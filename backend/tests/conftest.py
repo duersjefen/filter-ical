@@ -250,3 +250,55 @@ def admin_token():
     """Generate admin JWT token for testing."""
     from app.core.auth import create_admin_token
     return create_admin_token(expiry_days=1)
+
+
+@pytest.fixture
+def sample_filter(test_db, test_user):
+    """Create a sample filter with calendar and events for testing iCal export."""
+    from app.models import Calendar, Filter, Event
+    from datetime import datetime, timezone, timedelta
+
+    # Create a calendar
+    calendar = Calendar(
+        name="Test Calendar",
+        source_url="https://example.com/test.ics",
+        type="user",
+        user_id=test_user.id,
+        last_fetched=datetime.now(timezone.utc)
+    )
+    test_db.add(calendar)
+    test_db.commit()
+    test_db.refresh(calendar)
+
+    # Add some test events
+    now = datetime.now(timezone.utc)
+    for i in range(3):
+        event = Event(
+            calendar_id=calendar.id,
+            title=f"Test Event {i+1}",
+            start_time=now + timedelta(days=i),
+            end_time=now + timedelta(days=i, hours=1),
+            description=f"Description for event {i+1}",
+            location="Test Location",
+            uid=f"test-event-{i+1}@example.com",
+            updated_at=now,
+            other_ical_fields={}
+        )
+        test_db.add(event)
+
+    test_db.commit()
+
+    # Create a filter for the calendar
+    filter_obj = Filter(
+        name="Test Filter",
+        calendar_id=calendar.id,
+        link_uuid="550e8400-e29b-41d4-a716-446655440000",
+        subscribed_event_ids=[],
+        unselected_event_ids=[],
+        include_future_events=True
+    )
+    test_db.add(filter_obj)
+    test_db.commit()
+    test_db.refresh(filter_obj)
+
+    return filter_obj

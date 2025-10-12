@@ -4,7 +4,11 @@ iCal export router for dynamic calendar generation.
 Implements iCal export endpoints from OpenAPI specification.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+import hashlib
+from datetime import datetime, timezone
+from email.utils import formatdate
+
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 
 from ..core.database import get_db
@@ -19,9 +23,15 @@ router = APIRouter()
 @router.head("/{uuid}.ics")
 async def export_filtered_calendar(
     uuid: str,
+    request: Request,
     db: Session = Depends(get_db)
 ):
-    """Export filtered calendar as iCal file."""
+    """
+    Export filtered calendar as iCal file with proper HTTP caching headers.
+
+    Implements RFC 5545 (iCalendar) with HTTP caching (ETag, Last-Modified, Cache-Control)
+    to enable efficient calendar app refresh and update detection.
+    """
     try:
         # Get filter by UUID
         filter_obj = get_filter_by_uuid(db, uuid)
@@ -58,6 +68,7 @@ async def export_filtered_calendar(
                     "description": event.description or "",
                     "location": event.location,
                     "uid": event.uid,
+                    "updated_at": event.updated_at,  # For LAST-MODIFIED field in iCal
                     "other_ical_fields": event.other_ical_fields or {}
                 }
                 events_data.append(event_dict)
@@ -69,13 +80,54 @@ async def export_filtered_calendar(
 
         # Transform events to iCal format using pure function
         ical_content = transform_events_for_export(filtered_events, filter_obj.name)
-        
-        # Return iCal content with proper content type
+
+        # Generate ETag from content hash for efficient change detection
+        etag = f'"{hashlib.md5(ical_content.encode()).hexdigest()}"'
+
+        # Check If-None-Match header for conditional request (RFC 7232)
+        if_none_match = request.headers.get("if-none-match")
+        if if_none_match == etag:
+            # Content hasn't changed - return 304 Not Modified (no body)
+            return Response(
+                status_code=304,
+                headers={
+                    "ETag": etag,
+                    "Cache-Control": "private, must-revalidate, max-age=300"
+                }
+            )
+
+        # Generate Last-Modified timestamp (use calendar's last_fetched or filter's updated_at)
+        last_modified = None
+        try:
+            if filter_obj.calendar_id:
+                # User calendar - get calendar's last_fetched timestamp
+                from ..services.calendar_service import get_calendar_by_id
+                calendar = get_calendar_by_id(db, filter_obj.calendar_id)
+                if calendar and calendar.last_fetched:
+                    last_modified = calendar.last_fetched
+
+            # Fallback to filter's updated_at
+            if not last_modified and filter_obj.updated_at:
+                last_modified = filter_obj.updated_at
+        except Exception:
+            pass  # Graceful degradation if timestamp lookup fails
+
+        # Final fallback to current time
+        if not last_modified:
+            last_modified = datetime.now(timezone.utc)
+
+        last_modified_str = formatdate(last_modified.timestamp(), usegmt=True)
+
+        # Return iCal content with proper content type and caching headers
         return Response(
             content=ical_content,
             media_type="text/calendar",
             headers={
-                "Content-Disposition": f'attachment; filename="{filter_obj.name}.ics"'
+                "Content-Disposition": f'attachment; filename="{filter_obj.name}.ics"',
+                # HTTP caching headers for calendar app update detection
+                "ETag": etag,  # Content-based hash for change detection
+                "Last-Modified": last_modified_str,  # Timestamp for conditional requests
+                "Cache-Control": "private, must-revalidate, max-age=300"  # Cache 5 min, then revalidate
             }
         )
         

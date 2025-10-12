@@ -373,24 +373,20 @@ def transform_events_for_export(events: List[Dict[str, Any]], filter_name: str) 
         f"PRODID:-//Filter iCal//{filter_name}//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
+        # RFC 7986: Suggested refresh interval (1 hour for dynamic calendars)
+        "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+        # Legacy property for Apple Calendar and Outlook compatibility
+        "X-PUBLISHED-TTL:PT1H",
         f"X-WR-CALNAME:{filter_name}",
         "X-WR-CALDESC:Filtered calendar from Filter iCal"
     ]
 
     for event in events:
-        raw_ical = event.get("other_ical_fields", {}).get("raw_ical", "")
-
-        # Check if raw_ical has proper DTSTART field
-        # If not, generate from our parsed data to ensure compliance
-        has_dtstart = raw_ical and "DTSTART" in raw_ical
-
-        if has_dtstart:
-            # Use original raw iCal if it has proper date fields
-            lines.append(raw_ical)
-        else:
-            # Generate proper VEVENT from our parsed data (with DTSTART/DTEND)
-            event_lines = _generate_vevent_from_data(event)
-            lines.extend(event_lines)
+        # Always regenerate VEVENT blocks to ensure fresh metadata (DTSTAMP, SEQUENCE)
+        # This allows calendar apps to detect when filtered calendar was last updated
+        # Note: We preserve the original UID from source calendar for event identity
+        event_lines = _generate_vevent_from_data(event)
+        lines.extend(event_lines)
 
     lines.append("END:VCALENDAR")
     return "\n".join(lines)
@@ -413,6 +409,42 @@ def _generate_vevent_from_data(event: Dict[str, Any]) -> List[str]:
     # Required fields
     uid = event.get("uid", f"generated-{event.get('id', 'unknown')}")
     lines.append(f"UID:{uid}")
+
+    # DTSTAMP: RFC 5545 REQUIRED - timestamp when this iCalendar object was created
+    # Use current time to indicate when this export was generated
+    now = datetime.now(timezone.utc)
+    lines.append(f"DTSTAMP:{now.strftime('%Y%m%dT%H%M%SZ')}")
+
+    # SEQUENCE: Version number for this event (0 for filtered exports, we don't track modifications)
+    lines.append("SEQUENCE:0")
+
+    # LAST-MODIFIED: When the event data was last changed
+    # Use event's updated_at from database if available, otherwise current time
+    updated_at = event.get("updated_at")
+    if updated_at:
+        if isinstance(updated_at, str):
+            # Parse ISO string to datetime
+            try:
+                from dateutil import parser
+                updated_dt = parser.isoparse(updated_at)
+                if updated_dt.tzinfo is None:
+                    updated_dt = updated_dt.replace(tzinfo=timezone.utc)
+                else:
+                    updated_dt = updated_dt.astimezone(timezone.utc)
+                lines.append(f"LAST-MODIFIED:{updated_dt.strftime('%Y%m%dT%H%M%SZ')}")
+            except Exception:
+                # Fallback to current time if parsing fails
+                lines.append(f"LAST-MODIFIED:{now.strftime('%Y%m%dT%H%M%SZ')}")
+        elif hasattr(updated_at, 'strftime'):
+            # Datetime object
+            if updated_at.tzinfo:
+                updated_at = updated_at.astimezone(timezone.utc)
+            lines.append(f"LAST-MODIFIED:{updated_at.strftime('%Y%m%dT%H%M%SZ')}")
+        else:
+            lines.append(f"LAST-MODIFIED:{now.strftime('%Y%m%dT%H%M%SZ')}")
+    else:
+        # No updated_at field, use current time
+        lines.append(f"LAST-MODIFIED:{now.strftime('%Y%m%dT%H%M%SZ')}")
 
     title = event.get("title", "Untitled Event")
     lines.append(f"SUMMARY:{title}")

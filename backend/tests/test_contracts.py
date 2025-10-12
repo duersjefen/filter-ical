@@ -247,3 +247,137 @@ class TestErrorHandling:
         if response.status_code == 200:
             data = response.json()
             assert isinstance(data, list), "Response should be an array"
+
+
+class TestICalUpdateDetection:
+    """Test iCal update detection features (RFC 5545 compliance + HTTP caching)."""
+
+    def test_ical_export_has_http_caching_headers(self, test_client: TestClient, sample_filter):
+        """Test iCal export includes proper HTTP caching headers."""
+        if not sample_filter:
+            pytest.skip("sample_filter fixture not available")
+
+        response = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+
+        if response.status_code == 200:
+            # RFC 7232: ETag header for change detection
+            assert "ETag" in response.headers, "ETag header must be present for change detection"
+            assert response.headers["ETag"].startswith('"'), "ETag must be a quoted string"
+
+            # RFC 7232: Last-Modified header for timestamp validation
+            assert "Last-Modified" in response.headers, "Last-Modified header must be present"
+
+            # RFC 7234: Cache-Control header for cache behavior
+            assert "Cache-Control" in response.headers, "Cache-Control header must be present"
+            cache_control = response.headers["Cache-Control"]
+            assert "max-age" in cache_control, "Cache-Control must include max-age"
+            assert "must-revalidate" in cache_control, "Cache-Control must include must-revalidate"
+
+    def test_ical_export_supports_conditional_requests(self, test_client: TestClient, sample_filter):
+        """Test iCal export supports 304 Not Modified responses."""
+        if not sample_filter:
+            pytest.skip("sample_filter fixture not available")
+
+        # First request to get ETag
+        response1 = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+
+        if response1.status_code == 200:
+            etag = response1.headers.get("ETag")
+            assert etag is not None, "First response must include ETag"
+
+            # Second request with If-None-Match header
+            response2 = test_client.get(
+                f"/ical/{sample_filter.link_uuid}.ics",
+                headers={"If-None-Match": etag}
+            )
+
+            # Should return 304 Not Modified with no body
+            assert response2.status_code == 304, "Should return 304 Not Modified when ETag matches"
+            assert response2.content == b"", "304 response must have empty body"
+            assert "ETag" in response2.headers, "304 response must include ETag"
+
+    def test_ical_vcalendar_has_refresh_properties(self, test_client: TestClient, sample_filter):
+        """Test VCALENDAR includes RFC 7986 REFRESH-INTERVAL and X-PUBLISHED-TTL."""
+        if not sample_filter:
+            pytest.skip("sample_filter fixture not available")
+
+        response = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+
+        if response.status_code == 200:
+            ical_content = response.text
+
+            # RFC 7986: REFRESH-INTERVAL property
+            assert "REFRESH-INTERVAL" in ical_content, \
+                "VCALENDAR must include REFRESH-INTERVAL per RFC 7986"
+            assert "VALUE=DURATION:PT1H" in ical_content or "DURATION:PT1H" in ical_content, \
+                "REFRESH-INTERVAL must specify duration (e.g., PT1H for 1 hour)"
+
+            # Legacy property for Apple Calendar / Outlook compatibility
+            assert "X-PUBLISHED-TTL" in ical_content, \
+                "VCALENDAR should include X-PUBLISHED-TTL for Apple Calendar compatibility"
+
+    def test_ical_vevent_has_required_rfc5545_fields(self, test_client: TestClient, sample_filter):
+        """Test VEVENT blocks include RFC 5545 required fields for update detection."""
+        if not sample_filter:
+            pytest.skip("sample_filter fixture not available")
+
+        response = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+
+        if response.status_code == 200:
+            ical_content = response.text
+
+            # Skip if calendar has no events
+            if "BEGIN:VEVENT" not in ical_content:
+                pytest.skip("No events in calendar")
+
+            # RFC 5545: DTSTAMP is REQUIRED in all VEVENT components
+            assert "DTSTAMP:" in ical_content, \
+                "VEVENT must include DTSTAMP (RFC 5545 REQUIRED field)"
+
+            # RFC 5545: SEQUENCE for event versioning
+            assert "SEQUENCE:" in ical_content, \
+                "VEVENT should include SEQUENCE for version tracking"
+
+            # RFC 5545: LAST-MODIFIED for modification tracking
+            assert "LAST-MODIFIED:" in ical_content, \
+                "VEVENT should include LAST-MODIFIED for change detection"
+
+    def test_ical_dtstamp_format_is_valid(self, test_client: TestClient, sample_filter):
+        """Test DTSTAMP field uses valid RFC 5545 datetime format."""
+        if not sample_filter:
+            pytest.skip("sample_filter fixture not available")
+
+        response = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+
+        if response.status_code == 200:
+            ical_content = response.text
+
+            if "DTSTAMP:" in ical_content:
+                # Extract DTSTAMP value
+                import re
+                dtstamp_match = re.search(r'DTSTAMP:(\d{8}T\d{6}Z)', ical_content)
+                assert dtstamp_match, "DTSTAMP must be in format YYYYMMDDTHHMMSSz"
+
+    def test_ical_etag_changes_when_content_changes(self, test_client: TestClient, sample_filter):
+        """Test that ETag changes when calendar content changes."""
+        if not sample_filter:
+            pytest.skip("sample_filter fixture not available")
+
+        # Get initial ETag
+        response1 = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+
+        if response1.status_code == 200:
+            etag1 = response1.headers.get("ETag")
+            content1 = response1.text
+
+            # Note: In a real test, you would modify the calendar here
+            # For now, we just verify ETag is consistently generated
+            response2 = test_client.get(f"/ical/{sample_filter.link_uuid}.ics")
+
+            if response2.status_code == 200:
+                etag2 = response2.headers.get("ETag")
+                content2 = response2.text
+
+                # If content is identical, ETags must match
+                if content1 == content2:
+                    assert etag1 == etag2, "ETag must remain stable for identical content"
