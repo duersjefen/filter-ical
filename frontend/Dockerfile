@@ -4,6 +4,11 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+# Cache-busting: Force rebuild when source code changes
+# This arg should be set to git commit hash during build
+ARG GIT_COMMIT=unknown
+RUN echo "Building from commit: $GIT_COMMIT"
+
 # Copy package files first (cache layer)
 COPY package*.json ./
 
