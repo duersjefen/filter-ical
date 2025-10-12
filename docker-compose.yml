@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   backend:
+    container_name: filter-ical-backend-${ENVIRONMENT}
     build: ./backend
     env_file: .env.${ENVIRONMENT}
     networks:
@@ -22,6 +23,7 @@ services:
       retries: 3
 
   frontend:
+    container_name: filter-ical-frontend-${ENVIRONMENT}
     build: ./frontend
     networks:
       - platform

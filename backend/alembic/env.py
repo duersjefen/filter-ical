@@ -19,6 +19,14 @@ from app.models.calendar import (
     Calendar, Event, Group, RecurringEventGroup,
     AssignmentRule, Filter, DomainBackup
 )
+from app.models.domain import Domain
+from app.models.domain_request import DomainRequest
+from app.models.user import User
+from app.models.user_domain_access import UserDomainAccess
+from app.models.app_settings import AppSettings
+from app.models.admin import AdminSettings
+from app.models.admin_password_reset import AdminPasswordResetToken
+from app.models.domain_admin import domain_admins
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

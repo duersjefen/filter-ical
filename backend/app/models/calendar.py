@@ -82,7 +82,7 @@ class Group(Base):
     __tablename__ = "groups"
 
     id = Column(Integer, primary_key=True, index=True)
-    domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=True, index=True)  # New FK to domains table
+    domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=False, index=True)  # FK to domains table (required)
     domain_key = Column(String(100), nullable=True, index=True)  # Legacy field for backward compatibility
     name = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=func.now())
