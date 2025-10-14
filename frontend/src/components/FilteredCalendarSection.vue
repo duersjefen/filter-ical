@@ -164,7 +164,7 @@ const emit = defineEmits(['navigate-to-calendar', 'load-filter'])
 // Composables
 const { t } = useI18n()
 const { getUserId } = useUsername()
-const { isLoggedIn } = useAuth()
+const { isLoggedIn, user } = useAuth()
 const notify = useNotification()
 const {
   filteredCalendars,
@@ -212,7 +212,8 @@ const updateFormName = () => {
   const hasSelection = props.selectedRecurringEvents.length > 0 || (props.subscribedGroups && props.subscribedGroups.size > 0)
 
   if (hasSelection) {
-    const userId = getUserId()
+    // Use actual username from authenticated user, fallback to getUserId for anonymous users
+    const displayName = user.value?.username || getUserId()
     const filterNumbers = filteredCalendars.value
       .map(cal => {
         const match = cal.name.match(/Filter (\d+)$/i)
@@ -221,7 +222,7 @@ const updateFormName = () => {
       .filter(num => num > 0)
 
     const nextNumber = filterNumbers.length > 0 ? Math.max(...filterNumbers) + 1 : 1
-    createForm.value.name = `${userId} - Filter ${nextNumber}`
+    createForm.value.name = `${displayName} - Filter ${nextNumber}`
   } else {
     createForm.value.name = ''
   }
