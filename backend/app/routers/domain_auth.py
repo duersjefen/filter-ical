@@ -20,8 +20,7 @@ from ..services.domain_auth_service import (
     remove_user_password,
     check_password_status,
     verify_token,
-    get_all_domains_auth_status,
-    get_decrypted_password
+    get_all_domains_auth_status
 )
 from ..services.domain_access_service import (
     check_user_has_domain_access,
@@ -218,6 +217,8 @@ async def set_admin_password_endpoint(
 
     Requires user to be logged in and have admin access to domain.
     Password must be at least 4 characters.
+
+    Auto-grants admin access to the user who sets the password to prevent lockout.
     """
     # Check if user has admin access to domain
     # (either via ownership, granted admin access, or no password set)
@@ -232,6 +233,16 @@ async def set_admin_password_endpoint(
     success, error = set_admin_password(db, domain, request.password)
 
     if success:
+        # Auto-grant admin access to prevent lockout
+        # This ensures the user who set the password can still access the domain
+        grant_success, grant_error = unlock_domain_for_user(
+            db, user_id, domain, request.password, "admin"
+        )
+
+        if not grant_success:
+            # Log warning but don't fail the request - password was set successfully
+            print(f"⚠️  Warning: Failed to auto-grant access after setting password: {grant_error}")
+
         return {"success": True, "message": SuccessMessages.ADMIN_PASSWORD_SET}
     else:
         raise HTTPException(
@@ -255,6 +266,8 @@ async def set_user_password_endpoint(
 
     Requires user to be logged in and have admin access to domain.
     Password must be at least 4 characters.
+
+    Auto-grants user-level access to the user who sets the password.
     """
     # Check if user has admin access to domain
     # (either via ownership, granted admin access, or no password set)
@@ -269,6 +282,16 @@ async def set_user_password_endpoint(
     success, error = set_user_password(db, domain, request.password)
 
     if success:
+        # Auto-grant user access to prevent lockout
+        # This ensures the user who set the password can still access the domain
+        grant_success, grant_error = unlock_domain_for_user(
+            db, user_id, domain, request.password, "user"
+        )
+
+        if not grant_success:
+            # Log warning but don't fail the request - password was set successfully
+            print(f"⚠️  Warning: Failed to auto-grant user access after setting password: {grant_error}")
+
         return {"success": True, "message": SuccessMessages.USER_PASSWORD_SET}
     else:
         raise HTTPException(
@@ -430,27 +453,3 @@ async def set_domain_passwords_endpoint(
         return {"success": True, "message": SuccessMessages.NO_CHANGES_REQUESTED}
 
     return {"success": True, "message": ", ".join(results)}
-
-
-@router.get(
-    "/api/admin/domains/{domain}/password/{password_type}",
-    summary="Get decrypted password for domain (global admin only)"
-)
-async def get_domain_password_endpoint(
-    domain: str,
-    password_type: str,
-    db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_auth)
-):
-    """
-    Get decrypted password for a domain.
-
-    Requires global admin password authentication.
-    password_type must be 'admin' or 'user'.
-    """
-    success, result = get_decrypted_password(db, domain, password_type)
-
-    if success:
-        return {"success": True, "password": result}
-    else:
-        raise HTTPException(status_code=400, detail=result)

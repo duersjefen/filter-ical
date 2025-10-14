@@ -18,7 +18,7 @@ from ..models.domain_request import DomainRequest, RequestStatus
 from ..models.domain import Domain
 from ..models.user import User
 from ..services.email_service import send_domain_request_notification
-from ..data.domain_auth import encrypt_password
+from ..services.auth_service import hash_password
 from ..data.ical_parser import parse_ical_content
 
 router = APIRouter()
@@ -170,13 +170,10 @@ async def create_domain_request(
                     detail="Calendar contains no events. Please add events to your calendar before submitting a request."
                 )
 
-        # Encrypt the default password (if provided)
-        encrypted_password = None
+        # Hash the default password (if provided)
+        hashed_password = None
         if request_data.default_password:
-            encrypted_password = encrypt_password(
-                request_data.default_password,
-                settings.password_encryption_key
-            )
+            hashed_password = hash_password(request_data.default_password)
 
         # Create domain request
         domain_request = DomainRequest(
@@ -186,7 +183,7 @@ async def create_domain_request(
             requested_domain_key=request_data.requested_domain_key.strip().lower(),
             calendar_url=calendar_url,
             description=request_data.description.strip(),
-            default_password=encrypted_password,
+            default_password=hashed_password,
             status=RequestStatus.PENDING
         )
 

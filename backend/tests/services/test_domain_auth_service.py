@@ -21,8 +21,7 @@ from app.services.domain_auth_service import (
     verify_token,
     refresh_token_if_needed,
     check_password_status,
-    get_all_domains_auth_status,
-    get_decrypted_password
+    get_all_domains_auth_status
 )
 from app.models.domain import Domain
 from app.models.user import User
@@ -91,15 +90,15 @@ class TestSetAdminPassword:
         mock_domain = Mock(domain_key="test-domain", admin_password_hash=None)
 
         with patch('app.services.domain_auth_service.get_or_create_domain_auth') as mock_get:
-            with patch('app.services.domain_auth_service.encrypt_password') as mock_encrypt:
+            with patch('app.services.domain_auth_service.hash_password') as mock_hash:
                 mock_get.return_value = mock_domain
-                mock_encrypt.return_value = "encrypted_password"
+                mock_hash.return_value = "hashed_password"
 
                 success, error = set_admin_password(mock_db, "test-domain", "secure_password")
 
         assert success is True
         assert error == ""
-        assert mock_domain.admin_password_hash == "encrypted_password"
+        assert mock_domain.admin_password_hash == "hashed_password"
         assert mock_db.commit.called
 
     def test_set_admin_password_too_short(self):
@@ -127,9 +126,9 @@ class TestSetAdminPassword:
         mock_db.commit.side_effect = Exception("Database error")
 
         with patch('app.services.domain_auth_service.get_or_create_domain_auth') as mock_get:
-            with patch('app.services.domain_auth_service.encrypt_password') as mock_encrypt:
+            with patch('app.services.domain_auth_service.hash_password') as mock_hash:
                 mock_get.return_value = mock_domain
-                mock_encrypt.return_value = "encrypted"
+                mock_hash.return_value = "hashed"
 
                 success, error = set_admin_password(mock_db, "test-domain", "password123")
 
@@ -148,15 +147,15 @@ class TestSetUserPassword:
         mock_domain = Mock(domain_key="test-domain", user_password_hash=None)
 
         with patch('app.services.domain_auth_service.get_or_create_domain_auth') as mock_get:
-            with patch('app.services.domain_auth_service.encrypt_password') as mock_encrypt:
+            with patch('app.services.domain_auth_service.hash_password') as mock_hash:
                 mock_get.return_value = mock_domain
-                mock_encrypt.return_value = "encrypted_password"
+                mock_hash.return_value = "hashed_password"
 
                 success, error = set_user_password(mock_db, "test-domain", "user_password")
 
         assert success is True
         assert error == ""
-        assert mock_domain.user_password_hash == "encrypted_password"
+        assert mock_domain.user_password_hash == "hashed_password"
         assert mock_db.commit.called
 
     def test_set_user_password_too_short(self):
@@ -175,9 +174,9 @@ class TestSetUserPassword:
         mock_db.commit.side_effect = Exception("Database error")
 
         with patch('app.services.domain_auth_service.get_or_create_domain_auth') as mock_get:
-            with patch('app.services.domain_auth_service.encrypt_password') as mock_encrypt:
+            with patch('app.services.domain_auth_service.hash_password') as mock_hash:
                 mock_get.return_value = mock_domain
-                mock_encrypt.return_value = "encrypted"
+                mock_hash.return_value = "hashed"
 
                 success, error = set_user_password(mock_db, "test-domain", "password123")
 
@@ -628,100 +627,3 @@ class TestGetAllDomainsAuthStatus:
         statuses = get_all_domains_auth_status(mock_db)
 
         assert statuses == []
-
-
-@pytest.mark.unit
-class TestGetDecryptedPassword:
-    """Test getting decrypted passwords."""
-
-    def test_get_decrypted_password_admin_success(self):
-        """Test successful admin password decryption."""
-        mock_db = Mock(spec=Session)
-        mock_domain = Mock(
-            domain_key="test-domain",
-            admin_password_hash="encrypted_admin_password"
-        )
-
-        with patch('app.services.domain_auth_service.get_domain_auth') as mock_get:
-            with patch('app.services.domain_auth_service.decrypt_password') as mock_decrypt:
-                mock_get.return_value = mock_domain
-                mock_decrypt.return_value = "decrypted_password"
-
-                success, password = get_decrypted_password(mock_db, "test-domain", "admin")
-
-        assert success is True
-        assert password == "decrypted_password"
-
-    def test_get_decrypted_password_user_success(self):
-        """Test successful user password decryption."""
-        mock_db = Mock(spec=Session)
-        mock_domain = Mock(
-            domain_key="test-domain",
-            user_password_hash="encrypted_user_password"
-        )
-
-        with patch('app.services.domain_auth_service.get_domain_auth') as mock_get:
-            with patch('app.services.domain_auth_service.decrypt_password') as mock_decrypt:
-                mock_get.return_value = mock_domain
-                mock_decrypt.return_value = "user_password_123"
-
-                success, password = get_decrypted_password(mock_db, "test-domain", "user")
-
-        assert success is True
-        assert password == "user_password_123"
-
-    def test_get_decrypted_password_domain_not_found(self):
-        """Test decryption when domain doesn't exist."""
-        mock_db = Mock(spec=Session)
-
-        with patch('app.services.domain_auth_service.get_domain_auth') as mock_get:
-            mock_get.return_value = None
-
-            success, error = get_decrypted_password(mock_db, "nonexistent", "admin")
-
-        assert success is False
-        assert "Domain not found" in error
-
-    def test_get_decrypted_password_invalid_type(self):
-        """Test decryption with invalid password type."""
-        mock_db = Mock(spec=Session)
-        mock_domain = Mock(domain_key="test-domain")
-
-        with patch('app.services.domain_auth_service.get_domain_auth') as mock_get:
-            mock_get.return_value = mock_domain
-
-            success, error = get_decrypted_password(mock_db, "test-domain", "invalid")
-
-        assert success is False
-        assert "Invalid password type" in error
-
-    def test_get_decrypted_password_not_set(self):
-        """Test decryption when password not set."""
-        mock_db = Mock(spec=Session)
-        mock_domain = Mock(domain_key="test-domain", admin_password_hash=None)
-
-        with patch('app.services.domain_auth_service.get_domain_auth') as mock_get:
-            mock_get.return_value = mock_domain
-
-            success, error = get_decrypted_password(mock_db, "test-domain", "admin")
-
-        assert success is False
-        assert "Password not set" in error
-
-    def test_get_decrypted_password_decryption_failure(self):
-        """Test decryption failure."""
-        mock_db = Mock(spec=Session)
-        mock_domain = Mock(
-            domain_key="test-domain",
-            admin_password_hash="corrupted_hash"
-        )
-
-        with patch('app.services.domain_auth_service.get_domain_auth') as mock_get:
-            with patch('app.services.domain_auth_service.decrypt_password') as mock_decrypt:
-                mock_get.return_value = mock_domain
-                mock_decrypt.side_effect = Exception("Decryption error")
-
-                success, error = get_decrypted_password(mock_db, "test-domain", "admin")
-
-        assert success is False
-        assert "Failed to decrypt password" in error

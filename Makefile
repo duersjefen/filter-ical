@@ -55,7 +55,7 @@ dev: ## Start full development environment (recommended)
 	@echo ""
 	@echo "🐍 Starting backend..."
 	@bash -c "trap 'kill 0' EXIT; \
-		(cd backend && (test -d venv || python3.13 -m venv venv) && . venv/bin/activate && pip install -q -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 3000) & \
+		(cd backend && unset PASSWORD_ENCRYPTION_KEY && (test -d venv || python3.13 -m venv venv) && . venv/bin/activate && pip install -q -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 3000) & \
 		BACKEND_PID=$$!; \
 		echo '⏳ Waiting for backend to be ready...'; \
 		for i in {1..30}; do \
@@ -79,6 +79,7 @@ dev-backend: ## Run backend natively (hot reload)
 	@echo "📍 http://localhost:3000"
 	@echo "📖 http://localhost:3000/docs"
 	@cd backend && \
+		unset PASSWORD_ENCRYPTION_KEY && \
 		(test -d venv || python3.13 -m venv venv) && \
 		. venv/bin/activate && \
 		pip install -q -r requirements.txt && \

@@ -5,103 +5,15 @@ FUNCTIONAL CORE - All functions are pure and deterministic.
 No I/O operations, no side effects - only data transformations.
 
 Security:
-- Fernet (AES) for password encryption (two-way, retrievable)
 - JWT with HS256 for session tokens
 - 30-day token expiry with sliding window
 
-NOTE: Passwords are encrypted (not hashed) to allow admin retrieval.
-This is a security trade-off for admin convenience.
+Note: Password hashing (bcrypt) is handled in auth_service.py
 """
 
-from cryptography.fernet import Fernet, InvalidToken
 import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-
-
-# Password Encryption Functions
-
-def encrypt_password(password: str, encryption_key: str) -> str:
-    """
-    Encrypt a password using Fernet (AES encryption).
-
-    Args:
-        password: Plain text password
-        encryption_key: Fernet encryption key (base64-encoded 32-byte key)
-
-    Returns:
-        Encrypted password as string
-
-    Pure function - encryption with key.
-    """
-    if not password:
-        raise ValueError("Password cannot be empty")
-
-    if not encryption_key:
-        raise ValueError("Encryption key cannot be empty")
-
-    try:
-        fernet = Fernet(encryption_key.encode())
-        password_bytes = password.encode('utf-8')
-        encrypted = fernet.encrypt(password_bytes)
-        return encrypted.decode('utf-8')
-    except Exception as e:
-        raise ValueError(f"Failed to encrypt password: {str(e)}")
-
-
-def decrypt_password(encrypted_password: str, encryption_key: str) -> str:
-    """
-    Decrypt a password using Fernet (AES encryption).
-
-    Args:
-        encrypted_password: Encrypted password string
-        encryption_key: Fernet encryption key (base64-encoded 32-byte key)
-
-    Returns:
-        Decrypted password as plain text
-
-    Pure function - decryption with key.
-    """
-    if not encrypted_password:
-        raise ValueError("Encrypted password cannot be empty")
-
-    if not encryption_key:
-        raise ValueError("Encryption key cannot be empty")
-
-    try:
-        fernet = Fernet(encryption_key.encode())
-        encrypted_bytes = encrypted_password.encode('utf-8')
-        decrypted = fernet.decrypt(encrypted_bytes)
-        return decrypted.decode('utf-8')
-    except InvalidToken:
-        raise ValueError("Invalid encrypted password or wrong encryption key")
-    except Exception as e:
-        raise ValueError(f"Failed to decrypt password: {str(e)}")
-
-
-def verify_password(password: str, encrypted_password: str, encryption_key: str) -> bool:
-    """
-    Verify a password against an encrypted password.
-
-    Args:
-        password: Plain text password to verify
-        encrypted_password: Encrypted password to compare against
-        encryption_key: Fernet encryption key
-
-    Returns:
-        True if password matches
-
-    Pure function - decryption and comparison.
-    """
-    if not password or not encrypted_password:
-        return False
-
-    try:
-        decrypted = decrypt_password(encrypted_password, encryption_key)
-        return password == decrypted
-    except Exception:
-        # Invalid encrypted password or decryption failed
-        return False
 
 
 # JWT Token Functions

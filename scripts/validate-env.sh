@@ -64,7 +64,6 @@ VALIDATION_OUTPUT=$(aws ssm send-command \
         'check_var ENVIRONMENT',
         'check_var DATABASE_URL',
         'check_var JWT_SECRET_KEY',
-        'check_var PASSWORD_ENCRYPTION_KEY',
         'check_var ADMIN_PASSWORD',
         'check_var ADMIN_EMAIL',
         'check_var SMTP_HOST',

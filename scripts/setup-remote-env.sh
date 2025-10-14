@@ -53,7 +53,6 @@ DATABASE_URL=postgresql://filterical_staging:CHANGE_ME@localhost:5432/filterical
 # Security - CRITICAL: These keys must be unique and strong
 SECRET_KEY=staging-secret-key-CHANGE-ME
 JWT_SECRET_KEY=staging-jwt-secret-CHANGE-ME-64-chars-minimum
-PASSWORD_ENCRYPTION_KEY=RBB6nbzfUieauhDQIxzNfEtxOXFP7zkACTKgZ7iVF-E=
 
 # Admin (will be reset via admin panel after deployment)
 ADMIN_PASSWORD=temporary-will-reset-after-deployment
@@ -102,7 +101,6 @@ DATABASE_URL=postgresql://filterical_prod:CHANGE_ME@localhost:5432/filterical_pr
 # Security - CRITICAL: These keys must be unique and strong
 SECRET_KEY=production-secret-key-CHANGE-ME
 JWT_SECRET_KEY=production-jwt-secret-CHANGE-ME-64-chars-minimum
-PASSWORD_ENCRYPTION_KEY=IXcnyFN65lorghxsYz_Dd_X-eX3mMS94tOfnNzz5Jmc=
 
 # Admin (will be reset via admin panel after deployment)
 ADMIN_PASSWORD=temporary-will-reset-after-deployment

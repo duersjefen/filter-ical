@@ -31,7 +31,7 @@ class Domain(Base):
     - calendar_url: Source iCal URL
     - calendar_id: Link to synced Calendar record
     - owner_id: User who owns the domain
-    - Optional admin/user passwords (Fernet encrypted)
+    - Optional admin/user passwords (bcrypt hashed)
 
     Corresponds to domain requirements in OpenAPI spec.
     """
@@ -49,8 +49,8 @@ class Domain(Base):
     calendar_id = Column(Integer, ForeignKey("calendars.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
 
     # Authentication (merged from DomainAuth)
-    admin_password_hash = Column(String(255), nullable=True)  # Fernet encrypted
-    user_password_hash = Column(String(255), nullable=True)   # Fernet encrypted
+    admin_password_hash = Column(String(255), nullable=True)  # bcrypt hashed
+    user_password_hash = Column(String(255), nullable=True)   # bcrypt hashed
 
     # Status tracking
     status = Column(String(50), nullable=False, default='active')  # active, inactive, pending

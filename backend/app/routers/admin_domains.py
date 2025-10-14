@@ -99,7 +99,7 @@ async def create_domain_directly(
     Requires admin authentication. Optionally assign to a user as owner.
     """
     from app.models.user import User
-    from app.data.domain_auth import encrypt_password
+    from app.services.auth_service import hash_password
 
     # Validate domain key format
     if not re.match(r'^[a-z0-9-]+$', domain_data.domain_key):
@@ -182,11 +182,11 @@ async def create_domain_directly(
     owner_id = None
     owner_username = None
 
-    # Encrypt passwords
-    admin_password_hash = encrypt_password(domain_data.admin_password, settings.password_encryption_key)
+    # Hash passwords
+    admin_password_hash = hash_password(domain_data.admin_password)
     user_password_hash = None
     if domain_data.user_password:
-        user_password_hash = encrypt_password(domain_data.user_password, settings.password_encryption_key)
+        user_password_hash = hash_password(domain_data.user_password)
 
     try:
         # 1. Create domain record

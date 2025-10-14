@@ -534,14 +534,7 @@
                 </div>
 
                 <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'">
-                  <div v-if="viewingPassword === `${domain.domain_key}-admin` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg mb-2 border border-green-200 dark:border-green-700">
-                    <code class="text-sm font-mono text-green-900 dark:text-green-100 select-all break-all">{{ viewedPassword }}</code>
-                  </div>
-
                   <div class="flex flex-col gap-1.5">
-                    <button v-if="domain.admin_password_set" @click="viewPassword(domain.domain_key, 'admin')" class="px-3 py-2 text-sm font-medium rounded-lg transition-all" :class="viewingPassword === `${domain.domain_key}-admin` ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'">
-                      {{ viewingPassword === `${domain.domain_key}-admin` ? '🙈 Hide' : '👁️ View' }}
-                    </button>
                     <button @click="startEditing(domain.domain_key, 'admin')" class="px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
                       {{ domain.admin_password_set ? '✏️ Change' : '➕ Set Password' }}
                     </button>
@@ -586,14 +579,7 @@
                 </div>
 
                 <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'">
-                  <div v-if="viewingPassword === `${domain.domain_key}-user` && viewedPassword" class="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg mb-2 border border-green-200 dark:border-green-700">
-                    <code class="text-sm font-mono text-green-900 dark:text-green-100 select-all break-all">{{ viewedPassword }}</code>
-                  </div>
-
                   <div class="flex flex-col gap-1.5">
-                    <button v-if="domain.user_password_set" @click="viewPassword(domain.domain_key, 'user')" class="px-3 py-2 text-sm font-medium rounded-lg transition-all" :class="viewingPassword === `${domain.domain_key}-user` ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'">
-                      {{ viewingPassword === `${domain.domain_key}-user` ? '🙈 Hide' : '👁️ View' }}
-                    </button>
                     <button @click="startEditing(domain.domain_key, 'user')" class="px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
                       {{ domain.user_password_set ? '✏️ Change' : '➕ Set Password' }}
                     </button>
@@ -978,10 +964,6 @@ const editingType = ref(null)  // 'admin' or 'user'
 const newPassword = ref('')
 const showPassword = ref(false)
 
-// Password viewing state
-const viewingPassword = ref(null)  // Format: 'domainKey-type'
-const viewedPassword = ref('')
-
 // App settings state
 const appSettings = ref({
   footer_visibility: 'everywhere',
@@ -1198,29 +1180,6 @@ const removePassword = (domainKey, type) => {
     }
   }
   confirmDialog.value.open()
-}
-
-const viewPassword = async (domainKey, type) => {
-  const key = `${domainKey}-${type}`
-
-  // If already viewing this password, hide it
-  if (viewingPassword.value === key) {
-    viewingPassword.value = null
-    viewedPassword.value = ''
-    return
-  }
-
-  try {
-    const response = await axios.get(
-      `${API_BASE_URL}/api/admin/domains/${domainKey}/password/${type}`,
-      { headers: getAuthHeaders() }
-    )
-
-    viewingPassword.value = key
-    viewedPassword.value = response.data.password
-  } catch (error) {
-    notify.error(`Failed to retrieve password: ${error.response?.data?.detail || error.message}`)
-  }
 }
 
 const approveRequest = (requestId) => {

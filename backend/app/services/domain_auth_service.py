@@ -10,14 +10,12 @@ from sqlalchemy.orm import Session
 
 from ..models.domain import Domain
 from ..data.domain_auth import (
-    encrypt_password,
-    decrypt_password,
-    verify_password,
     create_auth_token,
     decode_auth_token,
     validate_token_for_domain,
     should_refresh_token
 )
+from ..services.auth_service import hash_password, verify_password
 from ..core.config import settings
 
 
@@ -87,9 +85,9 @@ def set_admin_password(db: Session, domain_key: str, password: str) -> Tuple[boo
         if not password or len(password) < 4:
             return False, "Password must be at least 4 characters"
 
-        encrypted = encrypt_password(password, settings.password_encryption_key)
+        hashed = hash_password(password)
         domain = get_or_create_domain_auth(db, domain_key)
-        domain.admin_password_hash = encrypted
+        domain.admin_password_hash = hashed
 
         db.commit()
         return True, ""
@@ -117,9 +115,9 @@ def set_user_password(db: Session, domain_key: str, password: str) -> Tuple[bool
         if not password or len(password) < 4:
             return False, "Password must be at least 4 characters"
 
-        encrypted = encrypt_password(password, settings.password_encryption_key)
+        hashed = hash_password(password)
         domain = get_or_create_domain_auth(db, domain_key)
-        domain.user_password_hash = encrypted
+        domain.user_password_hash = hashed
 
         db.commit()
         return True, ""
@@ -252,7 +250,7 @@ def verify_domain_password(
             return True, token
 
         # Verify password
-        if verify_password(password, password_hash, settings.password_encryption_key):
+        if verify_password(password, password_hash):
             token = create_auth_token(
                 domain_key,
                 access_level,
@@ -388,42 +386,3 @@ def get_all_domains_auth_status(db: Session) -> list:
     ]
 
 
-def get_decrypted_password(db: Session, domain_key: str, password_type: str) -> Tuple[bool, str]:
-    """
-    Get decrypted password for a domain (global admin only).
-
-    Args:
-        db: Database session
-        domain_key: Domain identifier
-        password_type: 'admin' or 'user'
-
-    Returns:
-        Tuple of (success, password_or_error)
-
-    I/O Operation - Database query and decryption.
-    """
-    try:
-        domain = get_domain_auth(db, domain_key)
-
-        if not domain:
-            return False, "Domain not found"
-
-        if password_type not in ['admin', 'user']:
-            return False, "Invalid password type"
-
-        encrypted = (
-            domain.admin_password_hash if password_type == 'admin'
-            else domain.user_password_hash
-        )
-
-        if not encrypted:
-            return False, "Password not set"
-
-        try:
-            decrypted = decrypt_password(encrypted, settings.password_encryption_key)
-            return True, decrypted
-        except Exception as e:
-            return False, f"Failed to decrypt password: {str(e)}"
-
-    except Exception as e:
-        return False, f"Failed to retrieve password: {str(e)}"

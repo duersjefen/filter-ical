@@ -3,6 +3,8 @@ Unit tests for domain authentication pure functions.
 
 Tests pure functions from app.data.domain_auth module following TDD principles.
 All functions tested here are pure - no side effects, predictable outputs.
+
+Note: Password hashing tests are in test_auth_service.py
 """
 
 import pytest
@@ -10,9 +12,6 @@ import time
 from datetime import datetime, timezone, timedelta
 
 from app.data.domain_auth import (
-    encrypt_password,
-    decrypt_password,
-    verify_password,
     create_auth_token,
     decode_auth_token,
     is_token_expired,
@@ -20,83 +19,6 @@ from app.data.domain_auth import (
     should_refresh_token,
     validate_token_for_domain
 )
-
-
-@pytest.mark.unit
-class TestPasswordEncryption:
-    """Test password encryption and verification functions."""
-
-    TEST_ENCRYPTION_KEY = "P-EOqzNBZhEg8QVf2pWq9xY7tR5uKmN3oJlHbFcGdVw="
-
-    def test_encrypt_password_creates_valid_encrypted_string(self):
-        """Test that password encryption creates a valid encrypted string."""
-        password = "test_password_123"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-
-        assert encrypted is not None
-        assert len(encrypted) > 0
-        assert isinstance(encrypted, str)
-
-    def test_encrypt_password_deterministic_with_same_key(self):
-        """Test that encrypting same password with same key is deterministic."""
-        password = "same_password"
-        encrypted1 = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-        encrypted2 = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-
-        # Fernet encryption is deterministic with the same key and timestamp
-        # but may differ slightly due to timestamp
-        assert isinstance(encrypted1, str)
-        assert isinstance(encrypted2, str)
-
-    def test_encrypt_password_empty_raises_error(self):
-        """Test that empty password raises ValueError."""
-        with pytest.raises(ValueError, match="Password cannot be empty"):
-            encrypt_password("", self.TEST_ENCRYPTION_KEY)
-
-    def test_decrypt_password_returns_original(self):
-        """Test that decryption returns the original password."""
-        password = "test_password_123"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
-
-        assert decrypted == password
-
-    def test_verify_password_correct_password(self):
-        """Test password verification with correct password."""
-        password = "correct_password"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-
-        assert verify_password(password, encrypted, self.TEST_ENCRYPTION_KEY) is True
-
-    def test_verify_password_incorrect_password(self):
-        """Test password verification with incorrect password."""
-        password = "correct_password"
-        wrong_password = "wrong_password"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-
-        assert verify_password(wrong_password, encrypted, self.TEST_ENCRYPTION_KEY) is False
-
-    def test_verify_password_empty_password(self):
-        """Test password verification with empty password."""
-        encrypted = encrypt_password("something", self.TEST_ENCRYPTION_KEY)
-
-        assert verify_password("", encrypted, self.TEST_ENCRYPTION_KEY) is False
-
-    def test_verify_password_empty_encrypted(self):
-        """Test password verification with empty encrypted password."""
-        assert verify_password("password", "", self.TEST_ENCRYPTION_KEY) is False
-
-    def test_verify_password_invalid_encrypted_format(self):
-        """Test password verification with invalid encrypted format."""
-        assert verify_password("password", "not_valid_encrypted", self.TEST_ENCRYPTION_KEY) is False
-
-    def test_verify_password_case_sensitive(self):
-        """Test that password verification is case-sensitive."""
-        password = "CaseSensitive"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-
-        assert verify_password("casesensitive", encrypted, self.TEST_ENCRYPTION_KEY) is False
-        assert verify_password("CaseSensitive", encrypted, self.TEST_ENCRYPTION_KEY) is True
 
 
 @pytest.mark.unit
@@ -587,52 +509,3 @@ class TestTokenExpiryEdgeCases:
         assert validate_token_for_domain(token_data, 'test_domain', 'admin') is False
 
 
-@pytest.mark.unit
-class TestPasswordEncryptionEdgeCases:
-    """Edge case tests for password encryption."""
-
-    TEST_ENCRYPTION_KEY = "P-EOqzNBZhEg8QVf2pWq9xY7tR5uKmN3oJlHbFcGdVw="
-
-    def test_encrypt_password_with_special_characters(self):
-        """Edge case: Password with special characters."""
-        password = "!@#$%^&*()_+-=[]{}|;:',.<>?/~`"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
-
-        assert decrypted == password
-
-    def test_encrypt_password_with_unicode(self):
-        """Edge case: Password with Unicode characters."""
-        password = "пароль密码🔒"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
-
-        assert decrypted == password
-
-    def test_encrypt_password_very_long(self):
-        """Edge case: Very long password (1000 characters)."""
-        password = "a" * 1000
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-        decrypted = decrypt_password(encrypted, self.TEST_ENCRYPTION_KEY)
-
-        assert decrypted == password
-        assert len(decrypted) == 1000
-
-    def test_decrypt_password_wrong_key_raises_error(self):
-        """Edge case: Decrypting with wrong key raises ValueError."""
-        password = "test_password"
-        encrypted = encrypt_password(password, self.TEST_ENCRYPTION_KEY)
-
-        wrong_key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-
-        with pytest.raises(ValueError, match="Invalid encrypted password"):
-            decrypt_password(encrypted, wrong_key)
-
-    def test_verify_password_with_whitespace(self):
-        """Edge case: Password with leading/trailing whitespace."""
-        password_with_spaces = "  password with spaces  "
-        encrypted = encrypt_password(password_with_spaces, self.TEST_ENCRYPTION_KEY)
-
-        # Exact match required (spaces preserved)
-        assert verify_password(password_with_spaces, encrypted, self.TEST_ENCRYPTION_KEY) is True
-        assert verify_password("password with spaces", encrypted, self.TEST_ENCRYPTION_KEY) is False

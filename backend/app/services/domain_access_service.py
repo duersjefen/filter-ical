@@ -14,7 +14,7 @@ from ..models.domain import Domain
 from ..models.user_domain_access import UserDomainAccess
 from ..models.calendar import Calendar
 from ..models.domain_admin import domain_admins
-from ..data.domain_auth import decrypt_password
+from ..services.auth_service import verify_password
 
 
 def check_user_has_domain_access(
@@ -132,13 +132,8 @@ def unlock_domain_for_user(
             return False, f"Failed to grant access: {str(e)}"
 
     # Verify password
-    try:
-        from ..core.config import settings
-        decrypted_password = decrypt_password(password_hash, settings.password_encryption_key)
-        if decrypted_password != password:
-            return False, "Invalid password"
-    except Exception as e:
-        return False, f"Password verification failed: {str(e)}"
+    if not verify_password(password, password_hash):
+        return False, "Invalid password"
 
     # Create access entry
     try:
