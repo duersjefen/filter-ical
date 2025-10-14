@@ -22,19 +22,48 @@
       <div class="space-y-6">
         <!-- Single Condition / First Condition -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Rule Type -->
+          <!-- Rule Type (Pill Buttons) -->
           <div class="space-y-3">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ newRule.is_compound ? 'Condition 1 - Type' : $t('domainAdmin.ruleType') }}
+              {{ newRule.is_compound ? 'Condition 1 - Field' : 'Field' }}
             </label>
-            <select
-              v-model="newRule.conditions[0].rule_type"
-              class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
-            >
-              <option value="title_contains">📄 {{ $t('domainAdmin.title') }}</option>
-              <option value="description_contains">📝 {{ $t('domainAdmin.description') }}</option>
-              <option value="category_contains">🏷️ {{ $t('domainAdmin.category') }}</option>
-            </select>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="fieldType in fieldTypes"
+                :key="fieldType.value"
+                @click="setConditionField(0, fieldType.value)"
+                :class="[
+                  'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                  getConditionField(0) === fieldType.value
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-md'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                ]"
+              >
+                <span>{{ fieldType.icon }}</span>
+                <span>{{ fieldType.label }}</span>
+              </button>
+            </div>
+
+            <!-- Operator Pills (Contains / Not Contains) -->
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-4">
+              {{ newRule.is_compound ? 'Condition 1 - Operator' : 'Operator' }}
+            </label>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="operator in operators"
+                :key="operator.value"
+                @click="setConditionOperator(0, operator.value)"
+                :class="[
+                  'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                  getConditionOperator(0) === operator.value
+                    ? 'bg-green-500 text-white border-green-500 shadow-md'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                ]"
+              >
+                <span>{{ operator.icon }}</span>
+                <span>{{ operator.label }}</span>
+              </button>
+            </div>
           </div>
 
           <!-- Rule Value -->
@@ -92,23 +121,53 @@
             :key="index"
             class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800"
           >
-            <!-- Operator indicator -->
+            <!-- Field and Operator Pills -->
             <div class="space-y-3">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Condition {{ index + 2 }} - Type
-              </label>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 mb-3">
                 <span class="text-sm font-bold text-blue-600 dark:text-blue-400 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   {{ newRule.operator }}
                 </span>
-                <select
-                  v-model="condition.rule_type"
-                  class="flex-1 px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Condition {{ index + 2 }} - Field
+                </label>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="fieldType in fieldTypes"
+                  :key="fieldType.value"
+                  @click="setConditionField(index + 1, fieldType.value)"
+                  :class="[
+                    'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                    getConditionField(index + 1) === fieldType.value
+                      ? 'bg-blue-500 text-white border-blue-500 shadow-md'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                  ]"
                 >
-                  <option value="title_contains">📄 {{ $t('domainAdmin.title') }}</option>
-                  <option value="description_contains">📝 {{ $t('domainAdmin.description') }}</option>
-                  <option value="category_contains">🏷️ {{ $t('domainAdmin.category') }}</option>
-                </select>
+                  <span>{{ fieldType.icon }}</span>
+                  <span>{{ fieldType.label }}</span>
+                </button>
+              </div>
+
+              <!-- Operator Pills -->
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-4">
+                Condition {{ index + 2 }} - Operator
+              </label>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="operator in operators"
+                  :key="operator.value"
+                  @click="setConditionOperator(index + 1, operator.value)"
+                  :class="[
+                    'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                    getConditionOperator(index + 1) === operator.value
+                      ? 'bg-green-500 text-white border-green-500 shadow-md'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                  ]"
+                >
+                  <span>{{ operator.icon }}</span>
+                  <span>{{ operator.label }}</span>
+                </button>
               </div>
             </div>
 
@@ -578,6 +637,18 @@ export default {
     // Translation
     const { t } = useI18n()
     
+    // Field types and operators for pill buttons
+    const fieldTypes = [
+      { value: 'title', icon: '📄', label: 'Title' },
+      { value: 'description', icon: '📝', label: 'Description' },
+      { value: 'category', icon: '🏷️', label: 'Category' }
+    ]
+
+    const operators = [
+      { value: 'contains', icon: '✓', label: 'Contains' },
+      { value: 'not_contains', icon: '✗', label: 'Not Contains' }
+    ]
+
     // Local state
     const newRule = ref({
       is_compound: false,
@@ -898,14 +969,24 @@ export default {
       switch (condition.rule_type) {
         case 'title_contains':
           return event.title.toLowerCase().includes(searchValue)
+        case 'title_not_contains':
+          return !event.title.toLowerCase().includes(searchValue)
         case 'description_contains':
           const description = event.sample_description ||
                             extractDescriptionFromRawICal(event.sample_raw_ical || '')
           return description.toLowerCase().includes(searchValue)
+        case 'description_not_contains':
+          const descriptionNot = event.sample_description ||
+                            extractDescriptionFromRawICal(event.sample_raw_ical || '')
+          return !descriptionNot.toLowerCase().includes(searchValue)
         case 'category_contains':
           const categories = event.sample_categories ||
                            extractCategoriesFromRawICal(event.sample_raw_ical || '')
           return categories.some(cat => cat.toLowerCase().includes(searchValue))
+        case 'category_not_contains':
+          const categoriesNot = event.sample_categories ||
+                           extractCategoriesFromRawICal(event.sample_raw_ical || '')
+          return !categoriesNot.some(cat => cat.toLowerCase().includes(searchValue))
         default:
           return false
       }
@@ -981,15 +1062,28 @@ export default {
           case 'title_contains':
             matches = event.title.toLowerCase().includes(searchValue)
             break
+          case 'title_not_contains':
+            matches = !event.title.toLowerCase().includes(searchValue)
+            break
           case 'description_contains':
             const description = event.sample_description ||
                               extractDescriptionFromRawICal(event.sample_raw_ical || '')
             matches = description.toLowerCase().includes(searchValue)
             break
+          case 'description_not_contains':
+            const descriptionNot = event.sample_description ||
+                              extractDescriptionFromRawICal(event.sample_raw_ical || '')
+            matches = !descriptionNot.toLowerCase().includes(searchValue)
+            break
           case 'category_contains':
             const categories = event.sample_categories ||
                              extractCategoriesFromRawICal(event.sample_raw_ical || '')
             matches = categories.some(cat => cat.toLowerCase().includes(searchValue))
+            break
+          case 'category_not_contains':
+            const categoriesNot = event.sample_categories ||
+                             extractCategoriesFromRawICal(event.sample_raw_ical || '')
+            matches = !categoriesNot.some(cat => cat.toLowerCase().includes(searchValue))
             break
         }
 
@@ -1021,12 +1115,44 @@ export default {
 
       return matchingEvents
     }
-    
+
+    // Helper functions for pill button UI
+    const getConditionField = (index) => {
+      const ruleType = newRule.value.conditions[index]?.rule_type || 'title_contains'
+      // Extract field from rule_type (e.g., "title_contains" -> "title")
+      return ruleType.split('_')[0]
+    }
+
+    const getConditionOperator = (index) => {
+      const ruleType = newRule.value.conditions[index]?.rule_type || 'title_contains'
+      // Extract operator from rule_type (e.g., "title_not_contains" -> "not_contains")
+      if (ruleType.includes('_not_')) {
+        return 'not_contains'
+      }
+      return 'contains'
+    }
+
+    const setConditionField = (index, field) => {
+      const currentOperator = getConditionOperator(index)
+      const newRuleType = `${field}_${currentOperator}`
+      newRule.value.conditions[index].rule_type = newRuleType
+      debouncedUpdatePreview()
+    }
+
+    const setConditionOperator = (index, operator) => {
+      const currentField = getConditionField(index)
+      const newRuleType = `${currentField}_${operator}`
+      newRule.value.conditions[index].rule_type = newRuleType
+      debouncedUpdatePreview()
+    }
+
     return {
       t,
       newRule,
       expandedRules,
       ruleTypes,
+      fieldTypes,
+      operators,
       isFormValid,
       isPreviewReady,
       toggleRuleDropdown,
@@ -1051,7 +1177,11 @@ export default {
       extractDescriptionFromRawICal,
       extractCategoriesFromRawICal,
       checkCondition,
-      getLiveMatchingEvents
+      getLiveMatchingEvents,
+      getConditionField,
+      getConditionOperator,
+      setConditionField,
+      setConditionOperator
     }
   }
 }
