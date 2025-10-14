@@ -58,7 +58,9 @@
     "loginToSave": "Login to save your filters",
     "loginToSaveCalendars": "Login to save calendars",
     "loginToSaveFilters": "Login to save filters",
-    "logout": "Logout"
+    "logout": "Logout",
+    "unsecured": "Unsecured",
+    "profileButton": "Profile"
   },
   "navigation": {
     "home": "Home",

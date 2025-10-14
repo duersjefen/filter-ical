@@ -39,7 +39,7 @@ class CompoundRuleCondition(BaseModel):
 
 class CompoundRuleCreate(BaseModel):
     """Request body for creating a compound assignment rule."""
-    operator: Literal['AND', 'OR']
+    operator: Literal['AND']  # Only AND operator (KISS)
     conditions: List[CompoundRuleCondition] = Field(min_items=2)
     target_group_id: int
 

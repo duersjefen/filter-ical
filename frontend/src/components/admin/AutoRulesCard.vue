@@ -205,18 +205,11 @@
         <!-- Add Condition Buttons -->
         <div v-if="!newRule.is_compound || newRule.conditions.length < 5" class="flex gap-3">
           <button
-            @click="addCondition('AND')"
+            @click="addCondition()"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium transition-all duration-200"
           >
             <span>➕</span>
-            <span>Add AND Condition</span>
-          </button>
-          <button
-            @click="addCondition('OR')"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium transition-all duration-200"
-          >
-            <span>➕</span>
-            <span>Add OR Condition</span>
+            <span>Add Condition</span>
           </button>
         </div>
       </div>
@@ -749,9 +742,9 @@ export default {
       }
     }
     
-    const addCondition = (operator) => {
+    const addCondition = () => {
       newRule.value.is_compound = true
-      newRule.value.operator = operator
+      newRule.value.operator = 'AND'  // Always use AND (KISS)
       newRule.value.conditions.push({
         rule_type: 'title_contains',
         rule_value: ''
@@ -762,6 +755,8 @@ export default {
       newRule.value.conditions.splice(index, 1)
       if (newRule.value.conditions.length === 1) {
         newRule.value.is_compound = false
+        // Sync rule_type when converting back to simple rule
+        newRule.value.rule_type = newRule.value.conditions[0].rule_type
       }
     }
 
@@ -1008,15 +1003,8 @@ export default {
         const matchingEvents = []
 
         props.recurringEvents.forEach(event => {
-          let matches = false
-
-          if (rule.operator === 'AND') {
-            // All conditions must match
-            matches = rule.conditions.every(condition => checkCondition(event, condition))
-          } else if (rule.operator === 'OR') {
-            // At least one condition must match
-            matches = rule.conditions.some(condition => checkCondition(event, condition))
-          }
+          // All conditions must match (AND operator only)
+          const matches = rule.conditions.every(condition => checkCondition(event, condition))
 
           if (matches) {
             const targetGroupId = parseInt(rule.target_group_id)
@@ -1136,6 +1124,12 @@ export default {
       const currentOperator = getConditionOperator(index)
       const newRuleType = `${field}_${currentOperator}`
       newRule.value.conditions[index].rule_type = newRuleType
+
+      // Sync top-level rule_type for simple rules (live preview reads this)
+      if (index === 0 && !newRule.value.is_compound) {
+        newRule.value.rule_type = newRuleType
+      }
+
       debouncedUpdatePreview()
     }
 
@@ -1143,6 +1137,12 @@ export default {
       const currentField = getConditionField(index)
       const newRuleType = `${currentField}_${operator}`
       newRule.value.conditions[index].rule_type = newRuleType
+
+      // Sync top-level rule_type for simple rules (live preview reads this)
+      if (index === 0 && !newRule.value.is_compound) {
+        newRule.value.rule_type = newRuleType
+      }
+
       debouncedUpdatePreview()
     }
 

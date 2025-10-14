@@ -43,13 +43,13 @@
               <span class="text-white text-xs sm:text-sm font-medium">
                 {{ user.username }}
               </span>
-              <span class="text-yellow-300 text-xs font-semibold">Unsecured</span>
+              <span class="text-yellow-300 text-xs font-semibold">{{ $t('username.unsecured') }}</span>
               <button
                 @click="navigateToProfile"
                 class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
-                title="My Profile"
+                :title="$t('username.profileButton')"
               >
-                Profile
+                {{ $t('username.profileButton') }}
               </button>
               <button
                 @click="handleLogout"
@@ -71,9 +71,9 @@
               <button
                 @click="navigateToProfile"
                 class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
-                title="My Profile"
+                :title="$t('username.profileButton')"
               >
-                Profile
+                {{ $t('username.profileButton') }}
               </button>
               <button
                 @click="handleLogout"
@@ -246,13 +246,13 @@
             <span class="text-white text-sm font-medium">
               {{ user.username }}
             </span>
-            <span class="text-yellow-300 text-xs font-semibold">Unsecured</span>
+            <span class="text-yellow-300 text-xs font-semibold">{{ $t('username.unsecured') }}</span>
             <button
               @click="navigateToProfile"
               class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
-              title="My Profile"
+              :title="$t('username.profileButton')"
             >
-              Profile
+              {{ $t('username.profileButton') }}
             </button>
             <button
               @click="handleLogout"
@@ -274,9 +274,9 @@
             <button
               @click="navigateToProfile"
               class="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg touch-manipulation hover:scale-105 active:scale-95"
-              title="My Profile"
+              :title="$t('username.profileButton')"
             >
-              Profile
+              {{ $t('username.profileButton') }}
             </button>
             <button
               @click="handleLogout"
@@ -288,7 +288,7 @@
           </div>
         </div>
       </div>
-      
+
     </div>
 
     <!-- User info section for login views (Desktop only) -->

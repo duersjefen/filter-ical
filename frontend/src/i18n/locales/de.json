@@ -58,7 +58,9 @@
     "loginToSave": "Anmelden, um Filter zu speichern",
     "loginToSaveCalendars": "Anmelden, um Kalender zu speichern",
     "loginToSaveFilters": "Anmelden, um Filter zu speichern",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "unsecured": "Ungesichert",
+    "profileButton": "Profil"
   },
   "navigation": {
     "home": "Startseite",

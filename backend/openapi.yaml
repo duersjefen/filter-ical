@@ -641,8 +641,8 @@ paths:
               properties:
                 operator:
                   type: string
-                  enum: [AND, OR]
-                  description: "How to combine the conditions"
+                  enum: [AND]
+                  description: "How to combine the conditions (always AND)"
                   example: "AND"
                 conditions:
                   type: array
@@ -2739,9 +2739,9 @@ components:
           example: false
         operator:
           type: string
-          enum: [AND, OR]
+          enum: [AND]
           default: "AND"
-          description: "How to combine conditions (only used if is_compound=true)"
+          description: "How to combine conditions (always AND, only used if is_compound=true)"
           example: "AND"
         parent_rule_id:
           type: integer

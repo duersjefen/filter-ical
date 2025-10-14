@@ -265,14 +265,8 @@ def _event_matches_rule(event: Dict[str, Any], rule: Dict[str, Any]) -> bool:
     # Compound rule (has child conditions)
     if rule.get('is_compound'):
         child_conditions = rule.get('child_conditions', [])
-        operator = rule.get('operator', 'AND')
-
-        if operator == 'AND':
-            # All conditions must match (empty list returns True - all zero conditions match)
-            return all(_event_matches_single_condition(event, cond) for cond in child_conditions)
-        elif operator == 'OR':
-            # At least one condition must match (empty list returns False - no conditions to match)
-            return any(_event_matches_single_condition(event, cond) for cond in child_conditions)
+        # All conditions must match (AND operator only - KISS)
+        return all(_event_matches_single_condition(event, cond) for cond in child_conditions)
 
     # Single condition (backward compatible)
     return _event_matches_single_condition(event, rule)

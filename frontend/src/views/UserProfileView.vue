@@ -529,6 +529,11 @@ const canSaveAccount = computed(() => {
   if (!isEmailChanged && !isPasswordChanged) return false
   if (emailValue && !isValidEmail(emailValue)) return false
 
+  // When adding email for first time (no existing email), password is REQUIRED
+  if (isEmailChanged && !user.value?.email && !isPasswordChanged) {
+    return false
+  }
+
   if (isPasswordChanged) {
     if (!isValidPassword(form.value.newPassword, 4)) return false
     if (form.value.newPassword !== form.value.confirmPassword) return false
