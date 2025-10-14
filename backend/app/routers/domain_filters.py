@@ -5,7 +5,7 @@ Implements filter-related endpoints from OpenAPI specification.
 """
 
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -44,7 +44,7 @@ def _format_filter_response(filter_obj):
 @handle_endpoint_errors
 async def create_domain_filter(
     domain_obj: Domain = Depends(get_verified_domain),
-    filter_data: dict = None,
+    filter_data: dict = Body(...),
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
