@@ -318,3 +318,36 @@ def is_valid_password(password: str) -> Tuple[bool, str]:
         return False, "Password too long"
 
     return True, ""
+
+
+def requires_email_with_password(
+    password: Optional[str],
+    current_email: Optional[str],
+    new_email: Optional[str] = None
+) -> Tuple[bool, str]:
+    """
+    Validate that email exists when password is being set.
+
+    Business rule: Passwords require email for password reset functionality.
+
+    Args:
+        password: New password being set (None if not changing)
+        current_email: User's existing email in database
+        new_email: New email from update request (None if not changing)
+
+    Returns:
+        Tuple of (is_valid, error_message)
+
+    Pure function - validates password→email dependency.
+    Belongs in functional core (service layer), not imperative shell (router).
+    """
+    if not password:
+        return True, ""  # No password being set, no requirement
+
+    # Determine effective email (new overrides current)
+    effective_email = new_email if new_email is not None else current_email
+
+    if not effective_email or not effective_email.strip():
+        return False, "Email address is required when setting a password (needed for password reset)"
+
+    return True, ""

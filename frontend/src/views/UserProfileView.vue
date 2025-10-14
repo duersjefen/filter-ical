@@ -428,7 +428,7 @@ import { useHTTP } from '../composables/useHTTP'
 import { useNotification } from '../composables/useNotification'
 
 const router = useRouter()
-const { user, isLoggedIn, fetchUser } = useAuth()
+const { user, isLoggedIn, fetchCurrentUser } = useAuth()
 const { get, post, del, patch } = useHTTP()
 const notify = useNotification()
 
@@ -540,46 +540,52 @@ const fetchDomains = async () => {
 const updateAccount = async () => {
   updatingAccount.value = true
 
-  try {
-    const payload = {}
+  const payload = {}
 
-    // Only send email if it's different from current
-    const emailValue = accountForm.value.email.trim()
-    if (emailValue && emailValue !== user.value?.email) {
-      payload.email = emailValue
+  // Only send email if it's different from current
+  const emailValue = accountForm.value.email.trim()
+  if (emailValue && emailValue !== user.value?.email) {
+    payload.email = emailValue
+  }
+
+  // Send password if provided
+  if (accountForm.value.newPassword) {
+    payload.password = accountForm.value.newPassword
+    // Only send current_password if user ALREADY HAS a password
+    if (user.value?.has_password) {
+      payload.current_password = accountForm.value.currentPassword
     }
+  }
 
-    // Send password if provided
-    if (accountForm.value.newPassword) {
-      payload.password = accountForm.value.newPassword
-      // Only send current_password if user ALREADY HAS a password
-      if (user.value?.has_password) {
-        payload.current_password = accountForm.value.currentPassword
-      }
-    }
+  if (Object.keys(payload).length === 0) {
+    notify.warning('No changes to save')
+    updatingAccount.value = false
+    return
+  }
 
-    if (Object.keys(payload).length === 0) {
-      notify.warning('No changes to save')
+  // Client-side validation: password requires email
+  if (payload.password) {
+    const effectiveEmail = payload.email || user.value?.email
+    if (!effectiveEmail || !effectiveEmail.trim()) {
+      notify.error('Email address is required when setting a password (needed for password reset)')
+      updatingAccount.value = false
       return
     }
-
-    const result = await patch('/api/users/me', payload)
-
-    if (result.success) {
-      notify.success('Account updated successfully')
-      accountForm.value.email = ''
-      accountForm.value.newPassword = ''
-      accountForm.value.currentPassword = ''
-      await fetchUser()
-    } else {
-      notify.error(result.error || 'Failed to update account')
-    }
-  } catch (error) {
-    console.error('Account update error:', error)
-    notify.error('Failed to update account')
-  } finally {
-    updatingAccount.value = false
   }
+
+  const result = await patch('/api/users/me', payload)
+
+  if (result.success) {
+    notify.success('Account updated successfully')
+    accountForm.value.email = ''
+    accountForm.value.newPassword = ''
+    accountForm.value.currentPassword = ''
+    // State is already updated by useAuth interceptor - no need to fetch again
+  } else {
+    notify.error(result.error || 'Failed to update account')
+  }
+
+  updatingAccount.value = false
 }
 
 // Toggle admin management panel

@@ -22,6 +22,19 @@ export const useNotificationStore = defineStore('notification', () => {
    * @returns {number} Notification ID
    */
   const addNotification = ({ message, type = 'info', duration = 5000 }) => {
+    // Deduplication: Check if same message+type exists within last 2 seconds
+    const now = Date.now()
+    const duplicate = notifications.value.find(
+      n => n.message === message &&
+           n.type === type &&
+           (now - n.createdAt) < 2000
+    )
+
+    if (duplicate) {
+      // Don't add duplicate, return existing ID
+      return duplicate.id
+    }
+
     const id = ++notificationIdCounter
 
     const notification = {

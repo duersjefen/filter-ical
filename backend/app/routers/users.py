@@ -122,12 +122,14 @@ async def register_user(
         if not is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
-        # Require email when password is set
-        if not user_data.email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=ErrorMessages.EMAIL_REQUIRED_FOR_PASSWORD
-            )
+    # Validate password→email dependency (moved to pure function)
+    is_valid, error_msg = auth_service.requires_email_with_password(
+        password=user_data.password,
+        current_email=None,  # Registration - no existing email
+        new_email=user_data.email
+    )
+    if not is_valid:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     # Check if username already exists
     existing_user = db.query(User).filter(User.username == user_data.username).first()
@@ -408,12 +410,14 @@ async def update_user_profile(
         if not is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
-        # Require email when setting password
-        if not user.email and request.email is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=ErrorMessages.EMAIL_REQUIRED_FOR_PASSWORD
-            )
+        # Validate password→email dependency (moved to pure function)
+        is_valid, error_msg = auth_service.requires_email_with_password(
+            password=request.password,
+            current_email=user.email,
+            new_email=request.email
+        )
+        if not is_valid:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
         # If user already has a password, verify current password
         if user.password_hash:
