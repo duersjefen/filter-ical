@@ -79,12 +79,19 @@ export function useDomainAuth(domain) {
   }
 
   /**
-   * Set admin password for domain.
+   * Set admin password for domain - requires user to be logged in.
    *
    * @param {string} password - New password
    * @returns {Promise<{success: boolean, error: string}>}
    */
   const setAdminPassword = async (password) => {
+    const { isLoggedIn } = useAuth()
+
+    // Check if user is logged in first
+    if (!isLoggedIn.value) {
+      return { success: false, error: 'Please log in first to set domain passwords' }
+    }
+
     try {
       const result = await patch(`/api/domains/${domain}/auth/set-admin-password`, { password })
       return { success: result.success, error: result.success ? '' : 'Failed to set password' }
@@ -94,12 +101,19 @@ export function useDomainAuth(domain) {
   }
 
   /**
-   * Set user password for domain.
+   * Set user password for domain - requires user to be logged in.
    *
    * @param {string} password - New password
    * @returns {Promise<{success: boolean, error: string}>}
    */
   const setUserPassword = async (password) => {
+    const { isLoggedIn } = useAuth()
+
+    // Check if user is logged in first
+    if (!isLoggedIn.value) {
+      return { success: false, error: 'Please log in first to set domain passwords' }
+    }
+
     try {
       const result = await patch(`/api/domains/${domain}/auth/set-user-password`, { password })
       return { success: result.success, error: result.success ? '' : 'Failed to set password' }
