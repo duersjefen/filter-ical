@@ -26,6 +26,47 @@ export const useAdminStore = defineStore('admin', () => {
     return headers
   }
 
+  function isTokenExpired() {
+    if (!adminToken.value) return true
+
+    try {
+      // Decode JWT token (base64)
+      const payload = JSON.parse(atob(adminToken.value.split('.')[1]))
+      const exp = payload.exp * 1000 // Convert to milliseconds
+      return Date.now() >= exp
+    } catch (error) {
+      // Invalid token format
+      return true
+    }
+  }
+
+  async function handleAuthError(response) {
+    // Check if error is due to invalid/expired token
+    if (response.status === 401) {
+      try {
+        const error = await response.json()
+        const isAuthError =
+          error.detail === 'Invalid token' ||
+          error.detail === 'Token has expired' ||
+          error.detail === 'Invalid token role' ||
+          error.detail === 'Missing authentication token'
+
+        if (isAuthError) {
+          // Clear expired/invalid token
+          setAdminToken(null)
+          throw new Error('Your session has expired. Please log in again.')
+        }
+      } catch (e) {
+        if (e.message.includes('session has expired')) {
+          throw e
+        }
+        // If JSON parsing failed, treat as auth error
+        setAdminToken(null)
+        throw new Error('Your session has expired. Please log in again.')
+      }
+    }
+  }
+
   async function login(password) {
     const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
       method: 'POST',
@@ -57,6 +98,7 @@ export const useAdminStore = defineStore('admin', () => {
     })
 
     if (!response.ok) {
+      await handleAuthError(response)
       const error = await response.json()
       throw new Error(error.detail || 'Failed to list configurations')
     }
@@ -73,6 +115,7 @@ export const useAdminStore = defineStore('admin', () => {
     )
 
     if (!response.ok) {
+      await handleAuthError(response)
       const error = await response.json()
       throw new Error(error.detail || 'Failed to get configuration')
     }
@@ -93,6 +136,7 @@ export const useAdminStore = defineStore('admin', () => {
     )
 
     if (!response.ok) {
+      await handleAuthError(response)
       const error = await response.json()
       throw new Error(error.detail || 'Failed to download configuration')
     }
@@ -128,6 +172,7 @@ export const useAdminStore = defineStore('admin', () => {
     )
 
     if (!response.ok) {
+      await handleAuthError(response)
       const error = await response.json()
       throw new Error(error.detail || 'Failed to upload configuration')
     }
@@ -146,6 +191,7 @@ export const useAdminStore = defineStore('admin', () => {
     )
 
     if (!response.ok) {
+      await handleAuthError(response)
       const error = await response.json()
       throw new Error(error.detail || 'Failed to seed domain')
     }
@@ -163,6 +209,7 @@ export const useAdminStore = defineStore('admin', () => {
     )
 
     if (!response.ok) {
+      await handleAuthError(response)
       const error = await response.json()
       throw new Error(error.detail || 'Failed to delete configuration')
     }
@@ -210,6 +257,8 @@ export const useAdminStore = defineStore('admin', () => {
 
   return {
     adminToken,
+    isTokenExpired,
+    setAdminToken, // Exported for testing
     login,
     logout,
     listDomainConfigs,

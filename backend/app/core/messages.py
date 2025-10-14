@@ -103,6 +103,7 @@ class ErrorMessages:
     ACCESS_DENIED_OWNER_REMOVE_ADMINS = "Access denied. Only domain owner can remove admins"
     ACCESS_DENIED_OWNER_OR_ADMIN_VIEW = "Access denied. Only domain owner or admins can view admin list"
     ACCESS_DENIED_OWNER_OR_GLOBAL_ADMIN = "You must be the domain owner or global admin to manage passwords"
+    INSUFFICIENT_PERMISSIONS = "You don't have sufficient permissions to perform this action. Admin access required."
     ACCOUNT_LOCKED = "Account locked due to too many failed login attempts. Try again in {minutes} minutes"
     LOGIN_ATTEMPTS_REMAINING = "Invalid username or password. {attempts} attempts remaining before lockout"
 

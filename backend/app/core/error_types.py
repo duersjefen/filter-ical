@@ -460,6 +460,10 @@ def get_error_type_from_message(message: str, default_status: int = 500) -> Erro
         return ErrorType.INVALID_CREDENTIALS
     elif "authentication required" in message_lower:
         return ErrorType.AUTH_REQUIRED
+    elif "invalid token" in message_lower or "token has expired" in message_lower or "missing authentication" in message_lower:
+        return ErrorType.AUTH_REQUIRED
+    elif "invalid authentication method" in message_lower:
+        return ErrorType.AUTH_REQUIRED
 
     # 400 Validation patterns
     elif "required" in message_lower:

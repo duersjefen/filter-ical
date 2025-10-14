@@ -136,9 +136,25 @@
     <!-- Enhanced Card Content with modern button design -->
     <div class="p-6 bg-gray-50 dark:bg-gray-800">
       
-      <!-- Action Buttons - Primary individual actions, secondary combined action -->
+      <!-- Action Buttons - Combined action first, then individual actions -->
       <div class="space-y-3">
-        <!-- Primary Individual Control Buttons -->
+        <!-- Combined Action Button - Subscribe & Select in one click -->
+        <button
+          @click.stop="toggleSubscribeAndSelect"
+          class="w-full"
+          :class="isBothSubscribedAndSelected
+            ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-green-700 bg-gradient-to-r from-green-50 to-blue-100 hover:from-green-100 hover:to-blue-200 border border-green-300 hover:border-blue-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 dark:from-green-900/20 dark:to-blue-800/40 dark:text-green-300 dark:border-green-700 dark:hover:from-green-800/40 dark:hover:to-blue-900/60'
+            : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 hover:border-gray-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-600'"
+          :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
+        >
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path v-if="isBothSubscribedAndSelected" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            <path v-else fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          <span>{{ isBothSubscribedAndSelected ? $t('groupCard.subscribedSelected') : $t('groupCard.subscribeSelect') }}</span>
+        </button>
+
+        <!-- Individual Control Buttons -->
         <div class="grid grid-cols-2 gap-3">
           <!-- Subscribe Button - Primary, prominent when subscribed -->
           <button
@@ -170,22 +186,6 @@
             <span>{{ areAllRecurringEventsSelected ? $t('status.selected') : $t('status.selectAll') }}</span>
           </button>
         </div>
-
-        <!-- Secondary Combined Action Button - Less prominent -->
-        <button
-          @click.stop="toggleSubscribeAndSelect"
-          class="w-full"
-          :class="isBothSubscribedAndSelected
-            ? 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-green-700 bg-gradient-to-r from-green-50 to-blue-100 hover:from-green-100 hover:to-blue-200 border border-green-300 hover:border-blue-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 dark:from-green-900/20 dark:to-blue-800/40 dark:text-green-300 dark:border-green-700 dark:hover:from-green-800/40 dark:hover:to-blue-900/60'
-            : 'inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 hover:border-gray-400 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/30 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-600'"
-          :title="isBothSubscribedAndSelected ? $t('ui.unsubscribeAndDeselect') : $t('ui.subscribeAndSelect')"
-        >
-          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-            <path v-if="isBothSubscribedAndSelected" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            <path v-else fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-          </svg>
-          <span>{{ isBothSubscribedAndSelected ? $t('groupCard.subscribedSelected') : $t('groupCard.subscribeSelect') }}</span>
-        </button>
       </div>
     </div>
     

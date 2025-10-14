@@ -76,7 +76,6 @@ export function useDragSelection(selectedEvents, cardRefs, filteredEvents, emit)
       const cardElement = cardRefs.value[event.title]
       if (cardElement) {
         const cardRect = cardElement.getBoundingClientRect()
-        const containerRect = cardElement.closest('.grid').getBoundingClientRect()
 
         const cardRelativeRect = {
           left: cardRect.left - containerRect.left,

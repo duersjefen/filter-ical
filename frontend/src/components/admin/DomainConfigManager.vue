@@ -197,8 +197,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAdminStore } from '@/stores/admin'
+import { useRouter } from 'vue-router'
 
 const adminStore = useAdminStore()
+const router = useRouter()
 
 const configs = ref([])
 const loading = ref(false)
@@ -212,6 +214,15 @@ const selectedFile = ref(null)
 const fileInput = ref(null)
 
 onMounted(() => {
+  // Check if token is expired before loading
+  if (adminStore.isTokenExpired()) {
+    adminStore.logout()
+    errorMessage.value = 'Your session has expired. Please log in again.'
+    setTimeout(() => {
+      router.push('/admin/login')
+    }, 2000)
+    return
+  }
   loadConfigs()
 })
 
@@ -224,6 +235,13 @@ async function loadConfigs() {
     configs.value = response.configs || []
   } catch (error) {
     errorMessage.value = error.message || 'Failed to load configurations'
+
+    // Redirect to login if session expired
+    if (error.message.includes('session has expired')) {
+      setTimeout(() => {
+        router.push('/admin/login')
+      }, 2000)
+    }
   } finally {
     loading.value = false
   }
@@ -257,6 +275,13 @@ async function uploadConfig() {
     await loadConfigs()
   } catch (error) {
     errorMessage.value = error.message || 'Failed to upload configuration'
+
+    // Redirect to login if session expired
+    if (error.message.includes('session has expired')) {
+      setTimeout(() => {
+        router.push('/admin/login')
+      }, 2000)
+    }
   } finally {
     uploading.value = false
   }
@@ -269,6 +294,13 @@ async function downloadConfig(domainKey) {
     await adminStore.downloadDomainConfig(domainKey)
   } catch (error) {
     errorMessage.value = error.message || 'Failed to download configuration'
+
+    // Redirect to login if session expired
+    if (error.message.includes('session has expired')) {
+      setTimeout(() => {
+        router.push('/admin/login')
+      }, 2000)
+    }
   }
 }
 
@@ -293,6 +325,13 @@ async function seedConfig(domainKey, hasGroups) {
     }
   } catch (error) {
     errorMessage.value = error.message || 'Failed to seed database'
+
+    // Redirect to login if session expired
+    if (error.message.includes('session has expired')) {
+      setTimeout(() => {
+        router.push('/admin/login')
+      }, 2000)
+    }
   } finally {
     seeding.value = null
   }
@@ -313,6 +352,13 @@ async function deleteConfig(domainKey) {
     await loadConfigs()
   } catch (error) {
     errorMessage.value = error.message || 'Failed to delete configuration'
+
+    // Redirect to login if session expired
+    if (error.message.includes('session has expired')) {
+      setTimeout(() => {
+        router.push('/admin/login')
+      }, 2000)
+    }
   } finally {
     deleting.value = null
   }

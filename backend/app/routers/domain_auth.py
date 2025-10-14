@@ -205,20 +205,30 @@ async def verify_user_password_endpoint(
 
 @router.patch(
     "/api/domains/{domain}/auth/set-admin-password",
-    summary="Set admin password for domain (requires admin JWT)"
+    summary="Set admin password for domain (requires admin access)"
 )
 async def set_admin_password_endpoint(
     domain: str,
     request: SetPasswordRequest,
-    db: Session = Depends(get_db),
-    token_data: dict = Depends(verify_domain_admin_jwt)
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
 ):
     """
     Set or change admin password for domain.
 
-    Requires valid admin JWT token.
-    Password must be at least 8 characters.
+    Requires user to be logged in and have admin access to domain.
+    Password must be at least 4 characters.
     """
+    # Check if user has admin access to domain
+    # (either via ownership, granted admin access, or no password set)
+    has_access = check_user_has_domain_access(db, user_id, domain, "admin")
+
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ErrorMessages.INSUFFICIENT_PERMISSIONS
+        )
+
     success, error = set_admin_password(db, domain, request.password)
 
     if success:
@@ -232,20 +242,30 @@ async def set_admin_password_endpoint(
 
 @router.patch(
     "/api/domains/{domain}/auth/set-user-password",
-    summary="Set user password for domain (requires admin JWT)"
+    summary="Set user password for domain (requires admin access)"
 )
 async def set_user_password_endpoint(
     domain: str,
     request: SetPasswordRequest,
-    db: Session = Depends(get_db),
-    token_data: dict = Depends(verify_domain_admin_jwt)
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
 ):
     """
     Set or change user password for domain.
 
-    Requires valid admin JWT token.
-    Password must be at least 8 characters.
+    Requires user to be logged in and have admin access to domain.
+    Password must be at least 4 characters.
     """
+    # Check if user has admin access to domain
+    # (either via ownership, granted admin access, or no password set)
+    has_access = check_user_has_domain_access(db, user_id, domain, "admin")
+
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ErrorMessages.INSUFFICIENT_PERMISSIONS
+        )
+
     success, error = set_user_password(db, domain, request.password)
 
     if success:
@@ -259,18 +279,27 @@ async def set_user_password_endpoint(
 
 @router.delete(
     "/api/domains/{domain}/auth/remove-admin-password",
-    summary="Remove admin password for domain (requires admin JWT)"
+    summary="Remove admin password for domain (requires admin access)"
 )
 async def remove_admin_password_endpoint(
     domain: str,
-    db: Session = Depends(get_db),
-    token_data: dict = Depends(verify_domain_admin_jwt)
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
 ):
     """
     Remove admin password protection for domain.
 
-    Requires valid admin JWT token.
+    Requires user to be logged in and have admin access to domain.
     """
+    # Check if user has admin access to domain
+    has_access = check_user_has_domain_access(db, user_id, domain, "admin")
+
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ErrorMessages.INSUFFICIENT_PERMISSIONS
+        )
+
     success, error = remove_admin_password(db, domain)
 
     if success:
@@ -284,18 +313,27 @@ async def remove_admin_password_endpoint(
 
 @router.delete(
     "/api/domains/{domain}/auth/remove-user-password",
-    summary="Remove user password for domain (requires admin JWT)"
+    summary="Remove user password for domain (requires admin access)"
 )
 async def remove_user_password_endpoint(
     domain: str,
-    db: Session = Depends(get_db),
-    token_data: dict = Depends(verify_domain_admin_jwt)
+    user_id: int = Depends(require_user_auth),
+    db: Session = Depends(get_db)
 ):
     """
     Remove user password protection for domain.
 
-    Requires valid admin JWT token.
+    Requires user to be logged in and have admin access to domain.
     """
+    # Check if user has admin access to domain
+    has_access = check_user_has_domain_access(db, user_id, domain, "admin")
+
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ErrorMessages.INSUFFICIENT_PERMISSIONS
+        )
+
     success, error = remove_user_password(db, domain)
 
     if success:
