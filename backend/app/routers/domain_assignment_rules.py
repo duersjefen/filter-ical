@@ -6,17 +6,34 @@ Implements assignment rule endpoints from OpenAPI specification.
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
+from typing import List, Literal
 
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
 from ..core.auth import get_verified_domain
 from ..models.domain import Domain
+from ..models.calendar import Group, AssignmentRule
 from ..services.domain_service import (
     create_assignment_rule, get_assignment_rules,
     auto_assign_events_with_rules, delete_assignment_rule
 )
 
 router = APIRouter()
+
+
+# Pydantic models for compound rule endpoint
+class CompoundRuleCondition(BaseModel):
+    """Individual condition within a compound rule."""
+    rule_type: Literal['title_contains', 'description_contains', 'category_contains']
+    rule_value: str = Field(min_length=1)
+
+
+class CompoundRuleCreate(BaseModel):
+    """Request body for creating a compound assignment rule."""
+    operator: Literal['AND', 'OR']
+    conditions: List[CompoundRuleCondition] = Field(min_items=2)
+    target_group_id: int
 
 
 @router.post("/{domain}/assignment-rules")
@@ -112,3 +129,66 @@ async def delete_domain_assignment_rule(
 
     # Return 204 No Content on successful deletion
     return None
+
+
+@router.post("/{domain}/assignment-rules/compound", status_code=201)
+@handle_endpoint_errors
+async def create_compound_assignment_rule(
+    rule_data: CompoundRuleCreate,
+    domain_obj: Domain = Depends(get_verified_domain),
+    db: Session = Depends(get_db)
+):
+    """Create a compound assignment rule with multiple conditions."""
+    # Validate target group exists
+    group = db.query(Group).filter(
+        Group.id == rule_data.target_group_id,
+        Group.domain_id == domain_obj.id
+    ).first()
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Target group not found")
+
+    # Create parent rule
+    parent_rule = AssignmentRule(
+        domain_id=domain_obj.id,
+        domain_key=domain_obj.domain_key,
+        is_compound=True,
+        operator=rule_data.operator,
+        target_group_id=rule_data.target_group_id,
+        rule_type=None,  # NULL for compound rules
+        rule_value=None
+    )
+    db.add(parent_rule)
+    db.flush()  # Get parent_rule.id
+
+    # Create child conditions
+    for condition in rule_data.conditions:
+        child_rule = AssignmentRule(
+            domain_id=domain_obj.id,
+            domain_key=domain_obj.domain_key,
+            parent_rule_id=parent_rule.id,
+            is_compound=False,
+            rule_type=condition.rule_type,
+            rule_value=condition.rule_value,
+            target_group_id=rule_data.target_group_id
+        )
+        db.add(child_rule)
+
+    db.commit()
+    db.refresh(parent_rule)
+
+    # Return with child_conditions populated (follows OpenAPI schema)
+    return {
+        "id": parent_rule.id,
+        "is_compound": True,
+        "operator": parent_rule.operator,
+        "target_group_id": parent_rule.target_group_id,
+        "child_conditions": [
+            {
+                "id": child.id,
+                "rule_type": child.rule_type,
+                "rule_value": child.rule_value
+            }
+            for child in parent_rule.child_conditions
+        ]
+    }

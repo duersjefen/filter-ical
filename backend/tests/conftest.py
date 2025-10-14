@@ -15,6 +15,7 @@ from typing import Generator, Dict, Any
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from openapi_core import Spec, validate_request, validate_response
 
 from app.main import create_application
@@ -86,7 +87,12 @@ class FastAPIResponseAdapter:
 def test_db_engine():
     """Create test database engine."""
     # Use in-memory SQLite for speed
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    # StaticPool ensures all connections share the same in-memory database
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool
+    )
     
     # Import all models to register them with SQLAlchemy
     from app.models import (
@@ -154,9 +160,16 @@ def test_client(test_db_engine) -> Generator[TestClient, None, None]:
     app.dependency_overrides[get_db] = override_get_db
     
     # Import and include routers
-    from app.routers import calendars, domains, ical_export, test, domain_requests, admin
+    from app.routers import (
+        calendars, domains, ical_export, test, domain_requests, admin,
+        domain_assignment_rules, domain_config, domain_backups, domain_admins
+    )
     app.include_router(calendars.router, prefix="/calendars", tags=["calendars"])
     app.include_router(domains.router, prefix="/domains", tags=["domains"])
+    app.include_router(domain_assignment_rules.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_config.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_backups.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_admins.router, prefix="/api/domains", tags=["domains"])
     app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
     app.include_router(test.router, prefix="/test", tags=["test"])
     app.include_router(domain_requests.router, prefix="/api", tags=["domain_requests"])
@@ -303,3 +316,61 @@ def sample_filter(test_db, test_user):
     test_db.refresh(filter_obj)
 
     return filter_obj
+
+
+@pytest.fixture
+def test_domain(test_client):
+    """Create a test domain with password for assignment rule testing.
+
+    Uses the test_client's shared session to avoid cross-session issues.
+    """
+    from app.models.domain import Domain
+    from app.core.database import get_db
+    import bcrypt
+
+    # Get the shared session from test_client
+    shared_session = next(test_client.app.dependency_overrides[get_db]())
+
+    # Clear any existing domain with the same key (for test isolation)
+    existing_domain = shared_session.query(Domain).filter(Domain.domain_key == "testdomain").first()
+    if existing_domain:
+        shared_session.delete(existing_domain)
+        shared_session.commit()
+
+    # Hash password using bcrypt (same as domain_auth_service)
+    password_hash = bcrypt.hashpw("test123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    domain = Domain(
+        name="Test Domain",
+        domain_key="testdomain",
+        calendar_url="https://example.com/test.ics",
+        admin_password_hash=password_hash,
+        status="active"
+    )
+    shared_session.add(domain)
+    shared_session.commit()
+    shared_session.refresh(domain)
+    return domain
+
+
+@pytest.fixture
+def test_group(test_client, test_domain):
+    """Create a test group for assignment rule testing.
+
+    Uses the test_client's shared session to avoid cross-session issues.
+    """
+    from app.models.calendar import Group
+    from app.core.database import get_db
+
+    # Get the shared session from test_client
+    shared_session = next(test_client.app.dependency_overrides[get_db]())
+
+    group = Group(
+        domain_id=test_domain.id,
+        domain_key=test_domain.domain_key,
+        name="Test Group"
+    )
+    shared_session.add(group)
+    shared_session.commit()
+    shared_session.refresh(group)
+    return group

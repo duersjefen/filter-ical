@@ -19,70 +19,146 @@
         </div>
       </div>
       
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Rule Type -->
-        <div class="space-y-3">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('domainAdmin.ruleType') }}</label>
-          <div class="flex gap-2">
-            <button
-              v-for="type in ruleTypes"
-              :key="type.value"
-              @click="newRule.rule_type = type.value"
-              :class="[
-                'flex-1 flex items-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-all duration-200',
-                newRule.rule_type === type.value
-                  ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-600 dark:text-blue-200'
-                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
-              ]"
+      <div class="space-y-6">
+        <!-- Single Condition / First Condition -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Rule Type -->
+          <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ newRule.is_compound ? 'Condition 1 - Type' : $t('domainAdmin.ruleType') }}
+            </label>
+            <select
+              v-model="newRule.conditions[0].rule_type"
+              class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
             >
-              <span>{{ type.icon }}</span>
-              <span>{{ type.label }}</span>
-            </button>
+              <option value="title_contains">📄 {{ $t('domainAdmin.title') }}</option>
+              <option value="description_contains">📝 {{ $t('domainAdmin.description') }}</option>
+              <option value="category_contains">🏷️ {{ $t('domainAdmin.category') }}</option>
+            </select>
           </div>
-        </div>
-        
-        <!-- Rule Value -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <span class="flex items-center gap-2">
-              <span class="text-green-600 dark:text-green-400">🔍</span>
-              {{ $t('domainAdmin.searchValue') }}
-            </span>
-          </label>
-          <div class="relative">
-            <input
-              v-model="newRule.rule_value"
-              type="text"
-              :placeholder="getRulePlaceholder(newRule.rule_type)"
-              class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md"
-              @keyup.enter="createRule"
-              @input="debouncedUpdatePreview"
-            />
-            <div v-if="newRule.rule_value.trim()" class="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <span class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full">
-                {{ newRule.rule_value.length }} chars
+
+          <!-- Rule Value -->
+          <div class="space-y-3">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <span class="flex items-center gap-2">
+                <span class="text-green-600 dark:text-green-400">🔍</span>
+                {{ $t('domainAdmin.searchValue') }}
               </span>
+            </label>
+            <div class="relative">
+              <input
+                v-model="newRule.conditions[0].rule_value"
+                type="text"
+                :placeholder="getRulePlaceholder(newRule.conditions[0].rule_type)"
+                class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                @keyup.enter="createRule"
+                @input="debouncedUpdatePreview"
+              />
+              <button
+                v-if="newRule.conditions.length > 1"
+                @click="removeCondition(0)"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs transition-all duration-200"
+                title="Remove condition"
+              >
+                ✕
+              </button>
             </div>
           </div>
+
+          <!-- Target Group (only show on first row if not compound, or keep consistent) -->
+          <div class="space-y-3">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <span class="flex items-center gap-2">
+                <span class="text-purple-600 dark:text-purple-400">📁</span>
+                {{ $t('domainAdmin.targetGroup') }}
+              </span>
+            </label>
+            <select
+              v-model="newRule.target_group_id"
+              class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+            >
+              <option value="" disabled>{{ $t('messages.selectTargetGroup') }}</option>
+              <option v-for="group in groups" :key="group.id" :value="group.id">
+                {{ group.name }} ({{ getGroupEventCount(group.id) }} events)
+              </option>
+            </select>
+          </div>
         </div>
-        
-        <!-- Target Group -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <span class="flex items-center gap-2">
-              <span class="text-purple-600 dark:text-purple-400">📁</span>
-              {{ $t('domainAdmin.targetGroup') }}
-            </span>
-          </label>
-          <select 
-            v-model="newRule.target_group_id"
-            class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+
+        <!-- Additional Conditions (for compound rules) -->
+        <div v-if="newRule.conditions.length > 1" class="space-y-4">
+          <div
+            v-for="(condition, index) in newRule.conditions.slice(1)"
+            :key="index"
+            class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800"
           >
-            <option value="" disabled>{{ $t('messages.selectTargetGroup') }}</option>
-            <option v-for="group in groups" :key="group.id" :value="group.id">
-              {{ group.name }} ({{ getGroupEventCount(group.id) }} events)
-            </option>
-          </select>
+            <!-- Operator indicator -->
+            <div class="space-y-3">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Condition {{ index + 2 }} - Type
+              </label>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-blue-600 dark:text-blue-400 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  {{ newRule.operator }}
+                </span>
+                <select
+                  v-model="condition.rule_type"
+                  class="flex-1 px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+                >
+                  <option value="title_contains">📄 {{ $t('domainAdmin.title') }}</option>
+                  <option value="description_contains">📝 {{ $t('domainAdmin.description') }}</option>
+                  <option value="category_contains">🏷️ {{ $t('domainAdmin.category') }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Condition Value -->
+            <div class="space-y-3">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <span class="flex items-center gap-2">
+                  <span class="text-green-600 dark:text-green-400">🔍</span>
+                  Search Value
+                </span>
+              </label>
+              <div class="relative">
+                <input
+                  v-model="condition.rule_value"
+                  type="text"
+                  :placeholder="getRulePlaceholder(condition.rule_type)"
+                  class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                  @input="debouncedUpdatePreview"
+                />
+                <button
+                  @click="removeCondition(index + 1)"
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs transition-all duration-200"
+                  title="Remove condition"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Empty space for alignment -->
+            <div></div>
+          </div>
+        </div>
+
+        <!-- Add Condition Buttons -->
+        <div v-if="!newRule.is_compound || newRule.conditions.length < 5" class="flex gap-3">
+          <button
+            @click="addCondition('AND')"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium transition-all duration-200"
+          >
+            <span>➕</span>
+            <span>Add AND Condition</span>
+          </button>
+          <button
+            @click="addCondition('OR')"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium transition-all duration-200"
+          >
+            <span>➕</span>
+            <span>Add OR Condition</span>
+          </button>
         </div>
       </div>
       
@@ -253,15 +329,27 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-3 mb-2">
                   <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                    {{ getRuleTypeLabel(rule.rule_type) }}
+                    <span v-if="rule.is_compound">{{ rule.operator }} Rule ({{ rule.child_conditions?.length || 0 }} conditions)</span>
+                    <span v-else>{{ getRuleTypeLabel(rule.rule_type) }}</span>
                   </h3>
                   <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold badge-bounce" :class="getMatchCountBadgeClass(rule)">
                     {{ getLiveMatchingEvents(rule).length }} matches
                   </span>
                 </div>
                 <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
-                  {{ $t('domainAdmin.when') }} <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span> 
-                  → {{ $t('domainAdmin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
+                  <span v-if="rule.is_compound">
+                    {{ $t('domainAdmin.when') }}
+                    <span v-for="(cond, i) in rule.child_conditions" :key="i">
+                      <span v-if="i > 0" class="mx-2 font-bold text-blue-600 dark:text-blue-400">{{ rule.operator }}</span>
+                      <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(cond.rule_type) }}</span>
+                      <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ cond.rule_value }}"</span>
+                    </span>
+                    → {{ $t('domainAdmin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
+                  </span>
+                  <span v-else>
+                    {{ $t('domainAdmin.when') }} <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span>
+                    → {{ $t('domainAdmin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
+                  </span>
                 </p>
                 <div v-if="getRuleStatus(rule) !== t('domainAdmin.complete')" class="flex items-center gap-6 text-xs">
                   <div class="flex items-center gap-2">
@@ -492,8 +580,13 @@ export default {
     
     // Local state
     const newRule = ref({
+      is_compound: false,
+      operator: 'AND',
       rule_type: 'title_contains', // Default to title
       rule_value: '',
+      conditions: [
+        { rule_type: 'title_contains', rule_value: '' }
+      ],
       target_group_id: ''
     })
     
@@ -521,9 +614,14 @@ export default {
     
     // Computed properties
     const isFormValid = computed(() => {
-      return newRule.value.rule_type && 
-             newRule.value.rule_value.trim() && 
-             newRule.value.target_group_id
+      if (newRule.value.is_compound) {
+        return newRule.value.conditions.every(c => c.rule_type && c.rule_value.trim()) &&
+               newRule.value.target_group_id
+      } else {
+        return newRule.value.rule_type &&
+               newRule.value.rule_value.trim() &&
+               newRule.value.target_group_id
+      }
     })
     
     // Debounced preview update (simple implementation)
@@ -572,12 +670,33 @@ export default {
       }
     }
     
+    const addCondition = (operator) => {
+      newRule.value.is_compound = true
+      newRule.value.operator = operator
+      newRule.value.conditions.push({
+        rule_type: 'title_contains',
+        rule_value: ''
+      })
+    }
+
+    const removeCondition = (index) => {
+      newRule.value.conditions.splice(index, 1)
+      if (newRule.value.conditions.length === 1) {
+        newRule.value.is_compound = false
+      }
+    }
+
     const createRule = () => {
       emit('create-rule', { ...newRule.value })
       // Reset form after creation
       newRule.value = {
+        is_compound: false,
+        operator: 'AND',
         rule_type: 'title_contains',
         rule_value: '',
+        conditions: [
+          { rule_type: 'title_contains', rule_value: '' }
+        ],
         target_group_id: ''
       }
     }
@@ -593,8 +712,13 @@ export default {
     
     const resetForm = () => {
       newRule.value = {
+        is_compound: false,
+        operator: 'AND',
         rule_type: 'title_contains',
         rule_value: '',
+        conditions: [
+          { rule_type: 'title_contains', rule_value: '' }
+        ],
         target_group_id: ''
       }
     }
@@ -760,51 +884,120 @@ export default {
       return categories
     }
     
+    const checkCondition = (event, condition) => {
+      const searchValue = condition.rule_value.toLowerCase()
+
+      switch (condition.rule_type) {
+        case 'title_contains':
+          return event.title.toLowerCase().includes(searchValue)
+        case 'description_contains':
+          const description = event.sample_description ||
+                            extractDescriptionFromRawICal(event.sample_raw_ical || '')
+          return description.toLowerCase().includes(searchValue)
+        case 'category_contains':
+          const categories = event.sample_categories ||
+                           extractCategoriesFromRawICal(event.sample_raw_ical || '')
+          return categories.some(cat => cat.toLowerCase().includes(searchValue))
+        default:
+          return false
+      }
+    }
+
     const getLiveMatchingEvents = (rule) => {
-      if (!rule || !rule.rule_type || !rule.rule_value || !Array.isArray(props.recurringEvents)) {
+      if (!rule || !Array.isArray(props.recurringEvents)) {
         return []
       }
-      
+
+      // Handle compound rules
+      if (rule.is_compound && rule.conditions && rule.conditions.length > 0) {
+        // Check if all conditions have values
+        const allConditionsValid = rule.conditions.every(c => c.rule_type && c.rule_value && c.rule_value.trim())
+        if (!allConditionsValid) {
+          return []
+        }
+
+        const matchingEvents = []
+
+        props.recurringEvents.forEach(event => {
+          let matches = false
+
+          if (rule.operator === 'AND') {
+            // All conditions must match
+            matches = rule.conditions.every(condition => checkCondition(event, condition))
+          } else if (rule.operator === 'OR') {
+            // At least one condition must match
+            matches = rule.conditions.some(condition => checkCondition(event, condition))
+          }
+
+          if (matches) {
+            const targetGroupId = parseInt(rule.target_group_id)
+            const assignedGroupIds = event.assigned_group_ids || []
+            const isAlreadyAssigned = assignedGroupIds.includes(targetGroupId)
+            const willChange = !isAlreadyAssigned
+
+            const primaryGroupId = assignedGroupIds.length > 0 ? assignedGroupIds[0] : null
+
+            const description = event.sample_description ||
+                              extractDescriptionFromRawICal(event.sample_raw_ical || '')
+            const categories = event.sample_categories ||
+                             extractCategoriesFromRawICal(event.sample_raw_ical || '')
+
+            matchingEvents.push({
+              title: event.title,
+              event_count: event.event_count,
+              description: description,
+              categories: categories,
+              currentGroupId: primaryGroupId,
+              currentGroupName: primaryGroupId ? getGroupName(primaryGroupId) : t('domainAdmin.unassigned'),
+              allGroupIds: assignedGroupIds,
+              willChange
+            })
+          }
+        })
+
+        return matchingEvents
+      }
+
+      // Handle simple rules (backward compatibility)
+      if (!rule.rule_type || !rule.rule_value || !rule.rule_value.trim()) {
+        return []
+      }
+
       const matchingEvents = []
-      
-      // Check each recurring event against the rule
+
       props.recurringEvents.forEach(event => {
         let matches = false
         const searchValue = rule.rule_value.toLowerCase()
-        
+
         switch (rule.rule_type) {
           case 'title_contains':
             matches = event.title.toLowerCase().includes(searchValue)
             break
           case 'description_contains':
-            // Use enhanced backend data: sample_description with fallback to extraction
-            const description = event.sample_description || 
+            const description = event.sample_description ||
                               extractDescriptionFromRawICal(event.sample_raw_ical || '')
             matches = description.toLowerCase().includes(searchValue)
-            break  
+            break
           case 'category_contains':
-            // Use enhanced backend data: sample_categories with fallback to extraction
-            const categories = event.sample_categories || 
+            const categories = event.sample_categories ||
                              extractCategoriesFromRawICal(event.sample_raw_ical || '')
             matches = categories.some(cat => cat.toLowerCase().includes(searchValue))
             break
         }
-        
+
         if (matches) {
-          // Check if target group is already assigned (handle multi-group assignments)
           const targetGroupId = parseInt(rule.target_group_id)
           const assignedGroupIds = event.assigned_group_ids || []
           const isAlreadyAssigned = assignedGroupIds.includes(targetGroupId)
           const willChange = !isAlreadyAssigned
-          
+
           const primaryGroupId = assignedGroupIds.length > 0 ? assignedGroupIds[0] : null
-          
-          // Extract description and categories for display
-          const description = event.sample_description || 
+
+          const description = event.sample_description ||
                             extractDescriptionFromRawICal(event.sample_raw_ical || '')
-          const categories = event.sample_categories || 
+          const categories = event.sample_categories ||
                            extractCategoriesFromRawICal(event.sample_raw_ical || '')
-          
+
           matchingEvents.push({
             title: event.title,
             event_count: event.event_count,
@@ -817,7 +1010,7 @@ export default {
           })
         }
       })
-      
+
       return matchingEvents
     }
     
@@ -828,6 +1021,8 @@ export default {
       ruleTypes,
       isFormValid,
       toggleRuleDropdown,
+      addCondition,
+      removeCondition,
       createRule,
       applyRule,
       deleteRuleConfirm,
@@ -846,6 +1041,7 @@ export default {
       getGroupName,
       extractDescriptionFromRawICal,
       extractCategoriesFromRawICal,
+      checkCondition,
       getLiveMatchingEvents
     }
   }

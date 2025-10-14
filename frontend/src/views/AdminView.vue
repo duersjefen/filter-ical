@@ -179,6 +179,7 @@ export default {
       addEventsToGroup,
       bulkUnassignEvents,
       createAssignmentRule,
+      createCompoundRule,
       deleteAssignmentRule,
       applyExistingRule,
       deleteGroup,
@@ -266,7 +267,22 @@ export default {
 
     // Rule Management Handlers
     const handleCreateRule = async (ruleData) => {
-      const result = await createAssignmentRule(ruleData.rule_type, ruleData.rule_value, ruleData.target_group_id)
+      let result
+
+      // Check if it's a compound rule
+      if (ruleData.is_compound && ruleData.conditions && ruleData.conditions.length > 1) {
+        result = await createCompoundRule(
+          ruleData.operator,
+          ruleData.conditions,
+          ruleData.target_group_id
+        )
+      } else {
+        // Simple rule - use first condition or fallback to old format
+        const ruleType = ruleData.conditions?.[0]?.rule_type || ruleData.rule_type
+        const ruleValue = ruleData.conditions?.[0]?.rule_value || ruleData.rule_value
+        result = await createAssignmentRule(ruleType, ruleValue, ruleData.target_group_id)
+      }
+
       showNotification(
         result.success ? t('domainAdmin.assignmentRuleCreatedSuccessfully') : t('domainAdmin.failedToCreateAssignmentRule', { error: result.error }),
         result.success ? 'success' : 'error'

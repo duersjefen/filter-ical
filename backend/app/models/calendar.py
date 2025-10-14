@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 
 from ..core.database import Base
@@ -117,6 +117,9 @@ class AssignmentRule(Base):
     """
     Auto-assignment rules for automatically assigning recurring events to groups.
 
+    Supports both simple single-condition rules and compound rules with multiple conditions.
+    Compound rules can use AND/OR operators to combine child conditions.
+
     Corresponds to AssignmentRule schema in OpenAPI spec.
     """
     __tablename__ = "assignment_rules"
@@ -124,14 +127,28 @@ class AssignmentRule(Base):
     id = Column(Integer, primary_key=True, index=True)
     domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=True, index=True)  # New FK to domains table
     domain_key = Column(String(100), nullable=True, index=True)  # Legacy field for backward compatibility
-    rule_type = Column(String(50), nullable=False)  # 'title_contains', 'description_contains', 'category_contains'
-    rule_value = Column(String(500), nullable=False)
+
+    # Single condition fields (nullable for compound parent rules)
+    rule_type = Column(String(50), nullable=True)  # 'title_contains', 'description_contains', 'category_contains'
+    rule_value = Column(String(500), nullable=True)
+
+    # Compound rule fields
+    parent_rule_id = Column(Integer, ForeignKey("assignment_rules.id", ondelete="CASCADE"), nullable=True)
+    operator = Column(String(10), nullable=False, default="AND")  # 'AND' or 'OR'
+    is_compound = Column(Boolean, nullable=False, default=False)
+
     target_group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     # Relationships
     group = relationship("Group", back_populates="assignment_rules")
+    child_conditions = relationship("AssignmentRule", backref=backref("parent", remote_side=[id]), cascade="all, delete-orphan")
+
+    def __repr__(self):
+        if self.is_compound:
+            return f"<AssignmentRule(id={self.id}, compound={self.operator}, conditions={len(self.child_conditions)}, target_group={self.target_group_id})>"
+        return f"<AssignmentRule(id={self.id}, {self.rule_type}='{self.rule_value}', target_group={self.target_group_id})>"
 
 
 class Filter(Base):

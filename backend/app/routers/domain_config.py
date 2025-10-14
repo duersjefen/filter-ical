@@ -59,7 +59,31 @@ async def import_domain_config(
     # Get raw content from request
     content_type = request.headers.get('content-type', '').lower()
 
-    if 'application/x-yaml' in content_type or 'text/yaml' in content_type:
+    if 'multipart/form-data' in content_type:
+        # Handle file upload from form
+        from fastapi import UploadFile, File, Form
+        form_data = await request.form()
+
+        # Get the uploaded file
+        uploaded_file = None
+        for field_name, field_value in form_data.items():
+            if hasattr(field_value, 'read'):  # It's a file
+                uploaded_file = field_value
+                break
+
+        if not uploaded_file:
+            raise HTTPException(status_code=400, detail="No file uploaded. Please upload a YAML configuration file.")
+
+        # Read file content
+        file_content = await uploaded_file.read()
+        try:
+            config_data = yaml.safe_load(file_content.decode('utf-8'))
+        except yaml.YAMLError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid YAML format: {str(e)}")
+        except UnicodeDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid file encoding (expected UTF-8): {str(e)}")
+
+    elif 'application/x-yaml' in content_type or 'text/yaml' in content_type:
         # Parse YAML content
         yaml_content = await request.body()
         try:

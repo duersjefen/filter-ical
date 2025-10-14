@@ -247,32 +247,65 @@ def _extract_categories_from_raw_ical(raw_ical: str) -> List[str]:
 
 def _event_matches_rule(event: Dict[str, Any], rule: Dict[str, Any]) -> bool:
     """
-    Check if event matches assignment rule.
-    
+    Check if event matches assignment rule (supports compound rules).
+
+    Compound rules can combine multiple conditions using AND/OR operators:
+    - AND: All child conditions must match
+    - OR: At least one child condition must match
+
     Args:
         event: Event data
-        rule: Assignment rule data
-        
+        rule: Assignment rule data (single condition or compound)
+
     Returns:
         True if event matches rule
-        
+
     Pure function - rule matching logic.
     """
-    rule_type = rule.get('rule_type', '')
-    rule_value = rule.get('rule_value', '').lower()
-    
+    # Compound rule (has child conditions)
+    if rule.get('is_compound'):
+        child_conditions = rule.get('child_conditions', [])
+        operator = rule.get('operator', 'AND')
+
+        if operator == 'AND':
+            # All conditions must match (empty list returns True - all zero conditions match)
+            return all(_event_matches_single_condition(event, cond) for cond in child_conditions)
+        elif operator == 'OR':
+            # At least one condition must match (empty list returns False - no conditions to match)
+            return any(_event_matches_single_condition(event, cond) for cond in child_conditions)
+
+    # Single condition (backward compatible)
+    return _event_matches_single_condition(event, rule)
+
+
+def _event_matches_single_condition(event: Dict[str, Any], condition: Dict[str, Any]) -> bool:
+    """
+    Check if event matches a single condition.
+
+    Args:
+        event: Event data
+        condition: Single condition data
+
+    Returns:
+        True if event matches condition
+
+    Pure function - single condition matching logic.
+    """
+    rule_type = condition.get('rule_type', '')
+    rule_value = condition.get('rule_value', '').lower()
+
     if rule_type == 'title_contains':
         title = event.get('title', '').lower()
         return rule_value in title
-    
+
     elif rule_type == 'description_contains':
         description = event.get('description', '').lower()
         return rule_value in description
-    
+
     elif rule_type == 'category_contains':
         categories = _extract_categories_from_raw_ical(event.get('raw_ical', ''))
         return any(rule_value in cat.lower() for cat in categories)
-    
+
     return False
 
 

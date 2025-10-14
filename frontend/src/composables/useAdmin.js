@@ -289,6 +289,21 @@ export function useAdmin(domain) {
     }
   }
 
+  const createCompoundRule = async (operator, conditions, targetGroupId) => {
+    try {
+      const result = await post(API_ENDPOINTS.DOMAIN_ASSIGNMENT_RULES_COMPOUND(domain), {
+        operator: operator,
+        conditions: conditions,
+        target_group_id: parseInt(targetGroupId)
+      })
+      await loadAssignmentRules() // Refresh rules list
+      return { success: true, data: result }
+    } catch (err) {
+      console.error('Failed to create compound rule:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
   const deleteAssignmentRule = async (ruleId) => {
     try {
       await del(API_ENDPOINTS.DOMAIN_ASSIGNMENT_RULE(domain, ruleId))
@@ -557,6 +572,7 @@ export function useAdmin(domain) {
     // Rules API
     loadAssignmentRules,
     createAssignmentRule,
+    createCompoundRule,
     deleteAssignmentRule,
 
     // Utilities

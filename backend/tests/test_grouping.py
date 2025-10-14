@@ -1016,3 +1016,246 @@ class TestAssignmentRulesEdgeCases:
         assert len(result['groups']) == 2
         assert result['groups'][0]['id'] == 9998  # Recurring
         assert result['groups'][1]['id'] == 9999  # Unique
+
+
+@pytest.mark.unit
+class TestCompoundRules:
+    """Test compound rule matching logic."""
+
+    def test_event_matches_compound_rule_and(self):
+        """Test compound rule with AND operator - both conditions must match."""
+        event = {
+            "title": "Team Meeting",
+            "description": "Project X discussion"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "description_contains", "rule_value": "project"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_compound_rule_and_fails(self):
+        """Test compound rule AND - fails if only one condition matches."""
+        event = {
+            "title": "Team Meeting",
+            "description": "General discussion"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "description_contains", "rule_value": "project"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is False
+
+    def test_event_matches_compound_rule_or(self):
+        """Test compound rule with OR operator - any condition can match."""
+        event = {
+            "title": "Exam"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "OR",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "exam"},
+                {"rule_type": "title_contains", "rule_value": "test"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_compound_rule_or_both_match(self):
+        """Test compound rule OR - passes if both conditions match."""
+        event = {
+            "title": "Exam and Test"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "OR",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "exam"},
+                {"rule_type": "title_contains", "rule_value": "test"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_single_condition_backward_compatible(self):
+        """Test that existing single-condition rules still work."""
+        event = {
+            "title": "Meeting"
+        }
+        rule = {
+            "rule_type": "title_contains",
+            "rule_value": "meeting",
+            "is_compound": False
+        }
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_compound_rule_and_with_categories(self):
+        """Test compound rule with AND using category matching."""
+        event = {
+            "title": "Team Meeting",
+            "description": "Project X discussion",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Team Meeting
+CATEGORY:Event
+CATEGORY:Deutschland
+END:VEVENT"""
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "category_contains", "rule_value": "event"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_compound_rule_or_none_match(self):
+        """Test compound rule OR - fails if no conditions match."""
+        event = {
+            "title": "Random Event"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "OR",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "title_contains", "rule_value": "exam"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is False
+
+    def test_event_matches_compound_rule_and_empty_conditions(self):
+        """Test compound rule AND with empty child conditions."""
+        event = {
+            "title": "Test Event"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": []
+        }
+        # Empty AND condition should return True (all zero conditions match)
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_compound_rule_or_empty_conditions(self):
+        """Test compound rule OR with empty child conditions."""
+        event = {
+            "title": "Test Event"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "OR",
+            "child_conditions": []
+        }
+        # Empty OR condition should return False (no conditions to match)
+        assert _event_matches_rule(event, rule) is False
+
+    def test_apply_assignment_rules_with_compound_rule(self):
+        """Test applying assignment rules that include compound rules."""
+        events = [
+            {
+                "title": "Math Exam",
+                "description": "Final exam for Mathematics"
+            },
+            {
+                "title": "Math Class",
+                "description": "Regular mathematics lecture"
+            },
+            {
+                "title": "English Exam",
+                "description": "Final exam for English"
+            }
+        ]
+        rules = [
+            # Compound rule: title contains "math" AND description contains "exam"
+            {
+                "is_compound": True,
+                "operator": "AND",
+                "child_conditions": [
+                    {"rule_type": "title_contains", "rule_value": "math"},
+                    {"rule_type": "description_contains", "rule_value": "exam"}
+                ],
+                "target_group_id": 1
+            },
+            # Simple rule: title contains "class"
+            {
+                "rule_type": "title_contains",
+                "rule_value": "class",
+                "target_group_id": 2
+            }
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        assert 1 in result
+        assert 2 in result
+        assert "Math Exam" in result[1]
+        assert "Math Class" in result[2]
+        # "English Exam" doesn't match compound rule (no "math" in title)
+        assert "English Exam" not in result.get(1, [])
+
+    def test_event_matches_compound_rule_case_insensitive(self):
+        """Test that compound rule matching is case insensitive."""
+        event = {
+            "title": "WEEKLY MEETING",
+            "description": "PROJECT DISCUSSION"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "description_contains", "rule_value": "project"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_compound_rule_three_conditions_and(self):
+        """Test compound rule with three conditions using AND."""
+        event = {
+            "title": "Math Exam",
+            "description": "Final examination",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Math Exam
+CATEGORY:Event
+END:VEVENT"""
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "math"},
+                {"rule_type": "description_contains", "rule_value": "exam"},
+                {"rule_type": "category_contains", "rule_value": "event"}
+            ]
+        }
+        assert _event_matches_rule(event, rule) is True
+
+    def test_event_matches_compound_rule_three_conditions_and_fails(self):
+        """Test compound rule with three conditions - fails if one doesn't match."""
+        event = {
+            "title": "Math Exam",
+            "description": "Final examination",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Math Exam
+CATEGORY:Training
+END:VEVENT"""
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "math"},
+                {"rule_type": "description_contains", "rule_value": "exam"},
+                {"rule_type": "category_contains", "rule_value": "event"}  # Won't match
+            ]
+        }
+        assert _event_matches_rule(event, rule) is False
