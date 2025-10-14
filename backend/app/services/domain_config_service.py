@@ -287,10 +287,18 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
         for section in required_sections:
             if section not in config:
                 return False, f"Missing required section: {section}"
-        
+
+        # Get domain_id (required for group creation)
+        from ..models.domain import Domain
+        domain = db.query(Domain).filter(Domain.domain_key == domain_key).first()
+        if not domain:
+            return False, f"Domain {domain_key} not found. Domain must exist before importing configuration."
+
+        domain_id = domain.id
+
         # Clear existing configuration for domain
         db.query(RecurringEventGroup).filter(RecurringEventGroup.domain_key == domain_key).delete()
-        db.query(AssignmentRule).filter(AssignmentRule.domain_key == domain_key).delete() 
+        db.query(AssignmentRule).filter(AssignmentRule.domain_key == domain_key).delete()
         db.query(Group).filter(Group.domain_key == domain_key).delete()
         
         # Create groups and build ID mapping (supports both semantic IDs and legacy group_X format)
@@ -306,12 +314,15 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
             if not validation_result.is_success:
                 return False, f"Invalid group '{group_name}' (ID: {semantic_id}): {validation_result.error}"
             
-            # Create group
+            # Create group with domain_id
             group_data = create_group_data(domain_key, group_name)
-            new_group = Group(**group_data)
+            new_group = Group(
+                domain_id=domain_id,  # Required foreign key
+                **group_data
+            )
             db.add(new_group)
             db.flush()  # Get database ID
-            
+
             id_mapping[semantic_id] = new_group.id
         
         # Create assignments using semantic IDs
@@ -347,14 +358,17 @@ def import_domain_configuration(db: Session, domain_key: str, config: Dict[str, 
             if not validation_result.is_success:
                 return False, f"Invalid assignment rule: {validation_result.error}"
             
-            # Create rule
+            # Create rule with domain_id
             rule_data = create_assignment_rule_data(
                 domain_key,
                 rule_config['rule_type'],
                 rule_config['rule_value'],
                 db_group_id
             )
-            rule = AssignmentRule(**rule_data)
+            rule = AssignmentRule(
+                domain_id=domain_id,  # Set foreign key for referential integrity
+                **rule_data
+            )
             db.add(rule)
         
         # Commit all changes
