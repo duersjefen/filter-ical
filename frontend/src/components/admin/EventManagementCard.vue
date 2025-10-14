@@ -172,14 +172,6 @@ export default {
     // Card refs for drag selection
     const cardRefs = ref({})
 
-    // Use drag selection composable
-    const {
-      dragSelection,
-      startDragSelection,
-      updateDragSelection,
-      endDragSelection
-    } = useDragSelection(selectedEvents, cardRefs, filteredEvents, emit)
-
     // Clear selection when search text changes
     watch(eventSearch, (newSearch, oldSearch) => {
       if (newSearch !== oldSearch && selectedEvents.value.length > 0) {
@@ -251,6 +243,14 @@ export default {
 
       return Object.values(eventsByTitle)
     })
+
+    // Use drag selection composable (must be after filteredEvents is defined)
+    const {
+      dragSelection,
+      startDragSelection,
+      updateDragSelection,
+      endDragSelection
+    } = useDragSelection(selectedEvents, cardRefs, filteredEvents, emit)
 
     const isAllEventsSelected = computed(() => {
       return filteredEvents.value.length > 0 &&
