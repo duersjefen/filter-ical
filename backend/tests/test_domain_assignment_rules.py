@@ -177,3 +177,184 @@ class TestCompoundAssignmentRules:
         assert response.status_code == 201
         data = response.json()
         assert len(data["child_conditions"]) == 3
+
+
+class TestNOTOperatorIntegration:
+    """Integration tests for NOT operator support in assignment rules."""
+
+    def test_create_simple_rule_with_title_not_contains(self, test_client: TestClient, test_domain, test_group):
+        """Test creating simple rule with title_not_contains."""
+        response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules",
+            json={
+                "rule_type": "title_not_contains",
+                "rule_value": "Cancelled",
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["rule_type"] == "title_not_contains"
+        assert data["rule_value"] == "Cancelled"
+        assert data["target_group_id"] == test_group.id
+
+    def test_create_simple_rule_with_description_not_contains(self, test_client: TestClient, test_domain, test_group):
+        """Test creating simple rule with description_not_contains."""
+        response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules",
+            json={
+                "rule_type": "description_not_contains",
+                "rule_value": "Optional",
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["rule_type"] == "description_not_contains"
+        assert data["rule_value"] == "Optional"
+
+    def test_create_simple_rule_with_category_not_contains(self, test_client: TestClient, test_domain, test_group):
+        """Test creating simple rule with category_not_contains."""
+        response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules",
+            json={
+                "rule_type": "category_not_contains",
+                "rule_value": "Personal",
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["rule_type"] == "category_not_contains"
+        assert data["rule_value"] == "Personal"
+
+    def test_create_compound_rule_with_not_operators(self, test_client: TestClient, test_domain, test_group):
+        """Test creating compound rule with NOT operators."""
+        response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules/compound",
+            json={
+                "operator": "AND",
+                "conditions": [
+                    {"rule_type": "title_contains", "rule_value": "Meeting"},
+                    {"rule_type": "description_not_contains", "rule_value": "Cancelled"}
+                ],
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["is_compound"] == True
+        assert data["operator"] == "AND"
+        assert len(data["child_conditions"]) == 2
+
+        # Verify NOT operator condition
+        child_conditions = data["child_conditions"]
+        assert child_conditions[1]["rule_type"] == "description_not_contains"
+        assert child_conditions[1]["rule_value"] == "Cancelled"
+
+    def test_create_compound_rule_all_not_operators(self, test_client: TestClient, test_domain, test_group):
+        """Test creating compound rule with all NOT operators."""
+        response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules/compound",
+            json={
+                "operator": "OR",
+                "conditions": [
+                    {"rule_type": "title_not_contains", "rule_value": "Test"},
+                    {"rule_type": "description_not_contains", "rule_value": "Debug"}
+                ],
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["operator"] == "OR"
+        assert len(data["child_conditions"]) == 2
+
+        # Verify all NOT operators
+        child_conditions = data["child_conditions"]
+        assert child_conditions[0]["rule_type"] == "title_not_contains"
+        assert child_conditions[0]["rule_value"] == "Test"
+        assert child_conditions[1]["rule_type"] == "description_not_contains"
+        assert child_conditions[1]["rule_value"] == "Debug"
+
+    def test_create_compound_rule_mixed_positive_negative(self, test_client: TestClient, test_domain, test_group):
+        """Test creating compound rule mixing positive and negative conditions."""
+        response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules/compound",
+            json={
+                "operator": "AND",
+                "conditions": [
+                    {"rule_type": "title_contains", "rule_value": "Meeting"},
+                    {"rule_type": "description_not_contains", "rule_value": "Cancelled"},
+                    {"rule_type": "category_contains", "rule_value": "Work"},
+                    {"rule_type": "category_not_contains", "rule_value": "Personal"}
+                ],
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert len(data["child_conditions"]) == 4
+
+        # Verify mix of positive and negative conditions
+        child_conditions = data["child_conditions"]
+        rule_types = [c["rule_type"] for c in child_conditions]
+        assert "title_contains" in rule_types
+        assert "description_not_contains" in rule_types
+        assert "category_contains" in rule_types
+        assert "category_not_contains" in rule_types
+
+    def test_validation_invalid_not_rule_type(self, test_client: TestClient, test_domain, test_group):
+        """Test validation rejects invalid NOT rule types."""
+        response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules",
+            json={
+                "rule_type": "location_not_contains",  # Invalid type
+                "rule_value": "Remote",
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        # Should return validation error
+        assert response.status_code == 400
+        assert "Rule type must be one of" in response.json()["detail"]
+
+    def test_get_rules_includes_not_operators(self, test_client: TestClient, test_domain, test_group):
+        """Test GET endpoint returns NOT operator rules correctly."""
+        # First create a NOT rule
+        test_client.post(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules",
+            json={
+                "rule_type": "title_not_contains",
+                "rule_value": "Test",
+                "target_group_id": test_group.id
+            },
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        # Now retrieve all rules
+        response = test_client.get(
+            f"/api/domains/{test_domain.domain_key}/assignment-rules",
+            headers={"X-Domain-Password": "test123"}
+        )
+
+        assert response.status_code == 200
+        rules = response.json()
+
+        # Verify NOT rule is in the list
+        not_rules = [r for r in rules if r["rule_type"] == "title_not_contains"]
+        assert len(not_rules) >= 1
+        assert not_rules[0]["rule_value"] == "Test"
