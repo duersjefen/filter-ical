@@ -35,7 +35,25 @@
             <span>📤</span>
             <span>{{ $t('domainAdmin.exportToFile') }}</span>
           </button>
+
+          <button
+            @click="triggerFileInput"
+            :disabled="loading"
+            class="flex-1 min-w-[200px] bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <span>📥</span>
+            <span>{{ $t('domainAdmin.importFromFile') }}</span>
+          </button>
         </div>
+
+        <!-- Hidden file input -->
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".yaml,.yml,.json"
+          @change="$emit('import-configuration', $event)"
+          class="hidden"
+        />
       </div>
 
       <!-- Backup History -->
@@ -159,6 +177,7 @@ export default {
     'toggle',
     'create-backup',
     'export-configuration',
+    'import-configuration',
     'restore-backup',
     'download-backup',
     'delete-backup'
@@ -168,6 +187,11 @@ export default {
 
     // Backup description state
     const backupDescription = ref('')
+    const fileInput = ref(null)
+
+    const triggerFileInput = () => {
+      fileInput.value?.click()
+    }
 
     const formatDate = (dateString) => {
       if (!dateString) return ''
@@ -212,7 +236,9 @@ export default {
       getBackupTypeIcon,
       getBackupTypeLabel,
       backupDescription,
-      handleCreateBackup
+      handleCreateBackup,
+      fileInput,
+      triggerFileInput
     }
   }
 }

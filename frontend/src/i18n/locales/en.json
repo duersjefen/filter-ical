@@ -353,6 +353,8 @@
     "backupRestoreSubtitle": "Create, restore, or export backups",
     "createBackup": "Create Backup Now",
     "exportToFile": "Export to File",
+    "importFromFile": "Import from File",
+    "configurationImportedSuccessfully": "Configuration imported successfully!",
     "backupHistory": "Backup History",
     "noBackupsYet": "No backups created yet",
     "createFirstBackup": "Click 'Create Backup Now' to save your first configuration snapshot",

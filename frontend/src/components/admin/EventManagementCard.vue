@@ -24,6 +24,8 @@
       @cancel-add-group="cancelAddGroup"
       @save-group-edit="saveGroupEdit"
       @cancel-group-edit="cancelGroupEdit"
+      @update:newGroupName="newGroupName = $event"
+      @update:editingGroupName="editingGroupName = $event"
     />
 
     <!-- Group Context Menu -->

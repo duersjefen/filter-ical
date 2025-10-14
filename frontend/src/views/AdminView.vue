@@ -76,6 +76,7 @@
         @toggle="toggleCard('config')"
         @create-backup="createBackup"
         @export-configuration="exportConfiguration"
+        @import-configuration="handleFileUpload"
         @restore-backup="restoreBackupConfirm"
         @download-backup="downloadBackup"
         @delete-backup="deleteBackupConfirm"
