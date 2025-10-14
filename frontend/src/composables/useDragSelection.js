@@ -51,6 +51,10 @@ export function useDragSelection(selectedEvents, cardRefs, filteredEvents, emit)
 
     event.preventDefault()
     event.stopPropagation()
+
+    // Attach document-level listeners to capture mouse events outside container
+    document.addEventListener('mousemove', updateDragSelection)
+    document.addEventListener('mouseup', endDragSelection)
   }
 
   const updateDragSelection = (event) => {
@@ -119,6 +123,10 @@ export function useDragSelection(selectedEvents, cardRefs, filteredEvents, emit)
     }
 
     dragSelection.value.dragging = false
+
+    // Remove document-level listeners
+    document.removeEventListener('mousemove', updateDragSelection)
+    document.removeEventListener('mouseup', endDragSelection)
   }
 
   return {

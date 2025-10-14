@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from ..models.domain import Domain
 from ..models.user_domain_access import UserDomainAccess
 from ..models.calendar import Calendar
+from ..models.domain_admin import domain_admins
 from ..data.domain_auth import decrypt_password
 
 
@@ -23,7 +24,13 @@ def check_user_has_domain_access(
     access_level: str
 ) -> bool:
     """
-    Check if user has already unlocked this domain.
+    Check if user has access to this domain.
+
+    Access is granted if:
+    1. User is the domain owner (always has admin access)
+    2. User is in domain_admins table (always has admin access)
+    3. No password is set for the requested access level (open access)
+    4. User has unlocked the domain via password (user_domain_access entry)
 
     Args:
         db: Database session
@@ -44,6 +51,20 @@ def check_user_has_domain_access(
     if not domain:
         return False
 
+    # PRIORITY CHECK: Owner always has admin access
+    if domain.owner_id == user_id and access_level == 'admin':
+        return True
+
+    # PRIORITY CHECK: Domain admins always have admin access
+    if access_level == 'admin':
+        is_domain_admin = db.query(domain_admins).filter(
+            domain_admins.c.user_id == user_id,
+            domain_admins.c.domain_id == domain.id
+        ).first() is not None
+
+        if is_domain_admin:
+            return True
+
     # Check if domain requires password for this access level
     password_required = (
         domain.admin_password_hash if access_level == 'admin'
@@ -54,7 +75,7 @@ def check_user_has_domain_access(
     if not password_required:
         return True
 
-    # Check user_domain_access table
+    # Check user_domain_access table (password unlock)
     access = db.query(UserDomainAccess).filter(
         UserDomainAccess.user_id == user_id,
         UserDomainAccess.calendar_id == domain.calendar_id,

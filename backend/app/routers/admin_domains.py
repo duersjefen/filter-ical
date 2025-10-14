@@ -123,14 +123,15 @@ async def create_domain_directly(
             ical_content = response.text
 
         # Parse iCal content to verify it's valid
-        success, events, error = parse_ical_content(ical_content)
+        parse_result = parse_ical_content(ical_content)
 
-        if not success:
+        if not parse_result.is_success:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid iCal URL: {error}"
+                detail=f"Invalid iCal URL: {parse_result.error}"
             )
 
+        events = parse_result.value
         if not events:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

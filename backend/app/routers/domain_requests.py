@@ -155,14 +155,15 @@ async def create_domain_request(
                 )
 
             # Parse iCal content
-            success, events, error = parse_ical_content(ical_content)
+            parse_result = parse_ical_content(ical_content)
 
-            if not success:
+            if not parse_result.is_success:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Calendar URL is not valid iCal format: {error}. Please provide a valid iCal URL."
+                    detail=f"Calendar URL is not valid iCal format: {parse_result.error}. Please provide a valid iCal URL."
                 )
 
+            events = parse_result.value
             if not events or len(events) == 0:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,

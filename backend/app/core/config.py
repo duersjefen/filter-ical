@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"  # HMAC-SHA256
 
     # Password encryption (Fernet/AES) - REQUIRED in production/staging
-    password_encryption_key: str = "dev-key-P-EOqzNBZhEg8QVf2pWq9xY7tR5uKmN3oJlHbFcGdVw="  # Development only - MUST override via PASSWORD_ENCRYPTION_KEY env var
+    password_encryption_key: str = "viUqnqnIxGiR3wH3eHqWdKn1Cji9CORY55T1zgDnG6w="  # Development only - MUST override via PASSWORD_ENCRYPTION_KEY env var
 
     # Email settings (for domain request notifications)
     smtp_host: str = "smtp.gmail.com"

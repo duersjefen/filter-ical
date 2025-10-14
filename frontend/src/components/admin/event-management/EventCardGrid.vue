@@ -3,6 +3,7 @@
     <!-- Events Card Grid -->
     <div
       class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 relative"
+      :class="{ 'select-none': dragSelection.dragging }"
       @mousedown="$emit('mousedown', $event)"
       @mousemove="$emit('mousemove', $event)"
       @mouseup="$emit('mouseup', $event)"

@@ -178,7 +178,7 @@ export default {
       startDragSelection,
       updateDragSelection,
       endDragSelection
-    } = useDragSelection(selectedEvents, cardRefs, () => filteredEvents.value, emit)
+    } = useDragSelection(selectedEvents, cardRefs, filteredEvents, emit)
 
     // Clear selection when search text changes
     watch(eventSearch, (newSearch, oldSearch) => {
