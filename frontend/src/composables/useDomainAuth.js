@@ -89,7 +89,7 @@ export function useDomainAuth(domain) {
 
     // Check if user is logged in first
     if (!isLoggedIn.value) {
-      return { success: false, error: 'Please log in first to set domain passwords' }
+      return { success: false, error: 'Please log in with your user account (at the top of the page) to manage domain passwords' }
     }
 
     try {
@@ -111,7 +111,7 @@ export function useDomainAuth(domain) {
 
     // Check if user is logged in first
     if (!isLoggedIn.value) {
-      return { success: false, error: 'Please log in first to set domain passwords' }
+      return { success: false, error: 'Please log in with your user account (at the top of the page) to manage domain passwords' }
     }
 
     try {
