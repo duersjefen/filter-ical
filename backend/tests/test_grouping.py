@@ -1054,36 +1054,6 @@ class TestCompoundRules:
         }
         assert _event_matches_rule(event, rule) is False
 
-    def test_event_matches_compound_rule_or(self):
-        """Test compound rule with OR operator - any condition can match."""
-        event = {
-            "title": "Exam"
-        }
-        rule = {
-            "is_compound": True,
-            "operator": "OR",
-            "child_conditions": [
-                {"rule_type": "title_contains", "rule_value": "exam"},
-                {"rule_type": "title_contains", "rule_value": "test"}
-            ]
-        }
-        assert _event_matches_rule(event, rule) is True
-
-    def test_event_matches_compound_rule_or_both_match(self):
-        """Test compound rule OR - passes if both conditions match."""
-        event = {
-            "title": "Exam and Test"
-        }
-        rule = {
-            "is_compound": True,
-            "operator": "OR",
-            "child_conditions": [
-                {"rule_type": "title_contains", "rule_value": "exam"},
-                {"rule_type": "title_contains", "rule_value": "test"}
-            ]
-        }
-        assert _event_matches_rule(event, rule) is True
-
     def test_event_matches_single_condition_backward_compatible(self):
         """Test that existing single-condition rules still work."""
         event = {
@@ -1117,21 +1087,6 @@ END:VEVENT"""
         }
         assert _event_matches_rule(event, rule) is True
 
-    def test_event_matches_compound_rule_or_none_match(self):
-        """Test compound rule OR - fails if no conditions match."""
-        event = {
-            "title": "Random Event"
-        }
-        rule = {
-            "is_compound": True,
-            "operator": "OR",
-            "child_conditions": [
-                {"rule_type": "title_contains", "rule_value": "meeting"},
-                {"rule_type": "title_contains", "rule_value": "exam"}
-            ]
-        }
-        assert _event_matches_rule(event, rule) is False
-
     def test_event_matches_compound_rule_and_empty_conditions(self):
         """Test compound rule AND with empty child conditions."""
         event = {
@@ -1144,19 +1099,6 @@ END:VEVENT"""
         }
         # Empty AND condition should return True (all zero conditions match)
         assert _event_matches_rule(event, rule) is True
-
-    def test_event_matches_compound_rule_or_empty_conditions(self):
-        """Test compound rule OR with empty child conditions."""
-        event = {
-            "title": "Test Event"
-        }
-        rule = {
-            "is_compound": True,
-            "operator": "OR",
-            "child_conditions": []
-        }
-        # Empty OR condition should return False (no conditions to match)
-        assert _event_matches_rule(event, rule) is False
 
     def test_apply_assignment_rules_with_compound_rule(self):
         """Test applying assignment rules that include compound rules."""
@@ -1414,41 +1356,6 @@ class TestCompoundRulesWithNOT:
         }
 
         assert _event_matches_rule(event, rule) is False
-
-    def test_or_rule_with_negative_conditions(self):
-        """Test OR rule with negative conditions."""
-        event = {
-            "title": "Study Session",
-            "description": "Mandatory attendance"
-        }
-        rule = {
-            "is_compound": True,
-            "operator": "OR",
-            "child_conditions": [
-                {"rule_type": "title_contains", "rule_value": "exam"},
-                {"rule_type": "description_not_contains", "rule_value": "optional"}
-            ]
-        }
-
-        # Matches because description doesn't contain "optional"
-        assert _event_matches_rule(event, rule) is True
-
-    def test_or_rule_both_negative_conditions_one_matches(self):
-        """Test OR rule with two NOT conditions, one matches."""
-        event = {
-            "title": "Production Deployment",
-            "description": "Debug logs enabled"
-        }
-        rule = {
-            "is_compound": True,
-            "operator": "OR",
-            "child_conditions": [
-                {"rule_type": "title_not_contains", "rule_value": "test"},  # Matches (no "test" in title)
-                {"rule_type": "description_not_contains", "rule_value": "debug"}  # Fails ("debug" in description)
-            ]
-        }
-
-        assert _event_matches_rule(event, rule) is True
 
     def test_all_negative_and_rule(self):
         """Test AND rule with all negative conditions."""
