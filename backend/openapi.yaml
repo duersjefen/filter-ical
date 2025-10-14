@@ -139,8 +139,9 @@ paths:
                 subscribed_event_ids:
                   type: array
                   items:
-                    type: integer
-                  example: [1, 2, 5]
+                    type: string
+                  example: ["Weekly Team Meeting", "Project Standup"]
+                  description: "Event titles to include (manual whitelist). For personal calendars, titles match those of recurring events."
                 include_future_events:
                   type: boolean
                   default: false
@@ -182,6 +183,59 @@ paths:
           description: Calendar not found
 
   /api/calendars/{calendarId}/filters/{filterId}:
+    put:
+      summary: Update filter for user calendar
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: filterId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: username
+          in: query
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Work meetings only"
+                subscribed_event_ids:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Weekly Team Meeting", "Project Standup"]
+                  description: "Event titles to include (manual whitelist)"
+                subscribed_group_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: []
+                  description: "Group IDs (not applicable to personal calendars, always empty)"
+      responses:
+        '200':
+          description: Filter updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+        '400':
+          description: Invalid input
+        '403':
+          description: Access denied
+        '404':
+          description: Filter or calendar not found
+
     delete:
       summary: Delete filter for user calendar
       parameters:
@@ -640,6 +694,65 @@ paths:
           description: Domain not found
 
   /api/domains/{domain}/filters/{filterId}:
+    put:
+      summary: Update filter for domain calendar
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filterId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: username
+          in: query
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "BCC Events + Selected Meetings"
+                subscribed_event_ids:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Special Conference", "One-time Meeting"]
+                  description: "Manual whitelist: event titles to include that are NOT in subscribed groups"
+                subscribed_group_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 3]
+                  description: "Group subscriptions: all events in these groups (including future ones)"
+                unselected_event_ids:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Daily Standup"]
+                  description: "Manual blacklist: event titles to exclude from subscribed groups"
+      responses:
+        '200':
+          description: Filter updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+        '400':
+          description: Invalid input
+        '403':
+          description: Access denied
+        '404':
+          description: Filter or domain not found
+
     delete:
       summary: Delete filter for domain calendar
       parameters:
@@ -911,9 +1024,9 @@ paths:
   /api/domains/{domain}/auth/set-admin-password:
     patch:
       summary: Set admin password for domain
-      description: Set or change admin password (requires admin JWT)
+      description: Set or change admin password (requires user login and admin access to domain)
       security:
-        - bearerAuth: []
+        - userAuth: []
       parameters:
         - name: domain
           in: path
@@ -932,7 +1045,7 @@ paths:
               properties:
                 password:
                   type: string
-                  minLength: 8
+                  minLength: 4
                   example: "new_admin_password"
       responses:
         '200':
@@ -949,14 +1062,16 @@ paths:
         '400':
           description: Invalid password format
         '401':
-          description: Unauthorized
+          description: Unauthorized - not logged in
+        '403':
+          description: Forbidden - insufficient permissions (admin access required)
 
   /api/domains/{domain}/auth/set-user-password:
     patch:
       summary: Set user password for domain
-      description: Set or change user password (requires admin JWT)
+      description: Set or change user password (requires user login and admin access to domain)
       security:
-        - bearerAuth: []
+        - userAuth: []
       parameters:
         - name: domain
           in: path
@@ -975,7 +1090,7 @@ paths:
               properties:
                 password:
                   type: string
-                  minLength: 8
+                  minLength: 4
                   example: "new_user_password"
       responses:
         '200':
@@ -992,14 +1107,16 @@ paths:
         '400':
           description: Invalid password format
         '401':
-          description: Unauthorized
+          description: Unauthorized - not logged in
+        '403':
+          description: Forbidden - insufficient permissions (admin access required)
 
   /api/domains/{domain}/auth/remove-admin-password:
     delete:
       summary: Remove admin password for domain
-      description: Remove admin password protection (requires admin JWT)
+      description: Remove admin password protection (requires user login and admin access to domain)
       security:
-        - bearerAuth: []
+        - userAuth: []
       parameters:
         - name: domain
           in: path
@@ -1020,14 +1137,16 @@ paths:
                   message:
                     type: string
         '401':
-          description: Unauthorized
+          description: Unauthorized - not logged in
+        '403':
+          description: Forbidden - insufficient permissions (admin access required)
 
   /api/domains/{domain}/auth/remove-user-password:
     delete:
       summary: Remove user password for domain
-      description: Remove user password protection (requires admin JWT)
+      description: Remove user password protection (requires user login and admin access to domain)
       security:
-        - bearerAuth: []
+        - userAuth: []
       parameters:
         - name: domain
           in: path
@@ -1048,7 +1167,9 @@ paths:
                   message:
                     type: string
         '401':
-          description: Unauthorized
+          description: Unauthorized - not logged in
+        '403':
+          description: Forbidden - insufficient permissions (admin access required)
 
   /api/domains/{domain}/auth/status:
     get:
