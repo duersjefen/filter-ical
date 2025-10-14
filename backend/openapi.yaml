@@ -614,6 +614,68 @@ paths:
                 items:
                   $ref: '#/components/schemas/AssignmentRule'
 
+  /api/domains/{domain}/assignment-rules/compound:
+    post:
+      summary: Create compound auto-assignment rule with multiple conditions (admin)
+      description: |
+        Create a rule with multiple conditions combined with AND or OR logic.
+        For example: "title contains 'Meeting' AND description contains 'Project X'"
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [operator, conditions, target_group_id]
+              properties:
+                operator:
+                  type: string
+                  enum: [AND, OR]
+                  description: "How to combine the conditions"
+                  example: "AND"
+                conditions:
+                  type: array
+                  minItems: 2
+                  description: "List of conditions to combine"
+                  items:
+                    type: object
+                    required: [rule_type, rule_value]
+                    properties:
+                      rule_type:
+                        type: string
+                        enum: [title_contains, description_contains, category_contains]
+                        example: "title_contains"
+                      rule_value:
+                        type: string
+                        example: "Meeting"
+                  example:
+                    - rule_type: "title_contains"
+                      rule_value: "Meeting"
+                    - rule_type: "description_contains"
+                      rule_value: "Project X"
+                target_group_id:
+                  type: integer
+                  description: "Group to assign matching events to"
+                  example: 1
+      responses:
+        '201':
+          description: Compound rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentRule'
+        '400':
+          description: Invalid input (e.g., less than 2 conditions, invalid operator)
+        '404':
+          description: Domain or target group not found
+
   /api/domains/{domain}/filters:
     post:
       summary: Create filter for domain calendar
@@ -2666,16 +2728,51 @@ components:
         id:
           type: integer
           example: 1
+        is_compound:
+          type: boolean
+          default: false
+          description: "True if this is a compound rule with multiple conditions"
+          example: false
+        operator:
+          type: string
+          enum: [AND, OR]
+          default: "AND"
+          description: "How to combine conditions (only used if is_compound=true)"
+          example: "AND"
+        parent_rule_id:
+          type: integer
+          nullable: true
+          description: "ID of parent rule if this is a child condition (null for top-level rules)"
+          example: null
         rule_type:
           type: string
-          enum: [title_contains, description_contains]
+          enum: [title_contains, description_contains, category_contains]
+          nullable: true
+          description: "Type of condition (null for compound parent rules)"
           example: "title_contains"
         rule_value:
           type: string
+          nullable: true
+          description: "Value to match (null for compound parent rules)"
           example: "Event"
         target_group_id:
           type: integer
+          description: "Group to assign matching events to"
           example: 1
+        child_conditions:
+          type: array
+          description: "Child conditions for compound rules (only present if is_compound=true)"
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              rule_type:
+                type: string
+                enum: [title_contains, description_contains, category_contains]
+              rule_value:
+                type: string
+          example: []
 
     Filter:
       type: object
