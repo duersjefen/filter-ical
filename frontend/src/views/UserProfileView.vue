@@ -1,24 +1,13 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-    <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
-      <div class="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 px-6 py-4 border-b-2 border-gray-100 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              My Profile
-            </h1>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-              Manage your account and domains
-            </p>
-          </div>
-          <div class="text-right">
-            <div class="text-xs text-gray-500 dark:text-gray-400">Username</div>
-            <div class="font-bold text-gray-900 dark:text-gray-100">{{ user?.username || 'Not logged in' }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Header with Language & Dark Mode -->
+    <AppHeader
+      :title="$t('profile.title')"
+      :subtitle="$t('profile.subtitle')"
+      :show-user-info="true"
+      :user="user"
+      page-context="profile"
+    />
 
     <!-- Not Logged In -->
     <div v-if="!isLoggedIn" class="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-xl p-6 text-center">
