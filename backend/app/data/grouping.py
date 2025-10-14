@@ -282,6 +282,9 @@ def _event_matches_single_condition(event: Dict[str, Any], condition: Dict[str, 
     """
     Check if event matches a single condition.
 
+    Supports both positive (contains) and negative (not_contains) matching.
+    Negative rules return True when the value is NOT found in the field.
+
     Args:
         event: Event data
         condition: Single condition data
@@ -294,17 +297,36 @@ def _event_matches_single_condition(event: Dict[str, Any], condition: Dict[str, 
     rule_type = condition.get('rule_type', '')
     rule_value = condition.get('rule_value', '').lower()
 
+    # Positive matching - title contains
     if rule_type == 'title_contains':
         title = event.get('title', '').lower()
         return rule_value in title
 
+    # Negative matching - title does NOT contain
+    elif rule_type == 'title_not_contains':
+        title = event.get('title', '').lower()
+        return rule_value not in title
+
+    # Positive matching - description contains
     elif rule_type == 'description_contains':
         description = event.get('description', '').lower()
         return rule_value in description
 
+    # Negative matching - description does NOT contain
+    elif rule_type == 'description_not_contains':
+        description = event.get('description', '').lower()
+        return rule_value not in description
+
+    # Positive matching - category contains
     elif rule_type == 'category_contains':
         categories = _extract_categories_from_raw_ical(event.get('raw_ical', ''))
         return any(rule_value in cat.lower() for cat in categories)
+
+    # Negative matching - category does NOT contain
+    elif rule_type == 'category_not_contains':
+        categories = _extract_categories_from_raw_ical(event.get('raw_ical', ''))
+        # Returns True if NO categories contain the rule_value
+        return not any(rule_value in cat.lower() for cat in categories)
 
     return False
 
@@ -601,6 +623,8 @@ def validate_assignment_rule_data(rule_type: str, rule_value: str,
     """
     Validate assignment rule creation data.
 
+    Supports both positive (contains) and negative (not_contains) rule types.
+
     Args:
         rule_type: Type of rule
         rule_value: Value to match
@@ -611,7 +635,11 @@ def validate_assignment_rule_data(rule_type: str, rule_value: str,
 
     Pure function - validation without side effects.
     """
-    valid_rule_types = ['title_contains', 'description_contains', 'category_contains']
+    valid_rule_types = [
+        'title_contains', 'title_not_contains',
+        'description_contains', 'description_not_contains',
+        'category_contains', 'category_not_contains'
+    ]
 
     if rule_type not in valid_rule_types:
         return fail(f"Rule type must be one of: {', '.join(valid_rule_types)}")

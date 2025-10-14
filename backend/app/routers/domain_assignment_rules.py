@@ -24,8 +24,16 @@ router = APIRouter()
 
 # Pydantic models for compound rule endpoint
 class CompoundRuleCondition(BaseModel):
-    """Individual condition within a compound rule."""
-    rule_type: Literal['title_contains', 'description_contains', 'category_contains']
+    """
+    Individual condition within a compound rule.
+
+    Supports both positive (contains) and negative (not_contains) matching.
+    """
+    rule_type: Literal[
+        'title_contains', 'title_not_contains',
+        'description_contains', 'description_not_contains',
+        'category_contains', 'category_not_contains'
+    ]
     rule_value: str = Field(min_length=1)
 
 

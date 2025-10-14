@@ -576,8 +576,12 @@ paths:
               properties:
                 rule_type:
                   type: string
-                  enum: [title_contains, description_contains]
+                  enum: [title_contains, title_not_contains, description_contains, description_not_contains, category_contains, category_not_contains]
                   example: "title_contains"
+                  description: |
+                    Type of condition to check:
+                    - *_contains: Matches if field contains the value (positive matching)
+                    - *_not_contains: Matches if field does NOT contain the value (negative matching)
                 rule_value:
                   type: string
                   example: "Event"
@@ -650,7 +654,7 @@ paths:
                     properties:
                       rule_type:
                         type: string
-                        enum: [title_contains, description_contains, category_contains]
+                        enum: [title_contains, title_not_contains, description_contains, description_not_contains, category_contains, category_not_contains]
                         example: "title_contains"
                       rule_value:
                         type: string
@@ -2746,9 +2750,9 @@ components:
           example: null
         rule_type:
           type: string
-          enum: [title_contains, description_contains, category_contains]
+          enum: [title_contains, title_not_contains, description_contains, description_not_contains, category_contains, category_not_contains]
           nullable: true
-          description: "Type of condition (null for compound parent rules)"
+          description: "Type of condition (null for compound parent rules). *_contains matches if field contains value, *_not_contains matches if field does NOT contain value"
           example: "title_contains"
         rule_value:
           type: string
@@ -2769,7 +2773,7 @@ components:
                 type: integer
               rule_type:
                 type: string
-                enum: [title_contains, description_contains, category_contains]
+                enum: [title_contains, title_not_contains, description_contains, description_not_contains, category_contains, category_not_contains]
               rule_value:
                 type: string
           example: []

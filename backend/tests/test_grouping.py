@@ -1259,3 +1259,355 @@ END:VEVENT"""
             ]
         }
         assert _event_matches_rule(event, rule) is False
+
+
+@pytest.mark.unit
+class TestNOTOperatorRuleMatching:
+    """Test NOT operator rule matching logic (negation)."""
+
+    def test_title_not_contains_matches_when_absent(self):
+        """Test title_not_contains returns True when value not in title."""
+        event = {"title": "Team Meeting", "description": ""}
+        rule = {"rule_type": "title_not_contains", "rule_value": "Cancelled", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_title_not_contains_fails_when_present(self):
+        """Test title_not_contains returns False when value in title."""
+        event = {"title": "Meeting Cancelled", "description": ""}
+        rule = {"rule_type": "title_not_contains", "rule_value": "Cancelled", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_title_not_contains_case_insensitive(self):
+        """Test title_not_contains is case-insensitive."""
+        event = {"title": "Team Meeting CANCELLED", "description": ""}
+        rule = {"rule_type": "title_not_contains", "rule_value": "cancelled", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_title_not_contains_partial_match(self):
+        """Test title_not_contains fails on partial string match."""
+        event = {"title": "Cancellation Policy", "description": ""}
+        rule = {"rule_type": "title_not_contains", "rule_value": "cancel", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_title_not_contains_empty_title(self):
+        """Test title_not_contains on empty title returns True."""
+        event = {"title": "", "description": ""}
+        rule = {"rule_type": "title_not_contains", "rule_value": "meeting", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_description_not_contains_matches_when_absent(self):
+        """Test description_not_contains returns True when value not in description."""
+        event = {"title": "Meeting", "description": "Regular weekly sync"}
+        rule = {"rule_type": "description_not_contains", "rule_value": "optional", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_description_not_contains_fails_when_present(self):
+        """Test description_not_contains returns False when value in description."""
+        event = {"title": "Meeting", "description": "This is optional"}
+        rule = {"rule_type": "description_not_contains", "rule_value": "optional", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_description_not_contains_case_insensitive(self):
+        """Test description_not_contains is case-insensitive."""
+        event = {"title": "Event", "description": "OPTIONAL attendance"}
+        rule = {"rule_type": "description_not_contains", "rule_value": "optional", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_description_not_contains_empty_description(self):
+        """Test description_not_contains on empty description returns True."""
+        event = {"title": "Event", "description": ""}
+        rule = {"rule_type": "description_not_contains", "rule_value": "test", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_category_not_contains_matches_when_absent(self):
+        """Test category_not_contains returns True when value not in any category."""
+        event = {
+            "title": "Event",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Event
+CATEGORY:Work
+CATEGORY:Important
+END:VEVENT"""
+        }
+        rule = {"rule_type": "category_not_contains", "rule_value": "personal", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_category_not_contains_fails_when_present(self):
+        """Test category_not_contains returns False when value in any category."""
+        event = {
+            "title": "Event",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Event
+CATEGORY:Work
+CATEGORY:Personal
+END:VEVENT"""
+        }
+        rule = {"rule_type": "category_not_contains", "rule_value": "personal", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_category_not_contains_no_categories(self):
+        """Test category_not_contains returns True when event has no categories."""
+        event = {"title": "Event", "raw_ical": "BEGIN:VEVENT\nSUMMARY:Event\nEND:VEVENT"}
+        rule = {"rule_type": "category_not_contains", "rule_value": "work", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_category_not_contains_case_insensitive(self):
+        """Test category_not_contains is case-insensitive."""
+        event = {
+            "title": "Event",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Event
+CATEGORY:PERSONAL
+END:VEVENT"""
+        }
+        rule = {"rule_type": "category_not_contains", "rule_value": "personal", "target_group_id": 1}
+
+        assert _event_matches_rule(event, rule) is False
+
+
+@pytest.mark.unit
+class TestCompoundRulesWithNOT:
+    """Test compound rules combining positive and negative conditions."""
+
+    def test_and_rule_with_positive_and_negative(self):
+        """Test AND rule: title_contains AND description_not_contains."""
+        event = {
+            "title": "Team Meeting",
+            "description": "Weekly sync"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "description_not_contains", "rule_value": "cancelled"}
+            ]
+        }
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_and_rule_negative_condition_fails(self):
+        """Test AND rule fails when negative condition not met."""
+        event = {
+            "title": "Team Meeting",
+            "description": "Meeting cancelled"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "description_not_contains", "rule_value": "cancelled"}
+            ]
+        }
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_or_rule_with_negative_conditions(self):
+        """Test OR rule with negative conditions."""
+        event = {
+            "title": "Study Session",
+            "description": "Mandatory attendance"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "OR",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "exam"},
+                {"rule_type": "description_not_contains", "rule_value": "optional"}
+            ]
+        }
+
+        # Matches because description doesn't contain "optional"
+        assert _event_matches_rule(event, rule) is True
+
+    def test_or_rule_both_negative_conditions_one_matches(self):
+        """Test OR rule with two NOT conditions, one matches."""
+        event = {
+            "title": "Production Deployment",
+            "description": "Debug logs enabled"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "OR",
+            "child_conditions": [
+                {"rule_type": "title_not_contains", "rule_value": "test"},  # Matches (no "test" in title)
+                {"rule_type": "description_not_contains", "rule_value": "debug"}  # Fails ("debug" in description)
+            ]
+        }
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_all_negative_and_rule(self):
+        """Test AND rule with all negative conditions."""
+        event = {
+            "title": "Production Deployment",
+            "description": "Live system update"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_not_contains", "rule_value": "test"},
+                {"rule_type": "description_not_contains", "rule_value": "debug"}
+            ]
+        }
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_all_negative_and_rule_fails_one(self):
+        """Test AND rule with all negative conditions fails if one present."""
+        event = {
+            "title": "Test Deployment",
+            "description": "Live system update"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_not_contains", "rule_value": "test"},  # Fails
+                {"rule_type": "description_not_contains", "rule_value": "debug"}  # Matches
+            ]
+        }
+
+        assert _event_matches_rule(event, rule) is False
+
+    def test_complex_compound_rule_mixed_conditions(self):
+        """Test complex compound rule with mixed positive and negative conditions."""
+        event = {
+            "title": "Emergency Meeting",
+            "description": "Urgent response required",
+            "raw_ical": """BEGIN:VEVENT
+SUMMARY:Emergency Meeting
+CATEGORY:Critical
+END:VEVENT"""
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "AND",
+            "child_conditions": [
+                {"rule_type": "title_contains", "rule_value": "meeting"},
+                {"rule_type": "description_not_contains", "rule_value": "cancelled"},
+                {"rule_type": "category_contains", "rule_value": "critical"}
+            ]
+        }
+
+        assert _event_matches_rule(event, rule) is True
+
+    def test_compound_or_all_negative_conditions_all_match(self):
+        """Test OR rule where all negative conditions match."""
+        event = {
+            "title": "Regular Event",
+            "description": "Standard procedure"
+        }
+        rule = {
+            "is_compound": True,
+            "operator": "OR",
+            "child_conditions": [
+                {"rule_type": "title_not_contains", "rule_value": "test"},
+                {"rule_type": "description_not_contains", "rule_value": "debug"}
+            ]
+        }
+
+        # Both conditions match (no "test" or "debug")
+        assert _event_matches_rule(event, rule) is True
+
+
+@pytest.mark.unit
+class TestApplyAssignmentRulesWithNOT:
+    """Test apply_assignment_rules function with NOT operators."""
+
+    def test_apply_negative_title_rule(self):
+        """Test applying title_not_contains rule."""
+        events = [
+            {"title": "Production Meeting", "description": ""},
+            {"title": "Test Meeting", "description": ""},
+            {"title": "Team Sync", "description": ""}
+        ]
+        rules = [
+            {
+                "rule_type": "title_not_contains",
+                "rule_value": "test",
+                "target_group_id": 1
+            }
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # Should match events without "test" in title
+        # apply_assignment_rules returns Dict[int, List[str]] (event titles)
+        assert 1 in result
+        assert len(result[1]) == 2
+        assert "Production Meeting" in result[1]
+        assert "Team Sync" in result[1]
+        assert "Test Meeting" not in result[1]
+
+    def test_apply_compound_rule_with_not(self):
+        """Test applying compound rule with negative condition."""
+        events = [
+            {"title": "Meeting A", "description": "Important meeting"},
+            {"title": "Meeting B", "description": "Meeting cancelled"},
+            {"title": "Project Review", "description": "Important"}
+        ]
+        rules = [
+            {
+                "is_compound": True,
+                "operator": "AND",
+                "target_group_id": 2,
+                "child_conditions": [
+                    {"rule_type": "title_contains", "rule_value": "meeting"},
+                    {"rule_type": "description_not_contains", "rule_value": "cancelled"}
+                ]
+            }
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # Should only match Meeting A (has "meeting" and not "cancelled")
+        # apply_assignment_rules returns Dict[int, List[str]] (event titles)
+        assert 2 in result
+        assert len(result[2]) == 1
+        assert result[2][0] == "Meeting A"
+
+    def test_negative_rule_precedence(self):
+        """Test that first matching negative rule wins."""
+        events = [
+            {"title": "Regular Event", "description": ""},
+            {"title": "Test Event", "description": ""}
+        ]
+        rules = [
+            {
+                "rule_type": "title_not_contains",
+                "rule_value": "test",
+                "target_group_id": 1
+            },
+            {
+                "rule_type": "title_contains",
+                "rule_value": "event",
+                "target_group_id": 2
+            }
+        ]
+
+        result = apply_assignment_rules(events, rules)
+
+        # "Regular Event" matches first rule (not_contains "test")
+        # "Test Event" matches second rule (first rule fails)
+        # apply_assignment_rules returns Dict[int, List[str]] (event titles)
+        assert 1 in result
+        assert len(result[1]) == 1
+        assert result[1][0] == "Regular Event"
+        assert 2 in result
+        assert len(result[2]) == 1
+        assert result[2][0] == "Test Event"

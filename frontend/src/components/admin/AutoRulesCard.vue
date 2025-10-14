@@ -166,7 +166,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
         <div class="flex items-center gap-4">
           <div class="text-sm text-gray-600 dark:text-gray-400">
-            <span v-if="newRule.rule_type && newRule.rule_value.trim()" class="flex items-center gap-2">
+            <span v-if="isPreviewReady" class="flex items-center gap-2">
               <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse-green"></span>
               <span class="font-medium text-green-700 dark:text-green-300">{{ getLiveMatchingEvents(newRule).length }} events match</span>
               <span v-if="getLiveMatchingEvents(newRule).filter(e => e.willChange).length > 0" class="text-blue-600 dark:text-blue-400">
@@ -181,7 +181,7 @@
         </div>
         <div class="flex items-center gap-3">
           <button
-            v-if="newRule.rule_type || newRule.rule_value || newRule.target_group_id"
+            v-if="newRule.conditions.some(c => c.rule_value.trim()) || newRule.target_group_id"
             @click="resetForm"
             class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-all duration-200 text-sm"
           >
@@ -200,9 +200,9 @@
           </button>
         </div>
       </div>
-      
+
       <!-- Live Preview (Enhanced Design) -->
-      <div v-if="newRule.rule_type && newRule.rule_value.trim()" class="border-t border-gray-200 dark:border-gray-600 pt-4">
+      <div v-if="isPreviewReady" class="border-t border-gray-200 dark:border-gray-600 pt-4">
         <div class="flex items-center justify-between mb-3">
           <h4 class="font-medium text-gray-900 dark:text-white flex items-center gap-2">
             <span class="text-lg">🔍</span>
@@ -618,10 +618,18 @@ export default {
         return newRule.value.conditions.every(c => c.rule_type && c.rule_value.trim()) &&
                newRule.value.target_group_id
       } else {
-        return newRule.value.rule_type &&
-               newRule.value.rule_value.trim() &&
+        return newRule.value.conditions[0].rule_type &&
+               newRule.value.conditions[0].rule_value.trim() &&
                newRule.value.target_group_id
       }
+    })
+
+    // Check if preview should be shown (at least one condition filled)
+    const isPreviewReady = computed(() => {
+      const hasFilledCondition = newRule.value.conditions.some(c =>
+        c.rule_type && c.rule_value && c.rule_value.trim()
+      )
+      return hasFilledCondition && newRule.value.target_group_id
     })
     
     // Debounced preview update (simple implementation)
@@ -1020,6 +1028,7 @@ export default {
       expandedRules,
       ruleTypes,
       isFormValid,
+      isPreviewReady,
       toggleRuleDropdown,
       addCondition,
       removeCondition,
