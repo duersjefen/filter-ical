@@ -98,9 +98,10 @@ def test_db_engine():
     Base.metadata.create_all(bind=engine)
     
     yield engine
-    
+
     # Cleanup
     Base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
 
 # Removed test_db_session - test_client now uses test_db_engine directly
