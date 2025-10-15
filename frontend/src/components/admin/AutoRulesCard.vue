@@ -20,73 +20,72 @@
       </div>
       
       <div class="space-y-6">
-        <!-- Single Condition / First Condition -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Rule Type (Pill Buttons) -->
-          <div class="space-y-3">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ newRule.is_compound ? 'Condition 1 - Field' : 'Field' }}
+        <!-- Single Condition / First Condition - Horizontal Compact Layout -->
+        <div class="flex flex-wrap items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border-2 border-gray-200 dark:border-gray-700">
+          <!-- Field Pills -->
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+              Field
             </label>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex gap-1.5">
               <button
                 v-for="fieldType in fieldTypes"
                 :key="fieldType.value"
                 @click="setConditionField(0, fieldType.value)"
                 :class="[
-                  'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                  'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                   getConditionField(0) === fieldType.value
-                    ? 'bg-blue-500 text-white border-blue-500 shadow-md'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:scale-105'
                 ]"
+                :title="fieldType.label"
               >
-                <span>{{ fieldType.icon }}</span>
-                <span>{{ fieldType.label }}</span>
+                <span class="text-lg">{{ fieldType.icon }}</span>
               </button>
             </div>
+          </div>
 
-            <!-- Operator Pills (Contains / Not Contains) -->
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-4">
-              {{ newRule.is_compound ? 'Condition 1 - Operator' : 'Operator' }}
+          <!-- Operator Pills -->
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+              Operator
             </label>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex gap-1.5">
               <button
                 v-for="operator in operators"
                 :key="operator.value"
                 @click="setConditionOperator(0, operator.value)"
                 :class="[
-                  'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                  'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                   getConditionOperator(0) === operator.value
-                    ? 'bg-green-500 text-white border-green-500 shadow-md'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                    ? 'bg-green-500 text-white border-green-500 shadow-md scale-105'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-green-400 hover:scale-105'
                 ]"
+                :title="operator.label"
               >
-                <span>{{ operator.icon }}</span>
-                <span>{{ operator.label }}</span>
+                <span class="text-lg">{{ operator.icon }}</span>
               </button>
             </div>
           </div>
 
-          <!-- Rule Value -->
-          <div class="space-y-3">
-            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              <span class="flex items-center gap-2">
-                <span class="text-green-600 dark:text-green-400">🔍</span>
-                {{ $t('domainAdmin.searchValue') }}
-              </span>
+          <!-- Search Value Input -->
+          <div class="flex-1 min-w-[200px] flex flex-col gap-2">
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+              🔍 Search Value
             </label>
             <div class="relative">
               <input
                 v-model="newRule.conditions[0].rule_value"
                 type="text"
                 :placeholder="getRulePlaceholder(newRule.conditions[0].rule_type)"
-                class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 @keyup.enter="createRule"
                 @input="debouncedUpdatePreview"
               />
               <button
                 v-if="newRule.conditions.length > 1"
                 @click="removeCondition(0)"
-                class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs transition-all duration-200"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs transition-all"
                 title="Remove condition"
               >
                 ✕
@@ -94,17 +93,14 @@
             </div>
           </div>
 
-          <!-- Target Group (only show on first row if not compound, or keep consistent) -->
-          <div class="space-y-3">
-            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              <span class="flex items-center gap-2">
-                <span class="text-purple-600 dark:text-purple-400">📁</span>
-                {{ $t('domainAdmin.targetGroup') }}
-              </span>
+          <!-- Target Group Dropdown -->
+          <div class="w-full sm:w-auto sm:min-w-[200px] flex flex-col gap-2">
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+              📁 Target Group
             </label>
             <select
               v-model="newRule.target_group_id"
-              class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+              class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all cursor-pointer"
             >
               <option value="" disabled>{{ $t('messages.selectTargetGroup') }}</option>
               <option v-for="group in groups" :key="group.id" :value="group.id">
@@ -114,91 +110,88 @@
           </div>
         </div>
 
-        <!-- Additional Conditions (for compound rules) -->
-        <div v-if="newRule.conditions.length > 1" class="space-y-4">
+        <!-- Additional Conditions (for compound rules) - Horizontal Compact Layout -->
+        <div v-if="newRule.conditions.length > 1" class="space-y-3">
           <div
             v-for="(condition, index) in newRule.conditions.slice(1)"
             :key="index"
-            class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800"
+            class="flex flex-wrap items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border-2 border-blue-200 dark:border-blue-700 relative"
           >
-            <!-- Field and Operator Pills -->
-            <div class="space-y-3">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="text-sm font-bold text-blue-600 dark:text-blue-400 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  {{ newRule.operator }}
-                </span>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Condition {{ index + 2 }} - Field
-                </label>
-              </div>
+            <!-- AND Badge -->
+            <div class="absolute -top-3 left-4">
+              <span class="inline-flex items-center px-3 py-1 text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/50 rounded-full border-2 border-blue-300 dark:border-blue-600">
+                {{ newRule.operator }}
+              </span>
+            </div>
 
-              <div class="flex flex-wrap gap-2">
+            <!-- Field Pills -->
+            <div class="flex flex-col gap-2 mt-2">
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                Field
+              </label>
+              <div class="flex gap-1.5">
                 <button
                   v-for="fieldType in fieldTypes"
                   :key="fieldType.value"
                   @click="setConditionField(index + 1, fieldType.value)"
                   :class="[
-                    'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                     getConditionField(index + 1) === fieldType.value
-                      ? 'bg-blue-500 text-white border-blue-500 shadow-md'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                      ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:scale-105'
                   ]"
+                  :title="fieldType.label"
                 >
-                  <span>{{ fieldType.icon }}</span>
-                  <span>{{ fieldType.label }}</span>
+                  <span class="text-lg">{{ fieldType.icon }}</span>
                 </button>
               </div>
+            </div>
 
-              <!-- Operator Pills -->
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-4">
-                Condition {{ index + 2 }} - Operator
+            <!-- Operator Pills -->
+            <div class="flex flex-col gap-2 mt-2">
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                Operator
               </label>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex gap-1.5">
                 <button
                   v-for="operator in operators"
                   :key="operator.value"
                   @click="setConditionOperator(index + 1, operator.value)"
                   :class="[
-                    'px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 border-2',
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                     getConditionOperator(index + 1) === operator.value
-                      ? 'bg-green-500 text-white border-green-500 shadow-md'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                      ? 'bg-green-500 text-white border-green-500 shadow-md scale-105'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-green-400 hover:scale-105'
                   ]"
+                  :title="operator.label"
                 >
-                  <span>{{ operator.icon }}</span>
-                  <span>{{ operator.label }}</span>
+                  <span class="text-lg">{{ operator.icon }}</span>
                 </button>
               </div>
             </div>
 
-            <!-- Condition Value -->
-            <div class="space-y-3">
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                <span class="flex items-center gap-2">
-                  <span class="text-green-600 dark:text-green-400">🔍</span>
-                  Search Value
-                </span>
+            <!-- Search Value Input -->
+            <div class="flex-1 min-w-[200px] flex flex-col gap-2 mt-2">
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                🔍 Search Value
               </label>
               <div class="relative">
                 <input
                   v-model="condition.rule_value"
                   type="text"
                   :placeholder="getRulePlaceholder(condition.rule_type)"
-                  class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                  class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                   @input="debouncedUpdatePreview"
                 />
                 <button
                   @click="removeCondition(index + 1)"
-                  class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs transition-all duration-200"
+                  class="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs transition-all"
                   title="Remove condition"
                 >
                   ✕
                 </button>
               </div>
             </div>
-
-            <!-- Empty space for alignment -->
-            <div></div>
           </div>
         </div>
 
@@ -690,10 +683,9 @@ export default {
 
     // Check if preview should be shown (at least one condition filled)
     const isPreviewReady = computed(() => {
-      const hasFilledCondition = newRule.value.conditions.some(c =>
+      return newRule.value.conditions.some(c =>
         c.rule_type && c.rule_value && c.rule_value.trim()
       )
-      return hasFilledCondition && newRule.value.target_group_id
     })
     
     // Debounced preview update (simple implementation)

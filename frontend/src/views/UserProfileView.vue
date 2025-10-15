@@ -2,21 +2,21 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
     <!-- Header with Language & Dark Mode -->
     <AppHeader
-      :title="$t('profile.title')"
-      :subtitle="$t('profile.subtitle')"
+      :title="t('profile.title')"
+      :subtitle="t('profile.subtitle')"
       page-context="profile"
     />
 
     <!-- Not Logged In -->
     <div v-if="!isLoggedIn" class="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-xl p-6 text-center">
       <p class="text-yellow-900 dark:text-yellow-200 font-semibold">
-        {{ $t('profile.notLoggedIn.warning') }}
+        {{ t('profile.notLoggedIn.warning') }}
       </p>
       <button
         @click="$router.push('/login')"
         class="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-xl font-semibold transition"
       >
-        {{ $t('profile.notLoggedIn.loginButton') }}
+        {{ t('profile.notLoggedIn.loginButton') }}
       </button>
     </div>
 
@@ -32,8 +32,8 @@
               </svg>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-white">{{ $t('profile.account.title') }}</h2>
-              <p class="text-xs text-purple-100">{{ $t('profile.account.subtitle') }}</p>
+              <h2 class="text-lg font-bold text-white">{{ t('profile.account.title') }}</h2>
+              <p class="text-xs text-purple-100">{{ t('profile.account.subtitle') }}</p>
             </div>
           </div>
         </div>
@@ -42,20 +42,20 @@
           <!-- Email -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              {{ user?.email ? $t('profile.account.email.labelUpdate') : $t('profile.account.email.labelAdd') }}
+              {{ user?.email ? t('profile.account.email.labelUpdate') : t('profile.account.email.labelAdd') }}
             </label>
             <input
               v-model="form.email"
               type="email"
               class="w-full px-4 py-2 border-2 rounded-lg"
               :class="emailError ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'"
-              :placeholder="user?.email || $t('profile.account.email.placeholder')"
+              :placeholder="user?.email || t('profile.account.email.placeholder')"
             />
             <p v-if="emailError" class="text-xs text-red-600 dark:text-red-400 font-semibold mt-1">
               {{ emailError }}
             </p>
             <p v-else class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {{ user?.email ? `${$t('profile.account.email.currentPrefix')} ${user.email}` : $t('profile.account.email.helpText') }}
+              {{ user?.email ? `${t('profile.account.email.currentPrefix')} ${user.email}` : t('profile.account.email.helpText') }}
             </p>
           </div>
 
@@ -64,7 +64,7 @@
             <!-- New Password -->
             <div>
               <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {{ user?.has_password ? $t('profile.account.password.labelChange') : $t('profile.account.password.labelAdd') }}
+                {{ user?.has_password ? t('profile.account.password.labelChange') : t('profile.account.password.labelAdd') }}
                 <span v-if="form.email && !user?.email" class="text-red-600 dark:text-red-400">*</span>
               </label>
               <input
@@ -85,7 +85,7 @@
             <!-- Confirm Password (only show when setting new password) -->
             <div v-if="form.newPassword">
               <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {{ $t('profile.account.password.confirmLabel') }}
+                {{ t('profile.account.password.confirmLabel') }}
                 <span class="text-red-600 dark:text-red-400">*</span>
               </label>
               <input
@@ -93,7 +93,7 @@
                 type="password"
                 class="w-full px-4 py-2 border-2 rounded-lg"
                 :class="confirmPasswordError ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'"
-                :placeholder="$t('profile.account.password.confirmPlaceholder')"
+                :placeholder="t('profile.account.password.confirmPlaceholder')"
               />
               <p v-if="confirmPasswordError" class="text-xs text-red-600 dark:text-red-400 font-semibold mt-1">
                 {{ confirmPasswordError }}
@@ -103,7 +103,7 @@
             <!-- Current Password (only show when changing existing password) -->
             <div v-if="user?.has_password && form.newPassword">
               <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {{ $t('profile.account.password.currentLabel') }}
+                {{ t('profile.account.password.currentLabel') }}
                 <span class="text-red-600 dark:text-red-400">*</span>
               </label>
               <input
@@ -111,7 +111,7 @@
                 type="password"
                 class="w-full px-4 py-2 border-2 rounded-lg"
                 :class="currentPasswordError ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'"
-                :placeholder="$t('profile.account.password.currentPlaceholder')"
+                :placeholder="t('profile.account.password.currentPlaceholder')"
               />
               <p v-if="currentPasswordError" class="text-xs text-red-600 dark:text-red-400 font-semibold mt-1">
                 {{ currentPasswordError }}
@@ -126,7 +126,7 @@
               :disabled="!canSaveAccount"
               class="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition"
             >
-              {{ updatingAccount ? $t('profile.account.saveButton.saving') : (user?.email || user?.has_password ? $t('profile.account.saveButton.update') : $t('profile.account.saveButton.save')) }}
+              {{ updatingAccount ? t('profile.account.saveButton.saving') : (user?.email || user?.has_password ? t('profile.account.saveButton.update') : t('profile.account.saveButton.save')) }}
             </button>
           </div>
         </div>
@@ -143,10 +143,10 @@
             </div>
             <div class="flex-1">
               <h2 class="text-lg font-bold text-white">
-                {{ $t('profile.activeDomains.title', { count: activeDomains.length }) }}
+                {{ t('profile.activeDomains.title', { count: activeDomains.length }) }}
               </h2>
               <p class="text-xs text-indigo-100">
-                {{ $t('profile.activeDomains.subtitle') }}
+                {{ t('profile.activeDomains.subtitle') }}
               </p>
             </div>
           </div>
@@ -154,8 +154,8 @@
 
         <div class="p-6">
           <div v-if="activeDomains.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <p>{{ $t('profile.activeDomains.emptyMessage') }}</p>
-            <p class="text-sm mt-2">{{ $t('profile.activeDomains.emptyHelp') }}</p>
+            <p>{{ t('profile.activeDomains.emptyMessage') }}</p>
+            <p class="text-sm mt-2">{{ t('profile.activeDomains.emptyHelp') }}</p>
           </div>
 
           <div v-else class="space-y-3">
@@ -176,7 +176,7 @@
                 <button
                   @click="domain.access_level === 'admin' ? goToDomainAdmin(domain.domain_key) : goToDomain(domain.domain_key)"
                   class="p-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-800/50 rounded-lg transition-colors"
-                  :title="domain.access_level === 'admin' ? $t('profile.activeDomains.manageButton') : $t('profile.activeDomains.viewButton')"
+                  :title="domain.access_level === 'admin' ? t('profile.activeDomains.manageButton') : t('profile.activeDomains.viewButton')"
                 >
                   <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -190,16 +190,16 @@
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    {{ $t('profile.activeDomains.filterCount', domain.filter_count) }}
+                    {{ t('profile.activeDomains.filterCount', domain.filter_count) }}
                   </span>
                   <span v-if="domain.access_level === 'admin'" class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 font-semibold">
-                    {{ $t('profile.activeDomains.adminAccess') }}
+                    {{ t('profile.activeDomains.adminAccess') }}
                   </span>
                   <span v-else-if="domain.access_level === 'user'" class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-semibold">
-                    {{ $t('profile.activeDomains.userAccess') }}
+                    {{ t('profile.activeDomains.userAccess') }}
                   </span>
                   <span v-if="domain.unlocked_at" class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ $t('profile.activeDomains.unlocked', { date: new Date(domain.unlocked_at).toLocaleDateString() }) }}
+                    {{ t('profile.activeDomains.unlocked', { date: new Date(domain.unlocked_at).toLocaleDateString() }) }}
                   </span>
                 </div>
               </div>
@@ -219,21 +219,21 @@
             </div>
             <div>
               <h2 class="text-lg font-bold text-white">
-                {{ $t('profile.ownedDomains.title', { count: ownedDomains.length }) }}
+                {{ t('profile.ownedDomains.title', { count: ownedDomains.length }) }}
               </h2>
-              <p class="text-xs text-green-100">{{ $t('profile.ownedDomains.subtitle') }}</p>
+              <p class="text-xs text-green-100">{{ t('profile.ownedDomains.subtitle') }}</p>
             </div>
           </div>
         </div>
 
         <div class="p-6">
           <div v-if="loading" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            {{ $t('profile.ownedDomains.loading') }}
+            {{ t('profile.ownedDomains.loading') }}
           </div>
 
           <div v-else-if="ownedDomains.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <p>{{ $t('profile.ownedDomains.emptyMessage') }}</p>
-            <p class="text-sm mt-2">{{ $t('profile.ownedDomains.emptyHelp') }}</p>
+            <p>{{ t('profile.ownedDomains.emptyMessage') }}</p>
+            <p class="text-sm mt-2">{{ t('profile.ownedDomains.emptyHelp') }}</p>
           </div>
 
           <div v-else class="space-y-3">
@@ -255,7 +255,7 @@
                   <button
                     @click="togglePasswordManagement(domain.domain_key)"
                     class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    :title="showingPasswords === domain.domain_key ? $t('profile.ownedDomains.hidePasswords') : $t('profile.ownedDomains.managePasswords')"
+                    :title="showingPasswords === domain.domain_key ? t('profile.ownedDomains.hidePasswords') : t('profile.ownedDomains.managePasswords')"
                   >
                     <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
@@ -264,7 +264,7 @@
                   <button
                     @click="toggleAdminManagement(domain.domain_key)"
                     class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    :title="showingAdmins === domain.domain_key ? $t('profile.ownedDomains.hideAdmins') : $t('profile.ownedDomains.manageAdmins')"
+                    :title="showingAdmins === domain.domain_key ? t('profile.ownedDomains.hideAdmins') : t('profile.ownedDomains.manageAdmins')"
                   >
                     <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -273,7 +273,7 @@
                   <button
                     @click="goToDomain(domain.domain_key)"
                     class="p-2 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-800/50 rounded-lg transition-colors"
-                    :title="$t('profile.ownedDomains.viewDomain')"
+                    :title="t('profile.ownedDomains.viewDomain')"
                   >
                     <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -284,16 +284,16 @@
 
               <!-- Password Management -->
               <div v-if="showingPasswords === domain.domain_key" class="p-4">
-                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ $t('profile.passwords.sectionTitle') }}</h4>
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ t('profile.passwords.sectionTitle') }}</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <!-- Admin Password -->
                   <div class="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border-2 border-purple-200 dark:border-purple-700">
-                    <h5 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">{{ $t('profile.passwords.admin.title') }}</h5>
+                    <h5 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">{{ t('profile.passwords.admin.title') }}</h5>
                     <div class="relative mb-2">
                       <input
                         v-model="passwordForms[domain.domain_key].adminPassword"
                         :type="showAdminPassword ? 'text' : 'password'"
-                        :placeholder="$t('profile.passwords.admin.placeholder')"
+                        :placeholder="t('profile.passwords.admin.placeholder')"
                         class="w-full px-3 py-2 pr-12 border-2 border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
                       />
                       <button
@@ -301,7 +301,7 @@
                         type="button"
                         @click="showAdminPassword = !showAdminPassword"
                         class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                        :title="showAdminPassword ? $t('profile.passwords.admin.hideButton') : $t('profile.passwords.admin.showButton')"
+                        :title="showAdminPassword ? t('profile.passwords.admin.hideButton') : t('profile.passwords.admin.showButton')"
                       >
                         <svg v-if="showAdminPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
@@ -317,18 +317,18 @@
                       :disabled="!passwordForms[domain.domain_key]?.adminPassword || passwordForms[domain.domain_key]?.adminPassword.length < 4 || settingPassword"
                       class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm font-semibold transition"
                     >
-                      {{ settingPassword ? $t('profile.passwords.admin.setting') : $t('profile.passwords.admin.setButton') }}
+                      {{ settingPassword ? t('profile.passwords.admin.setting') : t('profile.passwords.admin.setButton') }}
                     </button>
                   </div>
 
                   <!-- User Password -->
                   <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border-2 border-blue-200 dark:border-blue-700">
-                    <h5 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">{{ $t('profile.passwords.user.title') }}</h5>
+                    <h5 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">{{ t('profile.passwords.user.title') }}</h5>
                     <div class="relative mb-2">
                       <input
                         v-model="passwordForms[domain.domain_key].userPassword"
                         :type="showUserPassword ? 'text' : 'password'"
-                        :placeholder="$t('profile.passwords.user.placeholder')"
+                        :placeholder="t('profile.passwords.user.placeholder')"
                         class="w-full px-3 py-2 pr-12 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
                       />
                       <button
@@ -336,7 +336,7 @@
                         type="button"
                         @click="showUserPassword = !showUserPassword"
                         class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                        :title="showUserPassword ? $t('profile.passwords.user.hideButton') : $t('profile.passwords.user.showButton')"
+                        :title="showUserPassword ? t('profile.passwords.user.hideButton') : t('profile.passwords.user.showButton')"
                       >
                         <svg v-if="showUserPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
@@ -352,7 +352,7 @@
                       :disabled="!passwordForms[domain.domain_key]?.userPassword || passwordForms[domain.domain_key]?.userPassword.length < 4 || settingPassword"
                       class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm font-semibold transition"
                     >
-                      {{ settingPassword ? $t('profile.passwords.user.setting') : $t('profile.passwords.user.setButton') }}
+                      {{ settingPassword ? t('profile.passwords.user.setting') : t('profile.passwords.user.setButton') }}
                     </button>
                   </div>
                 </div>
@@ -360,10 +360,10 @@
 
               <!-- Admin Management -->
               <div v-if="showingAdmins === domain.domain_key" class="p-4 border-t-2 border-gray-200 dark:border-gray-700">
-                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ $t('profile.admins.sectionTitle') }}</h4>
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ t('profile.admins.sectionTitle') }}</h4>
 
                 <div v-if="loadingAdmins" class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ $t('profile.admins.loading') }}
+                  {{ t('profile.admins.loading') }}
                 </div>
 
                 <div v-else-if="domainAdmins[domain.domain_key]" class="space-y-2">
@@ -381,12 +381,12 @@
                       :disabled="removingAdmin"
                       class="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-3 py-1 rounded-lg text-sm font-semibold transition"
                     >
-                      {{ $t('profile.admins.removeButton') }}
+                      {{ t('profile.admins.removeButton') }}
                     </button>
                   </div>
 
                   <div v-if="domainAdmins[domain.domain_key].length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    {{ $t('profile.admins.emptyMessage') }}
+                    {{ t('profile.admins.emptyMessage') }}
                   </div>
                 </div>
 
@@ -394,7 +394,7 @@
                   <input
                     v-model="newAdminUsername"
                     type="text"
-                    :placeholder="$t('profile.admins.addPlaceholder')"
+                    :placeholder="t('profile.admins.addPlaceholder')"
                     class="flex-1 px-3 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm"
                     @keyup.enter="addAdmin(domain.domain_key)"
                   />
@@ -403,7 +403,7 @@
                     :disabled="!newAdminUsername || addingAdmin"
                     class="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                   >
-                    {{ $t('profile.admins.addButton') }}
+                    {{ t('profile.admins.addButton') }}
                   </button>
                 </div>
               </div>
@@ -426,7 +426,7 @@ import { useValidation } from '../composables/useValidation'
 import AppHeader from '../components/shared/AppHeader.vue'
 
 const router = useRouter()
-const { t: $t } = useI18n()
+const { t } = useI18n()
 const { user, isLoggedIn, fetchCurrentUser } = useAuth()
 const { get, post, del, patch } = useHTTP()
 const notify = useNotification()
@@ -467,7 +467,7 @@ const emailError = computed(() => {
   const emailValue = form.value.email.trim()
   if (!emailValue) return ''
   if (!isValidEmail(emailValue)) {
-    return $t('profile.account.email.invalidFormat')
+    return t('profile.account.email.invalidFormat')
   }
   return ''
 })
@@ -475,7 +475,7 @@ const emailError = computed(() => {
 const passwordError = computed(() => {
   if (!form.value.newPassword) return ''
   if (!isValidPassword(form.value.newPassword, 4)) {
-    return $t('profile.account.password.minLength')
+    return t('profile.account.password.minLength')
   }
   return ''
 })
@@ -483,7 +483,7 @@ const passwordError = computed(() => {
 const confirmPasswordError = computed(() => {
   if (!form.value.newPassword || !form.value.confirmPassword) return ''
   if (form.value.newPassword !== form.value.confirmPassword) {
-    return $t('profile.account.password.mismatch')
+    return t('profile.account.password.mismatch')
   }
   return ''
 })
@@ -493,7 +493,7 @@ const passwordEmailError = computed(() => {
   const emailValue = form.value.email.trim()
   const effectiveEmail = emailValue || user.value?.email
   if (!effectiveEmail || !effectiveEmail.trim()) {
-    return $t('profile.account.password.warningAddEmailFirst')
+    return t('profile.account.password.warningAddEmailFirst')
   }
   return ''
 })
@@ -502,17 +502,17 @@ const currentPasswordError = computed(() => {
   if (!form.value.newPassword) return ''
   if (!user.value?.has_password) return ''
   if (form.value.currentPassword) return ''
-  return $t('profile.account.password.currentPlaceholder')
+  return t('profile.account.password.currentPlaceholder')
 })
 
 const passwordPlaceholder = computed(() => {
   if (form.value.email && !user.value?.email) {
-    return $t('profile.account.password.placeholderRequired')
+    return t('profile.account.password.placeholderRequired')
   }
   if (user.value?.has_password) {
-    return $t('profile.account.password.placeholderKeepCurrent')
+    return t('profile.account.password.placeholderKeepCurrent')
   }
-  return $t('profile.account.password.placeholderOptional')
+  return t('profile.account.password.placeholderOptional')
 })
 
 // Form validation
@@ -590,7 +590,7 @@ const updateAccount = async () => {
   }
 
   if (Object.keys(payload).length === 0) {
-    notify.warning($t('profile.account.messages.noChanges'))
+    notify.warning(t('profile.account.messages.noChanges'))
     updatingAccount.value = false
     return
   }
@@ -598,13 +598,13 @@ const updateAccount = async () => {
   const result = await patch('/api/users/me', payload)
 
   if (result.success) {
-    notify.success($t('profile.account.messages.updateSuccess'))
+    notify.success(t('profile.account.messages.updateSuccess'))
     form.value.email = ''
     form.value.newPassword = ''
     form.value.confirmPassword = ''
     form.value.currentPassword = ''
   } else {
-    notify.error(result.error || $t('profile.account.messages.updateFailed'))
+    notify.error(result.error || t('profile.account.messages.updateFailed'))
   }
 
   updatingAccount.value = false
@@ -645,7 +645,7 @@ const fetchAdmins = async (domainKey) => {
   if (result.success) {
     domainAdmins.value[domainKey] = result.data.admins || []
   } else {
-    notify.error($t('profile.admins.loadFailed'))
+    notify.error(t('profile.admins.loadFailed'))
   }
   loadingAdmins.value = false
 }
@@ -659,26 +659,26 @@ const addAdmin = async (domainKey) => {
   })
 
   if (result.success) {
-    notify.success($t('profile.admins.addSuccess', { username: newAdminUsername.value }))
+    notify.success(t('profile.admins.addSuccess', { username: newAdminUsername.value }))
     newAdminUsername.value = ''
     await fetchAdmins(domainKey)
   } else {
-    notify.error(result.error || $t('profile.admins.addFailed'))
+    notify.error(result.error || t('profile.admins.addFailed'))
   }
   addingAdmin.value = false
 }
 
 const removeAdmin = async (domainKey, username) => {
-  if (!confirm($t('profile.admins.removeConfirm', { username }))) return
+  if (!confirm(t('profile.admins.removeConfirm', { username }))) return
 
   removingAdmin.value = true
   const result = await del(`/api/domains/${domainKey}/admins/${username}`)
 
   if (result.success) {
-    notify.success($t('profile.admins.removeSuccess', { username }))
+    notify.success(t('profile.admins.removeSuccess', { username }))
     await fetchAdmins(domainKey)
   } else {
-    notify.error(result.error || $t('profile.admins.removeFailed'))
+    notify.error(result.error || t('profile.admins.removeFailed'))
   }
   removingAdmin.value = false
 }
@@ -697,7 +697,7 @@ const togglePasswordManagement = (domainKey) => {
 const setAdminPasswordForDomain = async (domainKey) => {
   const password = passwordForms.value[domainKey]?.adminPassword
   if (!password || password.length < 4) {
-    notify.error($t('profile.passwords.minLengthError'))
+    notify.error(t('profile.passwords.minLengthError'))
     return
   }
 
@@ -707,10 +707,10 @@ const setAdminPasswordForDomain = async (domainKey) => {
   })
 
   if (result.success) {
-    notify.success($t('profile.passwords.admin.setSuccess'))
+    notify.success(t('profile.passwords.admin.setSuccess'))
     passwordForms.value[domainKey].adminPassword = ''
   } else {
-    notify.error(result.error || $t('profile.passwords.admin.setFailed'))
+    notify.error(result.error || t('profile.passwords.admin.setFailed'))
   }
   settingPassword.value = false
 }
@@ -718,7 +718,7 @@ const setAdminPasswordForDomain = async (domainKey) => {
 const setUserPasswordForDomain = async (domainKey) => {
   const password = passwordForms.value[domainKey]?.userPassword
   if (!password || password.length < 4) {
-    notify.error($t('profile.passwords.minLengthError'))
+    notify.error(t('profile.passwords.minLengthError'))
     return
   }
 
@@ -728,10 +728,10 @@ const setUserPasswordForDomain = async (domainKey) => {
   })
 
   if (result.success) {
-    notify.success($t('profile.passwords.user.setSuccess'))
+    notify.success(t('profile.passwords.user.setSuccess'))
     passwordForms.value[domainKey].userPassword = ''
   } else {
-    notify.error(result.error || $t('profile.passwords.user.setFailed'))
+    notify.error(result.error || t('profile.passwords.user.setFailed'))
   }
   settingPassword.value = false
 }
