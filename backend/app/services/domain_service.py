@@ -445,14 +445,35 @@ async def auto_assign_events_with_rules(db: Session, domain_key: str) -> Tuple[b
             return True, 0, "No assignment rules defined"
         
         # Transform rules to dictionaries for pure function
-        rules_data = [
-            {
-                "rule_type": rule.rule_type,
-                "rule_value": rule.rule_value,
-                "target_group_id": rule.target_group_id
-            }
-            for rule in rules
-        ]
+        # Only include parent rules (child rules are nested within)
+        parent_rules = [r for r in rules if r.parent_rule_id is None]
+
+        rules_data = []
+        for rule in parent_rules:
+            if rule.is_compound:
+                # Get child conditions for compound rules
+                child_rules = [r for r in rules if r.parent_rule_id == rule.id]
+                child_conditions = [
+                    {
+                        "rule_type": child.rule_type,
+                        "rule_value": child.rule_value
+                    }
+                    for child in child_rules
+                ]
+                rules_data.append({
+                    "is_compound": True,
+                    "operator": rule.operator,
+                    "child_conditions": child_conditions,
+                    "target_group_id": rule.target_group_id
+                })
+            else:
+                # Simple rule
+                rules_data.append({
+                    "is_compound": False,
+                    "rule_type": rule.rule_type,
+                    "rule_value": rule.rule_value,
+                    "target_group_id": rule.target_group_id
+                })
         
         # Apply rules using pure function
         group_assignments = apply_assignment_rules(events, rules_data)
