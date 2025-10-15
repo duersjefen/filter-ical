@@ -438,27 +438,33 @@ def build_domain_events_response_data_legacy(db: Session, domain_key: str) -> Di
 async def auto_assign_events_with_rules(db: Session, domain_key: str) -> Tuple[bool, int, str]:
     """
     Auto-assign events to groups using assignment rules.
-    
+
     Args:
         db: Database session
         domain_key: Domain identifier
-        
+
     Returns:
         Tuple of (success, assignment_count, error_message)
-        
+
     I/O Operation - Orchestrates rule application with database updates.
     """
     try:
         # Get events and rules
         events = get_domain_events(db, domain_key)
         rules = get_assignment_rules(db, domain_key)
-        
+
+        print(f"🔍 [AUTO-ASSIGN] Domain: {domain_key}")
+        print(f"🔍 [AUTO-ASSIGN] Found {len(events)} events")
+        print(f"🔍 [AUTO-ASSIGN] Found {len(rules)} rules")
+
         if not rules:
+            print(f"🔍 [AUTO-ASSIGN] No rules defined, returning early")
             return True, 0, "No assignment rules defined"
-        
+
         # Transform rules to dictionaries for pure function
         # Only include parent rules (child rules are nested within)
         parent_rules = [r for r in rules if r.parent_rule_id is None]
+        print(f"🔍 [AUTO-ASSIGN] Found {len(parent_rules)} parent rules")
 
         rules_data = []
         for rule in parent_rules:
@@ -472,38 +478,51 @@ async def auto_assign_events_with_rules(db: Session, domain_key: str) -> Tuple[b
                     }
                     for child in child_rules
                 ]
-                rules_data.append({
+                rule_dict = {
                     "is_compound": True,
                     "operator": rule.operator,
                     "child_conditions": child_conditions,
                     "target_group_id": rule.target_group_id
-                })
+                }
+                rules_data.append(rule_dict)
+                print(f"🔍 [AUTO-ASSIGN] Compound rule → group {rule.target_group_id}: {child_conditions}")
             else:
                 # Simple rule
-                rules_data.append({
+                rule_dict = {
                     "is_compound": False,
                     "rule_type": rule.rule_type,
                     "rule_value": rule.rule_value,
                     "target_group_id": rule.target_group_id
-                })
-        
+                }
+                rules_data.append(rule_dict)
+                print(f"🔍 [AUTO-ASSIGN] Simple rule → group {rule.target_group_id}: {rule.rule_type} = '{rule.rule_value}'")
+
         # Apply rules using pure function
+        print(f"🔍 [AUTO-ASSIGN] Calling apply_assignment_rules()...")
         group_assignments = apply_assignment_rules(events, rules_data)
+        print(f"🔍 [AUTO-ASSIGN] Pure function returned: {group_assignments}")
 
         # Apply assignments to database
         total_assignments = 0
         for group_id, event_titles in group_assignments.items():
+            print(f"🔍 [AUTO-ASSIGN] Assigning {len(event_titles)} event titles to group {group_id}")
             success, count, error = assign_recurring_events_to_group(
                 db, domain_key, group_id, event_titles
             )
             if success:
+                print(f"🔍 [AUTO-ASSIGN] Successfully assigned {count} events to group {group_id}")
                 total_assignments += count
             else:
+                print(f"❌ [AUTO-ASSIGN] Failed to assign to group {group_id}: {error}")
                 return False, 0, error
 
+        print(f"✅ [AUTO-ASSIGN] Total assignments: {total_assignments}")
         return True, total_assignments, ""
-        
+
     except Exception as e:
+        print(f"❌ [AUTO-ASSIGN] Exception: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False, 0, f"Auto-assignment error: {str(e)}"
 
 
