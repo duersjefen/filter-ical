@@ -2019,6 +2019,437 @@ paths:
         '404':
           description: Domain or user not found
 
+  # Admin User Management
+  /admin/users:
+    get:
+      summary: List all users (admin only)
+      description: Get paginated list of all users with search capability
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of users per page
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by username or email
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [user, global_admin]
+          description: Filter by role
+      responses:
+        '200':
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUserResponse'
+                  total:
+                    type: integer
+                    example: 150
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 20
+                  total_pages:
+                    type: integer
+                    example: 8
+        '401':
+          description: Unauthorized
+
+  /admin/users/{userId}:
+    get:
+      summary: Get user details (admin only)
+      description: Get detailed information about a user including their calendars, domains, and filters
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserDetailResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+    patch:
+      summary: Update user (admin only)
+      description: Update user profile, role, or password
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  nullable: true
+                  example: "newemail@example.com"
+                password:
+                  type: string
+                  minLength: 8
+                  nullable: true
+                  example: "NewSecurePass123"
+                  description: "Set new password (admin bypass, no current password required)"
+                role:
+                  type: string
+                  enum: [user, global_admin]
+                  example: "user"
+                  description: "Change user role"
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User updated successfully"
+                  user:
+                    $ref: '#/components/schemas/AdminUserResponse'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '409':
+          description: Email already taken
+
+    delete:
+      summary: Delete user (admin only)
+      description: Delete user and optionally cascade delete their data
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+        - name: delete_calendars
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: "If true, delete user's calendars. If false, orphan them."
+        - name: delete_domains
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: "If true, delete owned domains. If false, remove ownership."
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User deleted successfully"
+                  deleted_calendars:
+                    type: integer
+                    example: 3
+                  deleted_domains:
+                    type: integer
+                    example: 1
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /admin/users/{userId}/unlock:
+    post:
+      summary: Unlock user account (admin only)
+      description: Reset failed login attempts and unlock account
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      responses:
+        '200':
+          description: Account unlocked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Account unlocked successfully"
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  # Admin Calendar Permissions Management
+  /admin/calendars:
+    get:
+      summary: List all calendars (admin only)
+      description: Get list of all calendars across all users
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [user, domain]
+          description: Filter by calendar type
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of calendars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  calendars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminCalendarResponse'
+                  total:
+                    type: integer
+                    example: 75
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 20
+                  total_pages:
+                    type: integer
+                    example: 4
+        '401':
+          description: Unauthorized
+
+  /admin/calendars/{calendarId}/permissions:
+    get:
+      summary: List calendar permissions (admin only)
+      description: Get all users who have permissions for this calendar
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 15
+      responses:
+        '200':
+          description: Calendar permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  calendar:
+                    $ref: '#/components/schemas/AdminCalendarResponse'
+                  permissions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '#/components/schemas/UserInfo'
+                        permission_level:
+                          type: string
+                          enum: [read, write, admin]
+                          example: "write"
+                        granted_at:
+                          type: string
+                          format: date-time
+                          example: "2025-01-10T14:23:15Z"
+        '401':
+          description: Unauthorized
+        '404':
+          description: Calendar not found
+
+    post:
+      summary: Grant calendar permission (admin only)
+      description: Grant a user access to a calendar
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 15
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, permission_level]
+              properties:
+                user_id:
+                  type: integer
+                  example: 42
+                permission_level:
+                  type: string
+                  enum: [read, write, admin]
+                  example: "write"
+                  description: "read: view only, write: edit events/filters, admin: full control"
+      responses:
+        '201':
+          description: Permission granted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Permission granted successfully"
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Calendar or user not found
+        '409':
+          description: User already has permission
+
+  /admin/calendars/{calendarId}/permissions/{userId}:
+    delete:
+      summary: Revoke calendar permission (admin only)
+      description: Remove user's access to a calendar
+      security:
+        - bearerAuth: []
+      tags:
+        - admin
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 15
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      responses:
+        '200':
+          description: Permission revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Permission revoked successfully"
+        '401':
+          description: Unauthorized
+        '404':
+          description: Calendar, user, or permission not found
+
   # Admin Domain YAML Configuration Management
   /admin/domain-configs:
     get:
@@ -2456,6 +2887,149 @@ components:
           format: email
           nullable: true
           example: "john@example.com"
+
+    AdminUserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        username:
+          type: string
+          example: "john_doe"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [user, global_admin]
+          example: "user"
+        has_password:
+          type: boolean
+          example: true
+        account_locked:
+          type: boolean
+          example: false
+        failed_login_attempts:
+          type: integer
+          example: 0
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-10T14:23:15Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-12T09:30:00Z"
+        owned_domains_count:
+          type: integer
+          example: 2
+        admin_domains_count:
+          type: integer
+          example: 1
+        calendars_count:
+          type: integer
+          example: 3
+        filters_count:
+          type: integer
+          example: 5
+
+    AdminUserDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        username:
+          type: string
+          example: "john_doe"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [user, global_admin]
+          example: "user"
+        has_password:
+          type: boolean
+          example: true
+        account_locked:
+          type: boolean
+          example: false
+        failed_login_attempts:
+          type: integer
+          example: 0
+        account_locked_until:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-10T14:23:15Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-12T09:30:00Z"
+        owned_domains:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainInfo'
+        admin_domains:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainInfo'
+        calendars:
+          type: array
+          items:
+            $ref: '#/components/schemas/Calendar'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+
+    AdminCalendarResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 15
+        name:
+          type: string
+          example: "Work Calendar"
+        source_url:
+          type: string
+          format: uri
+          example: "https://example.com/calendar.ics"
+        type:
+          type: string
+          enum: [user, domain]
+          example: "user"
+        owner:
+          $ref: '#/components/schemas/UserInfo'
+          nullable: true
+          description: "User who owns this calendar (null for domain calendars)"
+        domain:
+          $ref: '#/components/schemas/DomainInfo'
+          nullable: true
+          description: "Domain this calendar belongs to (null for user calendars)"
+        events_count:
+          type: integer
+          example: 127
+        last_fetched:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-15T10:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-10T14:23:15Z"
 
     DomainInfo:
       type: object

@@ -6,14 +6,14 @@
 import { ref } from 'vue'
 import { useHTTP } from './useHTTP'
 import { useAppStore } from '../stores/app'
-import { useUsername } from './useUsername'
+import { useAuth } from './useAuth'
 import { API_ENDPOINTS } from '../constants/api'
 import { computeThreeListModel } from '@/utils/filterHelpers'
 
 export function useFilteredCalendarAPI() {
   // HTTP client
   const { get, post, put, del, loading, error, clearError, setError } = useHTTP()
-  const { getUserId } = useUsername()
+  const { isLoggedIn } = useAuth()
   
   // State
   const filteredCalendars = ref([])
@@ -97,12 +97,9 @@ export function useFilteredCalendarAPI() {
       console.warn('Cannot load filtered calendars without calendar ID or domain')
       return
     }
-    
+
     // Check authentication state - only load filtered calendars for logged-in users
-    const currentUserId = getUserId()
-    const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
-    
-    if (!hasCustomUsername) {
+    if (!isLoggedIn.value) {
       filteredCalendars.value = []
       return
     }
@@ -149,10 +146,7 @@ export function useFilteredCalendarAPI() {
     }
 
     // Check authentication state - only logged-in users can create filtered calendars
-    const currentUserId = getUserId()
-    const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
-
-    if (!hasCustomUsername) {
+    if (!isLoggedIn.value) {
       setError('Login required to create filtered calendars')
       return false
     }
