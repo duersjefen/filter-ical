@@ -45,11 +45,11 @@ async def lifespan(app: FastAPI):
     print(f"🌍 Environment: {settings.environment.value}")
     print("📋 Contract-first development active")
 
-    # Security validation - ensure JWT secret is configured properly
-    if settings.environment.value == "production":
+    # Security validation - ensure JWT secret is configured properly in all environments except testing
+    if not settings.is_testing:
         if settings.jwt_secret_key == "change-me-in-production-use-strong-random-key":
             raise RuntimeError(
-                "🚨 SECURITY ERROR: JWT_SECRET_KEY is using default value in production! "
+                "🚨 SECURITY ERROR: JWT_SECRET_KEY is using default value! "
                 "Set JWT_SECRET_KEY environment variable to a strong random key."
             )
         if len(settings.jwt_secret_key) < 32:
