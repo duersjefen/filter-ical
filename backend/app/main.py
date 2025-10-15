@@ -21,6 +21,8 @@ from .core.database import Base, engine
 from .core.scheduler import start_scheduler, stop_scheduler
 from .core.rate_limit import limiter
 from .core.error_handlers import http_exception_handler
+from .core.request_size_limiter import RequestSizeLimiter
+from .core.content_type_validator import ContentTypeValidator
 
 
 def load_openapi_spec() -> Optional[Dict[str, Any]]:
@@ -181,13 +183,27 @@ def create_application() -> FastAPI:
     from .core.security_headers import SecurityHeadersMiddleware
     app.add_middleware(SecurityHeadersMiddleware)
 
+    # Add request size limiter
+    app.add_middleware(RequestSizeLimiter, max_size=10_000_000)
+
+    # Add Content-Type validator
+    app.add_middleware(ContentTypeValidator)
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "Accept",
+            "Accept-Language",
+            "X-Requested-With"
+        ],
+        expose_headers=["Content-Type", "X-Total-Count"],
+        max_age=600
     )
     
     # Load our custom OpenAPI specification

@@ -2,18 +2,26 @@
   <div
     v-if="show"
     class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="auth-modal-title"
     @click.self="$emit('close')"
+    @keydown.esc="$emit('close')"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+    <div
+      ref="modalContent"
+      class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border-2 border-gray-200 dark:border-gray-700"
+    >
       <!-- Header -->
       <div class="bg-gradient-to-r from-purple-500 to-blue-500 dark:from-purple-600 dark:to-blue-600 p-6 text-white">
         <div class="flex items-center justify-between">
-          <h2 class="text-2xl font-bold">{{ activeTab === 'login' ? 'Welcome Back' : 'Create Account' }}</h2>
+          <h2 id="auth-modal-title" class="text-2xl font-bold">{{ activeTab === 'login' ? 'Welcome Back' : 'Create Account' }}</h2>
           <button
             @click="$emit('close')"
             class="text-white/80 hover:text-white transition-colors"
+            aria-label="Close"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
@@ -21,11 +29,15 @@
       </div>
 
       <!-- Tabs -->
-      <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900" role="tablist">
         <button
           @click="activeTab = 'login'"
           class="flex-1 py-3 font-semibold transition-colors"
           :class="activeTab === 'login' ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'"
+          role="tab"
+          :aria-selected="activeTab === 'login'"
+          :aria-controls="activeTab === 'login' ? 'login-panel' : null"
+          :tabindex="activeTab === 'login' ? 0 : -1"
         >
           Login
         </button>
@@ -33,6 +45,10 @@
           @click="activeTab = 'register'"
           class="flex-1 py-3 font-semibold transition-colors"
           :class="activeTab === 'register' ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'"
+          role="tab"
+          :aria-selected="activeTab === 'register'"
+          :aria-controls="activeTab === 'register' ? 'register-panel' : null"
+          :tabindex="activeTab === 'register' ? 0 : -1"
         >
           Register
         </button>
@@ -190,7 +206,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useAuth } from '../../composables/useAuth'
 import { useApiErrors } from '../../composables/useApiErrors'
 
@@ -210,6 +226,17 @@ const { error, setError, clearError } = useApiErrors()
 const activeTab = ref('login')
 const loading = ref(false)
 const success = ref('')
+const modalContent = ref(null)
+
+// Focus management - focus first input when modal opens
+watch(() => props.show, (isShown) => {
+  if (isShown) {
+    nextTick(() => {
+      const firstInput = modalContent.value?.querySelector('input')
+      firstInput?.focus()
+    })
+  }
+})
 
 // Login form
 const loginUsername = ref('')

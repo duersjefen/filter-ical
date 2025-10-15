@@ -482,6 +482,14 @@
     "categoryContainsDesc": "category contains", 
     "matches": "matches"
   },
+  "notifications": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "default": "Notification",
+    "close": "Close notification"
+  },
   "titles": {
     "icalFilterSubscribe": "🗓️ Filter iCal"
   },

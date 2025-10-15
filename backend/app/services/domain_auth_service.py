@@ -5,7 +5,7 @@ IMPERATIVE SHELL - Orchestrates pure functions with I/O operations.
 Handles database queries, password management, and token generation.
 """
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, List, Any
 from sqlalchemy.orm import Session
 
 from ..models.domain import Domain
@@ -265,7 +265,7 @@ def verify_domain_password(
         return False, f"Authentication error: {str(e)}"
 
 
-def verify_token(token: str, domain_key: str, required_level: str) -> Tuple[bool, Optional[dict]]:
+def verify_token(token: str, domain_key: str, required_level: str) -> Tuple[bool, Optional[Dict[str, Any]]]:
     """
     Verify JWT token for domain access.
 
@@ -331,7 +331,7 @@ def refresh_token_if_needed(token: str) -> Tuple[bool, str]:
         return False, token
 
 
-def check_password_status(db: Session, domain_key: str) -> dict:
+def check_password_status(db: Session, domain_key: str) -> Dict[str, bool]:
     """
     Check password status for domain.
 
@@ -358,7 +358,7 @@ def check_password_status(db: Session, domain_key: str) -> dict:
     }
 
 
-def get_all_domains_auth_status(db: Session) -> list:
+def get_all_domains_auth_status(db: Session) -> List[Dict[str, Any]]:
     """
     Get password status for all domains (global admin view).
 

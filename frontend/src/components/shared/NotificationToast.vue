@@ -1,6 +1,11 @@
 <template>
   <!-- Notification Container (fixed at top-right) -->
-  <div class="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none max-w-md">
+  <div
+    class="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none max-w-md"
+    aria-live="polite"
+    aria-atomic="true"
+    role="status"
+  >
     <transition-group
       enter-active-class="transition-all duration-300 ease-out"
       enter-from-class="translate-x-full opacity-0"
@@ -64,8 +69,9 @@
               <button
                 @click="removeNotification(notification.id)"
                 class="flex-shrink-0 w-6 h-6 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-200 flex items-center justify-center"
+                :aria-label="$t('notifications.close')"
               >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -90,8 +96,10 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useNotificationStore } from '../../stores/notification'
 
+const { t } = useI18n()
 const notificationStore = useNotificationStore()
 
 const notifications = computed(() => notificationStore.notifications)
@@ -146,11 +154,11 @@ const getNotificationStyles = (type) => {
 // Get notification title based on type
 const getNotificationTitle = (type) => {
   const titles = {
-    success: 'Success',
-    error: 'Error',
-    warning: 'Warning',
-    info: 'Information'
+    success: t('notifications.success'),
+    error: t('notifications.error'),
+    warning: t('notifications.warning'),
+    info: t('notifications.info')
   }
-  return titles[type] || 'Notification'
+  return titles[type] || t('notifications.default')
 }
 </script>

@@ -7,7 +7,7 @@ When a user enters a domain's shared password, we create a user_domain_access
 entry so they don't need to re-enter it on future visits.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Tuple, Dict, Any
 from sqlalchemy.orm import Session
 
 from ..models.domain import Domain
@@ -91,7 +91,7 @@ def unlock_domain_for_user(
     domain_key: str,
     password: str,
     access_level: str
-) -> tuple[bool, str]:
+) -> Tuple[bool, str]:
     """
     Verify password and grant user access to domain.
 
@@ -146,7 +146,7 @@ def unlock_domain_for_user(
 def get_user_unlocked_domains(
     db: Session,
     user_id: int
-) -> List[dict]:
+) -> List[Dict[str, Any]]:
     """
     Get all domains user has unlocked.
 

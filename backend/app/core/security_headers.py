@@ -21,30 +21,42 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
 
-        # Prevent MIME type sniffing
+        # Basic security headers (always applied)
         response.headers["X-Content-Type-Options"] = "nosniff"
-
-        # Prevent clickjacking
         response.headers["X-Frame-Options"] = "DENY"
-
-        # Enable browser XSS protection
         response.headers["X-XSS-Protection"] = "1; mode=block"
 
-        # Content Security Policy - restrict what can be loaded
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' data:; "
-            "connect-src 'self';"
-        )
-
-        # Force HTTPS in production (HSTS)
+        # Environment-specific CSP
         from ..core.config import settings
-        if settings.environment.value == "production":
+
+        if settings.is_production or settings.environment.value == "staging":
+            # Strict CSP for production/staging
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self'; "
+                "style-src 'self'; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' data:; "
+                "connect-src 'self'; "
+                "frame-ancestors 'none'; "
+                "base-uri 'self'; "
+                "form-action 'self';"
+            )
+
+            # HSTS for production AND staging
             response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
+                "max-age=31536000; includeSubDomains; preload"
+            )
+        else:
+            # Development - allow inline for Vue devtools and HMR
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' data:; "
+                "connect-src 'self' ws: wss:; "
+                "frame-ancestors 'none';"
             )
 
         return response

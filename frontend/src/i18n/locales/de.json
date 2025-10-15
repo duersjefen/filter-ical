@@ -480,6 +480,14 @@
     "categoryContainsDesc": "Kategorie enthält",
     "matches": "entspricht"
   },
+  "notifications": {
+    "success": "Erfolg",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "info": "Information",
+    "default": "Benachrichtigung",
+    "close": "Benachrichtigung schließen"
+  },
   "titles": {
     "icalFilterSubscribe": "🗓️ Filter iCal"
   },

@@ -7,7 +7,7 @@ CONTRACT-DRIVEN: Implementation matches OpenAPI specification.
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, List, Any
 from datetime import datetime, timedelta, timezone
 
 from ..core.database import get_db
@@ -97,7 +97,7 @@ async def register_user(
     request: Request,
     user_data: UserRegisterRequest,
     db: Session = Depends(get_db)
-):
+) -> AuthTokenResponse:
     """
     Register new user account.
 
