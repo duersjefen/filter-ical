@@ -5,7 +5,7 @@
 # See DEV_WORKFLOW.md for complete guide
 # =============================================================================
 
-.PHONY: help setup dev dev-db dev-backend dev-frontend stop test deploy-staging deploy-production status clean migrate-create migrate-up migrate-down migrate-history migrate-current migrate-stamp
+.PHONY: help setup dev dev-db dev-backend dev-frontend stop test test-build test-all deploy-staging deploy-production status clean migrate-create migrate-up migrate-down migrate-history migrate-current migrate-stamp
 
 .DEFAULT_GOAL := help
 
@@ -134,12 +134,19 @@ test: ## Run unit tests
 		. venv/bin/activate && \
 		python -m pytest tests/ -m unit -v
 
-test-all: ## Run all tests (unit + integration + E2E)
+test-build: ## Test frontend builds without errors (catches Vue compilation errors)
+	@echo "🏗️  Testing frontend build..."
+	@cd frontend && npm run build
+	@echo "✅ Frontend builds successfully!"
+
+test-all: ## Run all tests (unit + integration + E2E + build)
 	@echo "🎯 Running complete test suite..."
 	@cd backend && \
 		. venv/bin/activate && \
 		python -m pytest tests/ -v
 	@cd frontend && npm run test
+	@echo ""
+	@$(MAKE) test-build
 
 ##
 ## 🗄️  Database Migration Commands
@@ -202,9 +209,15 @@ deploy-production: ## Deploy to production via SSM (builds on server)
 
 deploy: ## Internal: Test, push, then deploy (use SKIP_TESTS=1 or SKIP_PUSH=1 to skip)
 ifndef SKIP_TESTS
-	@echo "🧪 Running tests before deployment..."
+	@echo "🧪 Running pre-deployment checks..."
+	@echo ""
+	@echo "1️⃣  Testing frontend build (catches Vue compilation errors)..."
+	@$(MAKE) test-build
+	@echo ""
+	@echo "2️⃣  Running backend unit tests..."
 	@$(MAKE) test
-	@echo "✅ Tests passed!"
+	@echo ""
+	@echo "✅ All pre-deployment checks passed!"
 	@echo ""
 endif
 ifndef SKIP_PUSH
