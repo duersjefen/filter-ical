@@ -8,6 +8,8 @@ This router combines:
 - admin_domain_requests: Approve/reject domain requests
 - admin_domains: Direct domain management
 - admin_domain_configs: YAML configuration management
+- admin_users: User management (list, update, delete, unlock)
+- admin_calendars: Calendar permissions management
 """
 
 from fastapi import APIRouter
@@ -17,6 +19,8 @@ from . import admin_auth
 from . import admin_domain_requests
 from . import admin_domains
 from . import admin_domain_configs
+from . import admin_users
+from . import admin_calendars
 
 # Create main admin router
 router = APIRouter()
@@ -26,3 +30,5 @@ router.include_router(admin_auth.router)
 router.include_router(admin_domain_requests.router)
 router.include_router(admin_domains.router)
 router.include_router(admin_domain_configs.router)
+router.include_router(admin_users.router)
+router.include_router(admin_calendars.router)

@@ -449,6 +449,18 @@
           <DomainConfigManager ref="domainConfigManager" />
         </div>
       </div>
+
+      <!-- User Management -->
+      <UserManagementCard
+        :expanded="showUserManagement"
+        @toggle="showUserManagement = !showUserManagement"
+      />
+
+      <!-- Calendar Permissions -->
+      <CalendarPermissionsCard
+        :expanded="showCalendarPermissions"
+        @toggle="showCalendarPermissions = !showCalendarPermissions"
+      />
       </div>
     </div>
 
@@ -480,6 +492,8 @@ import CreateDomainForm from '../components/admin/CreateDomainForm.vue'
 import ApprovalModal from '../components/admin/ApprovalModal.vue'
 import RejectionModal from '../components/admin/RejectionModal.vue'
 import PasswordResetModal from '../components/admin/PasswordResetModal.vue'
+import UserManagementCard from '../components/admin/UserManagementCard.vue'
+import CalendarPermissionsCard from '../components/admin/CalendarPermissionsCard.vue'
 import { useNotification } from '../composables/useNotification'
 
 const { t } = useI18n()
@@ -553,6 +567,8 @@ const showAllDomains = ref(true)
 const showPendingRequests = ref(true)
 const showAppSettings = ref(true)
 const showYamlConfig = ref(true)
+const showUserManagement = ref(false)
+const showCalendarPermissions = ref(false)
 const newDomain = ref({
   domain_key: '',
   name: '',
