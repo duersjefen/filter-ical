@@ -231,8 +231,7 @@ class TestExportImportRoundTrip:
         # Setup: Create some test data in database
         group = Group(
             domain_key=test_domain.domain_key,
-            name="Test Export Group",
-            description="Group for export test"
+            name="Test Export Group"
         )
         test_db.add(group)
         test_db.commit()

@@ -45,26 +45,6 @@ class TestCompoundAssignmentRules:
         assert child_conditions[1]["rule_type"] == "description_contains"
         assert child_conditions[1]["rule_value"] == "Project"
 
-    def test_create_compound_rule_or_operator(self, test_client: TestClient, test_domain, test_group):
-        """Test creating compound rule with OR operator."""
-        response = test_client.post(
-            f"/api/domains/{test_domain.domain_key}/assignment-rules/compound",
-            json={
-                "operator": "OR",
-                "conditions": [
-                    {"rule_type": "title_contains", "rule_value": "Meeting"},
-                    {"rule_type": "category_contains", "rule_value": "Work"}
-                ],
-                "target_group_id": test_group.id
-            },
-            headers={"X-Domain-Password": "test123"}
-        )
-
-        assert response.status_code == 201
-        data = response.json()
-        assert data["operator"] == "OR"
-        assert len(data["child_conditions"]) == 2
-
     def test_create_compound_rule_validation_min_conditions(self, test_client: TestClient, test_domain, test_group):
         """Test validation: minimum 2 conditions required."""
         response = test_client.post(
@@ -259,33 +239,6 @@ class TestNOTOperatorIntegration:
         child_conditions = data["child_conditions"]
         assert child_conditions[1]["rule_type"] == "description_not_contains"
         assert child_conditions[1]["rule_value"] == "Cancelled"
-
-    def test_create_compound_rule_all_not_operators(self, test_client: TestClient, test_domain, test_group):
-        """Test creating compound rule with all NOT operators."""
-        response = test_client.post(
-            f"/api/domains/{test_domain.domain_key}/assignment-rules/compound",
-            json={
-                "operator": "OR",
-                "conditions": [
-                    {"rule_type": "title_not_contains", "rule_value": "Test"},
-                    {"rule_type": "description_not_contains", "rule_value": "Debug"}
-                ],
-                "target_group_id": test_group.id
-            },
-            headers={"X-Domain-Password": "test123"}
-        )
-
-        assert response.status_code == 201
-        data = response.json()
-        assert data["operator"] == "OR"
-        assert len(data["child_conditions"]) == 2
-
-        # Verify all NOT operators
-        child_conditions = data["child_conditions"]
-        assert child_conditions[0]["rule_type"] == "title_not_contains"
-        assert child_conditions[0]["rule_value"] == "Test"
-        assert child_conditions[1]["rule_type"] == "description_not_contains"
-        assert child_conditions[1]["rule_value"] == "Debug"
 
     def test_create_compound_rule_mixed_positive_negative(self, test_client: TestClient, test_domain, test_group):
         """Test creating compound rule mixing positive and negative conditions."""

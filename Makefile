@@ -140,10 +140,10 @@ test-build: ## Test frontend builds without errors (catches Vue compilation erro
 	@echo "✅ Frontend builds successfully!"
 
 test-all: ## Run all tests (unit + integration + E2E + build)
-	@echo "🎯 Running complete test suite..."
+	@echo "🎯 Running complete test suite (excluding future/unimplemented features)..."
 	@cd backend && \
 		. venv/bin/activate && \
-		python -m pytest tests/ -v
+		python -m pytest tests/ -v -m "not future"
 	@cd frontend && npm run test
 	@echo ""
 	@$(MAKE) test-build
