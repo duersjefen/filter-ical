@@ -33,14 +33,14 @@
                 :key="fieldType.value"
                 @click="setConditionField(0, fieldType.value)"
                 :class="[
-                  'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
+                  'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                   getConditionField(0) === fieldType.value
                     ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:scale-105'
                 ]"
-                :title="fieldType.label"
               >
-                <span class="text-lg">{{ fieldType.icon }}</span>
+                <span class="text-base">{{ fieldType.icon }}</span>
+                <span class="text-xs font-semibold">{{ fieldType.label }}</span>
               </button>
             </div>
           </div>
@@ -80,7 +80,7 @@
                 :placeholder="getRulePlaceholder(newRule.conditions[0].rule_type)"
                 class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 @keyup.enter="createRule"
-                @input="debouncedUpdatePreview"
+                @input="onSearchValueInput(0)"
               />
               <button
                 v-if="newRule.conditions.length > 1"
@@ -135,14 +135,14 @@
                   :key="fieldType.value"
                   @click="setConditionField(index + 1, fieldType.value)"
                   :class="[
-                    'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
+                    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                     getConditionField(index + 1) === fieldType.value
                       ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105'
                       : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:scale-105'
                   ]"
-                  :title="fieldType.label"
                 >
-                  <span class="text-lg">{{ fieldType.icon }}</span>
+                  <span class="text-base">{{ fieldType.icon }}</span>
+                  <span class="text-xs font-semibold">{{ fieldType.label }}</span>
                 </button>
               </div>
             </div>
@@ -181,7 +181,7 @@
                   type="text"
                   :placeholder="getRulePlaceholder(condition.rule_type)"
                   class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
-                  @input="debouncedUpdatePreview"
+                  @input="onSearchValueInput(index + 1)"
                 />
                 <button
                   @click="removeCondition(index + 1)"
@@ -296,18 +296,18 @@
                   >
                     {{ event.title }}
                   </h5>
-                  <!-- Show description for description rules -->
-                  <div 
-                    v-if="newRule.rule_type === 'description_contains' && event.description" 
-                    class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help" 
+                  <!-- Show description only when rule uses description field -->
+                  <div
+                    v-if="ruleUsesField(newRule, 'description') && event.description"
+                    class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help"
                     :title="event.description"
                   >
                     <span class="font-medium">{{ t('domainAdmin.description') }}:</span> {{ event.description }}
                   </div>
-                  <!-- Show categories for category rules -->
-                  <div 
-                    v-if="newRule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" 
-                    class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help" 
+                  <!-- Show categories only when rule uses category field -->
+                  <div
+                    v-if="ruleUsesField(newRule, 'category') && event.categories && event.categories.length > 0"
+                    class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help"
                     :title="event.categories.join(', ')"
                   >
                     <span class="font-medium">{{ t('domainAdmin.categories') }}:</span> {{ event.categories.join(', ') }}
@@ -512,18 +512,18 @@
                     >
                       {{ event.title }}
                     </h5>
-                    <!-- Show description for description rules -->
-                    <div 
-                      v-if="rule.rule_type === 'description_contains' && event.description" 
-                      class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help" 
+                    <!-- Show description only when rule uses description field -->
+                    <div
+                      v-if="ruleUsesField(rule, 'description') && event.description"
+                      class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 cursor-help"
                       :title="event.description"
                     >
                       <span class="font-medium">{{ t('domainAdmin.description') }}:</span> {{ event.description }}
                     </div>
-                    <!-- Show categories for category rules -->
-                    <div 
-                      v-if="rule.rule_type === 'category_contains' && event.categories && event.categories.length > 0" 
-                      class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help" 
+                    <!-- Show categories only when rule uses category field -->
+                    <div
+                      v-if="ruleUsesField(rule, 'category') && event.categories && event.categories.length > 0"
+                      class="text-xs text-gray-600 dark:text-gray-400 mt-1 cursor-help"
                       :title="event.categories.join(', ')"
                     >
                       <span class="font-medium">{{ t('domainAdmin.categories') }}:</span> {{ event.categories.join(', ') }}
@@ -1138,6 +1138,23 @@ export default {
       debouncedUpdatePreview()
     }
 
+    const onSearchValueInput = (index) => {
+      // Sync top-level rule_value for simple rules (live preview reads this)
+      if (index === 0 && !newRule.value.is_compound) {
+        newRule.value.rule_value = newRule.value.conditions[0].rule_value
+      }
+      debouncedUpdatePreview()
+    }
+
+    // Helper to check if any condition uses a specific field
+    const ruleUsesField = (rule, field) => {
+      if (rule.is_compound) {
+        return rule.conditions.some(c => c.rule_type.startsWith(`${field}_`))
+      } else {
+        return rule.rule_type?.startsWith(`${field}_`)
+      }
+    }
+
     return {
       t,
       newRule,
@@ -1156,6 +1173,7 @@ export default {
       resetForm,
       updateRuleTypePreview,
       debouncedUpdatePreview,
+      onSearchValueInput,
       getGroupEventCount,
       getMatchCountBadgeClass,
       getRuleStatus,
@@ -1173,7 +1191,8 @@ export default {
       getConditionField,
       getConditionOperator,
       setConditionField,
-      setConditionOperator
+      setConditionOperator,
+      ruleUsesField
     }
   }
 }
