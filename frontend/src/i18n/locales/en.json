@@ -172,6 +172,12 @@
     "calendarError": "Failed to process calendar data. Please check the calendar URL.",
     "unknownError": "An unexpected error occurred. Please try again."
   },
+  "validation": {
+    "passwordRequiredWithEmail": "When providing an email, a password is required for account security and password reset functionality.",
+    "emailRequiredWithPassword": "When setting a password, an email is required for password reset functionality.",
+    "accountRequiresPassword": "This account requires a password",
+    "accountNoPassword": "This account has no password - just click login!"
+  },
   "domain": {
     "goToPersonalCalendars": "Go to Personal Calendars",
     "loadingDomainCalendar": "Loading domain calendar...",
@@ -180,7 +186,16 @@
     "calendar": "calendar",
     "eventsAvailable": "events available",
     "noEvents": "No Events Available",
-    "noEventsDescription": "This domain calendar doesn't have any events at the moment."
+    "noEventsDescription": "This domain calendar doesn't have any events at the moment.",
+    "desiredKey": "Desired Domain Key",
+    "keyPlaceholder": "my-calendar",
+    "keyHelper": "Lowercase letters, numbers, hyphens only",
+    "adminPassword": "Admin Password",
+    "userPassword": "User Password",
+    "passwordMinLength": "Min 4 characters",
+    "leaveBlankIfNone": "Leave blank if none",
+    "loginRequired": "You must be logged in to request a domain",
+    "emailRequired": "Please add an email to your profile before requesting a domain"
   },
   "home": {
     "addNewCalendar": "Add New Calendar",
@@ -206,6 +221,25 @@
     "deleteCalendarMessage": "Are you sure you want to delete the calendar '{name}'? This action cannot be undone.",
     "deleteCalendarConfirm": "Delete",
     "deleteCalendarCancel": "Cancel"
+  },
+  "auth": {
+    "welcomeBack": "Welcome Back",
+    "createAccount": "Create Account",
+    "login": "Login",
+    "register": "Register",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "usernamePlaceholder": "Enter your username",
+    "passwordPlaceholder": "Enter your password",
+    "emailPlaceholder": "your@email.com",
+    "chooseUsername": "Choose a username",
+    "choosePassword": "Choose a password (optional)",
+    "loggingIn": "Logging in...",
+    "emailOptional": "(optional)",
+    "passwordOptional": "(optional)",
+    "securityNote": "Email & password are optional. Add them for secure cross-device sync!",
+    "forgotPassword": "Forgot password?"
   },
   "login": {
     "subtitle": "Please log in to access your calendars",
@@ -594,7 +628,13 @@
     "selectAll": "Select All",
     "subscribed": "Subscribed",
     "subscribe": "Subscribe",
-    "subscribeToGroupsOrSelectEvents": "Subscribe to groups or select specific event types"
+    "subscribeToGroupsOrSelectEvents": "Subscribe to groups or select specific event types",
+    "checkingUsername": "Checking username...",
+    "checkingAvailability": "Checking availability...",
+    "usernameTaken": "Username already taken",
+    "usernameAvailable": "Username available!",
+    "passwordRequired": "Password required",
+    "emailRequiredForPassword": "Email required"
   },
   "dateTime": {
     "noDate": "No date",
