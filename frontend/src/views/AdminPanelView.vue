@@ -493,9 +493,21 @@
 
       <!-- Domains Overview (at top) -->
       <div class="">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-2xl sm:text-xl font-bold text-gray-900 dark:text-gray-100">📋 All Domains</h2>
-          <span class="text-sm text-gray-600 dark:text-gray-400">{{ domains.length }} domain{{ domains.length !== 1 ? 's' : '' }}</span>
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              </svg>
+              <span>All Domains</span>
+            </h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Manage all domain calendars and their settings
+            </p>
+          </div>
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
+            {{ domains.length }} {{ domains.length !== 1 ? 'domains' : 'domain' }}
+          </span>
         </div>
 
         <div v-if="domainsLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -752,9 +764,21 @@
 
       <!-- Requests List -->
       <div class="">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-2xl sm:text-xl font-bold text-gray-900 dark:text-gray-100">📬 Pending Domain Requests</h2>
-          <span class="text-sm text-gray-600 dark:text-gray-400">{{ pendingRequests.length }} request{{ pendingRequests.length !== 1 ? 's' : '' }}</span>
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              </svg>
+              <span>Pending Domain Requests</span>
+            </h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Review and approve user requests for new domains
+            </p>
+          </div>
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
+            {{ pendingRequests.length }} {{ pendingRequests.length !== 1 ? 'requests' : 'request' }}
+          </span>
         </div>
 
         <div v-if="loading" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center">
@@ -939,7 +963,7 @@
                     ? 'bg-purple-600 text-white shadow-inner'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
                 >
-                  🔐 Admin
+                  Admin
                 </button>
                 <button
                   @click="appSettings.footer_visibility = 'nowhere'"
