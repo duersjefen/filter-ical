@@ -1,26 +1,37 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center">
+  <div
+    v-if="show"
+    class="fixed inset-0 z-50 flex items-center justify-center"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dialog-title"
+    aria-describedby="dialog-description"
+    @keydown.esc="cancel"
+  >
     <!-- Backdrop -->
-    <div 
+    <div
       class="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
       @click="cancel"
     ></div>
-    
+
     <!-- Modal -->
-    <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4 transform transition-all">
+    <div
+      ref="dialogContent"
+      class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4 transform transition-all"
+    >
       <!-- Header -->
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center gap-3">
           <div class="text-2xl">⚠️</div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 id="dialog-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {{ displayTitle }}
           </h3>
         </div>
       </div>
-      
+
       <!-- Content -->
       <div class="px-6 py-4">
-        <p class="text-gray-600 dark:text-gray-300">
+        <p id="dialog-description" class="text-gray-600 dark:text-gray-300">
           {{ message }}
         </p>
       </div>
@@ -45,10 +56,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+
+// Dialog content ref for focus management
+const dialogContent = ref(null)
 
 // Props
 const props = defineProps({
@@ -99,6 +113,16 @@ const cancel = () => {
   emit('cancel')
   close()
 }
+
+// Focus management - focus first button when dialog opens
+watch(() => props.show, (isShown) => {
+  if (isShown) {
+    nextTick(() => {
+      const firstButton = dialogContent.value?.querySelector('button')
+      firstButton?.focus()
+    })
+  }
+})
 
 // Expose methods
 defineExpose({
