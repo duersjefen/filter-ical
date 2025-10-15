@@ -149,26 +149,39 @@
 
       <!-- Domains Overview (at top) -->
       <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          @click="showAllDomains = !showAllDomains"
+          class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                 </svg>
-                <span>All Domains</span>
+                <span class="truncate">All Domains</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-xs sm:text-sm font-semibold flex-shrink-0">
+                  {{ domains.length }}
+                </span>
               </h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Manage all domain calendars and their settings
+              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Click to {{ showAllDomains ? 'hide' : 'show' }} domains
               </p>
             </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
-              {{ domains.length }} {{ domains.length !== 1 ? 'domains' : 'domain' }}
-            </span>
+            <svg
+              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
+              :class="showAllDomains ? 'rotate-180' : ''"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
           </div>
         </div>
 
-        <div v-if="domainsLoading" role="status" aria-live="polite" aria-label="Loading domains" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="showAllDomains && domainsLoading" role="status" aria-live="polite" aria-label="Loading domains" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="i in 6" :key="i" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
             <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-100 dark:border-gray-700">
               <div class="flex items-center gap-3">
@@ -186,7 +199,7 @@
           </div>
         </div>
 
-        <div v-else-if="domains.length === 0" class="p-12 text-center">
+        <div v-else-if="showAllDomains && domains.length === 0" class="p-12 text-center">
           <div class="max-w-md mx-auto">
             <div class="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg aria-hidden="true" class="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,7 +224,7 @@
           </div>
         </div>
 
-        <div v-else class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div v-else-if="showAllDomains" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <DomainCard
             v-for="domain in domains"
             :key="domain.domain_key"
@@ -224,31 +237,44 @@
 
       <!-- Requests List -->
       <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          @click="showPendingRequests = !showPendingRequests"
+          class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                 </svg>
-                <span>Pending Domain Requests</span>
+                <span class="truncate">Pending Domain Requests</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-xs sm:text-sm font-semibold flex-shrink-0">
+                  {{ pendingRequests.length }}
+                </span>
               </h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Review and approve user requests for new domains
+              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Click to {{ showPendingRequests ? 'hide' : 'show' }} requests
               </p>
             </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
-              {{ pendingRequests.length }} {{ pendingRequests.length !== 1 ? 'requests' : 'request' }}
-            </span>
+            <svg
+              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
+              :class="showPendingRequests ? 'rotate-180' : ''"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
           </div>
         </div>
 
-        <div v-if="loading" class="p-12 text-center">
+        <div v-if="showPendingRequests && loading" class="p-12 text-center">
           <div class="inline-block w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p class="mt-4 text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
         </div>
 
-        <div v-else-if="pendingRequests.length === 0" class="p-12 text-center">
+        <div v-else-if="showPendingRequests && pendingRequests.length === 0" class="p-12 text-center">
           <div class="max-w-md mx-auto">
             <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg aria-hidden="true" class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,7 +290,7 @@
           </div>
         </div>
 
-        <div v-else class="p-6 space-y-4">
+        <div v-else-if="showPendingRequests" class="p-6 space-y-4">
           <DomainRequestCard
             v-for="request in pendingRequests"
             :key="request.id"
@@ -278,18 +304,37 @@
 
       <!-- App Settings - Clean & Spacious -->
       <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-            <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <div
+          @click="showAppSettings = !showAppSettings"
+          class="px-5 py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="truncate">App Settings</span>
+              </h2>
+              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Click to {{ showAppSettings ? 'hide' : 'show' }} settings
+              </p>
+            </div>
+            <svg
+              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
+              :class="showAppSettings ? 'rotate-180' : ''"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
-            <span>App Settings</span>
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Configure global application behavior</p>
+          </div>
         </div>
 
-        <div class="p-5">
+        <div v-if="showAppSettings" class="p-5">
           <!-- Settings Grid: Side by Side -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
@@ -361,29 +406,46 @@
 
       <!-- Domain YAML Configuration Management -->
       <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div class="px-6 py-5 sm:px-4 sm:py-3 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          @click="showYamlConfig = !showYamlConfig"
+          class="px-6 py-5 sm:px-4 sm:py-3 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                 </svg>
-                <span>Domain YAML Configurations</span>
+                <span class="truncate">Domain YAML Configurations</span>
               </h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage domain configuration files and seed the database</p>
+              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Click to {{ showYamlConfig ? 'hide' : 'show' }} configurations
+              </p>
             </div>
-            <button
-              @click="$refs.domainConfigManager?.refreshConfigs()"
-              class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <button
+                @click.stop="$refs.domainConfigManager?.refreshConfigs()"
+                class="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span class="hidden sm:inline">Refresh</span>
+              </button>
+              <svg
+                class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
+                :class="showYamlConfig ? 'rotate-180' : ''"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
-              <span class="hidden sm:inline">Refresh</span>
-            </button>
+            </div>
           </div>
         </div>
-        <div class="p-6 sm:p-4">
+        <div v-if="showYamlConfig" class="p-6 sm:p-4">
           <DomainConfigManager ref="domainConfigManager" />
         </div>
       </div>
@@ -485,6 +547,12 @@ const confirmDialogData = ref({
 // Create domain state
 const showCreateDomainForm = ref(false)
 const creatingDomain = ref(false)
+
+// Card expand/collapse state
+const showAllDomains = ref(true)
+const showPendingRequests = ref(true)
+const showAppSettings = ref(true)
+const showYamlConfig = ref(true)
 const newDomain = ref({
   domain_key: '',
   name: '',
