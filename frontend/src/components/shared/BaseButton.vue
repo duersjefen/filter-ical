@@ -3,6 +3,8 @@
     :class="buttonClasses"
     :disabled="disabled || loading"
     :type="type"
+    :aria-busy="loading"
+    :aria-disabled="disabled || loading"
     @click="$emit('click', $event)"
   >
     <span v-if="loading && !hideLoadingText" class="inline-flex items-center gap-2">
