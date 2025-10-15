@@ -82,13 +82,6 @@
         @delete-backup="deleteBackupConfirm"
       />
 
-      <!-- 🔐 Password Settings Card (Fourth Position) -->
-      <PasswordSettingsCard
-        :domain="domain"
-        :expanded="expandedCards.password"
-        @toggle="toggleCard('password')"
-      />
-
     </div>
   </div>
 
@@ -130,7 +123,6 @@ import AppHeader from '../components/shared/AppHeader.vue'
 import AutoRulesCard from '../components/admin/AutoRulesCard.vue'
 import EventManagementCard from '../components/admin/EventManagementCard.vue'
 import BackupRestoreCard from '../components/admin/BackupRestoreCard.vue'
-import PasswordSettingsCard from '../components/admin/PasswordSettingsCard.vue'
 import PasswordGate from '../components/auth/PasswordGate.vue'
 
 export default {
@@ -140,7 +132,6 @@ export default {
     AutoRulesCard,
     EventManagementCard,
     BackupRestoreCard,
-    PasswordSettingsCard,
     PasswordGate
   },
   props: {
@@ -196,8 +187,7 @@ export default {
     const expandedCards = ref({
       rules: false,    // Auto Rules card starts collapsed
       events: true,    // Events card starts expanded
-      config: false,   // Configuration card starts collapsed
-      password: false  // Password Settings card starts collapsed
+      config: false    // Configuration card starts collapsed
     })
     // HMR trigger
 
