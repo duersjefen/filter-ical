@@ -2,10 +2,42 @@
 Test configuration and fixtures for contract-first testing.
 
 This follows industry best practices for FastAPI testing with:
-- Isolated test database
-- FastAPI TestClient  
-- Contract validation fixtures
-- Clean test data setup/teardown
+- Isolated test database (in-memory SQLite)
+- FastAPI TestClient with proper dependency injection
+- Contract validation fixtures (OpenAPI spec validation)
+- Clean test data setup/teardown between tests
+
+FIXTURE ARCHITECTURE:
+
+Database:
+- test_db_engine: Session-scoped SQLite in-memory database
+- test_db: Function-scoped database session for direct DB access
+- test_client: Function-scoped FastAPI TestClient with shared session
+
+Authentication:
+- test_user: Test user (testuser@example.com) with email for domain requests
+- user_token: JWT token for test_user
+- auth_headers: Authorization headers for user endpoints
+- admin_token: JWT token for global admin
+- admin_headers: Authorization headers for admin endpoints
+
+Test Data:
+- sample_calendar_data: Calendar creation payload
+- sample_domain_filter_data: Domain filter creation payload
+- sample_user_filter_data: User filter creation payload
+- sample_filter: Complete filter with calendar and events
+- test_domain: Domain with password (testdomain, password: test123)
+- test_group: Group associated with test_domain
+
+Contract Testing:
+- openapi_spec: Loaded OpenAPI specification
+- openapi_validator: OpenAPI validator for response validation
+
+IMPORTANT NOTES:
+1. Test isolation: Each function-scoped fixture gets fresh data
+2. Shared session: test_client uses a single session across all requests in a test
+3. Email required: test_user has email (required for domain requests)
+4. Clean state: test_domain automatically cleans up existing domains
 """
 
 import pytest
@@ -222,9 +254,17 @@ def openapi_validator(openapi_spec) -> Spec:
     return Spec.from_dict(openapi_spec)
 
 
+# =============================================================================
+# Sample Data Fixtures
+# =============================================================================
+
 @pytest.fixture
 def sample_calendar_data():
-    """Sample calendar data for testing."""
+    """
+    Sample calendar data for testing POST /api/calendars.
+
+    Returns dict with required fields for calendar creation.
+    """
     return {
         "name": "Test Calendar",
         "source_url": "https://example.com/test.ics"
@@ -233,7 +273,11 @@ def sample_calendar_data():
 
 @pytest.fixture
 def sample_domain_filter_data():
-    """Sample domain filter data for testing."""
+    """
+    Sample domain filter data for testing.
+
+    Returns dict with required fields for domain filter creation.
+    """
     return {
         "name": "Test Domain Filter",
         "subscribed_event_ids": [1, 2],
@@ -243,16 +287,31 @@ def sample_domain_filter_data():
 
 @pytest.fixture
 def sample_user_filter_data():
-    """Sample user filter data for testing."""
+    """
+    Sample user filter data for testing.
+
+    Returns dict with required fields for user filter creation.
+    """
     return {
         "name": "Test User Filter",
         "subscribed_event_ids": [1, 2, 3]
     }
 
 
+# =============================================================================
+# Database Fixtures
+# =============================================================================
+
 @pytest.fixture
 def test_db(test_db_engine):
-    """Provide database session for tests that need direct DB access."""
+    """
+    Provide database session for tests that need direct DB access.
+
+    Use this for tests that need to create database objects directly.
+    Most tests should use test_client instead, which provides its own session.
+
+    Note: Each test gets a fresh session for isolation.
+    """
     from sqlalchemy.orm import sessionmaker
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
     session = TestingSessionLocal()
@@ -262,32 +321,114 @@ def test_db(test_db_engine):
         session.close()
 
 
+# =============================================================================
+# Authentication Fixtures
+# =============================================================================
+
 @pytest.fixture
-def test_user(test_db):
-    """Create a test user in the database."""
+def test_user(test_client):
+    """
+    Create a test user in the database.
+
+    User details:
+    - username: testuser
+    - email: test@example.com (required for domain requests and password reset)
+    - role: user
+
+    Use with user_token and auth_headers fixtures for authenticated requests.
+    Uses test_client's shared session to avoid cross-session issues.
+    """
     from app.models.user import User
+    from app.core.database import get_db
+
+    # Get the shared session from test_client
+    shared_session = next(test_client.app.dependency_overrides[get_db]())
+
+    # Clear any existing user with the same username (for test isolation)
+    existing_user = shared_session.query(User).filter(User.username == "testuser").first()
+    if existing_user:
+        shared_session.delete(existing_user)
+        shared_session.commit()
+
     user = User(
         username="testuser",
         email="test@example.com",
         password_hash="hashed_password",
         role="user"
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
+    shared_session.add(user)
+    shared_session.commit()
+    shared_session.refresh(user)
     return user
 
 
 @pytest.fixture
+def user_token(test_user):
+    """
+    Generate user JWT token for testing.
+
+    Returns JWT token for test_user (testuser@example.com).
+    Use with auth_headers fixture for authenticated requests.
+    """
+    from app.services.auth_service import create_jwt_token
+    return create_jwt_token(test_user.id, expiry_days=1)
+
+
+@pytest.fixture
+def auth_headers(user_token):
+    """
+    Provide authentication headers for protected endpoints.
+
+    Returns headers dict with Bearer token for test_user.
+    Use this for any endpoint requiring user authentication.
+
+    Example:
+        response = test_client.get("/api/users/me", headers=auth_headers)
+    """
+    return {"Authorization": f"Bearer {user_token}"}
+
+
+@pytest.fixture
 def admin_token():
-    """Generate admin JWT token for testing."""
+    """
+    Generate global admin JWT token for testing.
+
+    Returns JWT token with global_admin role.
+    Use with admin_headers fixture for admin endpoints.
+    """
     from app.core.auth import create_admin_token
     return create_admin_token(expiry_days=1)
 
 
 @pytest.fixture
+def admin_headers(admin_token):
+    """
+    Provide admin authentication headers for protected endpoints.
+
+    Returns headers dict with Bearer token for global admin.
+    Use this for any endpoint requiring admin authentication.
+
+    Example:
+        response = test_client.get("/api/admin/domain-requests", headers=admin_headers)
+    """
+    return {"Authorization": f"Bearer {admin_token}"}
+
+
+# =============================================================================
+# Domain and Filter Test Data Fixtures
+# =============================================================================
+
+@pytest.fixture
 def sample_filter(test_db, test_user):
-    """Create a sample filter with calendar and events for testing iCal export."""
+    """
+    Create a sample filter with calendar and events for testing iCal export.
+
+    Creates:
+    - Calendar with 3 test events
+    - Filter with UUID for export testing
+
+    Use this for testing iCal export functionality.
+    """
     from app.models import Calendar, Filter, Event
     from datetime import datetime, timezone, timedelta
 
@@ -339,9 +480,16 @@ def sample_filter(test_db, test_user):
 
 @pytest.fixture
 def test_domain(test_client):
-    """Create a test domain with password for assignment rule testing.
+    """
+    Create a test domain with password for assignment rule testing.
+
+    Domain details:
+    - domain_key: testdomain
+    - admin_password: test123 (bcrypt hashed)
+    - status: active
 
     Uses the test_client's shared session to avoid cross-session issues.
+    Automatically cleans up any existing domain with the same key for test isolation.
     """
     from app.models.domain import Domain
     from app.core.database import get_db
@@ -374,8 +522,10 @@ def test_domain(test_client):
 
 @pytest.fixture
 def test_group(test_client, test_domain):
-    """Create a test group for assignment rule testing.
+    """
+    Create a test group for assignment rule testing.
 
+    Creates a group associated with test_domain.
     Uses the test_client's shared session to avoid cross-session issues.
     """
     from app.models.calendar import Group

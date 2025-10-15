@@ -14,6 +14,7 @@ import yaml
 from io import BytesIO
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from unittest.mock import patch
 
 from app.models.domain import Domain
 from app.models.calendar import Group, RecurringEventGroup, AssignmentRule
@@ -221,15 +222,28 @@ class TestDomainConfigImportMultipart:
 class TestExportImportRoundTrip:
     """Test complete export → re-import workflow (critical user workflow)."""
 
-    def test_export_then_import_yaml_file(self, test_client: TestClient, test_domain: Domain, test_db: Session):
+    @patch('app.services.domain_config_service.load_domains_registry')
+    def test_export_then_import_yaml_file(self, mock_load_registry, test_client: TestClient, test_domain: Domain, test_db: Session):
         """
         Export configuration to YAML file, then import it back.
         This is the exact workflow users follow in the UI.
 
         Reproduces bug: "Failed to import configuration: Missing required section: 'domain'"
         """
+        # Mock the domains registry (required for export)
+        mock_load_registry.return_value = (True, {
+            'domains': {
+                'testdomain': {
+                    'name': 'Test Domain',
+                    'calendar_url': 'https://example.com/test.ics',
+                    'description': 'Test Domain Description'
+                }
+            }
+        }, "")
+
         # Setup: Create some test data in database
         group = Group(
+            domain_id=test_domain.id,
             domain_key=test_domain.domain_key,
             name="Test Export Group"
         )
@@ -239,6 +253,7 @@ class TestExportImportRoundTrip:
 
         # Create an assignment
         assignment = RecurringEventGroup(
+            domain_id=test_domain.id,
             domain_key=test_domain.domain_key,
             recurring_event_title="Test Event",
             group_id=group.id

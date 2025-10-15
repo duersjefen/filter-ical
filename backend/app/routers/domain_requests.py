@@ -49,6 +49,14 @@ class DomainRequestCreate(BaseModel):
             raise ValueError('Domain key must contain only lowercase letters, numbers, and hyphens')
         return v
 
+    @field_validator('default_password', mode='before')
+    @classmethod
+    def validate_password(cls, v: Optional[str]) -> Optional[str]:
+        """Convert empty strings to None (password-free domain)."""
+        if v is not None and isinstance(v, str) and not v.strip():
+            return None
+        return v
+
 
 class DomainRequestResponse(BaseModel):
     """Schema for domain request response - matches OpenAPI spec."""
