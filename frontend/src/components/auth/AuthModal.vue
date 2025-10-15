@@ -15,7 +15,7 @@
       <!-- Header -->
       <div class="bg-gradient-to-r from-purple-500 to-blue-500 dark:from-purple-600 dark:to-blue-600 p-6 text-white">
         <div class="flex items-center justify-between">
-          <h2 id="auth-modal-title" class="text-2xl font-bold">{{ activeTab === 'login' ? 'Welcome Back' : 'Create Account' }}</h2>
+          <h2 id="auth-modal-title" class="text-2xl font-bold">{{ activeTab === 'login' ? $t('auth.welcomeBack') : $t('auth.createAccount') }}</h2>
           <button
             @click="$emit('close')"
             class="text-white/80 hover:text-white transition-colors"
@@ -39,7 +39,7 @@
           :aria-controls="activeTab === 'login' ? 'login-panel' : null"
           :tabindex="activeTab === 'login' ? 0 : -1"
         >
-          Login
+          {{ $t('auth.login') }}
         </button>
         <button
           @click="activeTab = 'register'"
@@ -50,7 +50,7 @@
           :aria-controls="activeTab === 'register' ? 'register-panel' : null"
           :tabindex="activeTab === 'register' ? 0 : -1"
         >
-          Register
+          {{ $t('auth.register') }}
         </button>
       </div>
 
@@ -70,26 +70,26 @@
         <form v-if="activeTab === 'login'" @submit.prevent="handleLogin" class="space-y-4">
           <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Username
+              {{ $t('auth.username') }}
             </label>
             <input
               v-model="loginUsername"
               type="text"
               required
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Enter your username"
+              :placeholder="$t('auth.usernamePlaceholder')"
             />
           </div>
 
           <div v-if="showLoginPassword">
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Password
+              {{ $t('auth.password') }}
             </label>
             <input
               v-model="loginPassword"
               type="password"
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Enter your password"
+              :placeholder="$t('auth.passwordPlaceholder')"
             />
           </div>
 
@@ -98,7 +98,7 @@
             :disabled="loading"
             class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 rounded-xl font-bold transition-all hover:shadow-lg disabled:cursor-not-allowed"
           >
-            {{ loading ? 'Logging in...' : 'Login' }}
+            {{ loading ? $t('auth.loggingIn') : $t('auth.login') }}
           </button>
 
           <button
@@ -107,7 +107,7 @@
             @click="activeTab = 'forgot'"
             class="w-full text-sm text-purple-600 dark:text-purple-400 hover:underline"
           >
-            Forgot password?
+            {{ $t('auth.forgotPassword') }}
           </button>
         </form>
 
@@ -115,7 +115,7 @@
         <form v-else-if="activeTab === 'register'" @submit.prevent="handleRegister" class="space-y-4">
           <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Username <span class="text-red-500">*</span>
+              {{ $t('auth.username') }} <span class="text-red-500">*</span>
             </label>
             <input
               v-model="registerUsername"
@@ -124,35 +124,35 @@
               minlength="3"
               maxlength="50"
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Choose a username"
+              :placeholder="$t('auth.chooseUsername')"
             />
           </div>
 
           <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Email <span class="text-gray-400">(optional)</span>
+              {{ $t('auth.email') }} <span class="text-gray-400">{{ $t('auth.emailOptional') }}</span>
             </label>
             <input
               v-model="registerEmail"
               type="email"
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="your@email.com"
+              :placeholder="$t('auth.emailPlaceholder')"
             />
           </div>
 
           <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Password <span class="text-gray-400">(optional)</span>
+              {{ $t('auth.password') }} <span class="text-gray-400">{{ $t('auth.passwordOptional') }}</span>
             </label>
             <input
               v-model="registerPassword"
               type="password"
               minlength="4"
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-900/50 transition-colors"
-              placeholder="Choose a password (optional)"
+              :placeholder="$t('auth.choosePassword')"
             />
             <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              💡 Email & password are optional. Add them for secure cross-device sync!
+              💡 {{ $t('auth.securityNote') }}
             </p>
           </div>
 
@@ -161,7 +161,7 @@
             :disabled="loading"
             class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 rounded-xl font-bold transition-all hover:shadow-lg disabled:cursor-not-allowed"
           >
-            {{ loading ? 'Creating Account...' : 'Create Account' }}
+            {{ loading ? $t('login.creatingAccount') : $t('auth.createAccount') }}
           </button>
         </form>
 

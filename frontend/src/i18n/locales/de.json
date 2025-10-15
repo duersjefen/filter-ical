@@ -172,6 +172,12 @@
     "calendarError": "Fehler beim Verarbeiten der Kalenderdaten. Bitte überprüfen Sie die Kalender-URL.",
     "unknownError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
   },
+  "validation": {
+    "passwordRequiredWithEmail": "Wenn Sie eine E-Mail angeben, ist ein Passwort für die Kontosicherheit und Passwort-Reset-Funktionalität erforderlich.",
+    "emailRequiredWithPassword": "Wenn Sie ein Passwort festlegen, ist eine E-Mail für die Passwort-Reset-Funktionalität erforderlich.",
+    "accountRequiresPassword": "Dieses Konto benötigt ein Passwort",
+    "accountNoPassword": "Dieses Konto hat kein Passwort - einfach auf Anmelden klicken!"
+  },
   "domain": {
     "goToPersonalCalendars": "Zu persönlichen Kalendern",
     "loadingDomainCalendar": "Domain-Kalender wird geladen...",
@@ -180,7 +186,16 @@
     "calendar": "Kalender",
     "eventsAvailable": "Events verfügbar",
     "noEvents": "Keine Events verfügbar",
-    "noEventsDescription": "Dieser Domain-Kalender hat momentan keine Events."
+    "noEventsDescription": "Dieser Domain-Kalender hat momentan keine Events.",
+    "desiredKey": "Gewünschter Domain-Schlüssel",
+    "keyPlaceholder": "mein-kalender",
+    "keyHelper": "Nur Kleinbuchstaben, Zahlen und Bindestriche",
+    "adminPassword": "Admin-Passwort",
+    "userPassword": "Benutzer-Passwort",
+    "passwordMinLength": "Mind. 4 Zeichen",
+    "leaveBlankIfNone": "Leer lassen, wenn keins",
+    "loginRequired": "Sie müssen angemeldet sein, um eine Domain anzufordern",
+    "emailRequired": "Bitte fügen Sie Ihrem Profil eine E-Mail hinzu, bevor Sie eine Domain anfordern"
   },
   "home": {
     "addNewCalendar": "Neuen Kalender hinzufügen",
@@ -206,6 +221,25 @@
     "deleteCalendarMessage": "Sind Sie sicher, dass Sie den Kalender '{name}' löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteCalendarConfirm": "Löschen",
     "deleteCalendarCancel": "Abbrechen"
+  },
+  "auth": {
+    "welcomeBack": "Willkommen zurück",
+    "createAccount": "Konto erstellen",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "email": "E-Mail",
+    "usernamePlaceholder": "Benutzername eingeben",
+    "passwordPlaceholder": "Passwort eingeben",
+    "emailPlaceholder": "deine@email.de",
+    "chooseUsername": "Wähle einen Benutzernamen",
+    "choosePassword": "Wähle ein Passwort (optional)",
+    "loggingIn": "Anmelden...",
+    "emailOptional": "(optional)",
+    "passwordOptional": "(optional)",
+    "securityNote": "E-Mail & Passwort sind optional. Füge sie für sichere geräteübergreifende Synchronisierung hinzu!",
+    "forgotPassword": "Passwort vergessen?"
   },
   "login": {
     "subtitle": "Bitte melden Sie sich an, um auf Ihre Kalender zuzugreifen",
@@ -604,7 +638,13 @@
     "selectAll": "Alle auswählen",
     "subscribed": "Abonniert",
     "subscribe": "Abonnieren",
-    "subscribeToGroupsOrSelectEvents": "Gruppen abonnieren oder wiederkehrende Events auswählen"
+    "subscribeToGroupsOrSelectEvents": "Gruppen abonnieren oder wiederkehrende Events auswählen",
+    "checkingUsername": "Benutzername wird geprüft...",
+    "checkingAvailability": "Verfügbarkeit wird geprüft...",
+    "usernameTaken": "Benutzername bereits vergeben",
+    "usernameAvailable": "Benutzername verfügbar!",
+    "passwordRequired": "Passwort erforderlich",
+    "emailRequiredForPassword": "E-Mail erforderlich"
   },
   "dateTime": {
     "noDate": "Kein Datum",

@@ -86,15 +86,15 @@
         <FormInput
           id="domain-key-request"
           v-model="formData.requested_domain_key"
-          label="Desired Domain Key"
+          :label="$t('domain.desiredKey')"
           type="text"
           pattern="[a-z0-9-]+"
-          placeholder="my-calendar"
+          :placeholder="$t('domain.keyPlaceholder')"
           minlength="3"
           maxlength="100"
           :disabled="!canSubmitRequest"
           required
-          helper-text="Lowercase letters, numbers, hyphens only"
+          :helper-text="$t('domain.keyHelper')"
         />
 
         <FormInput
@@ -113,9 +113,9 @@
         <FormInput
           id="admin-password-request"
           v-model="formData.default_password"
-          label="Admin Password"
+          :label="$t('domain.adminPassword')"
           type="password"
-          placeholder="Min 4 characters"
+          :placeholder="$t('domain.passwordMinLength')"
           minlength="4"
           maxlength="100"
           :disabled="!canSubmitRequest"
@@ -126,10 +126,10 @@
         <FormInput
           id="user-password-request"
           v-model="formData.user_password"
-          label="User Password"
+          :label="$t('domain.userPassword')"
           optional="Optional"
           type="password"
-          placeholder="Leave blank if none"
+          :placeholder="$t('domain.leaveBlankIfNone')"
           minlength="4"
           maxlength="100"
           :disabled="!canSubmitRequest"
@@ -197,10 +197,10 @@ const canSubmitRequest = computed(() => {
 
 const needsEmailMessage = computed(() => {
   if (!isLoggedIn.value) {
-    return 'You must be logged in to request a domain'
+    return t('domain.loginRequired')
   }
   if (!user.value?.email) {
-    return 'Please add an email to your profile before requesting a domain'
+    return t('domain.emailRequired')
   }
   return null
 })

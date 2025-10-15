@@ -69,14 +69,14 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>Checking username...</span>
+              <span>{{ $t('status.checkingUsername') }}</span>
             </div>
           </div>
           <div v-else-if="usernameRequiresPassword === true" class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
-            🔒 This account requires a password
+            🔒 {{ $t('validation.accountRequiresPassword') }}
           </div>
           <div v-else-if="usernameRequiresPassword === false" class="mb-4 text-xs text-green-700 dark:text-green-300 bg-green-50/50 dark:bg-green-900/20 rounded-lg px-3 py-2.5 border border-green-200/50 dark:border-green-700/50">
-            ✓ This account has no password - just click login!
+            ✓ {{ $t('validation.accountNoPassword') }}
           </div>
           <div v-else class="mb-4 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg px-3 py-2.5 border border-blue-200/50 dark:border-blue-700/50">
             💡 {{ $t('login.passwordOptionalInfo') }}
@@ -135,19 +135,19 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>Checking availability...</span>
+              <span>{{ $t('status.checkingAvailability') }}</span>
             </div>
             <div v-else-if="usernameAvailable === false" class="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
               </svg>
-              <span>Username already taken</span>
+              <span>{{ $t('status.usernameTaken') }}</span>
             </div>
             <div v-else-if="usernameAvailable === true" class="mt-2 text-xs text-green-600 dark:text-green-400 flex items-center gap-2">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
-              <span>Username available!</span>
+              <span>{{ $t('status.usernameAvailable') }}</span>
             </div>
           </div>
 
@@ -162,14 +162,14 @@
 
           <!-- Warning when email is provided without password -->
           <div v-if="passwordRequired && !registerPassword" class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
-            <div class="font-semibold mb-1">🔒 Password required</div>
-            <div class="ml-4">When providing an email, a password is required for account security and password reset functionality.</div>
+            <div class="font-semibold mb-1">🔒 {{ $t('status.passwordRequired') }}</div>
+            <div class="ml-4">{{ $t('validation.passwordRequiredWithEmail') }}</div>
           </div>
 
           <!-- Warning when password is provided without email -->
           <div v-if="registerPassword && !registerEmail" class="mb-4 text-xs text-orange-700 dark:text-orange-300 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg px-3 py-2.5 border border-orange-200/50 dark:border-orange-700/50">
-            <div class="font-semibold mb-1">📧 Email required</div>
-            <div class="ml-4">When setting a password, an email is required for password reset functionality.</div>
+            <div class="font-semibold mb-1">📧 {{ $t('status.emailRequiredForPassword') }}</div>
+            <div class="ml-4">{{ $t('validation.emailRequiredWithPassword') }}</div>
           </div>
 
           <div class="opacity-60 focus-within:opacity-100 transition-opacity">
