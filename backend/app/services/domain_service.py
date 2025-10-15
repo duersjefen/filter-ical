@@ -592,15 +592,17 @@ def delete_group(db: Session, group_id: int, domain_key: str) -> Tuple[bool, str
 def delete_assignment_rule(db: Session, rule_id: int, domain_key: str) -> Tuple[bool, str]:
     """
     Delete assignment rule (admin function).
-    
+
+    For compound rules, deletes both the parent rule and all child conditions.
+
     Args:
         db: Database session
         rule_id: Rule ID to delete
         domain_key: Domain identifier for security
-        
+
     Returns:
         Tuple of (success, error_message)
-        
+
     I/O Operation - Database deletion.
     """
     try:
@@ -609,16 +611,24 @@ def delete_assignment_rule(db: Session, rule_id: int, domain_key: str) -> Tuple[
             AssignmentRule.id == rule_id,
             AssignmentRule.domain_key == domain_key
         ).first()
-        
+
         if not rule:
             return False, "Assignment rule not found"
-        
-        # Delete rule
+
+        # If compound rule, delete child conditions first
+        if rule.is_compound:
+            child_rules = db.query(AssignmentRule).filter(
+                AssignmentRule.parent_rule_id == rule_id
+            ).all()
+            for child in child_rules:
+                db.delete(child)
+
+        # Delete parent rule
         db.delete(rule)
         db.commit()
-        
+
         return True, ""
-        
+
     except Exception as e:
         db.rollback()
         return False, f"Database error: {str(e)}"

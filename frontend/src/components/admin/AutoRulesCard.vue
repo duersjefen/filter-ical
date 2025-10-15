@@ -1045,9 +1045,11 @@ export default {
       }
 
       // Handle compound rules
-      if (rule.is_compound && rule.conditions && rule.conditions.length > 0) {
+      // Backend uses 'child_conditions', create form uses 'conditions'
+      const conditions = rule.child_conditions || rule.conditions
+      if (rule.is_compound && conditions && conditions.length > 0) {
         // Check if all conditions have values
-        const allConditionsValid = rule.conditions.every(c => c.rule_type && c.rule_value && c.rule_value.trim())
+        const allConditionsValid = conditions.every(c => c.rule_type && c.rule_value && c.rule_value.trim())
         if (!allConditionsValid) {
           return []
         }
@@ -1056,7 +1058,7 @@ export default {
 
         props.recurringEvents.forEach(event => {
           // All conditions must match (AND operator only)
-          const matches = rule.conditions.every(condition => checkCondition(event, condition))
+          const matches = conditions.every(condition => checkCondition(event, condition))
 
           if (matches) {
             const targetGroupId = parseInt(rule.target_group_id)
@@ -1209,7 +1211,9 @@ export default {
     // Helper to check if any condition uses a specific field
     const ruleUsesField = (rule, field) => {
       if (rule.is_compound) {
-        return rule.conditions.some(c => c.rule_type.startsWith(`${field}_`))
+        // Backend uses 'child_conditions', create form uses 'conditions'
+        const conditions = rule.child_conditions || rule.conditions
+        return conditions?.some(c => c.rule_type.startsWith(`${field}_`)) || false
       } else {
         return rule.rule_type?.startsWith(`${field}_`)
       }

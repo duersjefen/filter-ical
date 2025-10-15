@@ -84,18 +84,47 @@ async def get_domain_assignment_rules(
     db: Session = Depends(get_db)
 ):
     """List assignment rules for domain."""
-    # Get assignment rules
-    rules = get_assignment_rules(db, domain_obj.domain_key)
+    # Get only parent rules (where parent_rule_id IS NULL)
+    parent_rules = db.query(AssignmentRule).filter(
+        AssignmentRule.domain_key == domain_obj.domain_key,
+        AssignmentRule.parent_rule_id == None
+    ).all()
 
     # Transform to OpenAPI schema format
     rules_response = []
-    for rule in rules:
-        rules_response.append({
-            "id": rule.id,
-            "rule_type": rule.rule_type,
-            "rule_value": rule.rule_value,
-            "target_group_id": rule.target_group_id
-        })
+    for rule in parent_rules:
+        if rule.is_compound:
+            # Fetch child conditions for compound rules
+            child_rules = db.query(AssignmentRule).filter(
+                AssignmentRule.parent_rule_id == rule.id
+            ).all()
+
+            child_conditions = [
+                {
+                    "rule_type": child.rule_type,
+                    "rule_value": child.rule_value
+                }
+                for child in child_rules
+            ]
+
+            rules_response.append({
+                "id": rule.id,
+                "is_compound": True,
+                "operator": rule.operator,
+                "child_conditions": child_conditions,
+                "target_group_id": rule.target_group_id,
+                "rule_type": None,
+                "rule_value": None
+            })
+        else:
+            # Simple rule
+            rules_response.append({
+                "id": rule.id,
+                "is_compound": False,
+                "rule_type": rule.rule_type,
+                "rule_value": rule.rule_value,
+                "target_group_id": rule.target_group_id
+            })
 
     return rules_response
 
