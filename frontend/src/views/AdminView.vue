@@ -297,8 +297,29 @@ export default {
       }
     }
 
+    const formatRuleDescription = (rule) => {
+      // Create human-readable description of the rule
+      if (rule.is_compound && rule.child_conditions) {
+        // Compound rule: show all conditions
+        const conditions = rule.child_conditions.map(cond => {
+          const field = cond.rule_type.includes('title') ? 'title' :
+                       cond.rule_type.includes('description') ? 'description' : 'category'
+          const operator = cond.rule_type.includes('not_contains') ? 'does not contain' : 'contains'
+          return `${field} ${operator} "${cond.rule_value}"`
+        }).join(` ${rule.operator} `)
+        return conditions
+      } else {
+        // Simple rule
+        const field = rule.rule_type.includes('title') ? 'title' :
+                     rule.rule_type.includes('description') ? 'description' : 'category'
+        const operator = rule.rule_type.includes('not_contains') ? 'does not contain' : 'contains'
+        return `${field} ${operator} "${rule.rule_value}"`
+      }
+    }
+
     const deleteRuleConfirm = (rule) => {
-      const message = t('domainAdmin.confirmDeleteRule', { ruleType: rule.rule_type, ruleValue: rule.rule_value })
+      const ruleDescription = formatRuleDescription(rule)
+      const message = `Are you sure you want to delete the rule: ${ruleDescription}?`
       showConfirmDialog(message, () => deleteRule(rule.id))
     }
 
