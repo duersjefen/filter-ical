@@ -123,14 +123,17 @@ def get_domain_events(db: Session, domain_key: str) -> List[Dict[str, Any]]:
     # Transform to dictionaries for pure function processing
     event_dicts = []
     for event in events:
-        # Extract categories from other_ical_fields if available
-        categories = []
+        # Extract raw_ical for category matching
         raw_ical = ""
         if event.other_ical_fields and isinstance(event.other_ical_fields, dict):
-            categories = event.other_ical_fields.get('categories', [])
-            # Store raw iCal for rule matching (reconstructed minimal format)
-            if categories:
-                raw_ical = "\n".join([f"CATEGORIES:{cat}" for cat in categories])
+            # Prefer original raw_ical if available (contains full iCal data)
+            raw_ical = event.other_ical_fields.get('raw_ical', '')
+
+            # If no raw_ical but we have parsed categories, reconstruct minimal format
+            if not raw_ical:
+                categories = event.other_ical_fields.get('categories', [])
+                if categories:
+                    raw_ical = "\n".join([f"CATEGORIES:{cat}" for cat in categories])
 
         event_dict = {
             "id": f"evt_{event.id}",
