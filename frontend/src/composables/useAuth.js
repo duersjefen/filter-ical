@@ -16,6 +16,19 @@ import { API_BASE_URL } from '../constants/api'
 const user = ref(null)
 const token = ref(localStorage.getItem('auth_token'))
 
+// Function to sync legacy username ref (imported lazily to avoid circular dependency)
+let syncUsername = null
+const ensureSyncUsername = () => {
+  if (!syncUsername) {
+    const { useUsername } = require('./useUsername')
+    const { username } = useUsername()
+    syncUsername = (name) => {
+      username.value = name
+    }
+  }
+  return syncUsername
+}
+
 export function useAuth() {
   const isLoggedIn = computed(() => !!user.value)
   const hasPassword = computed(() => user.value?.has_password || false)
@@ -39,6 +52,10 @@ export function useAuth() {
       token.value = response.data.token
       user.value = response.data.user
       localStorage.setItem('auth_token', token.value)
+
+      // Sync legacy username ref
+      const sync = ensureSyncUsername()
+      sync(response.data.user.username)
 
       return { success: true, error: null }
     } catch (error) {
@@ -67,6 +84,10 @@ export function useAuth() {
       user.value = response.data.user
       localStorage.setItem('auth_token', token.value)
 
+      // Sync legacy username ref
+      const sync = ensureSyncUsername()
+      sync(response.data.user.username)
+
       return { success: true, error: null }
     } catch (error) {
       return {
@@ -83,6 +104,10 @@ export function useAuth() {
     user.value = null
     token.value = null
     localStorage.removeItem('auth_token')
+
+    // Clear legacy username ref
+    const sync = ensureSyncUsername()
+    sync('')
   }
 
   /**
@@ -102,6 +127,11 @@ export function useAuth() {
       })
 
       user.value = response.data
+
+      // Sync legacy username ref
+      const sync = ensureSyncUsername()
+      sync(response.data.username)
+
       return { success: true, error: null }
     } catch (error) {
       // Token might be expired

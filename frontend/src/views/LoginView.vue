@@ -289,6 +289,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '../composables/useAuth'
+import { useUsername } from '../composables/useUsername'
 import { useHTTP } from '../composables/useHTTP'
 import { useApiErrors } from '../composables/useApiErrors'
 import { useValidation } from '../composables/useValidation'
@@ -298,6 +299,7 @@ const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const { register, login, requestPasswordReset } = useAuth()
+const { username: usernameRef } = useUsername()
 const { get } = useHTTP()
 const { error, setError, clearError } = useApiErrors()
 const { isValidEmail } = useValidation()
@@ -348,6 +350,8 @@ const handleLogin = async () => {
   loading.value = false
 
   if (result.success) {
+    // Sync legacy username ref with JWT auth
+    usernameRef.value = loginUsername.value.trim()
     success.value = t('login.loginSuccessful')
     // Redirect to intended page or home
     const redirect = route.query.redirect || '/home'
@@ -374,6 +378,8 @@ const handleRegister = async () => {
   loading.value = false
 
   if (result.success) {
+    // Sync legacy username ref with JWT auth
+    usernameRef.value = registerUsername.value.trim()
     success.value = t('login.accountCreated')
     // Redirect to intended page or home
     const redirect = route.query.redirect || '/home'
