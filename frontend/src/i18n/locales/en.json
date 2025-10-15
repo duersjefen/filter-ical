@@ -769,6 +769,7 @@
     "panel": {
       "title": "Admin Panel",
       "subtitle": "Password required to access admin features",
+      "contentSubtitle": "Manage domains, settings, and configurations",
       "password": "Admin Password",
       "passwordPlaceholder": "Enter admin password",
       "login": "Login",

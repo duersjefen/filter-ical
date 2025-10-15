@@ -294,8 +294,8 @@
     <!-- Admin Panel Content -->
     <div v-else>
       <AppHeader
-        :title="$t('admin.panel.domainRequests')"
-        :subtitle="$t('admin.panel.manageRequests')"
+        :title="$t('admin.panel.title')"
+        :subtitle="$t('admin.panel.contentSubtitle')"
         :back-button-text="$t('navigation.home')"
         :show-back-button="true"
         page-context="admin"
@@ -304,39 +304,39 @@
 
       <div class="space-y-8">
       <!-- Create New Domain (admin shortcut) -->
-      <div class="">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <!-- Header - Clickable -->
-          <div
-            @click="showCreateDomainForm = !showCreateDomainForm"
-            class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 px-6 py-4 cursor-pointer hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 transition-all"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                  <svg aria-hidden="true" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                  </svg>
-                </div>
-                <div>
-                  <h2 class="text-lg font-bold text-white">Create New Domain</h2>
-                  <p class="text-xs text-blue-100">Click to {{ showCreateDomainForm ? 'hide' : 'show' }} form</p>
-                </div>
-              </div>
-              <svg
-                class="w-5 h-5 text-white transition-transform"
-                :class="showCreateDomainForm ? 'rotate-180' : ''"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+        <!-- Header - Clickable -->
+        <div
+          @click="showCreateDomainForm = !showCreateDomainForm"
+          class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Create New Domain</span>
+              </h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Click to {{ showCreateDomainForm ? 'hide' : 'show' }} form
+              </p>
             </div>
+            <svg
+              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform"
+              :class="showCreateDomainForm ? 'rotate-180' : ''"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
           </div>
+        </div>
 
-          <!-- Form -->
-          <div v-if="showCreateDomainForm" class="p-6">
+        <!-- Form -->
+        <div v-if="showCreateDomainForm" class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <!-- Domain Key -->
               <div>
@@ -492,25 +492,27 @@
       </div>
 
       <!-- Domains Overview (at top) -->
-      <div class="">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-              <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-              </svg>
-              <span>All Domains</span>
-            </h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Manage all domain calendars and their settings
-            </p>
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+                <span>All Domains</span>
+              </h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Manage all domain calendars and their settings
+              </p>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
+              {{ domains.length }} {{ domains.length !== 1 ? 'domains' : 'domain' }}
+            </span>
           </div>
-          <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
-            {{ domains.length }} {{ domains.length !== 1 ? 'domains' : 'domain' }}
-          </span>
         </div>
 
-        <div v-if="domainsLoading" role="status" aria-live="polite" aria-label="Loading domains" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="domainsLoading" role="status" aria-live="polite" aria-label="Loading domains" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="i in 6" :key="i" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
             <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-100 dark:border-gray-700">
               <div class="flex items-center gap-3">
@@ -528,7 +530,7 @@
           </div>
         </div>
 
-        <div v-else-if="domains.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center shadow-sm">
+        <div v-else-if="domains.length === 0" class="p-12 text-center">
           <div class="max-w-md mx-auto">
             <div class="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg aria-hidden="true" class="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -553,7 +555,7 @@
           </div>
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div v-else class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <!-- Domain Card - Better Spacing & Readability -->
           <div v-for="domain in domains" :key="domain.domain_key" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm hover:shadow-md">
 
@@ -763,30 +765,32 @@
       </div>
 
       <!-- Requests List -->
-      <div class="">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-              <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-              </svg>
-              <span>Pending Domain Requests</span>
-            </h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Review and approve user requests for new domains
-            </p>
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                <span>Pending Domain Requests</span>
+              </h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Review and approve user requests for new domains
+              </p>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
+              {{ pendingRequests.length }} {{ pendingRequests.length !== 1 ? 'requests' : 'request' }}
+            </span>
           </div>
-          <span class="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-semibold">
-            {{ pendingRequests.length }} {{ pendingRequests.length !== 1 ? 'requests' : 'request' }}
-          </span>
         </div>
 
-        <div v-if="loading" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div v-if="loading" class="p-12 text-center">
           <div class="inline-block w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p class="mt-4 text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
         </div>
 
-        <div v-else-if="pendingRequests.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center shadow-sm">
+        <div v-else-if="pendingRequests.length === 0" class="p-12 text-center">
           <div class="max-w-md mx-auto">
             <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg aria-hidden="true" class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -802,7 +806,7 @@
           </div>
         </div>
 
-        <div v-else class="space-y-4">
+        <div v-else class="p-6 space-y-4">
           <div v-for="request in pendingRequests" :key="request.id" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm hover:shadow-md">
 
             <!-- Request Header -->
@@ -1012,16 +1016,29 @@
       <!-- Domain YAML Configuration Management -->
       <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="px-6 py-5 sm:px-4 sm:py-3 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-            <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-            </svg>
-            <span>Domain YAML Configurations</span>
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage domain configuration files and seed the database</p>
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                <span>Domain YAML Configurations</span>
+              </h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage domain configuration files and seed the database</p>
+            </div>
+            <button
+              @click="$refs.domainConfigManager?.refreshConfigs()"
+              class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span class="hidden sm:inline">Refresh</span>
+            </button>
+          </div>
         </div>
         <div class="p-6 sm:p-4">
-          <DomainConfigManager />
+          <DomainConfigManager ref="domainConfigManager" />
         </div>
       </div>
       </div>

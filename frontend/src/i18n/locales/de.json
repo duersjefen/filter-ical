@@ -779,6 +779,7 @@
     "panel": {
       "title": "Admin-Panel",
       "subtitle": "Passwort erforderlich für Admin-Funktionen",
+      "contentSubtitle": "Domains, Einstellungen und Konfigurationen verwalten",
       "password": "Admin-Passwort",
       "passwordPlaceholder": "Admin-Passwort eingeben",
       "login": "Anmelden",
