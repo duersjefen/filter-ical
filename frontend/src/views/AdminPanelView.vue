@@ -109,7 +109,7 @@
 
       <div class="space-y-8">
       <!-- Create New Domain (admin shortcut) -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <!-- Header - Clickable -->
         <div
           @click="showCreateDomainForm = !showCreateDomainForm"
@@ -148,7 +148,7 @@
       </div>
 
       <!-- Domains Overview (at top) -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <div class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
           <div class="flex items-center justify-between">
             <div>
@@ -223,7 +223,7 @@
       </div>
 
       <!-- Requests List -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <div class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
           <div class="flex items-center justify-between">
             <div>
@@ -277,7 +277,7 @@
       </div>
 
       <!-- App Settings - Clean & Spacious -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
             <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,7 +360,7 @@
       </div>
 
       <!-- Domain YAML Configuration Management -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <div class="px-6 py-5 sm:px-4 sm:py-3 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
           <div class="flex items-center justify-between">
             <div>
