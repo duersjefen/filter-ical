@@ -68,12 +68,23 @@ async def create_domain_assignment_rule(
     if not success:
         raise HTTPException(status_code=400, detail=error)
 
-    # Return rule data matching OpenAPI schema
+    # AUTO-APPLY: Apply the newly created rule to matching events
+    apply_success, assignment_count, apply_error = await auto_assign_events_with_rules(
+        db, domain_obj.domain_key
+    )
+
+    # Note: We don't fail the rule creation if application fails
+    # Rule is already created, we just inform the user about application status
+
+    # Return rule data matching OpenAPI schema with application results
     return {
         "id": rule.id,
         "rule_type": rule.rule_type,
         "rule_value": rule.rule_value,
-        "target_group_id": rule.target_group_id
+        "target_group_id": rule.target_group_id,
+        "auto_applied": apply_success,
+        "assignment_count": assignment_count if apply_success else 0,
+        "apply_error": apply_error if not apply_success else None
     }
 
 
@@ -217,7 +228,12 @@ async def create_compound_assignment_rule(
     db.commit()
     db.refresh(parent_rule)
 
-    # Return with child_conditions populated (follows OpenAPI schema)
+    # AUTO-APPLY: Apply all rules (including the newly created one)
+    apply_success, assignment_count, apply_error = await auto_assign_events_with_rules(
+        db, domain_obj.domain_key
+    )
+
+    # Return with child_conditions populated (follows OpenAPI schema) + application results
     return {
         "id": parent_rule.id,
         "is_compound": True,
@@ -230,5 +246,8 @@ async def create_compound_assignment_rule(
                 "rule_value": child.rule_value
             }
             for child in parent_rule.child_conditions
-        ]
+        ],
+        "auto_applied": apply_success,
+        "assignment_count": assignment_count if apply_success else 0,
+        "apply_error": apply_error if not apply_success else None
     }

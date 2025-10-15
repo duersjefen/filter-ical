@@ -273,10 +273,39 @@ export default {
         result = await createAssignmentRule(ruleType, ruleValue, ruleData.target_group_id)
       }
 
-      showNotification(
-        result.success ? t('domainAdmin.assignmentRuleCreatedSuccessfully') : t('domainAdmin.failedToCreateAssignmentRule', { error: result.error }),
-        result.success ? 'success' : 'error'
-      )
+      if (result.success) {
+        // Enhanced success message with auto-apply results
+        const baseMsg = t('domainAdmin.assignmentRuleCreatedSuccessfully')
+
+        // Check if auto-apply results are included in response
+        if (result.data?.auto_applied && result.data?.assignment_count > 0) {
+          const count = result.data.assignment_count
+          showNotification(
+            `${baseMsg} ${count} ${count === 1 ? 'event' : 'events'} automatically assigned!`,
+            'success'
+          )
+        } else if (result.data?.auto_applied === false && result.data?.apply_error) {
+          // Rule created but application failed
+          showNotification(
+            `${baseMsg} Note: ${result.data.apply_error}`,
+            'success'
+          )
+        } else if (result.data?.auto_applied && result.data?.assignment_count === 0) {
+          // Rule created but no matching events
+          showNotification(
+            `${baseMsg} No matching events found.`,
+            'success'
+          )
+        } else {
+          // Backward compatibility: if backend doesn't return auto-apply data
+          showNotification(baseMsg, 'success')
+        }
+      } else {
+        showNotification(
+          t('domainAdmin.failedToCreateAssignmentRule', { error: result.error }),
+          'error'
+        )
+      }
     }
 
     const applyRule = async (rule) => {
