@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm hover:shadow-md">
+  <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm hover:shadow-md overflow-hidden">
 
     <!-- Header with Domain Name & Actions -->
     <div class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
@@ -16,7 +16,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </a>
-        <button @click="$emit('delete-domain')" :disabled="processing" :aria-label="`Delete domain ${domain.domain_key}`" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-800/50 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center" title="Delete Domain">
+        <button @click="$emit('delete-domain')" :aria-label="`Delete domain ${domain.domain_key}`" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-800/50 rounded-lg transition-colors flex items-center justify-center" title="Delete Domain">
           <svg aria-hidden="true" class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
           </svg>
@@ -344,31 +344,20 @@ const props = defineProps({
   domain: {
     type: Object,
     required: true
-  },
-  processing: {
-    type: Boolean,
-    default: false
-  },
-  editingDomain: {
-    type: String,
-    default: null
-  },
-  editingType: {
-    type: String,
-    default: null
-  },
-  assigningOwner: {
-    type: String,
-    default: null
   }
 })
 
 // Emits
-const emit = defineEmits(['delete-domain', 'refresh-domains', 'start-editing', 'cancel-editing', 'save-password', 'remove-password', 'start-owner-assignment', 'cancel-owner-assignment', 'assign-owner', 'remove-owner'])
+const emit = defineEmits(['delete-domain', 'refresh-domains'])
 
-// Local state
+// Local state for password management
+const editingDomain = ref(null)
+const editingType = ref(null)
 const newPassword = ref('')
 const showPassword = ref(false)
+
+// Local state for owner management
+const assigningOwner = ref(null)
 const ownerSearchQuery = ref('')
 const userSearchResults = ref([])
 const searchingUsers = ref(false)
@@ -405,13 +394,15 @@ const getAuthHeaders = () => {
 
 // Password management methods
 const startEditing = (domainKey, type) => {
-  emit('start-editing', domainKey, type)
+  editingDomain.value = domainKey
+  editingType.value = type
   newPassword.value = ''
   showPassword.value = false
 }
 
 const cancelEditing = () => {
-  emit('cancel-editing')
+  editingDomain.value = null
+  editingType.value = null
   newPassword.value = ''
   showPassword.value = false
 }
@@ -441,19 +432,38 @@ const savePassword = async (domainKey, type) => {
   }
 }
 
-const removePassword = (domainKey, type) => {
-  emit('remove-password', domainKey, type)
+const removePassword = async (domainKey, type) => {
+  if (!confirm(`Are you sure you want to remove the ${type} password?`)) {
+    return
+  }
+
+  try {
+    const endpoint = `/api/admin/domains/${domainKey}/passwords`
+
+    const payload = type === 'admin'
+      ? { admin_password: null }
+      : { user_password: null }
+
+    await axios.patch(`${API_BASE_URL}${endpoint}`, payload, {
+      headers: getAuthHeaders()
+    })
+
+    notify.success(t(`admin.domainAuth.passwordSettings.success.${type}Removed`) || `${type === 'admin' ? 'Admin' : 'User'} password removed successfully`)
+    emit('refresh-domains')
+  } catch (error) {
+    notify.error(t(`admin.domainAuth.passwordSettings.error.${type}Removed`) || `Failed to remove password: ${error.message}`)
+  }
 }
 
 // Owner management methods
 const startOwnerAssignment = (domainKey) => {
-  emit('start-owner-assignment', domainKey)
+  assigningOwner.value = domainKey
   ownerSearchQuery.value = ''
   userSearchResults.value = []
 }
 
 const cancelOwnerAssignment = () => {
-  emit('cancel-owner-assignment')
+  assigningOwner.value = null
   ownerSearchQuery.value = ''
   userSearchResults.value = []
 }
@@ -503,17 +513,37 @@ const assignOwner = async (domainKey, userId, username) => {
       }
     )
 
-    notify.success(t('admin.domains.assignOwnerSuccess', { domainKey, username }))
-    emit('assign-owner', domainKey, userId, username)
+    notify.success(t('admin.domains.assignOwnerSuccess', { domainKey, username }) || `Owner assigned to ${username}`)
     cancelOwnerAssignment()
+    emit('refresh-domains')
   } catch (error) {
     console.error('Failed to assign owner:', error)
-    notify.error(t('admin.domains.assignOwnerError', { detail: error.response?.data?.detail || error.message }))
+    notify.error(t('admin.domains.assignOwnerError', { detail: error.response?.data?.detail || error.message }) || `Failed to assign owner: ${error.response?.data?.detail || error.message}`)
   }
 }
 
-const removeOwner = (domainKey) => {
-  emit('remove-owner', domainKey)
+const removeOwner = async (domainKey) => {
+  if (!confirm('Are you sure you want to remove the owner?')) {
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('admin_token')
+    await axios.delete(
+      `${API_BASE_URL}/api/admin/domains/${domainKey}/owner`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    notify.success('Owner removed successfully')
+    emit('refresh-domains')
+  } catch (error) {
+    console.error('Failed to remove owner:', error)
+    notify.error(`Failed to remove owner: ${error.response?.data?.detail || error.message}`)
+  }
 }
 
 // Calendar permissions methods
