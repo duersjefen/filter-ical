@@ -541,12 +541,7 @@ export function useAdmin(domain) {
     // Use backend's "apply all rules" endpoint
     // This works for both simple and compound rules
     try {
-      console.log('[Apply Rules] Sending request to:', API_ENDPOINTS.DOMAIN_ASSIGNMENT_RULES_APPLY(domain))
-      console.log('[Apply Rules] Auth token present:', !!localStorage.getItem('auth_token'))
-
       const result = await post(API_ENDPOINTS.DOMAIN_ASSIGNMENT_RULES_APPLY(domain))
-
-      console.log('[Apply Rules] Success:', result)
       await loadRecurringEventsWithAssignments() // Refresh to show changes
       return {
         success: true,
@@ -554,11 +549,7 @@ export function useAdmin(domain) {
         assignedCount: result.assignment_count || 0
       }
     } catch (err) {
-      console.error('[Apply Rules] Error:', err)
-      console.error('[Apply Rules] Error response:', err.response?.data)
-      console.error('[Apply Rules] Error status:', err.response?.status)
-
-      // Provide more detailed error message
+      // Provide detailed error message from backend
       const errorDetail = err.response?.data?.detail || err.message || 'Unknown error'
       return { success: false, error: `Apply failed: ${errorDetail}` }
     }

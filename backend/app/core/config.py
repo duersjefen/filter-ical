@@ -33,8 +33,8 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 3000
     
-    # CORS settings
-    allowed_origins: List[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
+    # CORS settings (overrideable via ALLOWED_ORIGINS env var)
+    _allowed_origins: List[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
     
     # Background job settings
     sync_interval_minutes: int = 5
@@ -115,6 +115,34 @@ class Settings(BaseSettings):
         - Already-seeded: Checks existing groups, skips re-seeding
         """
         return True  # Always enabled - safe due to existence checks
+
+    @property
+    def allowed_origins(self) -> List[str]:
+        """
+        Get CORS allowed origins based on environment.
+
+        Can be overridden via ALLOWED_ORIGINS environment variable.
+        Otherwise returns environment-specific defaults.
+        """
+        # If explicitly set via environment variable, use that
+        if hasattr(self, '_allowed_origins') and self._allowed_origins != ["http://localhost:8000", "http://127.0.0.1:8000"]:
+            return self._allowed_origins
+
+        # Environment-specific defaults
+        if self.is_production:
+            return [
+                "https://filter-ical.de",
+                "https://www.filter-ical.de"
+            ]
+        elif self.is_staging:
+            return [
+                "https://staging.filter-ical.de"
+            ]
+        else:  # development or testing
+            return [
+                "http://localhost:8000",
+                "http://127.0.0.1:8000"
+            ]
     
     @property
     def should_enable_background_tasks(self) -> bool:
