@@ -11,7 +11,8 @@ from typing import List, Literal
 
 from ..core.database import get_db
 from ..core.error_handlers import handle_endpoint_errors
-from ..core.auth import get_verified_domain
+from ..core.auth import get_verified_domain, require_user_auth
+from ..services.domain_access_service import check_user_has_domain_access
 from ..models.domain import Domain
 from ..models.calendar import Group, AssignmentRule
 from ..services.domain_service import (
@@ -133,9 +134,18 @@ async def get_domain_assignment_rules(
 @handle_endpoint_errors
 async def apply_domain_assignment_rules(
     domain_obj: Domain = Depends(get_verified_domain),
+    user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
 ):
     """Manually trigger assignment rules to be applied to all events (admin)."""
+    # Verify user has admin access to domain
+    has_access = check_user_has_domain_access(db, user_id, domain_obj.domain_key, "admin")
+    if not has_access:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient permissions. Admin access required."
+        )
+
     # Apply assignment rules
     success, assignment_count, error = await auto_assign_events_with_rules(db, domain_obj.domain_key)
     if not success:
