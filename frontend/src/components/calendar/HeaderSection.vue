@@ -4,7 +4,6 @@
     <AppHeader
       :title="domainContext ? `🌐 ${domainContext.name}` : $t('calendar.filterTitle', { name: selectedCalendar?.name || $t('common.loading') })"
       :subtitle="domainContext ? $t('subtitles.domainCalendar') : $t('calendar.subtitle')"
-      :show-user-info="false"
       :show-back-button="true"
       :back-button-text="domainContext ? $t('domain.goToPersonalCalendars') : $t('navigation.backToCalendars')"
       :domain-context="domainContext"

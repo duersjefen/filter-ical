@@ -4,8 +4,6 @@
     <AppHeader
       :title="$t('profile.title')"
       :subtitle="$t('profile.subtitle')"
-      :show-user-info="true"
-      :user="user"
       page-context="profile"
     />
 
