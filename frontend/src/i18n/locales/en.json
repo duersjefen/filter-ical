@@ -66,6 +66,7 @@
     "home": "Home",
     "logout": "Logout",
     "backToCalendars": "Back to Calendars",
+    "backToHome": "Back to Home",
     "navigateHome": "Navigate Home"
   },
   "calendar": {
