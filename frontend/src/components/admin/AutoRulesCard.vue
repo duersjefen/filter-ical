@@ -400,7 +400,7 @@
                     </template>
 
                     <!-- Arrow and Target Group in same row -->
-                    <span class="text-gray-600 dark:text-gray-400 text-sm">→ {{ $t('domainAdmin.assignTo') }}</span>
+                    <span class="text-gray-600 dark:text-gray-400 text-sm">→</span>
                     <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-700">
                       📁 {{ getGroupName(rule.target_group_id) }}
                     </span>
