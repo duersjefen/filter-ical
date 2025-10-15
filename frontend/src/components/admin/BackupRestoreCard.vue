@@ -223,7 +223,7 @@ export default {
     }
 
     const getBackupTypeLabel = (type) => {
-      return t(`admin.backupType.${type}`)
+      return t(`domainAdmin.backupType.${type}`)
     }
 
     const handleCreateBackup = () => {
