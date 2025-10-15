@@ -381,21 +381,71 @@
                     {{ getLiveMatchingEvents(rule).length }} matches
                   </span>
                 </div>
-                <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
-                  <span v-if="rule.is_compound">
-                    {{ $t('domainAdmin.when') }}
-                    <span v-for="(cond, i) in rule.child_conditions" :key="i">
-                      <span v-if="i > 0" class="mx-2 font-bold text-blue-600 dark:text-blue-400">{{ rule.operator }}</span>
-                      <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(cond.rule_type) }}</span>
-                      <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ cond.rule_value }}"</span>
+                <!-- Visual Rule Display with Pills -->
+                <div class="space-y-2 mb-3">
+                  <!-- Compound Rules -->
+                  <div v-if="rule.is_compound && rule.child_conditions" class="space-y-2">
+                    <div
+                      v-for="(cond, i) in rule.child_conditions"
+                      :key="i"
+                      class="flex flex-wrap items-center gap-2"
+                    >
+                      <!-- AND badge for 2nd+ conditions -->
+                      <span v-if="i > 0" class="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/50 rounded-full">
+                        {{ rule.operator }}
+                      </span>
+
+                      <!-- Field Pill (read-only) -->
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500 text-white border-2 border-blue-500">
+                        <span>{{ getFieldIcon(extractField(cond.rule_type)) }}</span>
+                        <span class="font-semibold">{{ getFieldLabel(extractField(cond.rule_type)) }}</span>
+                      </span>
+
+                      <!-- Operator Pill (read-only) -->
+                      <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500 text-white border-2 border-green-500" :title="getOperatorLabel(extractOperator(cond.rule_type))">
+                        <span class="text-base">{{ getOperatorIcon(extractOperator(cond.rule_type)) }}</span>
+                      </span>
+
+                      <!-- Search Value -->
+                      <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-2 border-yellow-200 dark:border-yellow-700">
+                        "{{ cond.rule_value }}"
+                      </span>
+                    </div>
+                    <!-- Target Group -->
+                    <div class="flex items-center gap-2 text-sm">
+                      <span class="text-gray-600 dark:text-gray-400">→ {{ $t('domainAdmin.assignTo') }}</span>
+                      <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-700">
+                        📁 {{ getGroupName(rule.target_group_id) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Simple Rules -->
+                  <div v-else class="flex flex-wrap items-center gap-2">
+                    <!-- Field Pill (read-only) -->
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500 text-white border-2 border-blue-500">
+                      <span>{{ getFieldIcon(extractField(rule.rule_type)) }}</span>
+                      <span class="font-semibold">{{ getFieldLabel(extractField(rule.rule_type)) }}</span>
                     </span>
-                    → {{ $t('domainAdmin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
-                  </span>
-                  <span v-else>
-                    {{ $t('domainAdmin.when') }} <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded font-medium">{{ getRuleTypeDescription(rule.rule_type) }}</span> <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded font-medium">"{{ rule.rule_value }}"</span>
-                    → {{ $t('domainAdmin.assignTo') }} <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded font-medium">{{ getGroupName(rule.target_group_id) }}</span>
-                  </span>
-                </p>
+
+                    <!-- Operator Pill (read-only) -->
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500 text-white border-2 border-green-500" :title="getOperatorLabel(extractOperator(rule.rule_type))">
+                      <span class="text-base">{{ getOperatorIcon(extractOperator(rule.rule_type)) }}</span>
+                    </span>
+
+                    <!-- Search Value -->
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-2 border-yellow-200 dark:border-yellow-700">
+                      "{{ rule.rule_value }}"
+                    </span>
+
+                    <span class="text-gray-600 dark:text-gray-400 text-sm">→</span>
+
+                    <!-- Target Group -->
+                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-700">
+                      📁 {{ getGroupName(rule.target_group_id) }}
+                    </span>
+                  </div>
+                </div>
                 <div v-if="getRuleStatus(rule) !== t('domainAdmin.complete')" class="flex items-center gap-6 text-xs">
                   <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -1155,6 +1205,51 @@ export default {
       }
     }
 
+    // Extract field from rule_type (e.g., "title_contains" -> "title")
+    const extractField = (ruleType) => {
+      if (!ruleType) return 'title'
+      return ruleType.split('_')[0]
+    }
+
+    // Extract operator from rule_type (e.g., "title_not_contains" -> "not_contains")
+    const extractOperator = (ruleType) => {
+      if (!ruleType) return 'contains'
+      if (ruleType.includes('_not_')) {
+        return 'not_contains'
+      }
+      return 'contains'
+    }
+
+    // Get field icon
+    const getFieldIcon = (field) => {
+      const icons = {
+        'title': '📄',
+        'description': '📝',
+        'category': '🏷️'
+      }
+      return icons[field] || '📄'
+    }
+
+    // Get field label
+    const getFieldLabel = (field) => {
+      const labels = {
+        'title': 'Title',
+        'description': 'Description',
+        'category': 'Category'
+      }
+      return labels[field] || field
+    }
+
+    // Get operator icon
+    const getOperatorIcon = (operator) => {
+      return operator === 'contains' ? '✓' : '✗'
+    }
+
+    // Get operator label
+    const getOperatorLabel = (operator) => {
+      return operator === 'contains' ? 'Contains' : 'Not Contains'
+    }
+
     return {
       t,
       newRule,
@@ -1192,7 +1287,13 @@ export default {
       getConditionOperator,
       setConditionField,
       setConditionOperator,
-      ruleUsesField
+      ruleUsesField,
+      extractField,
+      extractOperator,
+      getFieldIcon,
+      getFieldLabel,
+      getOperatorIcon,
+      getOperatorLabel
     }
   }
 }
