@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
 from app.models.user import User
-from app.core.auth import create_access_token
+from app.services.auth_service import create_jwt_token
 
 
 @pytest.mark.integration
@@ -25,11 +25,12 @@ class TestUserRegistration:
                 "email": "test@example.com"
             }
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
         data = response.json()
-        assert data["username"] == "testuser123"
-        assert data["email"] == "test@example.com"
-        assert "access_token" in data
+        assert data["user"]["username"] == "testuser123"
+        assert data["user"]["email"] == "test@example.com"
+        assert "token" in data
+        assert data["expires_in_days"] == 30
 
         # Verify user exists in database with hashed password
         user = test_db.query(User).filter(User.username == "testuser123").first()
@@ -44,10 +45,11 @@ class TestUserRegistration:
             "/api/users/register",
             json={"username": "insecureuser"}
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
         data = response.json()
-        assert data["username"] == "insecureuser"
-        assert "access_token" in data
+        assert data["user"]["username"] == "insecureuser"
+        assert data["user"]["has_password"] is False
+        assert "token" in data
 
         # Verify user has no password
         user = test_db.query(User).filter(User.username == "insecureuser").first()
@@ -59,29 +61,29 @@ class TestUserRegistration:
         # Create first user
         test_client.post(
             "/api/users/register",
-            json={"username": "duplicate", "password": "pass123"}
+            json={"username": "duplicate", "password": "pass123", "email": "duplicate@example.com"}
         )
 
         # Try to create duplicate
         response = test_client.post(
             "/api/users/register",
-            json={"username": "duplicate", "password": "otherpass"}
+            json={"username": "duplicate", "password": "otherpass", "email": "other@example.com"}
         )
         assert response.status_code in [400, 409]
-        assert "already" in response.json()["detail"].lower() or "exists" in response.json()["detail"].lower()
+        assert "already" in response.json()["detail"].lower() or "exists" in response.json()["detail"].lower() or "taken" in response.json()["detail"].lower()
 
-    def test_register_with_email_requires_password(self, test_client: TestClient):
-        """Test that providing email requires password for security."""
+    def test_register_password_requires_email(self, test_client: TestClient):
+        """Test that providing password requires email (for password reset)."""
         response = test_client.post(
             "/api/users/register",
             json={
-                "username": "emailnopass",
-                "email": "test@example.com"
+                "username": "passnomail",
+                "password": "securepass123"
             }
         )
-        # Should succeed but warn, or fail depending on implementation
-        # Adjust assertion based on actual behavior
-        assert response.status_code in [201, 400]
+        # Should fail - password requires email for reset functionality
+        assert response.status_code == 400
+        assert "email" in response.json()["detail"].lower()
 
 
 @pytest.mark.integration
@@ -93,7 +95,7 @@ class TestUserLogin:
         # Register user first
         test_client.post(
             "/api/users/register",
-            json={"username": "loginuser", "password": "mypassword123"}
+            json={"username": "loginuser", "password": "mypassword123", "email": "login@example.com"}
         )
 
         # Login
@@ -103,15 +105,16 @@ class TestUserLogin:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert data.get("token_type") == "bearer" or "access_token" in data
+        assert "token" in data
+        assert data["user"]["username"] == "loginuser"
+        assert data["expires_in_days"] == 30
 
     def test_login_with_invalid_password(self, test_client: TestClient):
         """Test invalid password returns 401."""
         # Register user
         test_client.post(
             "/api/users/register",
-            json={"username": "secureuser", "password": "correctpass"}
+            json={"username": "secureuser", "password": "correctpass", "email": "secure@example.com"}
         )
 
         # Try wrong password
@@ -135,7 +138,9 @@ class TestUserLogin:
             json={"username": "nopassuser"}
         )
         assert response.status_code == 200
-        assert "access_token" in response.json()
+        data = response.json()
+        assert "token" in data
+        assert data["user"]["has_password"] is False
 
     def test_login_nonexistent_user(self, test_client: TestClient):
         """Test login with nonexistent username fails."""
@@ -155,9 +160,9 @@ class TestJWTTokenValidation:
         # Register and get token
         response = test_client.post(
             "/api/users/register",
-            json={"username": "tokenuser", "password": "pass123"}
+            json={"username": "tokenuser", "password": "pass123", "email": "token@example.com"}
         )
-        token = response.json()["access_token"]
+        token = response.json()["token"]
 
         # Access protected endpoint
         response = test_client.get(
@@ -185,15 +190,29 @@ class TestJWTTokenValidation:
         # Create user
         response = test_client.post(
             "/api/users/register",
-            json={"username": "expireduser", "password": "pass123"}
+            json={"username": "expireduser", "password": "pass123", "email": "expired@example.com"}
         )
         user_data = response.json()
 
-        # Create expired token manually
-        expired_token = create_access_token(
-            data={"sub": "expireduser"},
-            expires_delta=timedelta(days=-1)  # Expired yesterday
-        )
+        # Get user from database to get user_id
+        user = test_db.query(User).filter(User.username == "expireduser").first()
+        assert user is not None
+
+        # Create expired token manually using JWT
+        import jwt
+        from app.core.config import settings
+        from datetime import timezone
+
+        now = datetime.now(timezone.utc)
+        expired_time = now - timedelta(days=1)  # Expired yesterday
+
+        payload = {
+            'user_id': user.id,
+            'iat': expired_time.timestamp(),
+            'exp': expired_time.timestamp()  # Already expired
+        }
+
+        expired_token = jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
         # Try to use expired token
         response = test_client.get(
@@ -212,7 +231,7 @@ class TestAccountSecurity:
         # Register user
         test_client.post(
             "/api/users/register",
-            json={"username": "lockoutuser", "password": "correctpass"}
+            json={"username": "lockoutuser", "password": "correctpass", "email": "lockout@example.com"}
         )
 
         # Make 5 failed login attempts
@@ -221,33 +240,34 @@ class TestAccountSecurity:
                 "/api/users/login",
                 json={"username": "lockoutuser", "password": "wrongpass"}
             )
-            # First 4 should return 401, 5th might trigger lockout
-            assert response.status_code in [401, 429]
+            # First 4 should return 401, 5th triggers lockout (403)
+            assert response.status_code in [401, 403]
 
-        # 6th attempt should be locked out
+        # 6th attempt should be locked out (403 Forbidden)
         response = test_client.post(
             "/api/users/login",
             json={"username": "lockoutuser", "password": "wrongpass"}
         )
-        # Should be either rate limited or account locked
-        assert response.status_code in [401, 429]
+        # Should be account locked
+        assert response.status_code == 403
+        assert "locked" in response.json()["detail"].lower()
 
     def test_username_check_endpoint(self, test_client: TestClient):
         """Test username availability check endpoint."""
-        # Register user
+        # Register user with password
         test_client.post(
             "/api/users/register",
-            json={"username": "taken", "password": "pass"}
+            json={"username": "taken", "password": "pass", "email": "taken@example.com"}
         )
 
-        # Check taken username
+        # Check taken username - should return exists=True and has_password=True
         response = test_client.get("/api/users/check/taken")
         assert response.status_code == 200
         data = response.json()
         assert data["exists"] is True
+        assert data["has_password"] is True
+        assert data["username"] == "taken"
 
-        # Check available username
+        # Check available username - should return 404 Not Found
         response = test_client.get("/api/users/check/available")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["exists"] is False
+        assert response.status_code == 404

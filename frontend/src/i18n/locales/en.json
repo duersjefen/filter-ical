@@ -466,9 +466,12 @@
     "enterSearchValue": "Enter search value...",
     "unknownGroup": "Unknown Group",
     "ruleTypePlaceholders": {
-      "title_contains": "e.g., \"Meeting\" or \"Training\"",
-      "description_contains": "e.g., \"Project\" or \"Review\"",
-      "category_contains": "e.g., \"Exter\" or \"Training\""
+      "title_contains": "Find titles containing... (e.g., \"Meeting\" or \"Training\")",
+      "title_not_contains": "Exclude titles containing... (e.g., \"Personal\" or \"Private\")",
+      "description_contains": "Find descriptions containing... (e.g., \"Project\" or \"Review\")",
+      "description_not_contains": "Exclude descriptions containing... (e.g., \"Internal\" or \"Draft\")",
+      "category_contains": "Find categories containing... (e.g., \"External\" or \"Training\")",
+      "category_not_contains": "Exclude categories containing... (e.g., \"Private\" or \"Internal\")"
     },
     "confirmAction": "Confirm Action",
     "delete": "Delete",
@@ -857,7 +860,9 @@
           "tooShort": "Password must be at least 4 characters"
         },
         "confirm": {
+          "removeAdminTitle": "Remove Admin Password",
           "removeAdmin": "Are you sure you want to remove the admin password? Anyone will be able to access the admin panel.",
+          "removeUserTitle": "Remove User Password",
           "removeUser": "Are you sure you want to remove the user password? The calendar will be publicly accessible."
         }
       },

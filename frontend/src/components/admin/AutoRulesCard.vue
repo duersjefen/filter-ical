@@ -24,9 +24,6 @@
         <div class="flex flex-wrap items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border-2 border-gray-200 dark:border-gray-700">
           <!-- Field Pills -->
           <div class="flex flex-col gap-2">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-              Field
-            </label>
             <div class="flex gap-1.5">
               <button
                 v-for="fieldType in fieldTypes"
@@ -47,9 +44,6 @@
 
           <!-- Operator Pills -->
           <div class="flex flex-col gap-2">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-              Operator
-            </label>
             <div class="flex gap-1.5">
               <button
                 v-for="operator in operators"
@@ -58,8 +52,12 @@
                 :class="[
                   'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                   getConditionOperator(0) === operator.value
-                    ? 'bg-green-500 text-white border-green-500 shadow-md scale-105'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-green-400 hover:scale-105'
+                    ? operator.value === 'not_contains'
+                      ? 'bg-red-500 text-white border-red-500 shadow-md scale-105'
+                      : 'bg-green-500 text-white border-green-500 shadow-md scale-105'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:scale-105',
+                  getConditionOperator(0) !== operator.value && operator.value === 'not_contains' ? 'hover:border-red-400' : '',
+                  getConditionOperator(0) !== operator.value && operator.value === 'contains' ? 'hover:border-green-400' : ''
                 ]"
                 :title="operator.label"
               >
@@ -70,9 +68,6 @@
 
           <!-- Search Value Input -->
           <div class="flex-1 min-w-[200px] flex flex-col gap-2">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-              🔍 Search Value
-            </label>
             <div class="relative">
               <input
                 v-model="newRule.conditions[0].rule_value"
@@ -95,9 +90,6 @@
 
           <!-- Target Group Dropdown -->
           <div class="w-full sm:w-auto sm:min-w-[200px] flex flex-col gap-2">
-            <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-              📁 Target Group
-            </label>
             <select
               v-model="newRule.target_group_id"
               class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all cursor-pointer"
@@ -126,9 +118,6 @@
 
             <!-- Field Pills -->
             <div class="flex flex-col gap-2 mt-2">
-              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                Field
-              </label>
               <div class="flex gap-1.5">
                 <button
                   v-for="fieldType in fieldTypes"
@@ -149,9 +138,6 @@
 
             <!-- Operator Pills -->
             <div class="flex flex-col gap-2 mt-2">
-              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                Operator
-              </label>
               <div class="flex gap-1.5">
                 <button
                   v-for="operator in operators"
@@ -160,8 +146,12 @@
                   :class="[
                     'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2',
                     getConditionOperator(index + 1) === operator.value
-                      ? 'bg-green-500 text-white border-green-500 shadow-md scale-105'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-green-400 hover:scale-105'
+                      ? operator.value === 'not_contains'
+                        ? 'bg-red-500 text-white border-red-500 shadow-md scale-105'
+                        : 'bg-green-500 text-white border-green-500 shadow-md scale-105'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:scale-105',
+                    getConditionOperator(index + 1) !== operator.value && operator.value === 'not_contains' ? 'hover:border-red-400' : '',
+                    getConditionOperator(index + 1) !== operator.value && operator.value === 'contains' ? 'hover:border-green-400' : ''
                   ]"
                   :title="operator.label"
                 >
@@ -172,9 +162,6 @@
 
             <!-- Search Value Input -->
             <div class="flex-1 min-w-[200px] flex flex-col gap-2 mt-2">
-              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                🔍 Search Value
-              </label>
               <div class="relative">
                 <input
                   v-model="condition.rule_value"
@@ -389,7 +376,13 @@
                       </span>
 
                       <!-- Operator Pill (read-only) -->
-                      <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500 text-white border-2 border-green-500" :title="getOperatorLabel(extractOperator(cond.rule_type))">
+                      <span
+                        class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium text-white border-2"
+                        :class="extractOperator(cond.rule_type) === 'not_contains'
+                          ? 'bg-red-500 border-red-500'
+                          : 'bg-green-500 border-green-500'"
+                        :title="getOperatorLabel(extractOperator(cond.rule_type))"
+                      >
                         <span class="text-base">{{ getOperatorIcon(extractOperator(cond.rule_type)) }}</span>
                       </span>
 
@@ -420,7 +413,13 @@
                     </span>
 
                     <!-- Operator Pill (read-only) -->
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500 text-white border-2 border-green-500" :title="getOperatorLabel(extractOperator(rule.rule_type))">
+                    <span
+                      class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium text-white border-2"
+                      :class="extractOperator(rule.rule_type) === 'not_contains'
+                        ? 'bg-red-500 border-red-500'
+                        : 'bg-green-500 border-green-500'"
+                      :title="getOperatorLabel(extractOperator(rule.rule_type))"
+                    >
                       <span class="text-base">{{ getOperatorIcon(extractOperator(rule.rule_type)) }}</span>
                     </span>
 
@@ -943,8 +942,11 @@ export default {
     const getRulePlaceholder = (ruleType) => {
       const placeholders = {
         title_contains: t('domainAdmin.ruleTypePlaceholders.title_contains'),
+        title_not_contains: t('domainAdmin.ruleTypePlaceholders.title_not_contains'),
         description_contains: t('domainAdmin.ruleTypePlaceholders.description_contains'),
-        category_contains: t('domainAdmin.ruleTypePlaceholders.category_contains')
+        description_not_contains: t('domainAdmin.ruleTypePlaceholders.description_not_contains'),
+        category_contains: t('domainAdmin.ruleTypePlaceholders.category_contains'),
+        category_not_contains: t('domainAdmin.ruleTypePlaceholders.category_not_contains')
       }
       return placeholders[ruleType] || t('domainAdmin.enterSearchValue')
     }

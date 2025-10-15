@@ -1,15 +1,7 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          📝 Domain YAML Configurations
-        </h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Manage domain configuration files and seed the database
-        </p>
-      </div>
+    <!-- Refresh Button -->
+    <div class="flex justify-end">
       <button
         @click="refreshConfigs"
         :disabled="loading"

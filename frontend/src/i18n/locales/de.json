@@ -464,9 +464,12 @@
     "enterSearchValue": "Suchwert eingeben...",
     "unknownGroup": "Unbekannte Gruppe",
     "ruleTypePlaceholders": {
-      "title_contains": "z.B. \"Meeting\" oder \"Training\"",
-      "description_contains": "z.B. \"Projekt\" oder \"Review\"",
-      "category_contains": "z.B. \"Extern\" oder \"Training\""
+      "title_contains": "Titel finden mit... (z.B. \"Meeting\" oder \"Training\")",
+      "title_not_contains": "Titel ausschließen mit... (z.B. \"Privat\" oder \"Persönlich\")",
+      "description_contains": "Beschreibungen finden mit... (z.B. \"Projekt\" oder \"Review\")",
+      "description_not_contains": "Beschreibungen ausschließen mit... (z.B. \"Intern\" oder \"Entwurf\")",
+      "category_contains": "Kategorien finden mit... (z.B. \"Extern\" oder \"Training\")",
+      "category_not_contains": "Kategorien ausschließen mit... (z.B. \"Privat\" oder \"Intern\")"
     },
     "confirmAction": "Aktion bestätigen",
     "delete": "Löschen",
@@ -867,7 +870,9 @@
           "tooShort": "Passwort muss mindestens 4 Zeichen lang sein"
         },
         "confirm": {
+          "removeAdminTitle": "Admin-Passwort entfernen",
           "removeAdmin": "Möchten Sie das Admin-Passwort wirklich entfernen? Jeder kann dann auf das Admin-Panel zugreifen.",
+          "removeUserTitle": "Benutzer-Passwort entfernen",
           "removeUser": "Möchten Sie das Benutzer-Passwort wirklich entfernen? Der Kalender wird dann öffentlich zugänglich sein."
         }
       },

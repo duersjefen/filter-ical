@@ -4,8 +4,9 @@ Calendars router for user calendar management.
 Implements user calendar endpoints from OpenAPI specification.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Union
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -28,7 +29,7 @@ async def add_calendar(
     request: Request,
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> JSONResponse:
     """Add a user calendar (authentication required)."""
     try:
         # Validate request data
@@ -91,7 +92,7 @@ async def add_calendar(
 async def list_calendars(
     user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
-):
+) -> List[Dict[str, Any]]:
     """List user calendars."""
     try:
         # Get calendars from database
@@ -123,7 +124,7 @@ async def sync_calendar_endpoint(
     calendar_id: int,
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     """Manually sync calendar events from source (authentication required)."""
     try:
         # Verify calendar exists and user has access
@@ -153,7 +154,7 @@ async def delete_user_calendar(
     calendar_id: int,
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> None:
     """Delete a user calendar (authentication required)."""
     try:
         # Delete calendar
@@ -178,7 +179,7 @@ async def get_calendar_events_endpoint(
     calendar_id: int,
     user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, List[Dict[str, Any]]]:
     """Get calendar events (flat structure for user calendars)."""
     try:
         # Verify calendar exists and user has access
@@ -218,7 +219,7 @@ async def create_calendar_filter(
     filter_data: dict,
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     """Create filter for user calendar (authentication required)."""
     try:
         # Verify calendar exists and user has access
@@ -275,7 +276,7 @@ async def get_calendar_filters(
     calendar_id: int,
     user_id: Optional[int] = Depends(get_current_user_id),
     db: Session = Depends(get_db)
-):
+) -> List[Dict[str, Any]]:
     """List filters for user calendar."""
     try:
         # Verify calendar exists and user has access
@@ -323,7 +324,7 @@ async def update_calendar_filter(
     filter_data: dict,
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     """Update an existing calendar filter (authentication required)."""
     try:
         # Verify calendar exists and user has access
@@ -385,7 +386,7 @@ async def delete_calendar_filter(
     filter_id: int,
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> None:
     """Delete filter for user calendar (authentication required)."""
     try:
         # Verify calendar exists and user has access

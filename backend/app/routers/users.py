@@ -197,7 +197,7 @@ async def login_user(
     request: Request,
     login_data: UserLoginRequest,
     db: Session = Depends(get_db)
-):
+) -> AuthTokenResponse:
     """
     Login to user account.
 
@@ -301,7 +301,7 @@ async def check_username(
     request: Request,
     username: str,
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     """
     Check if username exists and whether it requires a password.
 
@@ -344,7 +344,7 @@ async def check_username(
 async def get_current_user(
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> UserResponse:
     """Get current user profile."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -373,7 +373,7 @@ async def update_user_profile(
     request: UpdateProfileRequest,
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> UserResponse:
     """Update user profile."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -457,7 +457,7 @@ async def update_user_profile(
 async def get_user_domains(
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, List[Dict[str, Any]]]:
     """Get user's owned, admin, password-access, and filter domains."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -541,7 +541,7 @@ async def get_user_domains(
 async def get_user_unlocked_domains_endpoint(
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, List[Dict[str, Any]]]:
     """
     Get all domains user has unlocked by entering passwords.
 
@@ -562,7 +562,7 @@ async def set_domain_passwords_as_owner(
     user_id: int = Depends(require_user_auth),
     db: Session = Depends(get_db),
     authorization: Optional[str] = Header(None)
-):
+) -> Dict[str, Any]:
     """
     Set or change domain passwords (owner or global admin access).
 

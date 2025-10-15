@@ -1010,8 +1010,19 @@
       </div>
 
       <!-- Domain YAML Configuration Management -->
-      <div class="">
-        <DomainConfigManager />
+      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-6 py-5 sm:px-4 sm:py-3 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+            <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+            <span>Domain YAML Configurations</span>
+          </h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage domain configuration files and seed the database</p>
+        </div>
+        <div class="p-6 sm:p-4">
+          <DomainConfigManager />
+        </div>
       </div>
       </div>
     </div>

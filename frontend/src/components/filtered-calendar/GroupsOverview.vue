@@ -56,10 +56,7 @@
 
       <!-- Summary stats -->
       <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-gray-600 dark:text-gray-400">
-            {{ Object.keys(groups).length }} {{ t('common.totalGroups') }}
-          </span>
+        <div class="flex items-center justify-center text-sm">
           <span class="text-gray-600 dark:text-gray-400">
             {{ groupBreakdown }}
           </span>

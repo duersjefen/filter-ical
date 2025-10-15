@@ -1,4 +1,14 @@
 <template>
+  <ConfirmDialog
+    ref="confirmDialog"
+    :title="confirmDialogTitle"
+    :message="confirmDialogMessage"
+    :confirmText="$t('common.remove')"
+    :cancelText="$t('common.cancel')"
+    @confirm="confirmDialogAction?.()"
+    @cancel="confirmDialogAction = null"
+  />
+
   <AdminCardWrapper
     :title="$t('admin.domainAuth.passwordSettings.title')"
     :subtitle="$t('admin.domainAuth.passwordSettings.subtitle')"
@@ -30,12 +40,14 @@
               type="password"
               :placeholder="$t('admin.domainAuth.passwordSettings.adminPassword.placeholder')"
               class="w-full px-4 py-2 border-2 border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:border-purple-500"
+              @keyup.enter="canSetAdminPassword && handleSetAdminPassword()"
             />
             <input
               v-model="adminPasswordConfirm"
               type="password"
               :placeholder="$t('admin.domainAuth.passwordSettings.adminPassword.confirmPlaceholder')"
               class="w-full px-4 py-2 border-2 border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:border-purple-500"
+              @keyup.enter="canSetAdminPassword && handleSetAdminPassword()"
             />
             <div class="flex gap-2">
               <button
@@ -92,12 +104,14 @@
               type="password"
               :placeholder="$t('admin.domainAuth.passwordSettings.userPassword.placeholder')"
               class="w-full px-4 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500"
+              @keyup.enter="canSetUserPassword && handleSetUserPassword()"
             />
             <input
               v-model="userPasswordConfirm"
               type="password"
               :placeholder="$t('admin.domainAuth.passwordSettings.userPassword.confirmPlaceholder')"
               class="w-full px-4 py-2 border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500"
+              @keyup.enter="canSetUserPassword && handleSetUserPassword()"
             />
             <div class="flex gap-2">
               <button
@@ -141,6 +155,7 @@ import { useDomainAuth } from '@/composables/useDomainAuth'
 import { useNotification } from '@/composables/useNotification'
 import { useI18n } from 'vue-i18n'
 import AdminCardWrapper from './AdminCardWrapper.vue'
+import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 
 const props = defineProps({
   domain: {
@@ -175,6 +190,12 @@ const userPasswordSet = ref(false)
 const showAdminForm = ref(false)
 const showUserForm = ref(false)
 const saving = ref(false)
+
+// Confirm dialog state
+const confirmDialog = ref(null)
+const confirmDialogTitle = ref('')
+const confirmDialogMessage = ref('')
+const confirmDialogAction = ref(null)
 
 const canSetAdminPassword = computed(() => {
   return adminPassword.value.length >= 4 && adminPassword.value === adminPasswordConfirm.value
@@ -226,34 +247,40 @@ const handleSetUserPassword = async () => {
   }
 }
 
-const handleRemoveAdminPassword = async () => {
-  if (!confirm(t('admin.domainAuth.passwordSettings.confirm.removeAdmin'))) return
+const handleRemoveAdminPassword = () => {
+  confirmDialogTitle.value = t('admin.domainAuth.passwordSettings.confirm.removeAdminTitle')
+  confirmDialogMessage.value = t('admin.domainAuth.passwordSettings.confirm.removeAdmin')
+  confirmDialogAction.value = async () => {
+    saving.value = true
+    const result = await removeAdminPassword()
+    saving.value = false
 
-  saving.value = true
-  const result = await removeAdminPassword()
-  saving.value = false
-
-  if (result.success) {
-    notify.success(t('admin.domainAuth.passwordSettings.success.adminRemoved'))
-    await loadPasswordStatus()
-  } else {
-    notify.error(result.error || t('admin.domainAuth.passwordSettings.error.adminRemoved'))
+    if (result.success) {
+      notify.success(t('admin.domainAuth.passwordSettings.success.adminRemoved'))
+      await loadPasswordStatus()
+    } else {
+      notify.error(result.error || t('admin.domainAuth.passwordSettings.error.adminRemoved'))
+    }
   }
+  confirmDialog.value.open()
 }
 
-const handleRemoveUserPassword = async () => {
-  if (!confirm(t('admin.domainAuth.passwordSettings.confirm.removeUser'))) return
+const handleRemoveUserPassword = () => {
+  confirmDialogTitle.value = t('admin.domainAuth.passwordSettings.confirm.removeUserTitle')
+  confirmDialogMessage.value = t('admin.domainAuth.passwordSettings.confirm.removeUser')
+  confirmDialogAction.value = async () => {
+    saving.value = true
+    const result = await removeUserPassword()
+    saving.value = false
 
-  saving.value = true
-  const result = await removeUserPassword()
-  saving.value = false
-
-  if (result.success) {
-    notify.success(t('admin.domainAuth.passwordSettings.success.userRemoved'))
-    await loadPasswordStatus()
-  } else {
-    notify.error(result.error || t('admin.domainAuth.passwordSettings.error.userRemoved'))
+    if (result.success) {
+      notify.success(t('admin.domainAuth.passwordSettings.success.userRemoved'))
+      await loadPasswordStatus()
+    } else {
+      notify.error(result.error || t('admin.domainAuth.passwordSettings.error.userRemoved'))
+    }
   }
+  confirmDialog.value.open()
 }
 
 onMounted(() => {

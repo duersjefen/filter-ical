@@ -162,18 +162,37 @@ def test_client(test_db_engine) -> Generator[TestClient, None, None]:
     # Import and include routers
     from app.routers import (
         calendars, domains, ical_export, test, domain_requests, admin,
-        domain_assignment_rules, domain_config, domain_backups, domain_admins
+        domain_assignment_rules, domain_config, domain_backups, domain_admins,
+        users, auth, domain_auth, ical, filters, domain_events, domain_groups,
+        domain_filters
     )
-    app.include_router(calendars.router, prefix="/calendars", tags=["calendars"])
-    app.include_router(domains.router, prefix="/domains", tags=["domains"])
+    # User and auth endpoints (paths already include /api prefix in router)
+    app.include_router(users.router, tags=["users"])
+    app.include_router(auth.router, tags=["auth"])
+
+    # Calendar endpoints
+    app.include_router(calendars.router, prefix="/api/calendars", tags=["calendars"])
+    app.include_router(filters.router, prefix="/api/filters", tags=["filters"])
+
+    # Domain endpoints
+    app.include_router(domains.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_events.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_groups.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_filters.router, prefix="/api/domains", tags=["domains"])
     app.include_router(domain_assignment_rules.router, prefix="/api/domains", tags=["domains"])
     app.include_router(domain_config.router, prefix="/api/domains", tags=["domains"])
     app.include_router(domain_backups.router, prefix="/api/domains", tags=["domains"])
     app.include_router(domain_admins.router, prefix="/api/domains", tags=["domains"])
+    app.include_router(domain_auth.router, prefix="/api/domains", tags=["domains"])
+
+    # iCal endpoints
+    app.include_router(ical.router, prefix="/api/ical", tags=["ical"])
     app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
-    app.include_router(test.router, prefix="/test", tags=["test"])
+
+    # Admin and test endpoints
     app.include_router(domain_requests.router, prefix="/api", tags=["domain_requests"])
     app.include_router(admin.router, prefix="/api", tags=["admin"])
+    app.include_router(test.router, prefix="/test", tags=["test"])
     
     # Health check endpoint
     @app.get("/health")
