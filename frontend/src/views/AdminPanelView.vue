@@ -21,7 +21,7 @@
 
           <!-- Error Message -->
           <div v-if="authError" class="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-4 py-3 rounded-xl mb-4 border border-red-200 dark:border-red-700">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3 sm:gap-2">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
               </svg>
@@ -101,7 +101,7 @@
 
           <div v-else>
             <div class="bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg mb-4">
-              ✅ Reset link sent! Check your email.
+              Reset link sent! Check your email.
             </div>
             <button
               @click="showResetRequest = false; resetRequestSent = false"
@@ -142,7 +142,7 @@
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
               </svg>
               <div>
-                <p class="font-semibold text-sm mb-1">✅ What happens next</p>
+                <p class="font-semibold text-sm mb-1">What happens next</p>
                 <p class="text-sm">The domain will be created immediately and the user will be able to access their calendar.</p>
               </div>
             </div>
@@ -170,7 +170,12 @@
             <label class="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" v-model="sendApprovalEmail" class="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
               <div class="flex-1">
-                <span class="font-semibold text-gray-700 dark:text-gray-300">📧 Send email notification to user</span>
+                <span class="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  Send email notification to user
+                </span>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">User will receive their domain URL and admin panel link</p>
               </div>
             </label>
@@ -225,7 +230,7 @@
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
               </svg>
               <div>
-                <p class="font-semibold text-sm mb-1">📧 Email notification will be sent</p>
+                <p class="font-semibold text-sm mb-1">Email notification will be sent</p>
                 <p class="text-sm">The user will receive your rejection reason via email. Please be clear and constructive in your feedback.</p>
               </div>
             </div>
@@ -254,7 +259,12 @@
             <label class="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" v-model="sendRejectionEmail" class="w-5 h-5 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
               <div class="flex-1">
-                <span class="font-semibold text-gray-700 dark:text-gray-300">📧 Send email notification to user</span>
+                <span class="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  Send email notification to user
+                </span>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">User will receive your rejection reason via email</p>
               </div>
             </label>
@@ -294,7 +304,7 @@
 
       <div class="space-y-8">
       <!-- Create New Domain (admin shortcut) -->
-      <div class="mb-6">
+      <div class="">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <!-- Header - Clickable -->
           <div
@@ -432,7 +442,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   <div>
-                    <p class="font-semibold text-red-800 dark:text-red-200 mb-1">❌ Calendar Error</p>
+                    <p class="font-semibold text-red-800 dark:text-red-200 mb-1">Calendar Error</p>
                     <p class="text-sm text-red-700 dark:text-red-300">{{ newDomainPreview.data.error }}</p>
                     <p class="text-xs text-red-600 dark:text-red-400 mt-2">This URL cannot be used to create a domain.</p>
                   </div>
@@ -446,15 +456,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   <div class="flex-1">
-                    <p class="font-semibold text-green-800 dark:text-green-200 mb-1">✅ Valid Calendar</p>
+                    <p class="font-semibold text-green-800 dark:text-green-200 mb-1">Valid Calendar</p>
                     <p class="text-sm text-green-700 dark:text-green-300">Found {{ newDomainPreview.data.event_count }} event{{ newDomainPreview.data.event_count !== 1 ? 's' : '' }}</p>
                   </div>
                 </div>
 
                 <!-- Event Preview -->
                 <div class="space-y-2">
-                  <p class="text-xs font-semibold text-green-700 dark:text-green-300 mb-2">📅 Preview (first {{ Math.min(5, newDomainPreview.data.events.length) }} events):</p>
-                  <div v-for="(event, index) in newDomainPreview.data.events.slice(0, 5)" :key="index" class="bg-white dark:bg-gray-800 rounded p-2 text-xs">
+                  <p class="text-xs font-semibold text-green-700 dark:text-green-300 mb-2">Preview (first {{ Math.min(5, newDomainPreview.data.events.length) }} events):</p>
+                  <div v-for="(event, index) in newDomainPreview.data.events.slice(0, 5)" :key="index" class="bg-white dark:bg-gray-800 rounded p-2 text-sm sm:text-xs">
                     <p class="font-semibold text-gray-900 dark:text-gray-100">{{ event.title }}</p>
                     <p class="text-gray-600 dark:text-gray-400" v-if="event.start_time">{{ event.start_time }}</p>
                   </div>
@@ -482,9 +492,9 @@
       </div>
 
       <!-- Domains Overview (at top) -->
-      <div class="mb-6">
+      <div class="">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">📋 All Domains</h2>
+          <h2 class="text-2xl sm:text-xl font-bold text-gray-900 dark:text-gray-100">📋 All Domains</h2>
           <span class="text-sm text-gray-600 dark:text-gray-400">{{ domains.length }} domain{{ domains.length !== 1 ? 's' : '' }}</span>
         </div>
 
@@ -513,7 +523,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+            <h3 class="text-2xl sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
               No domains yet
             </h3>
             <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
@@ -538,19 +548,19 @@
             <!-- Header with Domain Name & Actions -->
             <div class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
               <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ domain.domain_key }}</h3>
-              <div class="flex items-center gap-2">
-                <a :href="`/${domain.domain_key}`" target="_blank" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors" title="View Calendar">
+              <div class="flex items-center gap-3 sm:gap-2">
+                <a :href="`/${domain.domain_key}`" target="_blank" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center justify-center" title="View Calendar">
                   <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                   </svg>
                 </a>
-                <a :href="`/${domain.domain_key}/admin`" target="_blank" class="p-2 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-800/50 rounded-lg transition-colors" title="Manage Domain">
+                <a :href="`/${domain.domain_key}/admin`" target="_blank" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-800/50 rounded-lg transition-colors flex items-center justify-center" title="Manage Domain">
                   <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   </svg>
                 </a>
-                <button @click="deleteDomain(domain.domain_key)" :disabled="processing" class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-800/50 rounded-lg transition-colors disabled:opacity-50" title="Delete Domain">
+                <button @click="deleteDomain(domain.domain_key)" :disabled="processing" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-800/50 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center" title="Delete Domain">
                   <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                   </svg>
@@ -559,12 +569,17 @@
             </div>
 
             <!-- Password Management: Side by Side -->
-            <div class="p-4 grid grid-cols-2 gap-4">
+            <div class="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
               <!-- Admin Password -->
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-bold text-gray-700 dark:text-gray-300">🔐 Admin</span>
+                  <span class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    Admin
+                  </span>
                   <span v-if="domain.admin_password_set" class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded">Protected</span>
                   <span v-else class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded">None</span>
                 </div>
@@ -572,10 +587,10 @@
                 <div v-if="editingDomain !== domain.domain_key || editingType !== 'admin'">
                   <div class="flex flex-col gap-1.5">
                     <button @click="startEditing(domain.domain_key, 'admin')" class="px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
-                      {{ domain.admin_password_set ? '✏️ Change' : '➕ Set Password' }}
+                      {{ domain.admin_password_set ? 'Change' : 'Set Password' }}
                     </button>
                     <button v-if="domain.admin_password_set" @click="removePassword(domain.domain_key, 'admin')" class="px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
-                      🗑️ Remove
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -600,7 +615,7 @@
                     </button>
                   </div>
                   <div class="flex gap-1.5">
-                    <button @click="savePassword(domain.domain_key, 'admin')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">💾 Save</button>
+                    <button @click="savePassword(domain.domain_key, 'admin')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">Save</button>
                     <button @click="cancelEditing" class="flex-1 px-3 py-2 text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">Cancel</button>
                   </div>
                 </div>
@@ -609,7 +624,12 @@
               <!-- User Password -->
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-bold text-gray-700 dark:text-gray-300">👤 User</span>
+                  <span class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    User
+                  </span>
                   <span v-if="domain.user_password_set" class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-medium rounded">Protected</span>
                   <span v-else class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded">None</span>
                 </div>
@@ -617,10 +637,10 @@
                 <div v-if="editingDomain !== domain.domain_key || editingType !== 'user'">
                   <div class="flex flex-col gap-1.5">
                     <button @click="startEditing(domain.domain_key, 'user')" class="px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
-                      {{ domain.user_password_set ? '✏️ Change' : '➕ Set Password' }}
+                      {{ domain.user_password_set ? 'Change' : 'Set Password' }}
                     </button>
                     <button v-if="domain.user_password_set" @click="removePassword(domain.domain_key, 'user')" class="px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
-                      🗑️ Remove
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -645,7 +665,7 @@
                     </button>
                   </div>
                   <div class="flex gap-1.5">
-                    <button @click="savePassword(domain.domain_key, 'user')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">💾 Save</button>
+                    <button @click="savePassword(domain.domain_key, 'user')" class="flex-1 px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">Save</button>
                     <button @click="cancelEditing" class="flex-1 px-3 py-2 text-sm font-medium bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">Cancel</button>
                   </div>
                 </div>
@@ -656,7 +676,12 @@
             <!-- Owner Management -->
             <div class="px-4 pb-4 border-t-2 border-gray-100 dark:border-gray-700 pt-4">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-bold text-gray-700 dark:text-gray-300">👤 Owner</span>
+                <span class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Owner
+                </span>
                 <span v-if="domain.owner_username" class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-medium rounded">
                   {{ domain.owner_username }}
                 </span>
@@ -710,14 +735,14 @@
                   @click="startOwnerAssignment(domain.domain_key)"
                   class="flex-1 px-3 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
                 >
-                  {{ domain.owner_username ? '✏️ Change' : '➕ Assign' }}
+                  {{ domain.owner_username ? 'Change' : 'Assign' }}
                 </button>
                 <button
                   v-if="domain.owner_username"
                   @click="removeOwner(domain.domain_key)"
                   class="flex-1 px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
                 >
-                  🗑️ Remove
+                  Remove
                 </button>
               </div>
             </div>
@@ -726,9 +751,9 @@
       </div>
 
       <!-- Requests List -->
-      <div class="mb-6">
+      <div class="">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">📬 Pending Domain Requests</h2>
+          <h2 class="text-2xl sm:text-xl font-bold text-gray-900 dark:text-gray-100">📬 Pending Domain Requests</h2>
           <span class="text-sm text-gray-600 dark:text-gray-400">{{ pendingRequests.length }} request{{ pendingRequests.length !== 1 ? 's' : '' }}</span>
         </div>
 
@@ -744,7 +769,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+            <h3 class="text-2xl sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
               All caught up!
             </h3>
             <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -777,13 +802,13 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <!-- Requested Domain -->
                 <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-700">
-                  <p class="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">🔑 REQUESTED DOMAIN</p>
+                  <p class="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">REQUESTED DOMAIN</p>
                   <p class="font-mono font-bold text-purple-900 dark:text-purple-100">{{ request.requested_domain_key }}</p>
                 </div>
 
                 <!-- Calendar URL -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
-                  <p class="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">📅 CALENDAR URL</p>
+                  <p class="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">CALENDAR URL</p>
                   <a :href="request.calendar_url" target="_blank" class="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all">
                     {{ request.calendar_url }}
                   </a>
@@ -792,7 +817,7 @@
 
               <!-- Description -->
               <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-600">
-                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">📝 DESCRIPTION</p>
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">DESCRIPTION</p>
                 <p class="text-sm text-gray-700 dark:text-gray-300">{{ request.description }}</p>
               </div>
 
@@ -811,7 +836,7 @@
                 <div v-if="icalPreviews[request.id]?.expanded" class="mt-3">
                   <!-- Loading State -->
                   <div v-if="icalPreviews[request.id]?.loading" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3 sm:gap-2">
                       <div class="inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Loading events...</span>
                     </div>
@@ -880,8 +905,14 @@
       <!-- App Settings - Clean & Spacious -->
       <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="px-5 py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-          <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">⚙️ App Settings</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Configure global application behavior</p>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>App Settings</span>
+          </h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Configure global application behavior</p>
         </div>
 
         <div class="p-5">
@@ -890,7 +921,7 @@
 
             <!-- Footer Visibility -->
             <div>
-              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">👣 Footer Visibility</label>
+              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Footer Visibility</label>
               <div class="inline-flex rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden shadow-sm">
                 <button
                   @click="appSettings.footer_visibility = 'everywhere'"
@@ -899,7 +930,7 @@
                     ? 'bg-purple-600 text-white shadow-inner'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
                 >
-                  🌍 Everywhere
+                  Everywhere
                 </button>
                 <button
                   @click="appSettings.footer_visibility = 'admin_only'"
@@ -917,7 +948,7 @@
                     ? 'bg-purple-600 text-white shadow-inner'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
                 >
-                  🚫 Hidden
+                  Hidden
                 </button>
               </div>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Control where the PayPal donation footer appears</p>
@@ -925,7 +956,7 @@
 
             <!-- Domain Request Card -->
             <div>
-              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">➕ Domain Request Card</label>
+              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Domain Request Card</label>
               <div class="flex items-center gap-3">
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" v-model="appSettings.show_domain_request" class="sr-only peer" />
@@ -933,7 +964,7 @@
                   <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-md"></div>
                 </label>
                 <span class="text-sm font-semibold" :class="appSettings.show_domain_request ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'">
-                  {{ appSettings.show_domain_request ? '✓ Enabled' : '✗ Disabled' }}
+                  {{ appSettings.show_domain_request ? 'Enabled' : 'Disabled' }}
                 </span>
               </div>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Allow users to request their own custom domains</p>
@@ -948,15 +979,16 @@
               :disabled="settingsSaving"
               class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed shadow-md hover:shadow-lg disabled:shadow-none"
             >
-              {{ settingsSaving ? '💾 Saving...' : '💾 Save Settings' }}
+              {{ settingsSaving ? 'Saving...' : 'Save Settings' }}
             </button>
           </div>
         </div>
       </div>
 
       <!-- Domain YAML Configuration Management -->
-      <div class="mb-6">
+      <div class="">
         <DomainConfigManager />
+      </div>
       </div>
     </div>
 
@@ -979,6 +1011,9 @@ import { API_BASE_URL } from '../constants/api'
 import AppHeader from '../components/shared/AppHeader.vue'
 import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 import DomainConfigManager from '../components/admin/DomainConfigManager.vue'
+import FormInput from '../components/shared/FormInput.vue'
+import FormTextarea from '../components/shared/FormTextarea.vue'
+import BaseButton from '../components/shared/BaseButton.vue'
 import { useNotification } from '../composables/useNotification'
 
 const { t } = useI18n()
@@ -1009,7 +1044,6 @@ const domainsLoading = ref(false)
 const editingDomain = ref(null)
 const editingType = ref(null)  // 'admin' or 'user'
 const newPassword = ref('')
-const showPassword = ref(false)
 
 // App settings state
 const appSettings = ref({
@@ -1054,8 +1088,6 @@ const newDomain = ref({
   admin_password: '',
   user_password: ''
 })
-const showNewDomainAdminPassword = ref(false)
-const showNewDomainUserPassword = ref(false)
 
 // Preview state for new domain creation
 const newDomainPreview = ref({
@@ -1728,3 +1760,56 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+/* Enhanced accessibility styles */
+
+/* Focus visible styles for all interactive elements */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible {
+  outline: 2px solid rgb(147 51 234); /* purple-600 */
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgb(243 232 255 / 1); /* purple-100 ring */
+}
+
+/* Dark mode focus styles */
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark a:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark [role="link"]:focus-visible {
+  outline: 2px solid rgb(147 51 234); /* purple-600 */
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgb(88 28 135 / 0.5); /* purple-900/50 ring */
+}
+
+/* Ensure modals trap focus properly */
+[role="dialog"] {
+  isolation: isolate;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  a:focus-visible {
+    outline-width: 3px;
+    outline-offset: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
