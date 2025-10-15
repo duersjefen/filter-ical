@@ -383,14 +383,26 @@ const groupRecurringEventTitles = computed(() => {
 })
 
 const selectedGroupRecurringEvents = computed(() => {
-  return groupRecurringEventTitles.value.filter(eventTitle => 
+  // If the entire group is subscribed, ALL events are selected
+  if (props.subscribedGroups.has(props.group.id)) {
+    return groupRecurringEventTitles.value
+  }
+
+  // Otherwise, only individually selected events
+  return groupRecurringEventTitles.value.filter(eventTitle =>
     props.selectedRecurringEvents.includes(eventTitle)
   )
 })
 
 const isGroupSelected = computed(() => {
-  return groupRecurringEventTitles.value.length > 0 && 
-         groupRecurringEventTitles.value.every(eventTitle => 
+  // If group is subscribed, it's considered fully selected
+  if (props.subscribedGroups.has(props.group.id)) {
+    return true
+  }
+
+  // Otherwise check if all events are individually selected
+  return groupRecurringEventTitles.value.length > 0 &&
+         groupRecurringEventTitles.value.every(eventTitle =>
            props.selectedRecurringEvents.includes(eventTitle)
          )
 })
