@@ -173,6 +173,10 @@ export const useCalendarStore = defineStore('calendar', () => {
     // Convert calendarId to number for consistent comparison
     const numericCalendarId = typeof calendarId === 'string' ? parseInt(calendarId, 10) : calendarId
 
+    if (isNaN(numericCalendarId)) {
+      return { success: false, error: 'Invalid calendar ID' }
+    }
+
     const currentUserId = getUserId()
     const hasCustomUsername = currentUserId !== 'public' && !currentUserId.startsWith('anon_')
 

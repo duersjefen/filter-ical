@@ -7,6 +7,22 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '../constants/api'
 
+// Network status tracking
+const isOnline = ref(navigator.onLine)
+
+// Listen for online/offline events
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    isOnline.value = true
+  })
+
+  window.addEventListener('offline', () => {
+    isOnline.value = false
+  })
+}
+
+export { isOnline }
+
 // Create axios instance with interceptors
 const createHttpClient = () => {
   const client = axios.create({
@@ -28,6 +44,45 @@ const createHttpClient = () => {
   client.interceptors.response.use(
     (response) => response,
     async (error) => {
+      // Check if offline FIRST
+      if (!navigator.onLine) {
+        return Promise.reject({
+          response: {
+            status: 0,
+            data: {
+              detail: 'You are offline. Please check your internet connection.',
+              type: 'network/offline'
+            }
+          }
+        })
+      }
+
+      // Specific error type detection
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        return Promise.reject({
+          response: {
+            status: 408,
+            data: {
+              detail: 'Request timed out. The server took too long to respond.',
+              type: 'network/timeout'
+            }
+          }
+        })
+      }
+
+      if (!error.response) {
+        // Network error (DNS, connection refused, etc.)
+        return Promise.reject({
+          response: {
+            status: 0,
+            data: {
+              detail: 'Unable to connect to server. Please check your internet connection.',
+              type: 'network/error'
+            }
+          }
+        })
+      }
+
       // For 401 errors, the app should redirect to login
       // This will be handled by component logic
       return Promise.reject(error)

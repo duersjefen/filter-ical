@@ -14,6 +14,8 @@ from typing import Dict, List, Any, Optional, Tuple
 from icalendar import Calendar as ICalCalendar, Event as ICalEvent
 from app.core.result import Result, ok, fail
 
+logger = logging.getLogger(__name__)
+
 
 def parse_ical_content(ical_content: str) -> Result[List[Dict[str, Any]]]:
     """
@@ -40,20 +42,21 @@ def parse_ical_content(ical_content: str) -> Result[List[Dict[str, Any]]]:
         return ok(events)
 
     except Exception as e:
+        logger.error(f"Failed to parse iCal content: {str(e)}", exc_info=True)
         return fail(f"Failed to parse iCal content: {str(e)}")
 
 
 def _extract_event_data(ical_event: ICalEvent, raw_ical: str) -> Optional[Dict[str, Any]]:
     """
     Extract event data from iCal event component (simple approach like old backend).
-    
+
     Args:
         ical_event: Parsed iCal event component
         raw_ical: Original raw iCal content for reference
-        
+
     Returns:
         Event data dictionary or None if invalid
-        
+
     Pure function - deterministic transformation using proven old backend logic.
     """
     try:
@@ -61,26 +64,26 @@ def _extract_event_data(ical_event: ICalEvent, raw_ical: str) -> Optional[Dict[s
         uid = str(ical_event.get('UID', ''))
         start_time = ical_event.get('DTSTART')
         event_id = _generate_event_id(uid, start_time)
-        
+
         # Extract core event fields
         title = str(ical_event.get('SUMMARY', 'Untitled Event'))
         description = str(ical_event.get('DESCRIPTION', ''))
         location = ical_event.get('LOCATION')
         location_str = str(location) if location else None
-        
+
         # Parse times (simple approach)
         start_dt = _parse_datetime(start_time)
         end_time = ical_event.get('DTEND')
         end_dt = _parse_datetime(end_time) if end_time else None
-        
+
         # Handle missing start time with fallback
         if not start_dt:
             start_dt = create_fallback_datetime(title, description)
-        
-        
+
+
         # Extract raw event for debugging/export
         raw_event = _extract_raw_event(raw_ical, uid)
-        
+
         return {
             "id": event_id,
             "title": title,
@@ -91,8 +94,15 @@ def _extract_event_data(ical_event: ICalEvent, raw_ical: str) -> Optional[Dict[s
             "uid": uid,
             "raw_ical": raw_event
         }
-        
-    except Exception:
+
+    except Exception as e:
+        logger.error(
+            f"Failed to extract event data: {str(e)}",
+            exc_info=True,
+            extra={
+                "event_summary": getattr(ical_event, "summary", None)
+            }
+        )
         return None
 
 
