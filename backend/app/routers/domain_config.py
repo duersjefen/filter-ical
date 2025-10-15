@@ -40,8 +40,9 @@ async def export_domain_config(
     accept_header = request.headers.get('accept', '').lower()
     if 'application/x-yaml' in accept_header or 'text/yaml' in accept_header:
         # Return raw YAML content with proper UTF-8 encoding
+        # sort_keys=False preserves dict insertion order (domain, groups, assignments, rules, metadata)
         yaml_content = yaml.dump(export_config, default_flow_style=False, indent=2,
-                               allow_unicode=True, encoding=None)
+                               allow_unicode=True, encoding=None, sort_keys=False)
         return Response(content=yaml_content, media_type="application/x-yaml")
     else:
         # Return JSON (default)

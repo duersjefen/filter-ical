@@ -217,3 +217,88 @@ class TestDomainConfigImportMultipart:
         groups = test_db.query(Group).filter(Group.domain_key == test_domain.domain_key).all()
         assert len(groups) == 1
         assert groups[0].name == "Test Group"
+
+class TestExportImportRoundTrip:
+    """Test complete export → re-import workflow (critical user workflow)."""
+
+    def test_export_then_import_yaml_file(self, test_client: TestClient, test_domain: Domain, test_db: Session):
+        """
+        Export configuration to YAML file, then import it back.
+        This is the exact workflow users follow in the UI.
+
+        Reproduces bug: "Failed to import configuration: Missing required section: 'domain'"
+        """
+        # Setup: Create some test data in database
+        group = Group(
+            domain_key=test_domain.domain_key,
+            name="Test Export Group",
+            description="Group for export test"
+        )
+        test_db.add(group)
+        test_db.commit()
+        test_db.refresh(group)
+
+        # Create an assignment
+        assignment = RecurringEventGroup(
+            domain_key=test_domain.domain_key,
+            recurring_event_title="Test Event",
+            group_id=group.id
+        )
+        test_db.add(assignment)
+        test_db.commit()
+
+        # Step 1: Export configuration as YAML (what user downloads)
+        export_response = test_client.get(
+            f"/api/domains/{test_domain.domain_key}/export-config",
+            headers={"Accept": "application/x-yaml"}
+        )
+
+        assert export_response.status_code == 200, f"Export failed: {export_response.text}"
+        yaml_content = export_response.content
+
+        # Verify it's valid YAML
+        exported_config = yaml.safe_load(yaml_content)
+        assert exported_config is not None, "Exported YAML is empty"
+        assert "domain" in exported_config, "Exported YAML missing 'domain' section"
+        assert "groups" in exported_config, "Exported YAML missing 'groups' section"
+        assert "assignments" in exported_config, "Exported YAML missing 'assignments' section"
+        assert "rules" in exported_config, "Exported YAML missing 'rules' section"
+
+        # Step 2: Clear database (simulate import to fresh state)
+        test_db.query(RecurringEventGroup).filter(
+            RecurringEventGroup.domain_key == test_domain.domain_key
+        ).delete()
+        test_db.query(Group).filter(Group.domain_key == test_domain.domain_key).delete()
+        test_db.commit()
+
+        # Verify database is empty
+        groups_before = test_db.query(Group).filter(Group.domain_key == test_domain.domain_key).all()
+        assert len(groups_before) == 0, "Database should be empty before import"
+
+        # Step 3: Import the exported YAML file (what user uploads)
+        files = {
+            "config_file": ("export.yaml", BytesIO(yaml_content), "application/x-yaml")
+        }
+
+        import_response = test_client.post(
+            f"/api/domains/{test_domain.domain_key}/import-config",
+            files=files
+        )
+
+        # This should succeed but currently fails with "Missing required section: 'domain'"
+        assert import_response.status_code == 200, \
+            f"Import failed with status {import_response.status_code}: {import_response.json()}"
+
+        result = import_response.json()
+        assert result["success"] is True, f"Import failed: {result}"
+
+        # Step 4: Verify data was restored
+        groups_after = test_db.query(Group).filter(Group.domain_key == test_domain.domain_key).all()
+        assert len(groups_after) == 1, f"Expected 1 group after import, got {len(groups_after)}"
+        assert groups_after[0].name == "Test Export Group"
+
+        assignments_after = test_db.query(RecurringEventGroup).filter(
+            RecurringEventGroup.domain_key == test_domain.domain_key
+        ).all()
+        assert len(assignments_after) == 1, f"Expected 1 assignment after import, got {len(assignments_after)}"
+        assert assignments_after[0].recurring_event_title == "Test Event"
