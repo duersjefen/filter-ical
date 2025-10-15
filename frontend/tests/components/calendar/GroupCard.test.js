@@ -337,6 +337,105 @@ describe('GroupCard - Prop Validation', () => {
   })
 })
 
+describe('GroupCard - Selection Logic Tests', () => {
+  let i18n
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    i18n = createI18n({
+      legacy: false,
+      locale: 'en',
+      messages: { en: {} }
+    })
+  })
+
+  it('shows correct count when subscribed but only some events selected', () => {
+    // BUG FIX: Subscription (future events) is INDEPENDENT of current event selection
+    // User can subscribe to group but only select SOME current events
+    const groupWithThreeEvents = {
+      ...fixtures.group,
+      recurring_events: [
+        { title: 'Event A', event_count: 5 },
+        { title: 'Event B', event_count: 3 },
+        { title: 'Event C', event_count: 2 }
+      ]
+    }
+
+    const wrapper = mount(GroupCard, {
+      props: {
+        domainId: "1",
+        group: groupWithThreeEvents,
+        selectedRecurringEvents: ['Event A', 'Event B'], // Only 2 out of 3 selected
+        subscribedGroups: new Set([groupWithThreeEvents.id]), // Group is subscribed
+        expandedGroups: new Set()
+      },
+      global: {
+        plugins: [createPinia(), i18n]
+      }
+    })
+
+    // Should show "2/3 selected" NOT "3/3 selected"
+    // The old bug showed "3/3" because subscription incorrectly implied all events selected
+    expect(wrapper.text()).toContain('2/3')
+    expect(wrapper.text()).not.toContain('3/3')
+  })
+
+  it('shows 0 selected when subscribed but no events selected', () => {
+    // User subscribes to group (future events) but deselects all current events
+    const groupWithTwoEvents = {
+      ...fixtures.group,
+      recurring_events: [
+        { title: 'Event A', event_count: 5 },
+        { title: 'Event B', event_count: 3 }
+      ]
+    }
+
+    const wrapper = mount(GroupCard, {
+      props: {
+        domainId: "1",
+        group: groupWithTwoEvents,
+        selectedRecurringEvents: [], // No events selected
+        subscribedGroups: new Set([groupWithTwoEvents.id]), // But group is subscribed
+        expandedGroups: new Set()
+      },
+      global: {
+        plugins: [createPinia(), i18n]
+      }
+    })
+
+    // Should show "0/2 selected" NOT "2/2 selected"
+    expect(wrapper.text()).toContain('0/2')
+    expect(wrapper.text()).not.toContain('2/2')
+  })
+
+  it('shows correct count when all events selected but not subscribed', () => {
+    // User selects all current events but doesn't subscribe (no future events)
+    const groupWithTwoEvents = {
+      ...fixtures.group,
+      recurring_events: [
+        { title: 'Event A', event_count: 5 },
+        { title: 'Event B', event_count: 3 }
+      ]
+    }
+
+    const wrapper = mount(GroupCard, {
+      props: {
+        domainId: "1",
+        group: groupWithTwoEvents,
+        selectedRecurringEvents: ['Event A', 'Event B'], // All events selected
+        subscribedGroups: new Set(), // Not subscribed
+        expandedGroups: new Set()
+      },
+      global: {
+        plugins: [createPinia(), i18n]
+      }
+    })
+
+    // Should show "2/2 selected"
+    expect(wrapper.text()).toContain('2/2')
+  })
+})
+
 describe('GroupCard - Event Emission Tests', () => {
   let i18n
 

@@ -223,6 +223,54 @@ export const useSelectionStore = defineStore('selection', () => {
     subscribedGroups.value.clear()
   }
 
+  /**
+   * Load filter selection state from backend's three-list model
+   *
+   * Formula: Selected Events = (Events from groups + subscribed_event_ids) - unselected_event_ids
+   *
+   * @param {Object} filterConfig - Backend filter configuration
+   * @param {Array} filterConfig.groups - Subscribed group IDs
+   * @param {Array} filterConfig.recurring_events - Subscribed event IDs (individual events)
+   * @param {Array} filterConfig.unselected_events - Unselected event IDs (from groups)
+   * @param {Object} groups - Groups data from app store
+   */
+  const loadFilterSelection = (filterConfig, groups = {}) => {
+    // Step 1: Clear current selection
+    clearSelection()
+
+    // Step 2: Subscribe to groups
+    const subscribedGroupIds = filterConfig.groups || []
+    subscribedGroupIds.forEach(groupId => {
+      subscribeToGroup(String(groupId))
+    })
+
+    // Step 3: Get all events from subscribed groups
+    const eventsFromGroups = new Set()
+    subscribedGroupIds.forEach(groupId => {
+      const group = groups[String(groupId)]
+      if (group && group.recurring_events) {
+        group.recurring_events.forEach(recurringEvent => {
+          if (recurringEvent.title && recurringEvent.event_count > 0) {
+            eventsFromGroups.add(recurringEvent.title)
+          }
+        })
+      }
+    })
+
+    // Step 4: Add individual subscribed events (not from groups)
+    const individualEvents = filterConfig.recurring_events || []
+    const allSelectedEvents = new Set([...eventsFromGroups, ...individualEvents])
+
+    // Step 5: Remove unselected events (blacklist wins)
+    const unselectedEvents = new Set(filterConfig.unselected_events || [])
+    const finalSelection = Array.from(allSelectedEvents).filter(
+      eventTitle => !unselectedEvents.has(eventTitle)
+    )
+
+    // Step 6: Set the final selection
+    replaceSelection(finalSelection)
+  }
+
   // ===============================================
   // EXPANSION STATE OPERATIONS
   // ===============================================
@@ -452,6 +500,7 @@ export const useSelectionStore = defineStore('selection', () => {
     unsubscribeAndDeselectAllGroups,
     subscribeAndSelectAllGroups,
     clearSelection,
+    loadFilterSelection,
     
     // Expansion operations
     isGroupExpanded,

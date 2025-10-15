@@ -210,6 +210,7 @@ export function useSelection() {
     unsubscribeAndDeselectAllGroups: () => selectionStore.unsubscribeAndDeselectAllGroups(appStore.groups || {}),
     subscribeAndSelectAllGroups,
     clearSelection: selectionStore.clearSelection,
+    loadFilterSelection: (filterConfig) => selectionStore.loadFilterSelection(filterConfig, appStore.groups || {}),
     
     // Expansion operations
     isGroupExpanded: selectionStore.isGroupExpanded,

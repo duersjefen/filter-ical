@@ -508,24 +508,14 @@ const navigateToCalendar = () => {
 // No manual assignment needed - all events are automatically grouped
 
 const loadFilterIntoPage = (filterData) => {
-  // Clear current selection using unified system
-  clearSelection()
-
-  // Handle group subscriptions first
-  if (filterData.groups && filterData.groups.length > 0) {
-    filterData.groups.forEach(groupId => {
-      // Convert string groupId to ensure compatibility
-      const groupIdStr = groupId.toString()
-      subscribeToGroup(groupIdStr)
-    })
-  }
-
-  // Handle individual recurring event selections
-  // FIXED: Use selectRecurringEvents to directly set the state
-  // instead of toggling each event individually (which only works for visible events)
-  if (filterData.recurringEvents && filterData.recurringEvents.length > 0) {
-    selectRecurringEvents(filterData.recurringEvents)
-  }
+  // Use the selection store's reconstruction logic
+  // This handles the complete three-list model:
+  // (Events from groups + subscribed_event_ids) - unselected_event_ids
+  loadFilterSelection({
+    groups: filterData.groups || [],
+    recurring_events: filterData.recurringEvents || [],
+    unselected_events: filterData.unselectedEvents || []
+  })
 }
 
 // Handle selection changes from the new multi-level selection system (old complex)

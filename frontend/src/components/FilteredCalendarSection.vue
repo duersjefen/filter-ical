@@ -357,17 +357,16 @@ const loadFilterIntoPage = (calendar) => {
   const filterConfig = calendar.filter_config
   if (!filterConfig) return
 
-  const recurringEventsToSelect = filterConfig.recurring_events || []
-  const groupsToSelect = filterConfig.groups || []
-
   isUpdateMode.value = true
   updateModeCalendar.value = calendar
   updateModeOriginalFilter.value = calendar  // Store original filter data
   createForm.value.name = calendar.name
 
+  // Pass COMPLETE three-list model to CalendarView
   emit('load-filter', {
-    recurringEvents: recurringEventsToSelect,
-    groups: groupsToSelect,
+    groups: filterConfig.groups || [],
+    recurringEvents: filterConfig.recurring_events || [],
+    unselectedEvents: filterConfig.unselected_events || [],
     calendarName: calendar.name
   })
 

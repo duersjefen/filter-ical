@@ -33,7 +33,8 @@ def _format_filter_response(filter_obj):
         "export_url": f"/ical/{filter_obj.link_uuid}.ics",
         "filter_config": {
             "recurring_events": filter_obj.subscribed_event_ids or [],
-            "groups": filter_obj.subscribed_group_ids or []
+            "groups": filter_obj.subscribed_group_ids or [],
+            "unselected_events": filter_obj.unselected_event_ids or []
         },
         "created_at": filter_obj.created_at.isoformat() if filter_obj.created_at else None,
         "updated_at": filter_obj.updated_at.isoformat() if filter_obj.updated_at else None

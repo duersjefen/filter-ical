@@ -259,6 +259,7 @@ async def create_calendar_filter(
             "filter_config": {
                 "recurring_events": filter_obj.subscribed_event_ids or [],
                 "groups": filter_obj.subscribed_group_ids or [],
+                "unselected_events": filter_obj.unselected_event_ids or [],
                 "include_future_events": filter_obj.include_future_events
             },
             "created_at": filter_obj.created_at.isoformat() if filter_obj.created_at else None,
@@ -303,7 +304,8 @@ async def get_calendar_filters(
                 # Add filter_config for frontend compatibility
                 "filter_config": {
                     "recurring_events": filter_obj.subscribed_event_ids or [],
-                    "groups": filter_obj.subscribed_group_ids or []
+                    "groups": filter_obj.subscribed_group_ids or [],
+                    "unselected_events": filter_obj.unselected_event_ids or []
                 },
                 "created_at": filter_obj.created_at.isoformat() if filter_obj.created_at else None,
                 "updated_at": filter_obj.updated_at.isoformat() if filter_obj.updated_at else None
@@ -367,7 +369,8 @@ async def update_calendar_filter(
             # Add filter_config for frontend compatibility
             "filter_config": {
                 "recurring_events": existing_filter.subscribed_event_ids or [],
-                "groups": existing_filter.subscribed_group_ids or []
+                "groups": existing_filter.subscribed_group_ids or [],
+                "unselected_events": existing_filter.unselected_event_ids or []
             },
             "created_at": existing_filter.created_at.isoformat() if existing_filter.created_at else None,
             "updated_at": existing_filter.updated_at.isoformat() if existing_filter.updated_at else None
