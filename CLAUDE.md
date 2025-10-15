@@ -47,6 +47,8 @@ make status                # Check deployment status
 
 # NEVER use manual server commands - always use Makefile
 # NOTE: Servers have hot-reloading - no restart needed for code changes
+# IMPORTANT: make dev is usually already running in a separate terminal
+#            Do NOT run make dev unless explicitly requested by user
 ```
 
 ---
