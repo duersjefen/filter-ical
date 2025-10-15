@@ -510,7 +510,7 @@
           </span>
         </div>
 
-        <div v-if="domainsLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="domainsLoading" role="status" aria-live="polite" aria-label="Loading domains" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="i in 6" :key="i" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
             <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-100 dark:border-gray-700">
               <div class="flex items-center gap-3">
