@@ -31,11 +31,22 @@ export const useSelectionStore = defineStore('selection', () => {
    * Combines individual selections + subscribed group events
    */
   const effectiveSelectedRecurringEvents = computed(() => {
-    const selected = [...selectedRecurringEvents.value]
-    
+    const selected = new Set([...selectedRecurringEvents.value])
+
     // Add recurring events from subscribed groups
-    // Note: This will be enhanced when groups integration is needed
-    return selected
+    const groups = appStore?.groups || {}
+    for (const groupId of subscribedGroups.value) {
+      const group = groups[groupId]
+      if (group?.recurring_events) {
+        group.recurring_events.forEach(event => {
+          if (event.event_count > 0 && event.title) {
+            selected.add(event.title)
+          }
+        })
+      }
+    }
+
+    return Array.from(selected)
   })
   
   /**
