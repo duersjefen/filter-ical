@@ -109,79 +109,28 @@
 
       <div class="space-y-8">
       <!-- Create New Domain (admin shortcut) -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <!-- Header - Clickable -->
-        <div
-          @click="showCreateDomainForm = !showCreateDomainForm"
-          class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span class="truncate">Create New Domain</span>
-              </h2>
-              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Click to {{ showCreateDomainForm ? 'hide' : 'show' }} form
-              </p>
-            </div>
-            <svg
-              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
-              :class="showCreateDomainForm ? 'rotate-180' : ''"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Form -->
+      <AdminCardWrapper
+        title="Create New Domain"
+        subtitle="Quickly add a new domain without approval process"
+        icon="➕"
+        :expanded="showCreateDomainForm"
+        @toggle="showCreateDomainForm = !showCreateDomainForm"
+      >
         <CreateDomainForm
           :show-form="showCreateDomainForm"
           @domain-created="loadDomains"
         />
-      </div>
+      </AdminCardWrapper>
 
       <!-- Domains Overview (at top) -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div
-          @click="showAllDomains = !showAllDomains"
-          class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                </svg>
-                <span class="truncate">All Domains</span>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-xs sm:text-sm font-semibold flex-shrink-0">
-                  {{ domains.length }}
-                </span>
-              </h2>
-              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Click to {{ showAllDomains ? 'hide' : 'show' }} domains
-              </p>
-            </div>
-            <svg
-              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
-              :class="showAllDomains ? 'rotate-180' : ''"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-
-        <div v-if="showAllDomains && domainsLoading" role="status" aria-live="polite" aria-label="Loading domains" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <AdminCardWrapper
+        :title="`All Domains (${domains.length})`"
+        subtitle="View and manage all registered domains"
+        icon="📁"
+        :expanded="showAllDomains"
+        @toggle="showAllDomains = !showAllDomains"
+      >
+        <div v-if="domainsLoading" role="status" aria-live="polite" aria-label="Loading domains" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="i in 6" :key="i" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
             <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-100 dark:border-gray-700">
               <div class="flex items-center gap-3">
@@ -199,7 +148,7 @@
           </div>
         </div>
 
-        <div v-else-if="showAllDomains && domains.length === 0" class="p-12 text-center">
+        <div v-else-if="domains.length === 0" class="p-6 text-center">
           <div class="max-w-md mx-auto">
             <div class="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg aria-hidden="true" class="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +173,7 @@
           </div>
         </div>
 
-        <div v-else-if="showAllDomains" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <DomainCard
             v-for="domain in domains"
             :key="domain.domain_key"
@@ -233,48 +182,22 @@
             @refresh-domains="loadDomains"
           />
         </div>
-      </div>
+      </AdminCardWrapper>
 
       <!-- Requests List -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div
-          @click="showPendingRequests = !showPendingRequests"
-          class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                </svg>
-                <span class="truncate">Pending Domain Requests</span>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-xs sm:text-sm font-semibold flex-shrink-0">
-                  {{ pendingRequests.length }}
-                </span>
-              </h2>
-              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Click to {{ showPendingRequests ? 'hide' : 'show' }} requests
-              </p>
-            </div>
-            <svg
-              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
-              :class="showPendingRequests ? 'rotate-180' : ''"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-
-        <div v-if="showPendingRequests && loading" class="p-12 text-center">
+      <AdminCardWrapper
+        :title="`Pending Domain Requests (${pendingRequests.length})`"
+        subtitle="Review and approve or reject domain requests from users"
+        icon="📥"
+        :expanded="showPendingRequests"
+        @toggle="showPendingRequests = !showPendingRequests"
+      >
+        <div v-if="loading" class="p-6 text-center">
           <div class="inline-block w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p class="mt-4 text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
         </div>
 
-        <div v-else-if="showPendingRequests && pendingRequests.length === 0" class="p-12 text-center">
+        <div v-else-if="pendingRequests.length === 0" class="p-6 text-center">
           <div class="max-w-md mx-auto">
             <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg aria-hidden="true" class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,7 +213,7 @@
           </div>
         </div>
 
-        <div v-else-if="showPendingRequests" class="p-6 space-y-4">
+        <div v-else class="space-y-4">
           <DomainRequestCard
             v-for="request in pendingRequests"
             :key="request.id"
@@ -300,166 +223,99 @@
             @reject="rejectRequest"
           />
         </div>
-      </div>
+      </AdminCardWrapper>
 
       <!-- App Settings - Clean & Spacious -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div
-          @click="showAppSettings = !showAppSettings"
-          class="px-5 py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <span class="truncate">App Settings</span>
-              </h2>
-              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Click to {{ showAppSettings ? 'hide' : 'show' }} settings
-              </p>
+      <AdminCardWrapper
+        title="App Settings"
+        subtitle="Configure global application settings and features"
+        icon="⚙️"
+        :expanded="showAppSettings"
+        @toggle="showAppSettings = !showAppSettings"
+      >
+        <!-- Settings Grid: Side by Side -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+          <!-- Footer Visibility -->
+          <div>
+            <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Footer Visibility</label>
+            <div class="inline-flex rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden shadow-sm">
+              <button
+                @click="appSettings.footer_visibility = 'everywhere'"
+                class="px-4 py-2.5 text-sm font-medium transition-all border-r-2 border-gray-300 dark:border-gray-600"
+                :class="appSettings.footer_visibility === 'everywhere'
+                  ? 'bg-purple-600 text-white shadow-inner'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+              >
+                Everywhere
+              </button>
+              <button
+                @click="appSettings.footer_visibility = 'admin_only'"
+                class="px-4 py-2.5 text-sm font-medium transition-all border-r-2 border-gray-300 dark:border-gray-600"
+                :class="appSettings.footer_visibility === 'admin_only'
+                  ? 'bg-purple-600 text-white shadow-inner'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+              >
+                Admin
+              </button>
+              <button
+                @click="appSettings.footer_visibility = 'nowhere'"
+                class="px-4 py-2.5 text-sm font-medium transition-all"
+                :class="appSettings.footer_visibility === 'nowhere'
+                  ? 'bg-purple-600 text-white shadow-inner'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+              >
+                Hidden
+              </button>
             </div>
-            <svg
-              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
-              :class="showAppSettings ? 'rotate-180' : ''"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Control where the PayPal donation footer appears</p>
           </div>
+
+          <!-- Domain Request Card -->
+          <div>
+            <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Domain Request Card</label>
+            <div class="flex items-center gap-3">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" v-model="appSettings.show_domain_request" class="sr-only peer" />
+                <div class="w-14 h-7 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 transition-all shadow-inner"></div>
+                <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-md"></div>
+              </label>
+              <span class="text-sm font-semibold" :class="appSettings.show_domain_request ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'">
+                {{ appSettings.show_domain_request ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Allow users to request their own custom domains</p>
+          </div>
+
         </div>
 
-        <div v-if="showAppSettings" class="p-5">
-          <!-- Settings Grid: Side by Side -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-
-            <!-- Footer Visibility -->
-            <div>
-              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Footer Visibility</label>
-              <div class="inline-flex rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden shadow-sm">
-                <button
-                  @click="appSettings.footer_visibility = 'everywhere'"
-                  class="px-4 py-2.5 text-sm font-medium transition-all border-r-2 border-gray-300 dark:border-gray-600"
-                  :class="appSettings.footer_visibility === 'everywhere'
-                    ? 'bg-purple-600 text-white shadow-inner'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-                >
-                  Everywhere
-                </button>
-                <button
-                  @click="appSettings.footer_visibility = 'admin_only'"
-                  class="px-4 py-2.5 text-sm font-medium transition-all border-r-2 border-gray-300 dark:border-gray-600"
-                  :class="appSettings.footer_visibility === 'admin_only'
-                    ? 'bg-purple-600 text-white shadow-inner'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-                >
-                  Admin
-                </button>
-                <button
-                  @click="appSettings.footer_visibility = 'nowhere'"
-                  class="px-4 py-2.5 text-sm font-medium transition-all"
-                  :class="appSettings.footer_visibility === 'nowhere'
-                    ? 'bg-purple-600 text-white shadow-inner'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-                >
-                  Hidden
-                </button>
-              </div>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Control where the PayPal donation footer appears</p>
-            </div>
-
-            <!-- Domain Request Card -->
-            <div>
-              <label class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Domain Request Card</label>
-              <div class="flex items-center gap-3">
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" v-model="appSettings.show_domain_request" class="sr-only peer" />
-                  <div class="w-14 h-7 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 transition-all shadow-inner"></div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-md"></div>
-                </label>
-                <span class="text-sm font-semibold" :class="appSettings.show_domain_request ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'">
-                  {{ appSettings.show_domain_request ? 'Enabled' : 'Disabled' }}
-                </span>
-              </div>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Allow users to request their own custom domains</p>
-            </div>
-
-          </div>
-
-          <!-- Save Button -->
-          <div class="pt-4 border-t-2 border-gray-100 dark:border-gray-700">
-            <button
-              @click="saveAppSettings"
-              :disabled="settingsSaving"
-              class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed shadow-md hover:shadow-lg disabled:shadow-none"
-            >
-              {{ settingsSaving ? 'Saving...' : 'Save Settings' }}
-            </button>
-          </div>
+        <!-- Save Button -->
+        <div class="pt-4 border-t-2 border-gray-100 dark:border-gray-700">
+          <button
+            @click="saveAppSettings"
+            :disabled="settingsSaving"
+            class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed shadow-md hover:shadow-lg disabled:shadow-none"
+          >
+            {{ settingsSaving ? 'Saving...' : 'Save Settings' }}
+          </button>
         </div>
-      </div>
+      </AdminCardWrapper>
 
       <!-- Domain YAML Configuration Management -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div
-          @click="showYamlConfig = !showYamlConfig"
-          class="px-6 py-5 sm:px-4 sm:py-3 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
-                <span class="truncate">Domain YAML Configurations</span>
-              </h2>
-              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Click to {{ showYamlConfig ? 'hide' : 'show' }} configurations
-              </p>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <button
-                @click.stop="$refs.domainConfigManager?.refreshConfigs()"
-                class="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span class="hidden sm:inline">Refresh</span>
-              </button>
-              <svg
-                class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
-                :class="showYamlConfig ? 'rotate-180' : ''"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div v-if="showYamlConfig" class="p-6 sm:p-4">
-          <DomainConfigManager ref="domainConfigManager" />
-        </div>
-      </div>
+      <AdminCardWrapper
+        title="Domain YAML Configurations"
+        subtitle="Edit domain configuration files directly"
+        icon="📄"
+        :expanded="showYamlConfig"
+        @toggle="showYamlConfig = !showYamlConfig"
+      >
+        <DomainConfigManager ref="domainConfigManager" />
+      </AdminCardWrapper>
 
       <!-- User Management -->
       <UserManagementCard
         :expanded="showUserManagement"
         @toggle="showUserManagement = !showUserManagement"
-      />
-
-      <!-- Calendar Permissions -->
-      <CalendarPermissionsCard
-        :expanded="showCalendarPermissions"
-        @toggle="showCalendarPermissions = !showCalendarPermissions"
       />
       </div>
     </div>
@@ -493,7 +349,7 @@ import ApprovalModal from '../components/admin/ApprovalModal.vue'
 import RejectionModal from '../components/admin/RejectionModal.vue'
 import PasswordResetModal from '../components/admin/PasswordResetModal.vue'
 import UserManagementCard from '../components/admin/UserManagementCard.vue'
-import CalendarPermissionsCard from '../components/admin/CalendarPermissionsCard.vue'
+import AdminCardWrapper from '../components/admin/AdminCardWrapper.vue'
 import { useNotification } from '../composables/useNotification'
 
 const { t } = useI18n()
@@ -568,7 +424,6 @@ const showPendingRequests = ref(true)
 const showAppSettings = ref(true)
 const showYamlConfig = ref(true)
 const showUserManagement = ref(false)
-const showCalendarPermissions = ref(false)
 const newDomain = ref({
   domain_key: '',
   name: '',

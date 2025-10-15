@@ -166,7 +166,7 @@ class TestCalendarPermissionsListContract:
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "write"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
 
         response = test_client.get(
@@ -189,7 +189,7 @@ class TestCalendarPermissionsListContract:
             assert "email" in perm["user"]
 
             # Validate permission level
-            assert perm["permission_level"] in ["read", "write", "admin"]
+            assert perm["permission_level"] in ["user", "admin"]
 
 
 class TestCalendarPermissionsGrantContract:
@@ -200,7 +200,7 @@ class TestCalendarPermissionsGrantContract:
         """Test that granting permission requires authentication."""
         response = test_client.post(
             "/admin/calendars/1/permissions",
-            json={"user_id": 1, "permission_level": "read"}
+            json={"user_id": 1, "permission_level": "user"}
         )
         assert response.status_code == 401
 
@@ -210,7 +210,7 @@ class TestCalendarPermissionsGrantContract:
         response = test_client.post(
             "/admin/calendars/999999/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": 1, "permission_level": "read"}
+            json={"user_id": 1, "permission_level": "user"}
         )
         assert response.status_code == 404
 
@@ -228,7 +228,7 @@ class TestCalendarPermissionsGrantContract:
         response = test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": 999999, "permission_level": "read"}
+            json={"user_id": 999999, "permission_level": "user"}
         )
         assert response.status_code == 404
 
@@ -246,7 +246,7 @@ class TestCalendarPermissionsGrantContract:
         response = test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "write"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
         assert response.status_code == 201
         data = response.json()
@@ -288,21 +288,21 @@ class TestCalendarPermissionsGrantContract:
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "write"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
 
         # Try to grant again
         response = test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "admin"}
         )
         assert response.status_code == 409
 
     @pytest.mark.future
     def test_grant_permission_levels(self, test_client: TestClient, admin_token: str, test_user):
         """Test that all permission levels are accepted."""
-        for level in ["read", "write", "admin"]:
+        for level in ["user", "admin"]:
             # Create new calendar for each test
             calendar_response = test_client.post(
                 "/api/calendars",
@@ -386,7 +386,7 @@ class TestCalendarPermissionsRevokeContract:
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "write"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
 
         # Revoke permission

@@ -2,7 +2,7 @@
 Integration tests for calendar permissions management.
 
 These tests verify the full workflow of calendar permission operations, including:
-- Permission granting (read, write, admin levels)
+- Permission granting (user, admin levels)
 - Permission revocation
 - Permission listing
 - Calendar owner implicit permissions
@@ -20,8 +20,8 @@ class TestPermissionGrantWorkflow:
     """Integration tests for granting calendar permissions."""
 
     @pytest.mark.future
-    def test_grant_read_permission_to_user(self, test_client: TestClient, admin_token: str, test_user, test_db):
-        """Test granting read permission to a user."""
+    def test_grant_user_permission_to_user(self, test_client: TestClient, admin_token: str, test_user, test_db):
+        """Test granting user permission to a user."""
         from app.models.user import User
 
         # Create calendar owner
@@ -38,11 +38,11 @@ class TestPermissionGrantWorkflow:
         )
         calendar_id = calendar_response.json()["id"]
 
-        # Grant read permission to test_user
+        # Grant user permission to test_user
         grant_response = test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
         assert grant_response.status_code == 201
         assert grant_response.json()["success"] is True
@@ -57,43 +57,8 @@ class TestPermissionGrantWorkflow:
 
         user_perm = next((p for p in permissions if p["user"]["id"] == test_user.id), None)
         assert user_perm is not None
-        assert user_perm["permission_level"] == "read"
+        assert user_perm["permission_level"] == "user"
 
-    @pytest.mark.future
-    def test_grant_write_permission_to_user(self, test_client: TestClient, admin_token: str, test_user, test_db):
-        """Test granting write permission to a user."""
-        from app.models.user import User
-
-        # Create calendar owner
-        owner = User(username="calowner2", email="owner2@example.com")
-        test_db.add(owner)
-        test_db.commit()
-        test_db.refresh(owner)
-
-        # Create a calendar
-        calendar_response = test_client.post(
-            "/api/calendars",
-            json={"name": "Editable Calendar", "source_url": "https://example.com/cal2.ics"},
-            params={"username": owner.username}
-        )
-        calendar_id = calendar_response.json()["id"]
-
-        # Grant write permission to test_user
-        grant_response = test_client.post(
-            f"/admin/calendars/{calendar_id}/permissions",
-            headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "write"}
-        )
-        assert grant_response.status_code == 201
-
-        # Verify permission level
-        list_response = test_client.get(
-            f"/admin/calendars/{calendar_id}/permissions",
-            headers={"Authorization": f"Bearer {admin_token}"}
-        )
-        permissions = list_response.json()["permissions"]
-        user_perm = next((p for p in permissions if p["user"]["id"] == test_user.id), None)
-        assert user_perm["permission_level"] == "write"
 
     @pytest.mark.future
     def test_grant_admin_permission_to_user(self, test_client: TestClient, admin_token: str, test_user, test_db):
@@ -158,17 +123,17 @@ class TestPermissionGrantWorkflow:
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": user2.id, "permission_level": "write"}
+            json={"user_id": user2.id, "permission_level": "admin"}
         )
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": user3.id, "permission_level": "admin"}
+            json={"user_id": user3.id, "permission_level": "user"}
         )
 
         # Verify all permissions
@@ -181,9 +146,9 @@ class TestPermissionGrantWorkflow:
 
         # Check each user has correct permission
         perm_map = {p["user"]["id"]: p["permission_level"] for p in permissions}
-        assert perm_map[test_user.id] == "read"
-        assert perm_map[user2.id] == "write"
-        assert perm_map[user3.id] == "admin"
+        assert perm_map[test_user.id] == "user"
+        assert perm_map[user2.id] == "admin"
+        assert perm_map[user3.id] == "user"
 
     @pytest.mark.future
     def test_cannot_grant_duplicate_permission(self, test_client: TestClient, admin_token: str, test_user, test_db):
@@ -208,7 +173,7 @@ class TestPermissionGrantWorkflow:
         first_grant = test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
         assert first_grant.status_code == 201
 
@@ -216,7 +181,7 @@ class TestPermissionGrantWorkflow:
         second_grant = test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "write"}
+            json={"user_id": test_user.id, "permission_level": "admin"}
         )
         assert second_grant.status_code == 409
 
@@ -246,7 +211,7 @@ class TestPermissionRevokeWorkflow:
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "write"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
 
         # Verify permission exists
@@ -319,7 +284,7 @@ class TestPermissionRevokeWorkflow:
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
 
         # Revoke first time
@@ -431,17 +396,17 @@ class TestPermissionListing:
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": user2.id, "permission_level": "write"}
+            json={"user_id": user2.id, "permission_level": "admin"}
         )
         test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": user3.id, "permission_level": "admin"}
+            json={"user_id": user3.id, "permission_level": "user"}
         )
 
         # List permissions
@@ -519,7 +484,7 @@ class TestPermissionEdgeCases:
         grant_response = test_client.post(
             f"/admin/calendars/{calendar_id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": 999999, "permission_level": "read"}
+            json={"user_id": 999999, "permission_level": "user"}
         )
         assert grant_response.status_code == 404
 
@@ -529,7 +494,7 @@ class TestPermissionEdgeCases:
         grant_response = test_client.post(
             "/admin/calendars/999999/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
         assert grant_response.status_code == 404
 
@@ -574,7 +539,7 @@ class TestPermissionEdgeCases:
         grant_response = test_client.post(
             f"/admin/calendars/{domain_calendar.id}/permissions",
             headers={"Authorization": f"Bearer {admin_token}"},
-            json={"user_id": test_user.id, "permission_level": "read"}
+            json={"user_id": test_user.id, "permission_level": "user"}
         )
         assert grant_response.status_code == 201
 

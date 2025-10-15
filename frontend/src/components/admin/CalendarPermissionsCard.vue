@@ -133,8 +133,8 @@
                 v-model="grantForm[calendar.id].level"
                 class="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
-                <option value="read">Read</option>
-                <option value="write">Write</option>
+                <option value="user">User Access</option>
+                <option value="admin">Admin Access</option>
               </select>
               <button
                 @click="handleGrantPermission(calendar.id)"
@@ -169,11 +169,11 @@
               <div class="flex items-center gap-3">
                 <span
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                  :class="permission.level === 'write'
-                    ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200'
+                  :class="permission.permission_level === 'admin'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
                     : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'"
                 >
-                  {{ permission.level }}
+                  {{ permission.permission_level === 'admin' ? 'Admin' : 'User' }}
                 </span>
                 <button
                   @click="handleRevokePermission(calendar.id, permission.user_id, permission.username)"
@@ -288,7 +288,7 @@ async function loadCalendarsList() {
         searchResults: [],
         selectedUserId: null,
         selectedUsername: '',
-        level: 'read'
+        level: 'user'
       }
     }
   })
@@ -369,7 +369,7 @@ async function handleGrantPermission(calendarId) {
     form.searchResults = []
     form.selectedUserId = null
     form.selectedUsername = ''
-    form.level = 'read'
+    form.level = 'user'
 
     // Reload permissions for this calendar
     await getCalendarPermissions(calendarId)

@@ -21,7 +21,8 @@ from ..models.calendar_admin import calendar_admins
 
 
 # Permission levels in order of access rights
-PERMISSION_LEVELS = ['read', 'write', 'admin']
+# 'user' = normal access to calendar, 'admin' = admin access to calendar
+PERMISSION_LEVELS = ['user', 'admin']
 
 
 def list_calendar_permissions(db: Session, calendar_id: int) -> Tuple[bool, List[Dict[str, Any]], str]:
@@ -38,7 +39,7 @@ def list_calendar_permissions(db: Session, calendar_id: int) -> Tuple[bool, List
         - user_id: User ID
         - username: Username
         - email: User email
-        - permission_level: Permission level ('read', 'write', 'admin')
+        - permission_level: Permission level ('user', 'admin')
         - created_at: When permission was granted
 
     I/O Operation - Database query.
@@ -89,7 +90,7 @@ def grant_calendar_permission(
         db: Database session
         calendar_id: Calendar ID
         user_id: User ID
-        permission_level: Permission level ('read', 'write', 'admin')
+        permission_level: Permission level ('user', 'admin')
 
     Returns:
         Tuple of (success, permission_dict, error_message)
@@ -216,20 +217,19 @@ def check_calendar_permission(
     db: Session,
     calendar_id: int,
     user_id: int,
-    required_level: str = 'read'
+    required_level: str = 'user'
 ) -> bool:
     """
     Check if user has required permission level for calendar.
 
-    Permission hierarchy: admin > write > read
-    User with 'admin' can do anything requiring 'write' or 'read'
-    User with 'write' can do anything requiring 'read'
+    Permission hierarchy: admin > user
+    User with 'admin' can do anything requiring 'user' access
 
     Args:
         db: Database session
         calendar_id: Calendar ID
         user_id: User ID
-        required_level: Required permission level ('read', 'write', 'admin')
+        required_level: Required permission level ('user', 'admin')
 
     Returns:
         True if user has required permission level or higher

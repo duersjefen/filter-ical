@@ -202,15 +202,139 @@
         </button>
       </div>
     </div>
+
+    <!-- Calendar Permissions Management -->
+    <div v-if="domain.calendar_id" class="border-t-2 border-gray-100 dark:border-gray-700">
+      <div
+        @click="togglePermissions"
+        class="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+      >
+        <span class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+          <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          Calendar Permissions
+          <span class="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-semibold rounded">
+            {{ calendarPermissions.length }}
+          </span>
+        </span>
+        <svg
+          class="w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform"
+          :class="showPermissions ? 'rotate-90' : ''"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
+      </div>
+
+      <!-- Permissions Content -->
+      <div v-if="showPermissions" class="px-4 pb-4 space-y-4">
+        <!-- Grant Permission Form -->
+        <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+          <h5 class="text-xs font-bold text-gray-900 dark:text-gray-100 mb-2">Grant New Permission</h5>
+          <div class="flex flex-col gap-2">
+            <div class="relative">
+              <input
+                v-model="permissionGrantForm.searchQuery"
+                type="text"
+                placeholder="Search for user..."
+                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-green-500 dark:focus:border-green-400 transition-all"
+                @input="handlePermissionUserSearch"
+              />
+              <!-- Search Results Dropdown -->
+              <div
+                v-if="permissionGrantForm.searchResults.length > 0"
+                class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-32 overflow-y-auto"
+              >
+                <button
+                  v-for="user in permissionGrantForm.searchResults"
+                  :key="user.id"
+                  @click="selectPermissionUser(user)"
+                  class="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-sm"
+                >
+                  <div class="font-semibold text-gray-900 dark:text-gray-100">{{ user.username }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ user.email || 'No email' }}</div>
+                </button>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <select
+                v-model="permissionGrantForm.level"
+                class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="user">User Access</option>
+                <option value="admin">Admin Access</option>
+              </select>
+              <button
+                @click="handleGrantPermission"
+                :disabled="!permissionGrantForm.selectedUserId || grantingPermission"
+                class="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition-all shadow-sm hover:shadow-md disabled:shadow-none whitespace-nowrap"
+              >
+                {{ grantingPermission ? 'Granting...' : 'Grant' }}
+              </button>
+            </div>
+            <div v-if="permissionGrantForm.selectedUserId" class="text-xs text-gray-600 dark:text-gray-400">
+              Selected: <span class="font-semibold">{{ permissionGrantForm.selectedUsername }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Permissions -->
+        <div v-if="loadingPermissions" class="py-4 text-center">
+          <div class="inline-block w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
+        <!-- No Permissions -->
+        <div v-else-if="calendarPermissions.length === 0" class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+          No permissions granted yet
+        </div>
+
+        <!-- Permissions List -->
+        <div v-else class="space-y-2">
+          <div
+            v-for="permission in calendarPermissions"
+            :key="permission.user_id"
+            class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{{ permission.username }}</div>
+              <div class="text-xs text-gray-600 dark:text-gray-400 truncate">{{ permission.email || 'No email' }}</div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                :class="permission.permission_level === 'admin'
+                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'"
+              >
+                {{ permission.permission_level === 'admin' ? 'Admin' : 'User' }}
+              </span>
+              <button
+                @click="handleRevokePermission(permission.user_id, permission.username)"
+                :disabled="revokingPermission"
+                class="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                title="Revoke permission"
+              >
+                <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import { API_BASE_URL } from '../../constants/api'
 import { useNotification } from '../../composables/useNotification'
+import { useAdminCalendars } from '@/composables/useAdminCalendars'
 
 const { t } = useI18n()
 const notify = useNotification()
@@ -249,6 +373,29 @@ const ownerSearchQuery = ref('')
 const userSearchResults = ref([])
 const searchingUsers = ref(false)
 let searchTimeout = null
+
+// Calendar permissions state
+const showPermissions = ref(false)
+const calendarPermissions = ref([])
+const loadingPermissions = ref(false)
+const grantingPermission = ref(false)
+const revokingPermission = ref(false)
+const permissionGrantForm = reactive({
+  searchQuery: '',
+  searchResults: [],
+  selectedUserId: null,
+  selectedUsername: '',
+  level: 'user'
+})
+let permissionSearchTimeout = null
+
+// Use admin calendars composable for permission management
+const {
+  getCalendarPermissions,
+  grantPermission,
+  revokePermission,
+  searchUsers: searchCalendarUsers
+} = useAdminCalendars()
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
@@ -367,5 +514,114 @@ const assignOwner = async (domainKey, userId, username) => {
 
 const removeOwner = (domainKey) => {
   emit('remove-owner', domainKey)
+}
+
+// Calendar permissions methods
+const togglePermissions = async () => {
+  showPermissions.value = !showPermissions.value
+
+  // Load permissions when expanding for the first time
+  if (showPermissions.value && calendarPermissions.value.length === 0 && props.domain.calendar_id) {
+    await loadCalendarPermissions()
+  }
+}
+
+const loadCalendarPermissions = async () => {
+  if (!props.domain.calendar_id) return
+
+  loadingPermissions.value = true
+  try {
+    const result = await getCalendarPermissions(props.domain.calendar_id)
+    if (result.success) {
+      calendarPermissions.value = result.data || []
+    } else {
+      notify.error('Failed to load permissions')
+    }
+  } finally {
+    loadingPermissions.value = false
+  }
+}
+
+const handlePermissionUserSearch = () => {
+  clearTimeout(permissionSearchTimeout)
+
+  permissionSearchTimeout = setTimeout(async () => {
+    const query = permissionGrantForm.searchQuery
+    if (query && query.length >= 2) {
+      const result = await searchCalendarUsers(query)
+      if (result.success) {
+        permissionGrantForm.searchResults = result.data
+      }
+    } else {
+      permissionGrantForm.searchResults = []
+    }
+  }, 300)
+}
+
+const selectPermissionUser = (user) => {
+  permissionGrantForm.selectedUserId = user.id
+  permissionGrantForm.selectedUsername = user.username
+  permissionGrantForm.searchQuery = user.username
+  permissionGrantForm.searchResults = []
+}
+
+const handleGrantPermission = async () => {
+  if (!permissionGrantForm.selectedUserId || !props.domain.calendar_id) {
+    notify.error('Please select a user')
+    return
+  }
+
+  grantingPermission.value = true
+  try {
+    const result = await grantPermission(
+      props.domain.calendar_id,
+      permissionGrantForm.selectedUserId,
+      permissionGrantForm.level
+    )
+
+    if (result.success) {
+      notify.success(`Permission granted to ${permissionGrantForm.selectedUsername}`)
+
+      // Reset form
+      permissionGrantForm.searchQuery = ''
+      permissionGrantForm.searchResults = []
+      permissionGrantForm.selectedUserId = null
+      permissionGrantForm.selectedUsername = ''
+      permissionGrantForm.level = 'user'
+
+      // Reload permissions
+      await loadCalendarPermissions()
+    } else {
+      notify.error(result.error || 'Failed to grant permission')
+    }
+  } finally {
+    grantingPermission.value = false
+  }
+}
+
+const handleRevokePermission = async (userId, username) => {
+  if (!props.domain.calendar_id) return
+
+  if (!confirm(`Are you sure you want to revoke permission for "${username}"?`)) {
+    return
+  }
+
+  revokingPermission.value = true
+  try {
+    const result = await revokePermission(props.domain.calendar_id, userId)
+
+    if (result.success) {
+      notify.success(`Permission revoked for ${username}`)
+
+      // Remove from local list immediately
+      calendarPermissions.value = calendarPermissions.value.filter(
+        p => p.user_id !== userId
+      )
+    } else {
+      notify.error(result.error || 'Failed to revoke permission')
+    }
+  } finally {
+    revokingPermission.value = false
+  }
 }
 </script>

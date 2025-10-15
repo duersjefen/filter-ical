@@ -2346,8 +2346,8 @@ paths:
                           $ref: '#/components/schemas/UserInfo'
                         permission_level:
                           type: string
-                          enum: [read, write, admin]
-                          example: "write"
+                          enum: [user, admin]
+                          example: "user"
                         granted_at:
                           type: string
                           format: date-time
@@ -2384,9 +2384,9 @@ paths:
                   example: 42
                 permission_level:
                   type: string
-                  enum: [read, write, admin]
-                  example: "write"
-                  description: "read: view only, write: edit events/filters, admin: full control"
+                  enum: [user, admin]
+                  example: "user"
+                  description: "user: normal access to calendar, admin: full administrative control"
       responses:
         '201':
           description: Permission granted successfully

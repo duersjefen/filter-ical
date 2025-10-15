@@ -56,7 +56,7 @@ class PermissionInfo(BaseModel):
 
 class GrantPermissionRequest(BaseModel):
     user_id: int
-    permission_level: str  # read, write, admin
+    permission_level: str  # user, admin
 
 
 @router.get(
@@ -229,12 +229,12 @@ async def list_calendar_permissions(
     for perm in data_or_error:
         permissions.append({
             "user": {
-                "id": perm["user"]["id"],
-                "username": perm["user"]["username"],
-                "email": perm["user"]["email"]
+                "id": perm["user_id"],
+                "username": perm["username"],
+                "email": perm["email"]
             },
             "permission_level": perm["permission_level"],
-            "granted_at": perm["granted_at"]
+            "granted_at": perm["created_at"]
         })
 
     return {
