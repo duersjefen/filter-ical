@@ -16,7 +16,8 @@ export default defineConfig({
     terserOptions: {
       compress: {
         drop_console: true,  // Remove all console.* calls in production
-        drop_debugger: true   // Remove debugger statements
+        drop_debugger: true,   // Remove debugger statements
+        pure_funcs: ['console.log', 'console.info', 'console.debug']  // Explicitly mark as pure for aggressive removal
       }
     },
     // Increase chunk size warning limit (we're code-splitting intentionally)

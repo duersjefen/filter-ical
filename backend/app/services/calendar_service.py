@@ -5,10 +5,13 @@ IMPERATIVE SHELL - Orchestrates pure functions with I/O operations.
 """
 
 import httpx
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+
+logger = logging.getLogger(__name__)
 
 from ..models.calendar import Calendar, Event, Filter, RecurringEventGroup
 from ..data.calendar import (
@@ -142,7 +145,7 @@ def get_calendar_by_id(db: Session, calendar_id: int,
         return query.first()
     except Exception as e:
         # Graceful degradation for database issues (e.g., tables not ready in test environment)
-        print(f"⚠️ Database query error in get_calendar_by_id: {e}")
+        logger.warning(f"Database query error in get_calendar_by_id: {e}", exc_info=True)
         return None
 
 
@@ -404,7 +407,7 @@ def get_filter_by_uuid(db: Session, link_uuid: str) -> Optional[Filter]:
         return db.query(Filter).filter(Filter.link_uuid == link_uuid).first()
     except Exception as e:
         # Graceful degradation for database issues (e.g., tables not ready in test environment)
-        print(f"⚠️ Database query error in get_filter_by_uuid: {e}")
+        logger.warning(f"Database query error in get_filter_by_uuid: {e}", exc_info=True)
         return None
 
 

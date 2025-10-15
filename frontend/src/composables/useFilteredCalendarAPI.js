@@ -8,6 +8,7 @@ import { useHTTP } from './useHTTP'
 import { useAppStore } from '../stores/app'
 import { useUsername } from './useUsername'
 import { API_ENDPOINTS } from '../constants/api'
+import { computeThreeListModel } from '@/utils/filterHelpers'
 
 export function useFilteredCalendarAPI() {
   // HTTP client
@@ -165,28 +166,9 @@ export function useFilteredCalendarAPI() {
 
     // For domain calendars: compute whitelist and blacklist
     if (subscribedGroupIds.length > 0 && Object.keys(groups).length > 0) {
-      // Get all event titles from subscribed groups
-      const eventTitlesInSubscribedGroups = new Set()
-      subscribedGroupIds.forEach(groupId => {
-        const group = groups[groupId]
-        if (group?.recurring_events) {
-          group.recurring_events.forEach(event => {
-            if (event.event_count > 0) {
-              eventTitlesInSubscribedGroups.add(event.title)
-            }
-          })
-        }
-      })
-
-      // Whitelist: events selected but NOT in any subscribed group
-      subscribedEventIds = selectedEvents.filter(title => !eventTitlesInSubscribedGroups.has(title))
-
-      // Blacklist: events in subscribed groups but NOT selected
-      eventTitlesInSubscribedGroups.forEach(title => {
-        if (!selectedEvents.includes(title)) {
-          unselectedEventIds.push(title)
-        }
-      })
+      const computed = computeThreeListModel(selectedGroups, selectedEvents, groups)
+      subscribedEventIds = computed.subscribedEventIds
+      unselectedEventIds.push(...computed.unselectedEventIds)
     }
 
     // Map to backend filter format
@@ -266,28 +248,9 @@ export function useFilteredCalendarAPI() {
 
         // For domain calendars: compute whitelist and blacklist
         if (subscribedGroupIds.length > 0 && Object.keys(groups).length > 0) {
-          // Get all event titles from subscribed groups
-          const eventTitlesInSubscribedGroups = new Set()
-          subscribedGroupIds.forEach(groupId => {
-            const group = groups[groupId]
-            if (group?.recurring_events) {
-              group.recurring_events.forEach(event => {
-                if (event.event_count > 0) {
-                  eventTitlesInSubscribedGroups.add(event.title)
-                }
-              })
-            }
-          })
-
-          // Whitelist: events selected but NOT in any subscribed group
-          subscribedEventIds = selectedEvents.filter(title => !eventTitlesInSubscribedGroups.has(title))
-
-          // Blacklist: events in subscribed groups but NOT selected
-          eventTitlesInSubscribedGroups.forEach(title => {
-            if (!selectedEvents.includes(title)) {
-              unselectedEventIds.push(title)
-            }
-          })
+          const computed = computeThreeListModel(selectedGroups, selectedEvents, groups)
+          subscribedEventIds = computed.subscribedEventIds
+          unselectedEventIds.push(...computed.unselectedEventIds)
         }
 
         payload.subscribed_event_ids = subscribedEventIds
