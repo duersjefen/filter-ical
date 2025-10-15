@@ -292,6 +292,7 @@
         @navigate-back="$router.push('/')"
       />
 
+      <div class="space-y-8">
       <!-- Create New Domain (admin shortcut) -->
       <div class="mb-6">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -487,12 +488,47 @@
           <span class="text-sm text-gray-600 dark:text-gray-400">{{ domains.length }} domain{{ domains.length !== 1 ? 's' : '' }}</span>
         </div>
 
-        <div v-if="domainsLoading" class="flex items-center justify-center py-12">
-          <div class="inline-block w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        <div v-if="domainsLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="i in 6" :key="i" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-100 dark:border-gray-700">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-xl"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="h-20 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              <div class="h-20 bg-gray-200 dark:bg-gray-600 rounded"></div>
+            </div>
+          </div>
         </div>
 
-        <div v-else-if="domains.length === 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-          <p class="text-gray-600 dark:text-gray-400">No domains found</p>
+        <div v-else-if="domains.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center shadow-sm">
+          <div class="max-w-md mx-auto">
+            <div class="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+              No domains yet
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+              Create your first domain using the "Create New Domain" button above to get started.
+            </p>
+            <button
+              @click="showCreateDomainForm = true"
+              class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              <span>Create Domain</span>
+            </button>
+          </div>
         </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -701,9 +737,20 @@
           <p class="mt-4 text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
         </div>
 
-        <div v-else-if="pendingRequests.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center">
-          <div class="text-6xl mb-4">📭</div>
-          <p class="text-gray-600 dark:text-gray-400 font-semibold">{{ $t('admin.panel.noRequests') }}</p>
+        <div v-else-if="pendingRequests.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-12 text-center shadow-sm">
+          <div class="max-w-md mx-auto">
+            <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+              All caught up!
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+              No pending domain requests at the moment. New requests will appear here for approval.
+            </p>
+          </div>
         </div>
 
         <div v-else class="space-y-4">
