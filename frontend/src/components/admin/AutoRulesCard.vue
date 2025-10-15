@@ -382,14 +382,10 @@
                   </span>
                 </div>
                 <!-- Visual Rule Display with Pills -->
-                <div class="space-y-2 mb-3">
-                  <!-- Compound Rules -->
-                  <div v-if="rule.is_compound && rule.child_conditions" class="space-y-2">
-                    <div
-                      v-for="(cond, i) in rule.child_conditions"
-                      :key="i"
-                      class="flex flex-wrap items-center gap-2"
-                    >
+                <div class="mb-3">
+                  <!-- Compound Rules - Single Row -->
+                  <div v-if="rule.is_compound && rule.child_conditions" class="flex flex-wrap items-center gap-2">
+                    <template v-for="(cond, i) in rule.child_conditions" :key="i">
                       <!-- AND badge for 2nd+ conditions -->
                       <span v-if="i > 0" class="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/50 rounded-full">
                         {{ rule.operator }}
@@ -410,14 +406,13 @@
                       <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-2 border-yellow-200 dark:border-yellow-700">
                         "{{ cond.rule_value }}"
                       </span>
-                    </div>
-                    <!-- Target Group -->
-                    <div class="flex items-center gap-2 text-sm">
-                      <span class="text-gray-600 dark:text-gray-400">→ {{ $t('domainAdmin.assignTo') }}</span>
-                      <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-700">
-                        📁 {{ getGroupName(rule.target_group_id) }}
-                      </span>
-                    </div>
+                    </template>
+
+                    <!-- Arrow and Target Group in same row -->
+                    <span class="text-gray-600 dark:text-gray-400 text-sm">→ {{ $t('domainAdmin.assignTo') }}</span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-700">
+                      📁 {{ getGroupName(rule.target_group_id) }}
+                    </span>
                   </div>
 
                   <!-- Simple Rules -->
