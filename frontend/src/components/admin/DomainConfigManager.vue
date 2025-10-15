@@ -351,4 +351,9 @@ function formatFileSize(bytes) {
 function formatDate(dateString) {
   return new Date(dateString).toLocaleString()
 }
+
+// Expose methods for parent component
+defineExpose({
+  refreshConfigs
+})
 </script>

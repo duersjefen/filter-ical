@@ -115,20 +115,20 @@
           @click="showCreateDomainForm = !showCreateDomainForm"
           class="px-6 py-5 sm:px-5 sm:py-4 border-b-2 border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 cursor-pointer hover:from-gray-100 hover:to-gray-50 dark:hover:from-gray-700 dark:hover:to-gray-700 transition-all"
         >
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                <span>Create New Domain</span>
+                <span class="truncate">Create New Domain</span>
               </h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Click to {{ showCreateDomainForm ? 'hide' : 'show' }} form
               </p>
             </div>
             <svg
-              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform"
+              class="w-6 h-6 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
               :class="showCreateDomainForm ? 'rotate-180' : ''"
               fill="none"
               stroke="currentColor"
