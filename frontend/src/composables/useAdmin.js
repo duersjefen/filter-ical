@@ -281,7 +281,11 @@ export function useAdmin(domain) {
         rule_value: ruleValue.trim(),
         target_group_id: parseInt(targetGroupId)
       })
-      await loadAssignmentRules() // Refresh rules list
+      // Refresh both rules AND events to show auto-applied assignments
+      await Promise.all([
+        loadAssignmentRules(),
+        loadRecurringEventsWithAssignments()
+      ])
       return { success: true, data: result }
     } catch (err) {
       console.error('Failed to create assignment rule:', err)
@@ -296,7 +300,11 @@ export function useAdmin(domain) {
         conditions: conditions,
         target_group_id: parseInt(targetGroupId)
       })
-      await loadAssignmentRules() // Refresh rules list
+      // Refresh both rules AND events to show auto-applied assignments
+      await Promise.all([
+        loadAssignmentRules(),
+        loadRecurringEventsWithAssignments()
+      ])
       return { success: true, data: result }
     } catch (err) {
       console.error('Failed to create compound rule:', err)
