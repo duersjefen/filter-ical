@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
   DOMAIN_ASSIGNMENT_RULES: (domain) => `/api/domains/${domain}/assignment-rules`,
   DOMAIN_ASSIGNMENT_RULE: (domain, ruleId) => `/api/domains/${domain}/assignment-rules/${ruleId}`,
   DOMAIN_ASSIGNMENT_RULES_COMPOUND: (domain) => `/api/domains/${domain}/assignment-rules/compound`,
+  DOMAIN_ASSIGNMENT_RULES_APPLY: (domain) => `/api/domains/${domain}/assignment-rules/apply`,
   DOMAIN_ASSIGN_RECURRING_EVENTS: (domain, groupId) => `/api/domains/${domain}/groups/${groupId}/assign-recurring-events`,
   DOMAIN_BULK_ASSIGN_EVENTS: (domain) => `/api/domains/${domain}/bulk-assign-events`,
   DOMAIN_BULK_UNASSIGN_EVENTS: (domain) => `/api/domains/${domain}/bulk-unassign-events`,

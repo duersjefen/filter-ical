@@ -538,7 +538,20 @@ export function useAdmin(domain) {
   }
 
   const applyExistingRule = async (rule) => {
-    return await applyAssignmentRule(rule.rule_type, rule.rule_value, rule.target_group_id)
+    // Use backend's "apply all rules" endpoint
+    // This works for both simple and compound rules
+    try {
+      const result = await post(API_ENDPOINTS.DOMAIN_ASSIGNMENT_RULES_APPLY(domain))
+      await loadRecurringEventsWithAssignments() // Refresh to show changes
+      return {
+        success: true,
+        message: result.message || 'Rules applied successfully',
+        assignedCount: result.assignment_count || 0
+      }
+    } catch (err) {
+      console.error('Failed to apply rule:', err)
+      return { success: false, error: err.message }
+    }
   }
 
   return {
