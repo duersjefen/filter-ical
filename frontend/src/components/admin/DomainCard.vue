@@ -1,28 +1,44 @@
 <template>
   <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm hover:shadow-md overflow-hidden">
 
-    <!-- Header with Domain Name & Actions -->
-    <div class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700">
-      <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ domain.domain_key }}</h3>
-      <div class="flex items-center gap-3 sm:gap-2">
-        <a :href="`/${domain.domain_key}`" target="_blank" :aria-label="`View calendar for ${domain.domain_key}`" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center justify-center" title="View Calendar">
+    <!-- Header with Domain Name & Actions (Always Visible) -->
+    <div
+      @click="toggleExpanded"
+      class="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 border-b-2 border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <div class="flex items-center gap-3 flex-1 min-w-0">
+        <svg
+          class="w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0"
+          :class="isExpanded ? 'rotate-90' : ''"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
+        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ domain.domain_key }}</h3>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0" @click.stop>
+        <a :href="`/${domain.domain_key}`" target="_blank" :aria-label="`View calendar for ${domain.domain_key}`" class="p-2 min-w-[40px] min-h-[40px] hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center justify-center" title="View Calendar">
           <svg aria-hidden="true" class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
           </svg>
         </a>
-        <a :href="`/${domain.domain_key}/admin`" target="_blank" :aria-label="`Open admin panel for ${domain.domain_key}`" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-800/50 rounded-lg transition-colors flex items-center justify-center" title="Manage Domain">
+        <a :href="`/${domain.domain_key}/admin`" target="_blank" :aria-label="`Open admin panel for ${domain.domain_key}`" class="p-2 min-w-[40px] min-h-[40px] bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-800/50 rounded-lg transition-colors flex items-center justify-center" title="Manage Domain">
           <svg aria-hidden="true" class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </a>
-        <button @click="$emit('delete-domain')" :aria-label="`Delete domain ${domain.domain_key}`" class="p-3 sm:p-2 min-w-[44px] min-h-[44px] touch-manipulation bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-800/50 rounded-lg transition-colors flex items-center justify-center" title="Delete Domain">
+        <button @click="$emit('delete-domain')" :aria-label="`Delete domain ${domain.domain_key}`" class="p-2 min-w-[40px] min-h-[40px] bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-800/50 rounded-lg transition-colors flex items-center justify-center" title="Delete Domain">
           <svg aria-hidden="true" class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
           </svg>
         </button>
       </div>
     </div>
+
+    <!-- Expandable Content -->
+    <div v-if="isExpanded">
 
     <!-- Password Management: Side by Side -->
     <div class="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -203,33 +219,22 @@
       </div>
     </div>
 
-    <!-- Calendar Permissions Management -->
-    <div v-if="domain.calendar_id" class="border-t-2 border-gray-100 dark:border-gray-700">
-      <div
-        @click="togglePermissions"
-        class="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-      >
-        <span class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+    <!-- Calendar Permissions Management (Always Show) -->
+    <div class="border-t-2 border-gray-100 dark:border-gray-700">
+      <div class="px-4 py-3 bg-purple-50 dark:bg-purple-900/20">
+        <span class="text-sm font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
           <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
-          Calendar Permissions
-          <span class="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-semibold rounded">
+          Calendar Access Permissions
+          <span class="px-1.5 py-0.5 bg-purple-200 dark:bg-purple-800/50 text-purple-900 dark:text-purple-200 text-xs font-semibold rounded">
             {{ calendarPermissions.length }}
           </span>
         </span>
-        <svg
-          class="w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform"
-          :class="showPermissions ? 'rotate-90' : ''"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-        </svg>
       </div>
 
-      <!-- Permissions Content -->
-      <div v-if="showPermissions" class="px-4 pb-4 space-y-4">
+      <!-- Permissions Content (Always Visible) -->
+      <div class="px-4 pb-4 pt-2 space-y-4">
         <!-- Grant Permission Form -->
         <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
           <h5 class="text-xs font-bold text-gray-900 dark:text-gray-100 mb-2">Grant New Permission</h5>
@@ -325,6 +330,9 @@
         </div>
       </div>
     </div>
+
+    </div>
+    <!-- End Expandable Content -->
   </div>
 </template>
 
@@ -350,6 +358,9 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['delete-domain', 'refresh-domains'])
 
+// Component state
+const isExpanded = ref(false)
+
 // Local state for password management
 const editingDomain = ref(null)
 const editingType = ref(null)
@@ -364,7 +375,6 @@ const searchingUsers = ref(false)
 let searchTimeout = null
 
 // Calendar permissions state
-const showPermissions = ref(false)
 const calendarPermissions = ref([])
 const loadingPermissions = ref(false)
 const grantingPermission = ref(false)
@@ -390,6 +400,16 @@ const {
 const getAuthHeaders = () => {
   const token = localStorage.getItem('admin_token')
   return token ? { 'Authorization': `Bearer ${token}` } : {}
+}
+
+// Toggle expanded state
+const toggleExpanded = () => {
+  isExpanded.value = !isExpanded.value
+
+  // Load calendar permissions when expanding for the first time
+  if (isExpanded.value && calendarPermissions.value.length === 0) {
+    loadCalendarPermissions()
+  }
 }
 
 // Password management methods
@@ -529,8 +549,10 @@ const removeOwner = async (domainKey) => {
 
   try {
     const token = localStorage.getItem('admin_token')
-    await axios.delete(
+    // Use PATCH with user_id: null to remove owner
+    await axios.patch(
       `${API_BASE_URL}/api/admin/domains/${domainKey}/owner`,
+      { user_id: null },
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -547,17 +569,12 @@ const removeOwner = async (domainKey) => {
 }
 
 // Calendar permissions methods
-const togglePermissions = async () => {
-  showPermissions.value = !showPermissions.value
-
-  // Load permissions when expanding for the first time
-  if (showPermissions.value && calendarPermissions.value.length === 0 && props.domain.calendar_id) {
-    await loadCalendarPermissions()
-  }
-}
-
 const loadCalendarPermissions = async () => {
-  if (!props.domain.calendar_id) return
+  // Domains always have a calendar_id once created (from ensure_domain_calendar_exists)
+  if (!props.domain.calendar_id) {
+    console.warn(`Domain ${props.domain.domain_key} has no calendar_id yet`)
+    return
+  }
 
   loadingPermissions.value = true
   try {

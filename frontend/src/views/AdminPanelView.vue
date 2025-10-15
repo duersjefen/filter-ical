@@ -173,7 +173,7 @@
           </div>
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <DomainCard
             v-for="domain in domains"
             :key="domain.domain_key"
