@@ -510,7 +510,7 @@ const navigateToCalendar = () => {
 const loadFilterIntoPage = (filterData) => {
   // Clear current selection using unified system
   clearSelection()
-  
+
   // Handle group subscriptions first
   if (filterData.groups && filterData.groups.length > 0) {
     filterData.groups.forEach(groupId => {
@@ -521,10 +521,10 @@ const loadFilterIntoPage = (filterData) => {
   }
 
   // Handle individual recurring event selections
+  // FIXED: Use selectRecurringEvents to directly set the state
+  // instead of toggling each event individually (which only works for visible events)
   if (filterData.recurringEvents && filterData.recurringEvents.length > 0) {
-    filterData.recurringEvents.forEach(recurringEventName => {
-      unifiedToggleRecurringEvent(recurringEventName)
-    })
+    selectRecurringEvents(filterData.recurringEvents)
   }
 }
 

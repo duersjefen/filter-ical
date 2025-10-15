@@ -182,6 +182,7 @@ const isExpanded = ref(true)
 const hasEverHadRecurringEvents = ref(false)
 const isUpdateMode = ref(false)
 const updateModeCalendar = ref(null)
+const updateModeOriginalFilter = ref(null)  // Store original filter to detect changes
 const createForm = ref({
   name: '',
   includeNewEvents: true
@@ -297,14 +298,23 @@ const handleSaveName = async ({ id, name }) => {
   updatingCalendarId.value = id
 
   try {
-    const filterConfig = {
-      recurring_events: props.selectedRecurringEvents,
-      groups: Array.from(props.subscribedGroups || [])
+    // CRITICAL FIX: Only send name if that's all that changed
+    // This prevents losing event selections when user only updates name
+    const updates = { name }
+
+    // Only include filter_config if not updating, or if no original filter stored
+    // (which means selection UI is active and user might have changed things)
+    if (!updateModeOriginalFilter.value) {
+      const filterConfig = {
+        recurring_events: props.selectedRecurringEvents,
+        groups: Array.from(props.subscribedGroups || [])
+      }
+      updates.filter_config = filterConfig
     }
 
     const success = await apiUpdateFiltered(
       id,
-      { name, filter_config: filterConfig },
+      updates,
       props.groups || {}
     )
 
@@ -352,6 +362,7 @@ const loadFilterIntoPage = (calendar) => {
 
   isUpdateMode.value = true
   updateModeCalendar.value = calendar
+  updateModeOriginalFilter.value = calendar  // Store original filter data
   createForm.value.name = calendar.name
 
   emit('load-filter', {
@@ -371,6 +382,7 @@ const loadFilterIntoPage = (calendar) => {
 const exitUpdateMode = () => {
   isUpdateMode.value = false
   updateModeCalendar.value = null
+  updateModeOriginalFilter.value = null  // Clear original filter
   createForm.value.name = ''
 }
 

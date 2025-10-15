@@ -160,19 +160,22 @@ const filterSummary = computed(() => {
   }
 
   const groupCount = filterConfig.groups?.length || 0
-  const eventCount = filterConfig.recurring_events?.length || 0
+  const individualEventCount = filterConfig.recurring_events?.length || 0
 
-  if (groupCount === 0 && eventCount === 0) {
+  if (groupCount === 0 && individualEventCount === 0) {
     return { hasFilter: false, text: '', badgeClass: '' }
   }
 
   let text = ''
-  if (groupCount > 0 && eventCount > 0) {
-    text = `📊 ${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} & ${eventCount} ${t('common.recurringEvents')}`
+  if (groupCount > 0 && individualEventCount > 0) {
+    // Show both groups and individual events (not in groups)
+    text = `📊 ${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} + ${individualEventCount} individual ${individualEventCount === 1 ? 'event' : 'events'}`
   } else if (groupCount > 0) {
-    text = `📊 ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}`
-  } else if (eventCount > 0) {
-    text = `📂 ${eventCount} recurring ${eventCount === 1 ? 'event' : 'events'}`
+    // Only groups - just show group count
+    text = `📊 ${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')}`
+  } else if (individualEventCount > 0) {
+    // Only individual events - show event count
+    text = `📂 ${individualEventCount} ${t('common.recurringEvents')}`
   }
 
   let badgeClass
