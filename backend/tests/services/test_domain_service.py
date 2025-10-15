@@ -698,7 +698,7 @@ class TestDeleteAssignmentRule:
     def test_delete_assignment_rule_success(self):
         """Test successful rule deletion."""
         mock_db = Mock(spec=Session)
-        mock_rule = Mock(id=1, domain_key="test-domain")
+        mock_rule = Mock(id=1, domain_key="test-domain", is_compound=False)
 
         mock_db.query.return_value.filter.return_value.first.return_value = mock_rule
 
