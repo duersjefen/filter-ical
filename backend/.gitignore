@@ -1,1 +1,5 @@
 .env.development
+
+# Test coverage
+.coverage
+htmlcov/
