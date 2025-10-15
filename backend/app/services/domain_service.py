@@ -141,15 +141,14 @@ def get_domain_events(db: Session, domain_key: str) -> List[Dict[str, Any]]:
             "description": event.description or "",
             "location": event.location,
             "uid": event.uid,
-            "raw_ical": raw_ical,  # For category matching in rules
+            "raw_ical": raw_ical,  # For category matching in rules (reconstructed with CATEGORIES)
             "other_ical_fields": {           # Fixed: nest raw_ical for export compatibility
                 "raw_ical": event.other_ical_fields.get("raw_ical", "") if event.other_ical_fields else ""
             },
             # Keep legacy format for domain UI compatibility
             "start": event.start_time.isoformat() if event.start_time else None,
             "end": event.end_time.isoformat() if event.end_time else None,
-            "is_recurring": False,  # Will be determined by grouping
-            "raw_ical": event.other_ical_fields.get("raw_ical", "") if event.other_ical_fields else ""
+            "is_recurring": False  # Will be determined by grouping
         }
         event_dicts.append(event_dict)
 
@@ -487,7 +486,7 @@ async def auto_assign_events_with_rules(db: Session, domain_key: str) -> Tuple[b
         
         # Apply rules using pure function
         group_assignments = apply_assignment_rules(events, rules_data)
-        
+
         # Apply assignments to database
         total_assignments = 0
         for group_id, event_titles in group_assignments.items():
@@ -498,7 +497,7 @@ async def auto_assign_events_with_rules(db: Session, domain_key: str) -> Tuple[b
                 total_assignments += count
             else:
                 return False, 0, error
-        
+
         return True, total_assignments, ""
         
     except Exception as e:

@@ -372,15 +372,6 @@
               
               <!-- Rule Info -->
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 mb-2">
-                  <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                    <span v-if="rule.is_compound">{{ rule.operator }} Rule ({{ rule.child_conditions?.length || 0 }} conditions)</span>
-                    <span v-else>{{ getRuleTypeLabel(rule.rule_type) }}</span>
-                  </h3>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold badge-bounce" :class="getMatchCountBadgeClass(rule)">
-                    {{ getLiveMatchingEvents(rule).length }} matches
-                  </span>
-                </div>
                 <!-- Visual Rule Display with Pills -->
                 <div class="mb-3">
                   <!-- Compound Rules - Single Row -->
@@ -413,6 +404,11 @@
                     <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-700">
                       📁 {{ getGroupName(rule.target_group_id) }}
                     </span>
+
+                    <!-- Match count badge -->
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold badge-bounce" :class="getMatchCountBadgeClass(rule)" :title="`${getLiveMatchingEvents(rule).length} matching events`">
+                      {{ getLiveMatchingEvents(rule).length }}
+                    </span>
                   </div>
 
                   <!-- Simple Rules -->
@@ -436,8 +432,13 @@
                     <span class="text-gray-600 dark:text-gray-400 text-sm">→</span>
 
                     <!-- Target Group -->
-                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-700">
+                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-200 dark:border-blue-707">
                       📁 {{ getGroupName(rule.target_group_id) }}
+                    </span>
+
+                    <!-- Match count badge -->
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold badge-bounce" :class="getMatchCountBadgeClass(rule)" :title="`${getLiveMatchingEvents(rule).length} matching events`">
+                      {{ getLiveMatchingEvents(rule).length }}
                     </span>
                   </div>
                 </div>
