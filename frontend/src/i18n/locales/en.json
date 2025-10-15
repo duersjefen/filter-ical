@@ -853,115 +853,115 @@
       "removeOwnerError": "Failed to remove owner: {detail}",
       "removeOwnerTitle": "Remove Owner",
       "removeOwnerConfirm": "Remove owner from domain \"{domainKey}\"?"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your account and domains",
+    "usernameLabel": "Username",
+    "notLoggedIn": {
+      "warning": "You must be logged in to view your profile",
+      "loginButton": "Go to Login"
     },
-    "profile": {
-      "title": "My Profile",
-      "subtitle": "Manage your account and domains",
-      "usernameLabel": "Username",
-      "notLoggedIn": {
-        "warning": "You must be logged in to view your profile",
-        "loginButton": "Go to Login"
+    "account": {
+      "title": "Account Settings",
+      "subtitle": "Manage your email and password",
+      "email": {
+        "labelUpdate": "Update Email",
+        "labelAdd": "Add Email",
+        "placeholder": "Add email address",
+        "currentPrefix": "Current:",
+        "helpText": "Required for password reset and domain requests",
+        "invalidFormat": "Please enter a valid email address"
       },
-      "account": {
-        "title": "Account Settings",
-        "subtitle": "Manage your email and password",
-        "email": {
-          "labelUpdate": "Update Email",
-          "labelAdd": "Add Email",
-          "placeholder": "Add email address",
-          "currentPrefix": "Current:",
-          "helpText": "Required for password reset and domain requests",
-          "invalidFormat": "Please enter a valid email address"
-        },
-        "password": {
-          "labelChange": "Change Password",
-          "labelAdd": "Add Password",
-          "placeholderRequired": "Required when adding email",
-          "placeholderKeepCurrent": "Leave blank to keep current",
-          "placeholderOptional": "Optional: Add password for account security",
-          "confirmLabel": "Confirm New Password",
-          "confirmPlaceholder": "Re-enter your new password",
-          "currentLabel": "Current Password",
-          "currentPlaceholder": "Required to change password",
-          "warningEmailRequired": "⚠️ Password required when adding email (needed for password reset)",
-          "warningAddEmailFirst": "⚠️ Add email first - required for password reset",
-          "minLength": "Password must be at least 4 characters",
-          "mismatch": "Passwords do not match"
-        },
-        "saveButton": {
-          "saving": "Saving...",
-          "update": "Update Account",
-          "save": "Save Account Info"
-        },
-        "messages": {
-          "noChanges": "No changes to save",
-          "emailRequired": "Email address is required when setting a password (needed for password reset)",
-          "updateSuccess": "Account updated successfully",
-          "updateFailed": "Failed to update account"
-        }
+      "password": {
+        "labelChange": "Change Password",
+        "labelAdd": "Add Password",
+        "placeholderRequired": "Required when adding email",
+        "placeholderKeepCurrent": "Leave blank to keep current",
+        "placeholderOptional": "Optional: Add password for account security",
+        "confirmLabel": "Confirm New Password",
+        "confirmPlaceholder": "Re-enter your new password",
+        "currentLabel": "Current Password",
+        "currentPlaceholder": "Required to change password",
+        "warningEmailRequired": "⚠️ Password required when adding email (needed for password reset)",
+        "warningAddEmailFirst": "⚠️ Add email first - required for password reset",
+        "minLength": "Password must be at least 4 characters",
+        "mismatch": "Passwords do not match"
       },
-      "activeDomains": {
-        "title": "Active Domains ({count})",
-        "subtitle": "Domains you're actively using with filters, password access, or admin privileges",
-        "emptyMessage": "You haven't interacted with any domains yet.",
-        "emptyHelp": "Create filters or unlock password-protected domains to get started.",
-        "manageButton": "Manage Domain",
-        "viewButton": "View Domain",
-        "filterCount": "{count} filter | {count} filters",
-        "adminAccess": "Admin Access",
-        "userAccess": "User Access",
-        "unlocked": "Unlocked {date}"
+      "saveButton": {
+        "saving": "Saving...",
+        "update": "Update Account",
+        "save": "Save Account Info"
       },
-      "ownedDomains": {
-        "title": "My Domains ({count})",
-        "subtitle": "Domains you own and manage",
-        "loading": "Loading...",
-        "emptyMessage": "You don't own any domains yet.",
-        "emptyHelp": "Request a domain to get started!",
-        "managePasswords": "Manage Passwords",
-        "hidePasswords": "Hide Passwords",
-        "manageAdmins": "Manage Admins",
-        "hideAdmins": "Hide Admins",
-        "viewDomain": "View Domain"
-      },
-      "passwords": {
-        "sectionTitle": "Domain Passwords",
-        "admin": {
-          "title": "Admin Password",
-          "placeholder": "Enter admin password (min 4 chars)",
-          "showButton": "Show password",
-          "hideButton": "Hide password",
-          "setButton": "Set Admin Password",
-          "setting": "Setting...",
-          "setSuccess": "Admin password set successfully",
-          "setFailed": "Failed to set admin password"
-        },
-        "user": {
-          "title": "User Password",
-          "placeholder": "Enter user password (min 4 chars)",
-          "showButton": "Show password",
-          "hideButton": "Hide password",
-          "setButton": "Set User Password",
-          "setting": "Setting...",
-          "setSuccess": "User password set successfully",
-          "setFailed": "Failed to set user password"
-        },
-        "minLengthError": "Password must be at least 4 characters"
-      },
-      "admins": {
-        "sectionTitle": "Domain Admins",
-        "loading": "Loading admins...",
-        "loadFailed": "Failed to load admins",
-        "emptyMessage": "No admins yet",
-        "addPlaceholder": "Username to add as admin",
-        "addButton": "Add Admin",
-        "removeButton": "Remove",
-        "addSuccess": "Successfully added {username} as admin",
-        "addFailed": "Failed to add admin",
-        "removeConfirm": "Remove {username} from admins?",
-        "removeSuccess": "Successfully removed {username} from admins",
-        "removeFailed": "Failed to remove admin"
+      "messages": {
+        "noChanges": "No changes to save",
+        "emailRequired": "Email address is required when setting a password (needed for password reset)",
+        "updateSuccess": "Account updated successfully",
+        "updateFailed": "Failed to update account"
       }
+    },
+    "activeDomains": {
+      "title": "Active Domains ({count})",
+      "subtitle": "Domains you're actively using with filters, password access, or admin privileges",
+      "emptyMessage": "You haven't interacted with any domains yet.",
+      "emptyHelp": "Create filters or unlock password-protected domains to get started.",
+      "manageButton": "Manage Domain",
+      "viewButton": "View Domain",
+      "filterCount": "{count} filter | {count} filters",
+      "adminAccess": "Admin Access",
+      "userAccess": "User Access",
+      "unlocked": "Unlocked {date}"
+    },
+    "ownedDomains": {
+      "title": "My Domains ({count})",
+      "subtitle": "Domains you own and manage",
+      "loading": "Loading...",
+      "emptyMessage": "You don't own any domains yet.",
+      "emptyHelp": "Request a domain to get started!",
+      "managePasswords": "Manage Passwords",
+      "hidePasswords": "Hide Passwords",
+      "manageAdmins": "Manage Admins",
+      "hideAdmins": "Hide Admins",
+      "viewDomain": "View Domain"
+    },
+    "passwords": {
+      "sectionTitle": "Domain Passwords",
+      "admin": {
+        "title": "Admin Password",
+        "placeholder": "Enter admin password (min 4 chars)",
+        "showButton": "Show password",
+        "hideButton": "Hide password",
+        "setButton": "Set Admin Password",
+        "setting": "Setting...",
+        "setSuccess": "Admin password set successfully",
+        "setFailed": "Failed to set admin password"
+      },
+      "user": {
+        "title": "User Password",
+        "placeholder": "Enter user password (min 4 chars)",
+        "showButton": "Show password",
+        "hideButton": "Hide password",
+        "setButton": "Set User Password",
+        "setting": "Setting...",
+        "setSuccess": "User password set successfully",
+        "setFailed": "Failed to set user password"
+      },
+      "minLengthError": "Password must be at least 4 characters"
+    },
+    "admins": {
+      "sectionTitle": "Domain Admins",
+      "loading": "Loading admins...",
+      "loadFailed": "Failed to load admins",
+      "emptyMessage": "No admins yet",
+      "addPlaceholder": "Username to add as admin",
+      "addButton": "Add Admin",
+      "removeButton": "Remove",
+      "addSuccess": "Successfully added {username} as admin",
+      "addFailed": "Failed to add admin",
+      "removeConfirm": "Remove {username} from admins?",
+      "removeSuccess": "Successfully removed {username} from admins",
+      "removeFailed": "Failed to remove admin"
     }
   }
 }

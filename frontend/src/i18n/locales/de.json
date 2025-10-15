@@ -863,115 +863,115 @@
       "removeOwnerError": "Fehler beim Entfernen des Besitzers: {detail}",
       "removeOwnerTitle": "Besitzer entfernen",
       "removeOwnerConfirm": "Besitzer von Domain \"{domainKey}\" entfernen?"
+    }
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "subtitle": "Verwalten Sie Ihr Konto und Domains",
+    "usernameLabel": "Benutzername",
+    "notLoggedIn": {
+      "warning": "Sie müssen angemeldet sein, um Ihr Profil anzuzeigen",
+      "loginButton": "Zur Anmeldung"
     },
-    "profile": {
-      "title": "Mein Profil",
-      "subtitle": "Verwalten Sie Ihr Konto und Domains",
-      "usernameLabel": "Benutzername",
-      "notLoggedIn": {
-        "warning": "Sie müssen angemeldet sein, um Ihr Profil anzuzeigen",
-        "loginButton": "Zur Anmeldung"
+    "account": {
+      "title": "Kontoeinstellungen",
+      "subtitle": "Verwalten Sie Ihre E-Mail und Passwort",
+      "email": {
+        "labelUpdate": "E-Mail aktualisieren",
+        "labelAdd": "E-Mail hinzufügen",
+        "placeholder": "E-Mail-Adresse hinzufügen",
+        "currentPrefix": "Aktuell:",
+        "helpText": "Erforderlich für Passwort-Reset und Domain-Anfragen",
+        "invalidFormat": "Bitte geben Sie eine gültige E-Mail-Adresse ein"
       },
-      "account": {
-        "title": "Kontoeinstellungen",
-        "subtitle": "Verwalten Sie Ihre E-Mail und Passwort",
-        "email": {
-          "labelUpdate": "E-Mail aktualisieren",
-          "labelAdd": "E-Mail hinzufügen",
-          "placeholder": "E-Mail-Adresse hinzufügen",
-          "currentPrefix": "Aktuell:",
-          "helpText": "Erforderlich für Passwort-Reset und Domain-Anfragen",
-          "invalidFormat": "Bitte geben Sie eine gültige E-Mail-Adresse ein"
-        },
-        "password": {
-          "labelChange": "Passwort ändern",
-          "labelAdd": "Passwort hinzufügen",
-          "placeholderRequired": "Erforderlich beim Hinzufügen einer E-Mail",
-          "placeholderKeepCurrent": "Leer lassen, um aktuelles beizubehalten",
-          "placeholderOptional": "Optional: Passwort für Kontosicherheit hinzufügen",
-          "confirmLabel": "Neues Passwort bestätigen",
-          "confirmPlaceholder": "Neues Passwort erneut eingeben",
-          "currentLabel": "Aktuelles Passwort",
-          "currentPlaceholder": "Erforderlich zum Ändern des Passworts",
-          "warningEmailRequired": "⚠️ Passwort erforderlich beim Hinzufügen einer E-Mail (für Passwort-Reset benötigt)",
-          "warningAddEmailFirst": "⚠️ Fügen Sie zuerst eine E-Mail hinzu - erforderlich für Passwort-Reset",
-          "minLength": "Passwort muss mindestens 4 Zeichen lang sein",
-          "mismatch": "Passwörter stimmen nicht überein"
-        },
-        "saveButton": {
-          "saving": "Wird gespeichert...",
-          "update": "Konto aktualisieren",
-          "save": "Kontoinfo speichern"
-        },
-        "messages": {
-          "noChanges": "Keine Änderungen zum Speichern",
-          "emailRequired": "E-Mail-Adresse ist erforderlich beim Festlegen eines Passworts (für Passwort-Reset benötigt)",
-          "updateSuccess": "Konto erfolgreich aktualisiert",
-          "updateFailed": "Konto konnte nicht aktualisiert werden"
-        }
+      "password": {
+        "labelChange": "Passwort ändern",
+        "labelAdd": "Passwort hinzufügen",
+        "placeholderRequired": "Erforderlich beim Hinzufügen einer E-Mail",
+        "placeholderKeepCurrent": "Leer lassen, um aktuelles beizubehalten",
+        "placeholderOptional": "Optional: Passwort für Kontosicherheit hinzufügen",
+        "confirmLabel": "Neues Passwort bestätigen",
+        "confirmPlaceholder": "Neues Passwort erneut eingeben",
+        "currentLabel": "Aktuelles Passwort",
+        "currentPlaceholder": "Erforderlich zum Ändern des Passworts",
+        "warningEmailRequired": "⚠️ Passwort erforderlich beim Hinzufügen einer E-Mail (für Passwort-Reset benötigt)",
+        "warningAddEmailFirst": "⚠️ Fügen Sie zuerst eine E-Mail hinzu - erforderlich für Passwort-Reset",
+        "minLength": "Passwort muss mindestens 4 Zeichen lang sein",
+        "mismatch": "Passwörter stimmen nicht überein"
       },
-      "activeDomains": {
-        "title": "Aktive Domains ({count})",
-        "subtitle": "Domains, die Sie aktiv mit Filtern, Passwortzugriff oder Admin-Rechten nutzen",
-        "emptyMessage": "Sie haben noch nicht mit Domains interagiert.",
-        "emptyHelp": "Erstellen Sie Filter oder entsperren Sie passwortgeschützte Domains, um zu beginnen.",
-        "manageButton": "Domain verwalten",
-        "viewButton": "Domain anzeigen",
-        "filterCount": "{count} Filter | {count} Filter",
-        "adminAccess": "Admin-Zugriff",
-        "userAccess": "Benutzer-Zugriff",
-        "unlocked": "Entsperrt am {date}"
+      "saveButton": {
+        "saving": "Wird gespeichert...",
+        "update": "Konto aktualisieren",
+        "save": "Kontoinfo speichern"
       },
-      "ownedDomains": {
-        "title": "Meine Domains ({count})",
-        "subtitle": "Domains, die Sie besitzen und verwalten",
-        "loading": "Wird geladen...",
-        "emptyMessage": "Sie besitzen noch keine Domains.",
-        "emptyHelp": "Fordern Sie eine Domain an, um zu beginnen!",
-        "managePasswords": "Passwörter verwalten",
-        "hidePasswords": "Passwörter ausblenden",
-        "manageAdmins": "Admins verwalten",
-        "hideAdmins": "Admins ausblenden",
-        "viewDomain": "Domain anzeigen"
-      },
-      "passwords": {
-        "sectionTitle": "Domain-Passwörter",
-        "admin": {
-          "title": "Admin-Passwort",
-          "placeholder": "Admin-Passwort eingeben (mind. 4 Zeichen)",
-          "showButton": "Passwort anzeigen",
-          "hideButton": "Passwort ausblenden",
-          "setButton": "Admin-Passwort festlegen",
-          "setting": "Wird festgelegt...",
-          "setSuccess": "Admin-Passwort erfolgreich festgelegt",
-          "setFailed": "Admin-Passwort konnte nicht festgelegt werden"
-        },
-        "user": {
-          "title": "Benutzer-Passwort",
-          "placeholder": "Benutzer-Passwort eingeben (mind. 4 Zeichen)",
-          "showButton": "Passwort anzeigen",
-          "hideButton": "Passwort ausblenden",
-          "setButton": "Benutzer-Passwort festlegen",
-          "setting": "Wird festgelegt...",
-          "setSuccess": "Benutzer-Passwort erfolgreich festgelegt",
-          "setFailed": "Benutzer-Passwort konnte nicht festgelegt werden"
-        },
-        "minLengthError": "Passwort muss mindestens 4 Zeichen lang sein"
-      },
-      "admins": {
-        "sectionTitle": "Domain-Admins",
-        "loading": "Admins werden geladen...",
-        "loadFailed": "Admins konnten nicht geladen werden",
-        "emptyMessage": "Noch keine Admins",
-        "addPlaceholder": "Benutzername zum Hinzufügen als Admin",
-        "addButton": "Admin hinzufügen",
-        "removeButton": "Entfernen",
-        "addSuccess": "{username} erfolgreich als Admin hinzugefügt",
-        "addFailed": "Admin konnte nicht hinzugefügt werden",
-        "removeConfirm": "{username} von Admins entfernen?",
-        "removeSuccess": "{username} erfolgreich von Admins entfernt",
-        "removeFailed": "Admin konnte nicht entfernt werden"
+      "messages": {
+        "noChanges": "Keine Änderungen zum Speichern",
+        "emailRequired": "E-Mail-Adresse ist erforderlich beim Festlegen eines Passworts (für Passwort-Reset benötigt)",
+        "updateSuccess": "Konto erfolgreich aktualisiert",
+        "updateFailed": "Konto konnte nicht aktualisiert werden"
       }
+    },
+    "activeDomains": {
+      "title": "Aktive Domains ({count})",
+      "subtitle": "Domains, die Sie aktiv mit Filtern, Passwortzugriff oder Admin-Rechten nutzen",
+      "emptyMessage": "Sie haben noch nicht mit Domains interagiert.",
+      "emptyHelp": "Erstellen Sie Filter oder entsperren Sie passwortgeschützte Domains, um zu beginnen.",
+      "manageButton": "Domain verwalten",
+      "viewButton": "Domain anzeigen",
+      "filterCount": "{count} Filter | {count} Filter",
+      "adminAccess": "Admin-Zugriff",
+      "userAccess": "Benutzer-Zugriff",
+      "unlocked": "Entsperrt am {date}"
+    },
+    "ownedDomains": {
+      "title": "Meine Domains ({count})",
+      "subtitle": "Domains, die Sie besitzen und verwalten",
+      "loading": "Wird geladen...",
+      "emptyMessage": "Sie besitzen noch keine Domains.",
+      "emptyHelp": "Fordern Sie eine Domain an, um zu beginnen!",
+      "managePasswords": "Passwörter verwalten",
+      "hidePasswords": "Passwörter ausblenden",
+      "manageAdmins": "Admins verwalten",
+      "hideAdmins": "Admins ausblenden",
+      "viewDomain": "Domain anzeigen"
+    },
+    "passwords": {
+      "sectionTitle": "Domain-Passwörter",
+      "admin": {
+        "title": "Admin-Passwort",
+        "placeholder": "Admin-Passwort eingeben (mind. 4 Zeichen)",
+        "showButton": "Passwort anzeigen",
+        "hideButton": "Passwort ausblenden",
+        "setButton": "Admin-Passwort festlegen",
+        "setting": "Wird festgelegt...",
+        "setSuccess": "Admin-Passwort erfolgreich festgelegt",
+        "setFailed": "Admin-Passwort konnte nicht festgelegt werden"
+      },
+      "user": {
+        "title": "Benutzer-Passwort",
+        "placeholder": "Benutzer-Passwort eingeben (mind. 4 Zeichen)",
+        "showButton": "Passwort anzeigen",
+        "hideButton": "Passwort ausblenden",
+        "setButton": "Benutzer-Passwort festlegen",
+        "setting": "Wird festgelegt...",
+        "setSuccess": "Benutzer-Passwort erfolgreich festgelegt",
+        "setFailed": "Benutzer-Passwort konnte nicht festgelegt werden"
+      },
+      "minLengthError": "Passwort muss mindestens 4 Zeichen lang sein"
+    },
+    "admins": {
+      "sectionTitle": "Domain-Admins",
+      "loading": "Admins werden geladen...",
+      "loadFailed": "Admins konnten nicht geladen werden",
+      "emptyMessage": "Noch keine Admins",
+      "addPlaceholder": "Benutzername zum Hinzufügen als Admin",
+      "addButton": "Admin hinzufügen",
+      "removeButton": "Entfernen",
+      "addSuccess": "{username} erfolgreich als Admin hinzugefügt",
+      "addFailed": "Admin konnte nicht hinzugefügt werden",
+      "removeConfirm": "{username} von Admins entfernen?",
+      "removeSuccess": "{username} erfolgreich von Admins entfernt",
+      "removeFailed": "Admin konnte nicht entfernt werden"
     }
   }
 }

@@ -5,6 +5,9 @@
       :title="t('profile.title')"
       :subtitle="t('profile.subtitle')"
       page-context="profile"
+      :show-back-button="true"
+      :back-button-text="t('navigation.backToHome')"
+      @navigate-back="$router.push('/home')"
     />
 
     <!-- Not Logged In -->

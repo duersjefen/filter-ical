@@ -901,8 +901,11 @@ export default {
     const getRuleTypeLabel = (ruleType) => {
       const labels = {
         title_contains: t('domainAdmin.titleContains'),
-        description_contains: t('domainAdmin.descriptionContains'), 
-        category_contains: t('domainAdmin.categoryContains')
+        title_not_contains: 'Title Not Contains',
+        description_contains: t('domainAdmin.descriptionContains'),
+        description_not_contains: 'Description Not Contains',
+        category_contains: t('domainAdmin.categoryContains'),
+        category_not_contains: 'Category Not Contains'
       }
       return labels[ruleType] || ruleType
     }
@@ -910,28 +913,35 @@ export default {
     const getRuleTypeDescription = (ruleType) => {
       const descriptions = {
         title_contains: t('domainAdmin.titleContainsDesc'),
+        title_not_contains: 'title does not contain',
         description_contains: t('domainAdmin.descriptionContainsDesc'),
-        category_contains: t('domainAdmin.categoryContainsDesc')
+        description_not_contains: 'description does not contain',
+        category_contains: t('domainAdmin.categoryContainsDesc'),
+        category_not_contains: 'category does not contain'
       }
       return descriptions[ruleType] || t('domainAdmin.matches')
     }
     
     const getRuleTypeIcon = (ruleType) => {
+      // Extract field from rule type for consistent icons
+      const field = extractField(ruleType)
       const icons = {
-        title_contains: '📄',
-        description_contains: '📝',
-        category_contains: '🏷️'
+        title: '📄',
+        description: '📝',
+        category: '🏷️'
       }
-      return icons[ruleType] || '⚡'
+      return icons[field] || '⚡'
     }
     
     const getRuleTypeIconClass = (ruleType) => {
+      // Extract field from rule type for consistent styling
+      const field = extractField(ruleType)
       const classes = {
-        title_contains: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-        description_contains: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-        category_contains: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+        title: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+        description: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+        category: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
       }
-      return classes[ruleType] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+      return classes[field] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
     }
     
     const getRulePlaceholder = (ruleType) => {
