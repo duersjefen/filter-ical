@@ -351,12 +351,7 @@
         >
           <div class="flex items-start justify-between">
             <div class="flex items-start gap-4 flex-1">
-              
-              <!-- Rule Type Icon -->
-              <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" :class="getRuleTypeIconClass(rule.rule_type)">
-                <span class="text-xl">{{ getRuleTypeIcon(rule.rule_type) }}</span>
-              </div>
-              
+
               <!-- Rule Info -->
               <div class="flex-1 min-w-0">
                 <!-- Visual Rule Display with Pills -->

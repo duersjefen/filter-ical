@@ -149,36 +149,37 @@ def apply_assignment_rules(events: List[Dict[str, Any]],
     Rule Matching Process:
     1. Group events by title to identify recurring events
     2. For each unique title, use first event as representative
-    3. Test assignment rules in order until one matches
-    4. First matching rule wins - subsequent rules ignored
+    3. Test ALL assignment rules and assign to every matching group
+    4. Events can belong to multiple groups if they match multiple rules
 
-    Precedence:
-    -----------
-    Rules are evaluated in the order they appear in assignment_rules list.
-    This allows admins to create priority-based grouping:
-    - More specific rules should come first (e.g., "title_contains: Exam")
-    - More general rules should come last (e.g., "title_contains: Class")
+    Multi-Group Assignment:
+    ----------------------
+    Events are evaluated against ALL rules and assigned to ALL matching groups.
+    This allows flexible categorization:
+    - An event can be in multiple groups (e.g., both "Sport" and "Youth")
+    - Each rule independently determines if the event matches
+    - Same event can appear in different groups based on different criteria
 
     Why This Approach:
     ------------------
-    - First-match prevents ambiguous multi-group assignments
-    - Rule ordering gives admins explicit control over precedence
+    - Flexible multi-category assignment
+    - Events can be organized by multiple dimensions
     - Using representative event is efficient (no need to check all instances)
     - Supports multiple rule types (title_contains, description_contains, category_contains)
 
     Example:
     --------
     >>> events = [
-    ...     {"title": "Math Exam", "description": "Final exam"},
+    ...     {"title": "Youth Soccer Match", "description": "Sports event", "categories": ["Sport"]},
     ...     {"title": "Math Class", "description": "Regular class"}
     ... ]
     >>> rules = [
-    ...     {"rule_type": "title_contains", "rule_value": "exam", "target_group_id": 1},
-    ...     {"rule_type": "title_contains", "rule_value": "math", "target_group_id": 2}
+    ...     {"rule_type": "title_contains", "rule_value": "Youth", "target_group_id": 1},
+    ...     {"rule_type": "category_contains", "rule_value": "Sport", "target_group_id": 2}
     ... ]
     >>> result = apply_assignment_rules(events, rules)
-    >>> # Result: {1: ["Math Exam"], 2: ["Math Class"]}
-    >>> # "Math Exam" matches first rule (1), so second rule (2) not applied
+    >>> # Result: {1: ["Youth Soccer Match"], 2: ["Youth Soccer Match"]}
+    >>> # "Youth Soccer Match" matches BOTH rules and is assigned to BOTH groups
 
     Args:
         events: List of events to process
@@ -203,15 +204,17 @@ def apply_assignment_rules(events: List[Dict[str, Any]],
     for title, title_events in events_by_title.items():
         # Use first event as representative for rule matching
         representative_event = title_events[0]
-        
+
+        # Check against ALL rules - assign to every matching group
         for rule in assignment_rules:
             if _event_matches_rule(representative_event, rule):
                 group_id = rule['target_group_id']
                 if group_id not in group_assignments:
                     group_assignments[group_id] = []
-                group_assignments[group_id].append(title)
-                break  # First matching rule wins
-    
+                # Only add if not already in this group's list
+                if title not in group_assignments[group_id]:
+                    group_assignments[group_id].append(title)
+
     return group_assignments
 
 

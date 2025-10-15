@@ -265,8 +265,8 @@ class TestAssignmentRules:
         assert 1 in result
         assert "WEEKLY MEETING" in result[1]
     
-    def test_apply_assignment_rules_first_match_wins(self):
-        """Test that first matching rule wins."""
+    def test_apply_assignment_rules_multi_group(self):
+        """Test that events are assigned to ALL matching groups."""
         events = [
             {"id": 1, "title": "Team Meeting", "description": "project discussion"}
         ]
@@ -274,13 +274,14 @@ class TestAssignmentRules:
             {"rule_type": "title_contains", "rule_value": "meeting", "target_group_id": 1},
             {"rule_type": "description_contains", "rule_value": "project", "target_group_id": 2}
         ]
-        
+
         result = apply_assignment_rules(events, rules)
-        
-        # Should only match first rule (group 1)
+
+        # Should match BOTH rules (groups 1 and 2)
         assert 1 in result
-        assert 2 not in result
+        assert 2 in result
         assert "Team Meeting" in result[1]
+        assert "Team Meeting" in result[2]
     
     def test_apply_assignment_rules_no_matches(self):
         """Test assignment rules with no matches."""
@@ -810,7 +811,7 @@ class TestAssignmentRulesEdgeCases:
     """Edge case tests for assignment rule application logic."""
 
     def test_apply_assignment_rules_overlapping_multi_rule_match(self):
-        """Edge case: Event matches multiple rules, first rule wins."""
+        """Edge case: Event matches multiple rules, assigned to ALL matching groups."""
         events = [
             {
                 "title": "Math Exam Review",
@@ -826,11 +827,13 @@ class TestAssignmentRulesEdgeCases:
 
         result = apply_assignment_rules(events, rules)
 
-        # Should only match first rule (group 1)
+        # Should match ALL three rules (groups 1, 2, and 3)
         assert 1 in result
-        assert 2 not in result
-        assert 3 not in result
+        assert 2 in result
+        assert 3 in result
         assert "Math Exam Review" in result[1]
+        assert "Math Exam Review" in result[2]
+        assert "Math Exam Review" in result[3]
 
     def test_apply_assignment_rules_partial_title_match(self):
         """Edge case: Rule matches substring in title."""
@@ -1488,8 +1491,8 @@ class TestApplyAssignmentRulesWithNOT:
         assert len(result[2]) == 1
         assert result[2][0] == "Meeting A"
 
-    def test_negative_rule_precedence(self):
-        """Test that first matching negative rule wins."""
+    def test_negative_rule_multi_group_assignment(self):
+        """Test that negative rules work with multi-group assignment."""
         events = [
             {"title": "Regular Event", "description": ""},
             {"title": "Test Event", "description": ""}
@@ -1509,12 +1512,13 @@ class TestApplyAssignmentRulesWithNOT:
 
         result = apply_assignment_rules(events, rules)
 
-        # "Regular Event" matches first rule (not_contains "test")
-        # "Test Event" matches second rule (first rule fails)
+        # "Regular Event" matches BOTH rules (not_contains "test" AND contains "event")
+        # "Test Event" matches only rule 2 (contains "event")
         # apply_assignment_rules returns Dict[int, List[str]] (event titles)
         assert 1 in result
         assert len(result[1]) == 1
         assert result[1][0] == "Regular Event"
         assert 2 in result
-        assert len(result[2]) == 1
-        assert result[2][0] == "Test Event"
+        assert len(result[2]) == 2  # Both events match
+        assert "Regular Event" in result[2]
+        assert "Test Event" in result[2]
