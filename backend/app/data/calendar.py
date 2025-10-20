@@ -373,10 +373,10 @@ def transform_events_for_export(events: List[Dict[str, Any]], filter_name: str) 
         f"PRODID:-//Filter iCal//{filter_name}//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
-        # RFC 7986: Suggested refresh interval (1 hour for dynamic calendars)
-        "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+        # RFC 7986: Suggested refresh interval (5 minutes for dynamic calendars)
+        "REFRESH-INTERVAL;VALUE=DURATION:PT5M",
         # Legacy property for Apple Calendar and Outlook compatibility
-        "X-PUBLISHED-TTL:PT1H",
+        "X-PUBLISHED-TTL:PT5M",
         f"X-WR-CALNAME:{filter_name}",
         "X-WR-CALDESC:Filtered calendar from Filter iCal"
     ]
