@@ -400,9 +400,9 @@ export default {
         const formData = new FormData()
         formData.append('config_file', file)
 
-        const result = await post(`/api/domains/${props.domain}/import-config`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        // IMPORTANT: Do NOT set Content-Type for FormData!
+        // The browser must set it automatically with the boundary parameter
+        const result = await post(`/api/domains/${props.domain}/import-config`, formData)
 
         if (result.success) {
           showNotification(t('domainAdmin.configurationImportedSuccessfully'), 'success')

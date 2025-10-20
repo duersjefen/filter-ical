@@ -158,9 +158,14 @@ export function useHTTP() {
         method,
         url: `${API_BASE_URL}${endpoint}`,
         headers: {
-          'Content-Type': 'application/json',
           ...headers
         }
+      }
+
+      // Only set Content-Type for JSON if not FormData
+      // FormData must set Content-Type automatically with boundary
+      if (!(data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json'
       }
 
       if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {

@@ -57,7 +57,8 @@ vi.mock('@/composables/useSelection', () => ({
     subscribeAndSelectAllGroups: vi.fn(),
     selectAllGroups: vi.fn(),
     unsubscribeFromAllGroups: vi.fn(),
-    getGroupBreakdownSummary: vi.fn(() => '')
+    getGroupBreakdownSummary: vi.fn(() => ''),
+    loadFilterSelection: vi.fn()
   }))
 }))
 

@@ -604,4 +604,202 @@ describe('useSelection', () => {
       expect(summary.total).toBe(1)
     })
   })
+
+  describe('Load Filter Selection (Three-List Model)', () => {
+    beforeEach(() => {
+      appStore.groups = {
+        '1': {
+          id: 1,
+          name: 'Work',
+          recurring_events: [
+            { title: 'Daily Standup', event_count: 5 },
+            { title: 'Team Meeting', event_count: 3 }
+          ]
+        },
+        '2': {
+          id: 2,
+          name: 'Personal',
+          recurring_events: [
+            { title: 'Workout', event_count: 4 },
+            { title: 'Lunch', event_count: 7 }
+          ]
+        }
+      }
+    })
+
+    it('loads filter with groups only', () => {
+      const filterConfig = {
+        groups: [1, 2],
+        recurring_events: [],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isGroupSubscribed('1')).toBe(true)
+      expect(selection.isGroupSubscribed('2')).toBe(true)
+      expect(selection.isRecurringEventEffectivelySelected('Daily Standup')).toBe(true)
+      expect(selection.isRecurringEventEffectivelySelected('Workout')).toBe(true)
+    })
+
+    it('loads filter with individual events only', () => {
+      const filterConfig = {
+        groups: [],
+        recurring_events: ['Daily Standup', 'Lunch'],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.subscribedGroups.value.size).toBe(0)
+      expect(selection.isRecurringEventSelected('Daily Standup')).toBe(true)
+      expect(selection.isRecurringEventSelected('Lunch')).toBe(true)
+    })
+
+    it('loads filter with both groups and individual events', () => {
+      const filterConfig = {
+        groups: [1],
+        recurring_events: ['Lunch'],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isGroupSubscribed('1')).toBe(true)
+      expect(selection.isRecurringEventSelected('Lunch')).toBe(true)
+      expect(selection.isRecurringEventEffectivelySelected('Daily Standup')).toBe(true)
+    })
+
+    it('applies three-list model: removes unselected events from group', () => {
+      const filterConfig = {
+        groups: [1],
+        recurring_events: [],
+        unselected_events: ['Team Meeting']
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isGroupSubscribed('1')).toBe(true)
+      expect(selection.isRecurringEventSelected('Daily Standup')).toBe(true)
+      expect(selection.isRecurringEventSelected('Team Meeting')).toBe(false)
+    })
+
+    it('applies three-list model: complex scenario', () => {
+      // Subscribe to group 1, add Lunch individually, but exclude Team Meeting
+      const filterConfig = {
+        groups: [1],
+        recurring_events: ['Lunch'],
+        unselected_events: ['Team Meeting']
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isGroupSubscribed('1')).toBe(true)
+      expect(selection.isRecurringEventSelected('Daily Standup')).toBe(true)
+      expect(selection.isRecurringEventSelected('Team Meeting')).toBe(false)
+      expect(selection.isRecurringEventSelected('Lunch')).toBe(true)
+    })
+
+    it('clears existing selection before loading new filter', () => {
+      // Set up existing selection
+      selection.subscribeToGroup('2')
+      selection.toggleRecurringEvent('Workout')
+
+      // Load new filter
+      const filterConfig = {
+        groups: [1],
+        recurring_events: [],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isGroupSubscribed('2')).toBe(false)
+      expect(selection.isGroupSubscribed('1')).toBe(true)
+      expect(selection.isRecurringEventSelected('Workout')).toBe(false)
+    })
+
+    it('handles empty filter configuration', () => {
+      const filterConfig = {
+        groups: [],
+        recurring_events: [],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.subscribedGroups.value.size).toBe(0)
+      expect(selection.selectedRecurringEvents.value.length).toBe(0)
+    })
+
+    it('handles missing properties in filter config', () => {
+      const filterConfig = {}
+
+      expect(() => selection.loadFilterSelection(filterConfig)).not.toThrow()
+      expect(selection.subscribedGroups.value.size).toBe(0)
+      expect(selection.selectedRecurringEvents.value.length).toBe(0)
+    })
+
+    it('handles string group IDs correctly', () => {
+      const filterConfig = {
+        groups: ['1', '2'],
+        recurring_events: [],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isGroupSubscribed('1')).toBe(true)
+      expect(selection.isGroupSubscribed('2')).toBe(true)
+    })
+
+    it('handles numeric group IDs correctly', () => {
+      const filterConfig = {
+        groups: [1, 2],
+        recurring_events: [],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isGroupSubscribed('1')).toBe(true)
+      expect(selection.isGroupSubscribed('2')).toBe(true)
+    })
+
+    it('ignores events with zero event_count when loading from groups', () => {
+      appStore.groups = {
+        '1': {
+          id: 1,
+          name: 'Work',
+          recurring_events: [
+            { title: 'Active Event', event_count: 5 },
+            { title: 'Inactive Event', event_count: 0 }
+          ]
+        }
+      }
+
+      const filterConfig = {
+        groups: [1],
+        recurring_events: [],
+        unselected_events: []
+      }
+
+      selection.loadFilterSelection(filterConfig)
+
+      expect(selection.isRecurringEventSelected('Active Event')).toBe(true)
+      expect(selection.isRecurringEventSelected('Inactive Event')).toBe(false)
+    })
+
+    it('handles non-existent group IDs gracefully', () => {
+      const filterConfig = {
+        groups: [999],
+        recurring_events: ['Daily Standup'],
+        unselected_events: []
+      }
+
+      expect(() => selection.loadFilterSelection(filterConfig)).not.toThrow()
+      expect(selection.isGroupSubscribed('999')).toBe(true)
+      expect(selection.isRecurringEventSelected('Daily Standup')).toBe(true)
+    })
+  })
 })

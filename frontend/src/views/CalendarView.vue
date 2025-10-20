@@ -288,9 +288,9 @@ const {
 } = useCalendar(events, recurringEvents, props.id)
 
 // Get unified event selection system (SINGLE SOURCE OF TRUTH)
-const { 
-  subscribeToGroup, 
-  unsubscribeFromGroup, 
+const {
+  subscribeToGroup,
+  unsubscribeFromGroup,
   subscribedGroups,
   selectedRecurringEvents: unifiedSelectedRecurringEvents,
   toggleRecurringEvent: unifiedToggleRecurringEvent,
@@ -299,7 +299,8 @@ const {
   subscribeAndSelectAllGroups,
   selectAllGroups,
   unsubscribeFromAllGroups,
-  getGroupBreakdownSummary
+  getGroupBreakdownSummary,
+  loadFilterSelection
 } = useSelection()
 
 // View mode localStorage persistence functions
