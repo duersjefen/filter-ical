@@ -507,13 +507,11 @@ async def get_user_domains(
                 })
 
     # Get filter domains (domains where user has filters)
+    # Include ALL domains where user has filters, regardless of other access levels
     filter_domains = []
     seen_domain_keys = set()
     for filter_obj in user.filters:
         if filter_obj.domain_key:
-            # Skip if already in other lists
-            if filter_obj.domain_key in [d["domain_key"] for d in owned_domains + admin_domains + password_access_domains]:
-                continue
             if filter_obj.domain_key not in seen_domain_keys:
                 seen_domain_keys.add(filter_obj.domain_key)
                 # Get domain info

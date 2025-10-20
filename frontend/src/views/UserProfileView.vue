@@ -222,7 +222,7 @@
             </div>
             <div>
               <h2 class="text-lg font-bold text-white">
-                {{ t('profile.ownedDomains.title', { count: ownedDomains.length }) }}
+                {{ t('profile.ownedDomains.title', { count: ownedDomainsWithFilters.length }) }}
               </h2>
               <p class="text-xs text-green-100">{{ t('profile.ownedDomains.subtitle') }}</p>
             </div>
@@ -234,14 +234,14 @@
             {{ t('profile.ownedDomains.loading') }}
           </div>
 
-          <div v-else-if="ownedDomains.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div v-else-if="ownedDomainsWithFilters.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
             <p>{{ t('profile.ownedDomains.emptyMessage') }}</p>
             <p class="text-sm mt-2">{{ t('profile.ownedDomains.emptyHelp') }}</p>
           </div>
 
           <div v-else class="space-y-3">
             <div
-              v-for="domain in ownedDomains"
+              v-for="domain in ownedDomainsWithFilters"
               :key="domain.domain_key"
               class="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-500 transition-all shadow-sm hover:shadow-md overflow-hidden"
             >
@@ -250,9 +250,17 @@
                   <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">
                     {{ domain.name || domain.domain_key }}
                   </h3>
-                  <p class="text-xs text-gray-600 dark:text-gray-400">
-                    <span class="font-mono">{{ domain.domain_key }}</span> • {{ domain.status }}
-                  </p>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-xs text-gray-600 dark:text-gray-400">
+                      <span class="font-mono">{{ domain.domain_key }}</span> • {{ domain.status }}
+                    </p>
+                    <span v-if="domain.filter_count" class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 font-semibold">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                      </svg>
+                      {{ t('profile.activeDomains.filterCount', domain.filter_count) }}
+                    </span>
+                  </div>
                 </div>
                 <div class="flex items-center gap-2">
                   <button
@@ -545,33 +553,60 @@ const canSaveAccount = computed(() => {
   return true
 })
 
-// Active domains merged
+// Active domains merged - now includes ALL domains where user has filters
 const activeDomains = computed(() => {
   const domainMap = new Map()
 
+  // Start with filter domains (now includes ALL domains with filters from backend)
   filterDomains.value.forEach(domain => {
     domainMap.set(domain.domain_key, { ...domain, filter_count: domain.filter_count })
   })
 
+  // Merge password-access domains, preserving filter_count
   passwordAccessDomains.value.forEach(domain => {
     const existing = domainMap.get(domain.domain_key)
     if (existing) {
-      domainMap.set(domain.domain_key, { ...existing, access_level: domain.access_level, unlocked_at: domain.unlocked_at })
+      domainMap.set(domain.domain_key, {
+        ...existing,
+        access_level: domain.access_level,
+        unlocked_at: domain.unlocked_at,
+        filter_count: existing.filter_count // Preserve filter_count from filterDomains
+      })
     } else {
       domainMap.set(domain.domain_key, domain)
     }
   })
 
+  // Merge admin domains, preserving filter_count
   adminDomains.value.forEach(domain => {
     const existing = domainMap.get(domain.domain_key)
     if (existing) {
-      domainMap.set(domain.domain_key, { ...existing, ...domain, filter_count: existing.filter_count || domain.filter_count })
+      domainMap.set(domain.domain_key, {
+        ...existing,
+        ...domain,
+        filter_count: existing.filter_count || domain.filter_count
+      })
     } else {
       domainMap.set(domain.domain_key, domain)
     }
   })
 
   return Array.from(domainMap.values())
+})
+
+// Owned domains enriched with filter counts
+const ownedDomainsWithFilters = computed(() => {
+  // Create a map of domain_key -> filter_count from filterDomains
+  const filterCountMap = new Map()
+  filterDomains.value.forEach(domain => {
+    filterCountMap.set(domain.domain_key, domain.filter_count)
+  })
+
+  // Enrich owned domains with filter counts
+  return ownedDomains.value.map(domain => ({
+    ...domain,
+    filter_count: filterCountMap.get(domain.domain_key) || 0
+  }))
 })
 
 // Actions
