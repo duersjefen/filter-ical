@@ -347,11 +347,13 @@ class TestSyncCalendarEvents:
         mock_db = Mock(spec=Session)
         mock_calendar = Mock(id=1, source_url="https://example.com/cal.ics")
 
+        # Use a date within the last week (events older than 1 week are filtered out)
+        today = datetime.now(timezone.utc)
         mock_event_data = [
             {
                 "title": "Event 1",
-                "start_time": datetime(2025, 10, 10, 10, 0, tzinfo=timezone.utc),
-                "end_time": datetime(2025, 10, 10, 11, 0, tzinfo=timezone.utc),
+                "start_time": today,
+                "end_time": today + timedelta(hours=1),
                 "description": "Test event",
                 "location": "Test location",
                 "uid": "event-1"
