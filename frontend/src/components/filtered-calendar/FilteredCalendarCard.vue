@@ -60,12 +60,12 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span v-if="filterSummary.hasFilter"
-                    :class="filterSummary.badgeClass + ' text-sm font-semibold px-3 py-1.5 rounded-lg border shadow-sm'">
+                    class="text-sm text-gray-600 dark:text-gray-400">
                 {{ filterSummary.text }}
               </span>
               <span v-else
-                    class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded-lg font-semibold text-sm border border-gray-200 dark:border-gray-600 shadow-sm">
-                📋 All events
+                    class="text-sm text-gray-600 dark:text-gray-400">
+                All events
               </span>
             </div>
 
@@ -156,14 +156,14 @@ const nameInput = ref(null)
 const filterSummary = computed(() => {
   const filterConfig = props.calendar.filter_config
   if (!filterConfig) {
-    return { hasFilter: false, text: '', badgeClass: '' }
+    return { hasFilter: false, text: '' }
   }
 
   const groupCount = filterConfig.groups?.length || 0
   const individualEventCount = filterConfig.recurring_events?.length || 0
 
   if (groupCount === 0 && individualEventCount === 0) {
-    return { hasFilter: false, text: '', badgeClass: '' }
+    return { hasFilter: false, text: '' }
   }
 
   let text = ''
@@ -178,17 +178,9 @@ const filterSummary = computed(() => {
     text = `${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'} selected`
   }
 
-  let badgeClass
-  if (groupCount > 0) {
-    badgeClass = 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded font-medium'
-  } else {
-    badgeClass = 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-medium'
-  }
-
   return {
     hasFilter: true,
-    text: text,
-    badgeClass
+    text: text
   }
 })
 
