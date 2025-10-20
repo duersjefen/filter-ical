@@ -169,13 +169,13 @@ const filterSummary = computed(() => {
   let text = ''
   if (groupCount > 0 && individualEventCount > 0) {
     // Show both groups and individual events with bullet separator
-    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} subscribed • ${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'} selected`
+    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} • ${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'}`
   } else if (groupCount > 0) {
     // Only groups - just show group count
-    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} subscribed`
+    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')}`
   } else if (individualEventCount > 0) {
     // Only individual events - show event count
-    text = `${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'} selected`
+    text = `${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'}`
   }
 
   return {
