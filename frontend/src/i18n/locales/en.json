@@ -591,6 +591,7 @@
   },
   "footer": {
     "donateButton": "Support Server & Development Costs",
+    "contactButton": "Contact Us",
     "paypalNotice": "Help cover hosting & development costs.",
     "voluntaryNotice": "All donations are voluntary and appreciated.",
     "copyright": "© 2025 PAISS",
@@ -908,6 +909,48 @@
       "removeOwnerError": "Failed to remove owner: {detail}",
       "removeOwnerTitle": "Remove Owner",
       "removeOwnerConfirm": "Remove owner from domain \"{domainKey}\"?"
+    }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Send us your feedback, bug reports, or feature suggestions",
+    "form": {
+      "nameLabel": "Your Name",
+      "namePlaceholder": "John Doe",
+      "emailLabel": "Your Email",
+      "emailPlaceholder": "john@example.com",
+      "emailHelper": "We'll use this to reply to you",
+      "subjectLabel": "Subject",
+      "subjectPlaceholder": "Bug Report: Calendar not loading",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Please describe your issue, suggestion, or question in detail..."
+    },
+    "buttons": {
+      "send": "Send Message",
+      "sending": "Sending...",
+      "back": "Back"
+    },
+    "success": {
+      "title": "Thank you for your message!",
+      "message": "We'll get back to you soon at"
+    },
+    "validation": {
+      "nameMinLength": "Name must be at least 2 characters",
+      "nameMaxLength": "Name must be less than 100 characters",
+      "emailInvalid": "Please enter a valid email address",
+      "emailMaxLength": "Email must be less than 200 characters",
+      "subjectMinLength": "Subject must be at least 5 characters",
+      "subjectMaxLength": "Subject must be less than 200 characters",
+      "messageMinLength": "Message must be at least 20 characters",
+      "messageMaxLength": "Message must be less than 2000 characters"
+    },
+    "errors": {
+      "tooManyRequests": "Too many requests. Please try again later.",
+      "failedToSend": "Failed to send message. Please try again or contact us directly at info@paiss.me"
+    },
+    "help": {
+      "title": "Need Help?",
+      "message": "We're here to help! Whether you found a bug, have a feature suggestion, or just want to say hi, we'd love to hear from you. We typically respond within 24-48 hours."
     }
   },
   "profile": {

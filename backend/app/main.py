@@ -222,7 +222,7 @@ def create_application() -> FastAPI:
         calendars, domains, ical_export, test, filters, domain_requests, admin,
         domain_auth, app_settings, users, auth, ical,
         domain_events, domain_groups, domain_assignment_rules, domain_filters,
-        domain_config, domain_backups, domain_admins
+        domain_config, domain_backups, domain_admins, contact
     )
     app.include_router(calendars.router, prefix="/api/calendars", tags=["calendars"])
     app.include_router(domains.router, prefix="/api/domains", tags=["domains"])
@@ -243,6 +243,7 @@ def create_application() -> FastAPI:
     app.include_router(app_settings.router, tags=["app-settings"])
     app.include_router(users.router, tags=["users"])
     app.include_router(auth.router, tags=["auth"])
+    app.include_router(contact.router, prefix="/api", tags=["contact"])
     
     # Health check endpoint
     @app.get("/health")

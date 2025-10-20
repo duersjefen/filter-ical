@@ -344,6 +344,78 @@ paths:
                     description: Error message if preview failed
                     example: null
 
+  # Contact Form
+  /api/contact:
+    post:
+      summary: Submit contact form
+      description: Send a contact message to the admin. Used for bug reports, feature suggestions, and general feedback.
+      tags:
+        - Contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, subject, message]
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: "John Doe"
+                  description: "Sender's name"
+                email:
+                  type: string
+                  format: email
+                  maxLength: 200
+                  example: "john@example.com"
+                  description: "Sender's email for reply"
+                subject:
+                  type: string
+                  minLength: 5
+                  maxLength: 200
+                  example: "Bug Report: Calendar not loading"
+                  description: "Subject line for the message"
+                message:
+                  type: string
+                  minLength: 20
+                  maxLength: 2000
+                  example: "I'm experiencing an issue where my calendar doesn't load when I..."
+                  description: "Detailed message content"
+      responses:
+        '200':
+          description: Contact form submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Thank you for your message! We'll get back to you soon."
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests (rate limited)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error (e.g., email sending failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   # Domain-specific endpoints (auto-created from domains.yaml)
 
   /api/domains:

@@ -506,3 +506,125 @@ filter-ical.de/admin
     except Exception as e:
         logger.error(f"Failed to send admin password reset email: {e}")
         return False, str(e)
+
+
+async def send_contact_form_email(name: str, email: str, subject: str, message: str) -> Tuple[bool, str]:
+    """
+    Send contact form submission to admin.
+
+    Args:
+        name: Sender's name
+        email: Sender's email
+        subject: Message subject
+        message: Message content
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    # Skip if email not configured
+    if not settings.admin_email or not settings.smtp_username:
+        logger.warning("Email not configured - skipping contact form notification")
+        return False, "Email not configured"
+
+    logger.info(f"📧 Sending contact form email from {email}")
+    try:
+        # Create HTML email body
+        html_body = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
+              <h1 style="margin: 0; font-size: 24px;">💬 New Contact Form Message</h1>
+            </div>
+
+            <div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+              <h2 style="color: #2d3748; margin-top: 0;">Message Details</h2>
+
+              <div style="margin-bottom: 15px;">
+                <strong style="color: #4a5568;">From:</strong><br/>
+                <span style="color: #2d3748;">{name}</span>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <strong style="color: #4a5568;">Email:</strong><br/>
+                <a href="mailto:{email}" style="color: #3b82f6;">{email}</a>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <strong style="color: #4a5568;">Subject:</strong><br/>
+                <span style="color: #2d3748; font-weight: 600;">{subject}</span>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <strong style="color: #4a5568;">Message:</strong><br/>
+                <p style="color: #2d3748; margin: 5px 0; padding: 15px; background: white; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">
+{message}
+                </p>
+              </div>
+            </div>
+
+            <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+              <p style="margin: 0; color: #1e3a8a; font-size: 13px;">
+                <strong>Reply to this email</strong> to respond directly to {name} at {email}
+              </p>
+            </div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #a0aec0; font-size: 12px;">
+              <p>This is an automated notification from Filter iCal Contact Form</p>
+            </div>
+          </body>
+        </html>
+        """
+
+        # Create plain text version
+        text_body = f"""
+New Contact Form Message - Filter iCal
+
+From: {name}
+Email: {email}
+Subject: {subject}
+
+Message:
+{message}
+
+---
+Reply to this email to respond directly to {name} at {email}
+
+This is an automated notification from Filter iCal Contact Form
+        """
+
+        # Send to admin with reply-to set to sender's email
+        message_obj = MIMEMultipart("alternative")
+        message_obj["Subject"] = f"💬 Contact Form: {subject}"
+        message_obj["From"] = settings.smtp_from_email
+        message_obj["To"] = settings.admin_email
+        message_obj["Reply-To"] = email  # Important: allows admin to reply directly
+
+        part1 = MIMEText(text_body, "plain")
+        part2 = MIMEText(html_body, "html")
+        message_obj.attach(part1)
+        message_obj.attach(part2)
+
+        # Send email with 5 second timeout
+        await asyncio.wait_for(
+            aiosmtplib.send(
+                message_obj,
+                hostname=settings.smtp_host,
+                port=settings.smtp_port,
+                username=settings.smtp_username,
+                password=settings.smtp_password,
+                start_tls=True,
+            ),
+            timeout=5.0
+        )
+
+        logger.info(f"Contact form email sent to {settings.admin_email}")
+        return True, ""
+
+    except asyncio.TimeoutError:
+        error_msg = "Email timeout - SMTP took longer than 5 seconds"
+        logger.error(error_msg)
+        return False, error_msg
+    except Exception as e:
+        error_msg = f"Failed to send contact form email: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg

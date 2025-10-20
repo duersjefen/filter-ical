@@ -40,6 +40,10 @@ const routes = [
     path: '/profile',
     component: () => import('./views/UserProfileView.vue')
   },
+  {
+    path: '/contact',
+    component: () => import('./views/ContactView.vue')
+  },
   // More specific routes MUST come before general ones
   {
     path: '/:domain/admin',

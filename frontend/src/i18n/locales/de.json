@@ -601,6 +601,7 @@
   },
   "footer": {
     "donateButton": "Server- und Entwicklungskosten unterstützen",
+    "contactButton": "Kontaktieren Sie uns",
     "paypalNotice": "Hilft Hosting- & Entwicklungskosten zu decken.",
     "voluntaryNotice": "Alle Spenden sind freiwillig und geschätzt.",
     "copyright": "© 2025 PAISS",
@@ -918,6 +919,48 @@
       "removeOwnerError": "Fehler beim Entfernen des Besitzers: {detail}",
       "removeOwnerTitle": "Besitzer entfernen",
       "removeOwnerConfirm": "Besitzer von Domain \"{domainKey}\" entfernen?"
+    }
+  },
+  "contact": {
+    "title": "Kontakt",
+    "subtitle": "Senden Sie uns Ihr Feedback, Fehlerberichte oder Funktionswünsche",
+    "form": {
+      "nameLabel": "Ihr Name",
+      "namePlaceholder": "Max Mustermann",
+      "emailLabel": "Ihre E-Mail",
+      "emailPlaceholder": "max@beispiel.de",
+      "emailHelper": "Wir nutzen diese, um Ihnen zu antworten",
+      "subjectLabel": "Betreff",
+      "subjectPlaceholder": "Fehlerbericht: Kalender lädt nicht",
+      "messageLabel": "Nachricht",
+      "messagePlaceholder": "Bitte beschreiben Sie Ihr Problem, Ihren Vorschlag oder Ihre Frage im Detail..."
+    },
+    "buttons": {
+      "send": "Nachricht senden",
+      "sending": "Wird gesendet...",
+      "back": "Zurück"
+    },
+    "success": {
+      "title": "Vielen Dank für Ihre Nachricht!",
+      "message": "Wir melden uns bald bei Ihnen unter"
+    },
+    "validation": {
+      "nameMinLength": "Name muss mindestens 2 Zeichen lang sein",
+      "nameMaxLength": "Name muss weniger als 100 Zeichen lang sein",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "emailMaxLength": "E-Mail muss weniger als 200 Zeichen lang sein",
+      "subjectMinLength": "Betreff muss mindestens 5 Zeichen lang sein",
+      "subjectMaxLength": "Betreff muss weniger als 200 Zeichen lang sein",
+      "messageMinLength": "Nachricht muss mindestens 20 Zeichen lang sein",
+      "messageMaxLength": "Nachricht muss weniger als 2000 Zeichen lang sein"
+    },
+    "errors": {
+      "tooManyRequests": "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+      "failedToSend": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut oder kontaktieren Sie uns direkt unter info@paiss.me"
+    },
+    "help": {
+      "title": "Benötigen Sie Hilfe?",
+      "message": "Wir sind für Sie da! Ob Sie einen Fehler gefunden haben, einen Funktionswunsch haben oder einfach nur Hallo sagen möchten - wir freuen uns von Ihnen zu hören. Wir antworten normalerweise innerhalb von 24-48 Stunden."
     }
   },
   "profile": {
