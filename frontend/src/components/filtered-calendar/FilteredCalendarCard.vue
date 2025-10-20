@@ -168,14 +168,14 @@ const filterSummary = computed(() => {
 
   let text = ''
   if (groupCount > 0 && individualEventCount > 0) {
-    // Show both groups and individual events (not in groups)
-    text = `📊 ${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} + ${individualEventCount} individual ${individualEventCount === 1 ? 'event' : 'events'}`
+    // Show both groups and individual events with bullet separator
+    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} subscribed • ${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'} selected`
   } else if (groupCount > 0) {
     // Only groups - just show group count
-    text = `📊 ${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')}`
+    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} subscribed`
   } else if (individualEventCount > 0) {
     // Only individual events - show event count
-    text = `📂 ${individualEventCount} ${t('common.recurringEvents')}`
+    text = `${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'} selected`
   }
 
   let badgeClass
