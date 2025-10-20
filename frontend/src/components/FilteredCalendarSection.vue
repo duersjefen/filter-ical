@@ -25,9 +25,9 @@
             <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
               🔗 <span class="bg-gradient-to-r from-gray-700 to-gray-600 dark:from-gray-300 dark:to-gray-200 bg-clip-text text-transparent">{{ $t('filteredCalendar.title') }}</span>
             </h3>
-            <div v-if="filteredCalendars.length > 0"
+            <div v-if="enrichedFilteredCalendars.length > 0"
                  class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm font-semibold rounded-full border border-blue-200 dark:border-blue-700">
-              {{ filteredCalendars.length }}
+              {{ enrichedFilteredCalendars.length }}
             </div>
           </div>
           <p class="text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -70,7 +70,7 @@
 
         <!-- Filtered Calendars List -->
         <FilteredCalendarList
-          :filtered-calendars="filteredCalendars"
+          :filtered-calendars="enrichedFilteredCalendars"
           :is-update-mode="isUpdateMode"
           :show-empty-state="selectedRecurringEvents.length === 0 && !isUpdateMode"
           :copy-success-id="copySuccess"
@@ -204,6 +204,40 @@ const shouldShowSection = computed(() => {
   if (hasEverHadRecurringEvents.value) return true
   if (props.selectedCalendar?.id) return true
   return false
+})
+
+// Enrich filtered calendars with actual event counts
+const enrichedFilteredCalendars = computed(() => {
+  return filteredCalendars.value.map(calendar => {
+    const filterConfig = calendar.filter_config
+    if (!filterConfig) {
+      return { ...calendar, totalEventCount: 0 }
+    }
+
+    let totalCount = 0
+
+    // Count events from subscribed groups
+    if (filterConfig.groups && Array.isArray(filterConfig.groups)) {
+      filterConfig.groups.forEach(groupId => {
+        const group = props.groups[String(groupId)]
+        if (group && group.recurring_events) {
+          totalCount += group.recurring_events.length
+        }
+      })
+    }
+
+    // Add individually selected events (that aren't already in groups)
+    if (filterConfig.recurring_events && Array.isArray(filterConfig.recurring_events)) {
+      totalCount += filterConfig.recurring_events.length
+    }
+
+    // Subtract unselected events
+    if (filterConfig.unselected_events && Array.isArray(filterConfig.unselected_events)) {
+      totalCount -= filterConfig.unselected_events.length
+    }
+
+    return { ...calendar, totalEventCount: Math.max(0, totalCount) }
+  })
 })
 
 // Methods

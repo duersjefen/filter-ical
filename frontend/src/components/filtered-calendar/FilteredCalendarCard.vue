@@ -160,22 +160,22 @@ const filterSummary = computed(() => {
   }
 
   const groupCount = filterConfig.groups?.length || 0
-  const individualEventCount = filterConfig.recurring_events?.length || 0
+  const totalEventCount = props.calendar.totalEventCount || 0
 
-  if (groupCount === 0 && individualEventCount === 0) {
+  if (groupCount === 0 && totalEventCount === 0) {
     return { hasFilter: false, text: '' }
   }
 
   let text = ''
-  if (groupCount > 0 && individualEventCount > 0) {
-    // Show both groups and individual events with bullet separator
-    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} • ${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'}`
+  if (groupCount > 0 && totalEventCount > 0) {
+    // Show both groups and total event count
+    text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')} • ${totalEventCount} ${totalEventCount === 1 ? 'event' : 'events'}`
   } else if (groupCount > 0) {
     // Only groups - just show group count
     text = `${groupCount} ${groupCount === 1 ? t('common.group') : t('common.groups')}`
-  } else if (individualEventCount > 0) {
-    // Only individual events - show event count
-    text = `${individualEventCount} ${individualEventCount === 1 ? 'event' : 'events'}`
+  } else if (totalEventCount > 0) {
+    // Only individual events - show total event count
+    text = `${totalEventCount} ${totalEventCount === 1 ? 'event' : 'events'}`
   }
 
   return {
