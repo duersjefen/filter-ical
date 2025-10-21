@@ -29,6 +29,9 @@ make reset-db              # Reset local database
 # Testing
 make test                  # Run unit tests
 make test-all              # Run complete test suite (unit + integration + E2E)
+make preview               # Build and preview production frontend locally (port 4173)
+                          # CRITICAL: Test production builds before deploying
+                          # Catches Vite optimization issues that don't appear in dev mode
 
 # Deployment (auto-pushes to GitHub before deploying)
 make deploy-staging        # Push → test → deploy to staging (auto health check)
