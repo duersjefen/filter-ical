@@ -93,6 +93,8 @@ dev-frontend: ## Run frontend natively (hot reload)
 		npm run dev
 
 preview: ## Build and preview production frontend
+	@echo "🛑 Stopping any existing preview processes..."
+	@-lsof -ti:4173 | xargs kill -9 2>/dev/null || true
 	@echo "📦 Building production bundle..."
 	@cd frontend && npm run build
 	@echo "✅ Build complete!"

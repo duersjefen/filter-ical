@@ -318,6 +318,8 @@ const { user, isLoggedIn, hasPassword, logout } = useAuth()
 const contextMessage = computed(() => {
   if (props.pageContext === 'calendar') {
     return t('username.loginToSaveFilters')
+  } else if (props.pageContext === 'contact') {
+    return t('auth.login')
   } else {
     return t('username.loginToSaveCalendars')
   }
