@@ -1,11 +1,19 @@
 <template>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <h1 class="text-3xl font-bold mb-6">Contact Test Page</h1>
-    <p class="text-lg mb-4">If you can see this, the route works!</p>
-    <p class="text-base text-gray-600">Now testing components step by step...</p>
+    <h1 class="text-3xl font-bold mb-6">Test 1: Adding AppHeader</h1>
+
+    <AppHeader
+      :title="$t('contact.title')"
+      page-context="contact"
+    />
+
+    <p class="text-lg mb-4 mt-6">If you see the header above, AppHeader works!</p>
   </div>
 </template>
 
 <script setup>
-// Minimal script for testing
+import { useI18n } from 'vue-i18n'
+import AppHeader from '../components/shared/AppHeader.vue'
+
+const { t } = useI18n()
 </script>
