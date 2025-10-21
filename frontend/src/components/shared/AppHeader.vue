@@ -160,8 +160,8 @@
     <!-- Mobile Layout (sm and below) - Compact single row -->
     <div class="sm:hidden">
 
-      <!-- Single Row: Back Button + Title + Toggles -->
-      <div class="flex items-center justify-between gap-2 mb-4">
+      <!-- Single Row: Back Button + Title (absolute center) + Toggles -->
+      <div class="relative flex items-center justify-between gap-2 mb-4">
         <!-- Left Side: Back Button -->
         <div v-if="showBackButton" class="flex-shrink-0">
           <button
@@ -175,13 +175,13 @@
           </button>
         </div>
 
-        <!-- Center: Title (flexible, can shrink) -->
-        <div class="flex-1 min-w-0 text-center">
-          <h1 class="text-base font-bold tracking-tight drop-shadow-lg truncate px-1">{{ title }}</h1>
+        <!-- Center: Title (absolutely centered) -->
+        <div class="absolute left-1/2 -translate-x-1/2 pointer-events-none max-w-[60%]">
+          <h1 class="text-lg font-bold tracking-tight drop-shadow-lg truncate whitespace-nowrap">{{ title }}</h1>
         </div>
 
         <!-- Right Side: Language & Dark Mode Toggles -->
-        <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="flex items-center gap-2 flex-shrink-0 ml-auto">
           <LanguageToggle />
 
           <button

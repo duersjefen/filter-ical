@@ -22,7 +22,7 @@
           <div class="inline-block animate-spin rounded-full h-8 w-8 border-3 border-blue-600 border-t-transparent"></div>
           <div class="flex-1">
             <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-              🌐 {{ $t('domain.loadingDomainCalendar') }}
+              {{ $t('domain.loadingDomainCalendar') }}
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">
               {{ $t('common.pleaseWait') }}
@@ -52,7 +52,7 @@
           </div>
           <div class="flex-1">
             <h3 class="text-lg sm:text-xl font-bold text-red-800 dark:text-red-200 mb-1">
-              🌐 Domain Access Error
+              Domain Access Error
             </h3>
             <p class="text-sm text-red-600 dark:text-red-300">
               Unable to load domain calendar
@@ -96,7 +96,7 @@
           </div>
           <div class="flex-1">
             <h3 class="text-lg sm:text-xl font-bold text-amber-800 dark:text-amber-200 mb-1">
-              🌐 {{ $t('domain.notFound') }}
+              {{ $t('domain.notFound') }}
             </h3>
             <p class="text-sm text-amber-600 dark:text-amber-300">
               Domain configuration not available
@@ -107,7 +107,6 @@
       
       <!-- Content area -->
       <div class="p-6 text-center">
-        <div class="text-6xl mb-6">🌐</div>
         <div class="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800 mb-6">
           <p class="text-amber-800 dark:text-amber-200 font-medium mb-2">{{ $t('messages.domainStatus') }}</p>
           <p class="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">{{ $t('domain.domainNotConfigured', { domain }) }}</p>
