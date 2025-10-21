@@ -600,10 +600,10 @@
     "welcomeTo": "Willkommen zu {name}! Weiterleitung..."
   },
   "footer": {
-    "donateButton": "Server- und Entwicklungskosten unterstützen",
+    "donateButton": "Entwicklung unterstützen",
     "contactButton": "Kontaktieren Sie uns",
-    "paypalNotice": "Hilft Hosting- & Entwicklungskosten zu decken.",
-    "voluntaryNotice": "Alle Spenden sind freiwillig und geschätzt.",
+    "paypalNotice": "Helfen Sie, diesen Service am Laufen zu halten",
+    "voluntaryNotice": "Ihre Unterstützung wird geschätzt",
     "copyright": "© 2025 PAISS",
     "madeWith": "Mit ❤️ für die Community gemacht"
   },

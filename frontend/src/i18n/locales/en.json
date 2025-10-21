@@ -590,10 +590,10 @@
     "groups": "🏷️ Groups"
   },
   "footer": {
-    "donateButton": "Support Server & Development Costs",
+    "donateButton": "Support Development",
     "contactButton": "Contact Us",
-    "paypalNotice": "Help cover hosting & development costs.",
-    "voluntaryNotice": "All donations are voluntary and appreciated.",
+    "paypalNotice": "Help keep this service running",
+    "voluntaryNotice": "Your support is appreciated",
     "copyright": "© 2025 PAISS",
     "madeWith": "Made with ❤️ for the community"
   },
