@@ -47,14 +47,34 @@
         </div>
       </div>
 
-      <!-- Copyright/Info Section -->
-      <div class="mt-3 text-center">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          {{ $t('footer.copyright') }} •
-          <span class="text-gray-500 dark:text-gray-500">
-            {{ $t('footer.madeWith') }}
+      <!-- Built by paiss Section -->
+      <div class="mt-4 text-center">
+        <a
+          href="https://paiss.me"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-slate-100/50 to-slate-200/50 dark:from-slate-800/50 dark:to-slate-700/50 hover:from-slate-200/80 hover:to-slate-300/80 dark:hover:from-slate-700/80 dark:hover:to-slate-600/80 border border-slate-300/30 dark:border-slate-600/30 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+          aria-label="Visit paiss.me to get your own website built"
+        >
+          <span class="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Built by</span>
+          <img
+            src="https://paiss.me/logo-for-external-use.svg"
+            alt="paiss"
+            class="h-6 group-hover:scale-105 transition-transform duration-300"
+          />
+          <span class="mx-1 text-slate-400 dark:text-slate-500">•</span>
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
+            Want your own?
           </span>
-        </p>
+          <svg
+            class="w-4 h-4 text-slate-600 dark:text-slate-400 group-hover:translate-x-1 transition-transform duration-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+        </a>
       </div>
     </div>
   </footer>
