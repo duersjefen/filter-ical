@@ -683,6 +683,8 @@
     "collapseAll": "Collapse All",
     "expandAllEvents": "Expand All",
     "collapseAllEvents": "Collapse All",
+    "expandAllIndividualEvents": "Expand All Individual Events",
+    "collapseAllIndividualEvents": "Collapse All Individual Events",
     "selectAllResults": "Select all results",
     "addGroup": "Add Group",
     "editName": "Edit Name",

@@ -693,6 +693,8 @@
     "collapseAll": "Alle einklappen",
     "expandAllEvents": "Alle ausklappen",
     "collapseAllEvents": "Alle einklappen",
+    "expandAllIndividualEvents": "Alle einzelnen Events erweitern",
+    "collapseAllIndividualEvents": "Alle einzelnen Events einklappen",
     "selectAllResults": "Alle Ergebnisse auswählen",
     "addGroup": "Gruppe hinzufügen",
     "editName": "Name bearbeiten",
