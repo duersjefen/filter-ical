@@ -157,59 +157,61 @@
       </div>
     </div>
 
-    <!-- Mobile Layout (sm and below) - Single row top controls -->
+    <!-- Mobile Layout (sm and below) - Compact single row -->
     <div class="sm:hidden">
-      
-      <!-- Top Controls Row - Back Button + Toggles -->
-      <div class="flex items-center justify-between mb-4">
+
+      <!-- Single Row: Back Button + Title + Toggles -->
+      <div class="flex items-center justify-between gap-2 mb-4">
         <!-- Left Side: Back Button -->
-        <div class="flex items-center">
-          <!-- Back Navigation -->
-          <div v-if="showBackButton">
-            <button 
-              @click="$emit('navigate-back')" 
-              class="w-10 h-10 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-xl border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg hover:shadow-xl flex items-center justify-center group touch-manipulation hover:scale-105 active:scale-95"
-              :title="backButtonText"
-            >
-              <svg class="w-4 h-4 text-white group-hover:text-white/90 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
-              </svg>
-            </button>
-          </div>
+        <div v-if="showBackButton" class="flex-shrink-0">
+          <button
+            @click="$emit('navigate-back')"
+            class="w-9 h-9 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-lg border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg flex items-center justify-center group touch-manipulation active:scale-95"
+            :title="backButtonText"
+          >
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
         </div>
-        
+
+        <!-- Center: Title (flexible, can shrink) -->
+        <div class="flex-1 min-w-0 text-center">
+          <h1 class="text-base font-bold tracking-tight drop-shadow-lg truncate px-1">{{ title }}</h1>
+        </div>
+
         <!-- Right Side: Language & Dark Mode Toggles -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 flex-shrink-0">
           <LanguageToggle />
-          
-          <button 
+
+          <button
             @click="toggleDarkMode"
-            class="group relative w-12 h-6 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg hover:shadow-xl touch-manipulation hover:scale-105 active:scale-95"
+            class="group relative w-11 h-6 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm rounded-full border border-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 shadow-lg touch-manipulation active:scale-95"
             :title="isDarkMode ? $t('darkMode.switchToLight') : $t('darkMode.switchToDark')"
           >
             <!-- Toggle Track -->
             <div class="absolute inset-1 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 dark:from-slate-600 dark:to-slate-700 transition-all duration-300"></div>
-            
+
             <!-- Toggle Switch -->
-            <div 
+            <div
               class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-lg transform transition-all duration-300 flex items-center justify-center"
-              :class="isDarkMode ? 'translate-x-6' : 'translate-x-0.5'"
+              :class="isDarkMode ? 'translate-x-5' : 'translate-x-0.5'"
             >
               <!-- Sun Icon (Light Mode) -->
-              <svg 
-                v-if="!isDarkMode" 
+              <svg
+                v-if="!isDarkMode"
                 class="w-3 h-3 text-yellow-500"
-                fill="currentColor" 
+                fill="currentColor"
                 viewBox="0 0 24 24"
               >
                 <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z" />
               </svg>
-              
+
               <!-- Moon Icon (Dark Mode) -->
-              <svg 
-                v-else 
+              <svg
+                v-else
                 class="w-3 h-3 text-slate-700"
-                fill="currentColor" 
+                fill="currentColor"
                 viewBox="0 0 24 24"
               >
                 <path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z" clip-rule="evenodd" />
@@ -219,11 +221,10 @@
         </div>
       </div>
 
-      <!-- Title Section -->
-      <div class="text-center mb-4">
-        <h1 class="text-xl font-bold tracking-tight drop-shadow-lg">{{ title }}</h1>
-        <div v-if="subtitle && !hideSubtitle" class="inline-block mt-2 mb-4 px-4 py-1.5 bg-white/15 backdrop-blur-md rounded-xl border border-white/30 shadow-lg">
-          <p class="text-xs font-medium text-white/95 tracking-normal leading-snug whitespace-pre-line text-center max-w-md">{{ subtitle }}</p>
+      <!-- Subtitle (if present) -->
+      <div v-if="subtitle && !hideSubtitle" class="text-center mb-4">
+        <div class="inline-block px-4 py-1.5 bg-white/15 backdrop-blur-md rounded-xl border border-white/30 shadow-lg">
+          <p class="text-xs font-medium text-white/95 tracking-normal leading-snug whitespace-pre-line max-w-md">{{ subtitle }}</p>
         </div>
       </div>
 

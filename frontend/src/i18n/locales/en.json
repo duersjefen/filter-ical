@@ -528,7 +528,7 @@
     "close": "Close notification"
   },
   "titles": {
-    "icalFilterSubscribe": "🗓️ Filter iCal"
+    "icalFilterSubscribe": "Filter iCal"
   },
   "subtitles": {
     "filterCalendarsCreateFeeds": "Add calendars • Filter events • Export filtered iCal subscriptions",
