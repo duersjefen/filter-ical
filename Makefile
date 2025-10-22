@@ -257,6 +257,63 @@ status: ## Check deployment status
 		echo "💡 Check manually: https://github.com/duersjefen/filter-ical/actions"
 
 ##
+## 🔐 Remote Environment Management
+##
+
+edit-env-staging: ## SSH to EC2 to edit staging .env files
+	@if [ ! -f .env.ec2 ]; then \
+		echo "❌ .env.ec2 not found"; \
+		exit 1; \
+	fi
+	@. .env.ec2 && \
+		echo "🔐 Opening SSH session to edit staging environment..." && \
+		echo "📝 Edit: backend/.env.staging and frontend/.env.staging" && \
+		echo "💡 After editing, restart containers with: make restart-staging" && \
+		aws ssm start-session --target $$EC2_INSTANCE_ID --region eu-north-1
+
+edit-env-production: ## SSH to EC2 to edit production .env files
+	@if [ ! -f .env.ec2 ]; then \
+		echo "❌ .env.ec2 not found"; \
+		exit 1; \
+	fi
+	@. .env.ec2 && \
+		echo "🔐 Opening SSH session to edit production environment..." && \
+		echo "📝 Edit: backend/.env.production and frontend/.env.production" && \
+		echo "⚠️  CRITICAL: Changing VITE_* vars requires rebuild!" && \
+		echo "💡 After editing, restart containers with: make restart-production" && \
+		aws ssm start-session --target $$EC2_INSTANCE_ID --region eu-north-1
+
+restart-staging: ## Restart staging containers (after .env changes)
+	@if [ ! -f .env.ec2 ]; then \
+		echo "❌ .env.ec2 not found"; \
+		exit 1; \
+	fi
+	@. .env.ec2 && \
+		echo "🔄 Restarting staging containers..." && \
+		aws ssm send-command --region eu-north-1 \
+			--instance-ids $$EC2_INSTANCE_ID \
+			--document-name "AWS-RunShellScript" \
+			--parameters 'commands=["cd /opt/apps/filter-ical && docker-compose -p filter-ical-staging restart"]' \
+			--output text --query 'Command.CommandId'
+	@echo "✅ Restart command sent"
+	@echo "💡 Check logs with: make logs-staging"
+
+restart-production: ## Restart production containers (after .env changes)
+	@if [ ! -f .env.ec2 ]; then \
+		echo "❌ .env.ec2 not found"; \
+		exit 1; \
+	fi
+	@. .env.ec2 && \
+		echo "🔄 Restarting production containers..." && \
+		aws ssm send-command --region eu-north-1 \
+			--instance-ids $$EC2_INSTANCE_ID \
+			--document-name "AWS-RunShellScript" \
+			--parameters 'commands=["cd /opt/apps/filter-ical && docker-compose -p filter-ical-production restart"]' \
+			--output text --query 'Command.CommandId'
+	@echo "✅ Restart command sent"
+	@echo "💡 Check logs with: make logs-production"
+
+##
 ## 🛠️ Utility Commands
 ##
 

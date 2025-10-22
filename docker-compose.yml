@@ -4,7 +4,7 @@ services:
   backend:
     container_name: filter-ical-backend-${ENVIRONMENT}
     build: ./backend
-    env_file: .env.${ENVIRONMENT}
+    env_file: backend/.env.${ENVIRONMENT}
     networks:
       - platform
     restart: unless-stopped
@@ -25,6 +25,7 @@ services:
   frontend:
     container_name: filter-ical-frontend-${ENVIRONMENT}
     build: ./frontend
+    env_file: frontend/.env.${ENVIRONMENT}
     networks:
       - platform
     restart: unless-stopped

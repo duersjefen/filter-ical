@@ -42,6 +42,12 @@ make logs-staging          # View staging logs (if deployment fails)
 make logs-production       # View production logs (if deployment fails)
 make status                # Check deployment status
 
+# Environment Management (EC2 only)
+make edit-env-staging      # SSH to EC2 to edit staging .env files
+make edit-env-production   # SSH to EC2 to edit production .env files
+make restart-staging       # Restart staging containers (after .env changes)
+make restart-production    # Restart production containers (after .env changes)
+
 # Local Development URLs
 # Frontend:  http://localhost:8000
 # Backend:   http://localhost:3000
@@ -86,6 +92,27 @@ make status                # Check deployment status
 - Deployment: `deploy.sh`, `docker-compose.yml`, `Makefile`
 - Platform nginx: `../multi-tenant-platform/platform/nginx/sites/filter-ical.conf`
 - EC2 instance ID: `.env.ec2` (gitignored)
+
+### Environment Configuration (Per-Component Pattern)
+
+**Structure:**
+```
+backend/.env.development    # Local: DB, SMTP, secrets (backend only)
+frontend/.env.development   # Local: VITE_API_BASE_URL (frontend only)
+backend/.env.staging        # EC2: Backend config (created manually)
+frontend/.env.staging       # EC2: Frontend config (created manually)
+backend/.env.production     # EC2: Backend config (created manually)
+frontend/.env.production    # EC2: Frontend config (created manually)
+```
+
+**Security:** Frontend never receives backend secrets (DB, SMTP, JWT keys).
+
+**Changing .env on EC2:**
+1. Backend config: `make edit-env-staging` → edit `backend/.env.staging` → `make restart-staging`
+2. Frontend config: Edit `frontend/.env.staging` → **MUST REBUILD**: `docker-compose build frontend && docker-compose up -d`
+   - VITE_* vars are baked into the build, restart alone won't work
+
+**Initial setup:** Run `./scripts/setup-remote-env.sh` once, then SSH to update placeholders.
 
 ### Database Migrations
 **MANDATORY: Use Alembic for all schema changes**

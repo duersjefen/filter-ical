@@ -38,12 +38,18 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
-# .env.development contains SMTP credentials
 .env.development
 .env.staging
 .env.production
-# EC2 instance ID for SSM deployment
 .env.ec2
+# Component-level environment files
+backend/.env*
+frontend/.env*
+# Allow example files (templates)
+!backend/.env.*.example
+!frontend/.env.*.example
+!.env.*.example
+# SSH keys
 *.pem
 *.key
 

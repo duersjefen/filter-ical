@@ -1,4 +1,6 @@
-.env.development
+# Environment files (NEVER commit secrets!)
+.env*
+!.env.*.example
 
 # Test coverage
 .coverage

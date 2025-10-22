@@ -73,11 +73,11 @@ class Settings(BaseSettings):
     openapi_spec_path: Path = base_dir / "openapi.yaml"
 
     class Config:
-        # Default to .env.development for local development (in project root)
+        # Default to backend/.env.development for local development
         # Production will override via environment variables
-        env_file = str(Path(__file__).parent.parent.parent / ".." / ".env.development")
+        env_file = str(Path(__file__).parent.parent.parent / ".env.development")
         case_sensitive = False
-        extra = "ignore"  # Ignore extra env vars (e.g., frontend-specific vars)
+        extra = "ignore"  # Ignore extra env vars
     
     @property
     def is_development(self) -> bool:
