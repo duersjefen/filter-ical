@@ -42,13 +42,15 @@ yarn-error.log*
 .env.staging
 .env.production
 .env.ec2
-# Component-level environment files
-backend/.env*
-frontend/.env*
-# Allow example files (templates)
-!backend/.env.*.example
-!frontend/.env.*.example
-!.env.*.example
+# Component-level environment files (specific files only, allow templates)
+backend/.env.development
+backend/.env.staging
+backend/.env.production
+backend/.env.local
+frontend/.env.development
+frontend/.env.staging
+frontend/.env.production
+frontend/.env.local
 # SSH keys
 *.pem
 *.key
@@ -101,3 +103,9 @@ backend/test_*.db
 # Production deployment artifacts
 infrastructure/secrets/
 *.backup
+
+# SST (Infrastructure as Code)
+.sst/
+.open-next/
+.sst-outputs/
+sst-env.d.ts

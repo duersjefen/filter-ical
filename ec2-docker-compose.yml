@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: filter-ical-postgres
+    environment:
+      POSTGRES_DB: filterical_${ENVIRONMENT}
+      POSTGRES_USER: filterical
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - filter-ical
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filterical"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: filter-ical-redis
+    volumes:
+      - redis_data:/var/lib/redis
+    networks:
+      - filter-ical
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    container_name: filter-ical-backend-${ENVIRONMENT}
+    build: ./backend
+    env_file: backend/.env.${ENVIRONMENT}
+    networks:
+      - filter-ical
+    ports:
+      - "${API_PORT}:3000"  # staging: 3001, production: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  filter-ical:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
