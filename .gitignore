@@ -47,6 +47,8 @@ backend/.env.development
 backend/.env.staging
 backend/.env.production
 backend/.env.local
+backend/.env.staging.ec2
+backend/.env.production.ec2
 frontend/.env.development
 frontend/.env.staging
 frontend/.env.production
