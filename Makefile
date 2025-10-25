@@ -200,13 +200,30 @@ migrate-stamp: ## Mark database as being at specific version (usage: make migrat
 	@echo "✅ Database stamped to $(version)"
 
 ##
-## 🚀 Deployment Commands (SSM-Based)
+## 🚀 Deployment Commands (Hybrid SST)
 ##
 
-deploy-staging: ## Deploy to staging via SSM (builds on server)
+# SST Frontend Deployments (CloudFront + S3)
+sst-deploy-staging: ## Deploy frontend to SST staging (temp-staging.paiss.me)
+	@echo "🚀 Deploying frontend to SST staging..."
+	@npm run deploy:staging
+
+sst-deploy-production: ## Deploy frontend to SST production (paiss.me)
+	@echo "🚀 Deploying frontend to SST production..."
+	@npm run deploy:prod
+
+sst-remove-staging: ## Remove SST staging deployment
+	@echo "🗑️  Removing SST staging deployment..."
+	@npm run remove:staging
+
+sst-console: ## Open SST console (monitoring, logs)
+	@npm run console
+
+# Legacy EC2 Deployments (SSM-Based - for reference)
+deploy-staging: ## Deploy to staging via SSM (builds on server) - LEGACY
 	@$(MAKE) deploy ENV=staging
 
-deploy-production: ## Deploy to production via SSM (builds on server)
+deploy-production: ## Deploy to production via SSM (builds on server) - LEGACY
 	@$(MAKE) deploy ENV=production
 
 deploy: ## Internal: Test, push, then deploy (use SKIP_TESTS=1 or SKIP_PUSH=1 to skip)

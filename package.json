@@ -1,0 +1,21 @@
+{
+  "name": "filter-ical",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "sst dev",
+    "build": "sst build",
+    "deploy": "sst deploy",
+    "deploy:staging": "sst deploy --stage staging",
+    "deploy:prod": "sst deploy --stage production",
+    "remove": "sst remove",
+    "remove:staging": "sst remove --stage staging",
+    "console": "sst console",
+    "types": "sst types"
+  },
+  "devDependencies": {
+    "sst": "^3.4.1",
+    "typescript": "^5.7.3"
+  }
+}

@@ -72,12 +72,26 @@ make restart-production    # Restart production containers (after .env changes)
   - Database: `filterical_development`
   - Managed by: `docker-compose.dev.yml`
 
-### Production Stack
-- **Backend:** Python FastAPI + Uvicorn (port 3000)
-- **Frontend:** Vue 3 SPA with Vite + Pinia (port 8000)
-- **Domain:** https://filter-ical.de
-- **Staging:** https://staging.filter-ical.de
-- **AWS:** EC2 i-01647c3d9af4fe9fc (13.62.136.72)
+### Production Stack (SST Hybrid Deployment)
+- **Backend:** Python FastAPI + Uvicorn on EC2 (filter-ical AWS account)
+  - EC2: `i-041f562bf5f9642e1` (t4g.micro ARM, 13.50.144.0)
+  - Staging: port 3001, Production: port 3000
+  - PostgreSQL + Redis in Docker
+- **Frontend:** Vue 3 SPA on S3 (temporary, will migrate to CloudFront)
+  - Staging: http://filter-ical-staging.paiss.me → S3 static website
+  - Production: Not deployed yet
+- **AWS Account:** filter-ical (165046687980)
+- **Region:** eu-north-1 (Stockholm)
+
+**NEXT TASK:** Migrate frontend to CloudFront + SST once account verification completes
+- CloudFront verification is pending (received email, API access not yet propagated)
+- `sst.config.ts` already configured for CloudFront deployment
+- Run `npx sst deploy --stage staging` when CloudFront access is enabled
+- Will replace S3-only deployment with CloudFront CDN (same domain)
+
+**Legacy (filter-ical.de):**
+- Domain: https://filter-ical.de (not yet migrated to paiss.me)
+- AWS: EC2 i-01647c3d9af4fe9fc (13.62.136.72) - OLD, needs migration
 
 ### SSM-Based Deployment Architecture
 **CRITICAL:** filter-ical uses SSM (AWS Systems Manager) for deployment.
