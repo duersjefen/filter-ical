@@ -39,7 +39,6 @@ setup: ## Install all dependencies (run this first!)
 
 dev: ## Start full development environment (recommended)
 	@echo "🚀 Starting full development environment..."
-	@$(MAKE) stop
 	@echo ""
 	@$(MAKE) dev-db
 	@echo ""
@@ -93,8 +92,6 @@ dev-frontend: ## Run frontend natively (hot reload)
 		npm run dev
 
 preview: ## Build and preview production frontend
-	@echo "🛑 Stopping any existing preview processes..."
-	@-lsof -ti:4173 | xargs kill -9 2>/dev/null || true
 	@echo "📦 Building production bundle..."
 	@cd frontend && npm run build
 	@echo "✅ Build complete!"
@@ -105,12 +102,11 @@ preview: ## Build and preview production frontend
 	@echo "💡 Test performance with Lighthouse on localhost:4173"
 	@cd frontend && npm run preview
 
-stop: ## Stop all development services
-	@echo "🛑 Stopping services..."
+stop: ## Stop database (ports auto-increment if in use)
+	@echo "🛑 Stopping database..."
 	@docker-compose -f docker-compose.dev.yml down
-	@-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-	@-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
-	@echo "✅ All services stopped"
+	@echo "✅ Database stopped"
+	@echo "💡 Note: SST/Vite auto-detect available ports if 3000/8000 are in use"
 
 clean: ## Clean development artifacts and containers
 	@echo "🧹 Cleaning up..."
@@ -204,13 +200,21 @@ migrate-stamp: ## Mark database as being at specific version (usage: make migrat
 ##
 
 # SST Frontend Deployments (CloudFront + S3)
-sst-deploy-staging: ## Deploy frontend to SST staging (temp-staging.paiss.me)
+sst-deploy-dev: ## Deploy frontend to SST dev environment
+	@echo "🚀 Deploying frontend to SST dev..."
+	@npm run dev
+
+sst-deploy-staging: ## Deploy frontend to SST staging (staging.filter-ical.de)
 	@echo "🚀 Deploying frontend to SST staging..."
 	@npm run deploy:staging
 
-sst-deploy-production: ## Deploy frontend to SST production (paiss.me)
+sst-deploy-production: ## Deploy frontend to SST production (filter-ical.de)
 	@echo "🚀 Deploying frontend to SST production..."
 	@npm run deploy:prod
+
+sst-remove-dev: ## Remove SST dev deployment
+	@echo "🗑️  Removing SST dev deployment..."
+	@npm run remove:dev
 
 sst-remove-staging: ## Remove SST staging deployment
 	@echo "🗑️  Removing SST staging deployment..."

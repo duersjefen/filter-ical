@@ -61,8 +61,8 @@ make dev
 ```
 
 **Access:**
-- Frontend: http://localhost:8000
-- Backend API: http://localhost:3000
+- Frontend: http://localhost:8000 (auto-increments to 8001, 8002 if port in use)
+- Backend API: http://localhost:3000 (auto-increments to 3001, 3002 if port in use)
 - API Docs: http://localhost:3000/docs
 - PostgreSQL: localhost:5432
 
@@ -71,21 +71,30 @@ make dev
 - ✅ Vue DevTools automatically available
 - ✅ PostgreSQL in Docker (no local install needed)
 - ✅ Automatic dependency installation
+- ✅ Multiple dev instances can run simultaneously (auto port increment)
+- ✅ Isolated dev AWS resources (separate CloudFormation stacks)
 
 ### Available Commands
 
 ```bash
 # Development
-make dev                   # Start all services
-make stop                  # Stop all services
+make dev                   # Start all services (dev stage)
+make stop                  # Stop database (ports auto-increment if in use)
 make health                # Check service status
 make reset-db              # Reset local database
 
 # Testing
 make test                  # Run unit tests
 make test-all              # Run complete test suite
+make preview               # Build and test production frontend locally
 
-# Deployment
+# SST Deployment (CloudFront + S3)
+make sst-deploy-staging        # Deploy frontend to staging.filter-ical.de
+make sst-deploy-production     # Deploy frontend to filter-ical.de
+make sst-remove-dev            # Remove dev stage AWS resources
+make sst-console               # Open SST console (monitoring, logs)
+
+# Legacy Deployment (SSM-based EC2)
 make deploy-staging        # Deploy to staging
 make deploy-production     # Deploy to production (requires approval)
 make status                # Check deployment status
@@ -155,11 +164,13 @@ filter-ical/
 
 ### Environments
 
-| Environment | URL | Database | Trigger |
-|-------------|-----|----------|---------|
-| **Local** | http://localhost:8000 | `filterical_development` | `make dev` |
-| **Staging** | https://staging.filter-ical.de | `filterical_staging` | Push to `master` |
-| **Production** | https://filter-ical.de | `filterical_production` | Manual approval |
+| Environment | URL | Database | AWS Resources | Trigger |
+|-------------|-----|----------|---------------|---------|
+| **Dev** | http://localhost:8000 | `filterical_development` | Isolated CloudFormation stacks | `make dev` |
+| **Staging** | https://staging.filter-ical.de | `filterical_staging` | Staging CloudFront distribution | `make sst-deploy-staging` |
+| **Production** | https://filter-ical.de | `filterical_production` | Production CloudFront distribution | `make sst-deploy-production` |
+
+**Note**: Each stage has completely isolated AWS resources (separate CloudFormation stacks, S3 buckets, CloudFront distributions).
 
 ### Deployment Workflow
 
@@ -301,6 +312,10 @@ Shows status of:
 
 ### Common Issues
 
+**Port 3000 or 8000 already in use:**
+- No action needed! SST/Vite automatically increment to next available port
+- Multiple dev instances can run simultaneously
+
 **Port 5432 already in use:**
 ```bash
 docker ps -a | grep postgres
@@ -317,6 +332,11 @@ make dev
 ```bash
 make reset-db
 cd backend && alembic upgrade head
+```
+
+**Clean up dev stage AWS resources:**
+```bash
+make sst-remove-dev
 ```
 
 ---
