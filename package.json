@@ -4,12 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "sst dev",
+    "dev": "sst dev --stage dev",
     "build": "sst build",
     "deploy": "sst deploy",
     "deploy:staging": "sst deploy --stage staging",
     "deploy:prod": "sst deploy --stage production",
     "remove": "sst remove",
+    "remove:dev": "sst remove --stage dev",
     "remove:staging": "sst remove --stage staging",
     "console": "sst console",
     "types": "sst types"
