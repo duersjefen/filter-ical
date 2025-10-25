@@ -7,19 +7,19 @@ export default $config({
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
       providers: {
-        // Using NEW AWS account (paiss → filter-ical, same as gabs-massage.de)
+        // Using NEW filter-ical AWS account (165046687980)
         aws: {
           region: "eu-north-1",
-          profile: "paiss-filter-ical"
+          profile: "filter-ical"
         }
       }
     };
   },
   async run() {
-    // Backend API URL (EC2 instance - will be set up separately)
+    // Backend API URL (EC2 instance - already deployed)
     const backendUrl = $app.stage === "production"
-      ? "https://api.paiss.me"  // EC2 backend API
-      : "https://api-staging.paiss.me";  // EC2 staging backend API
+      ? "https://api.filter-ical.de"
+      : "https://api-staging.filter-ical.de";
 
     // Frontend (Vue 3 SPA)
     const frontend = new sst.aws.StaticSite("FilterIcalFrontend", {
@@ -33,15 +33,14 @@ export default $config({
       },
       domain: $app.stage === "production"
         ? {
-            name: "paiss.me",
-            redirects: ["www.paiss.me"],
+            name: "filter-ical.de",
             dns: sst.aws.dns()
           }
         : {
-            name: `temp-staging.paiss.me`,
+            name: "staging.filter-ical.de",
             dns: sst.aws.dns()
           },
-      errorPage: "redirect_to_index"  // SPA routing support
+      errorPage: "redirect_to_index"
     });
 
     return {
