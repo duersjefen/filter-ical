@@ -26,9 +26,9 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
 # Stage 2: Production runtime with nginx
-# Using nginx-brotli image for better compression (20-30% smaller than gzip)
-# v1.28.0 is based on nginx 1.28.0 stable + brotli module
-FROM fholzer/nginx-brotli:v1.28.0
+# Using official nginx:alpine image (ARM64 compatible)
+# Note: Brotli support will be added after AWS account verification
+FROM nginx:1.27-alpine
 
 # Cache-busting: Inherit GIT_COMMIT from builder stage
 ARG GIT_COMMIT=unknown
