@@ -62,15 +62,15 @@ COMMAND_ID=$(aws ssm send-command \
         'export POSTGRES_PASSWORD=\$(cat /opt/secrets/postgres_password)',
         'export DOCKER_BUILDKIT=1',
         'export GIT_COMMIT=\$(git rev-parse --short HEAD)',
-        'docker-compose build',
+        'docker-compose -p filter-ical-$ENVIRONMENT build',
         'echo \"🚀 Starting services...\"',
-        'docker-compose up -d',
+        'docker-compose -p filter-ical-$ENVIRONMENT up -d',
         'echo \"⏳ Waiting for database...\"',
         'sleep 15',
         'echo \"📊 Running migrations...\"',
-        'docker-compose exec -T backend alembic upgrade head || echo \"⚠️  Migrations may have failed\"',
+        'docker-compose -p filter-ical-$ENVIRONMENT exec -T backend alembic upgrade head || echo \"⚠️  Migrations may have failed\"',
         'echo \"✅ $ENVIRONMENT is live on port $BACKEND_PORT!\"',
-        'docker-compose ps'
+        'docker-compose -p filter-ical-$ENVIRONMENT ps'
     ]" \
     --output text \
     --query 'Command.CommandId')
