@@ -125,6 +125,89 @@ make restart-production    # Restart production containers (after .env changes)
 - 📋 AWS Support ticket submitted
 - 🚀 Ready to deploy once verification completes: `AWS_PROFILE=filter-ical npx sst deploy --stage staging`
 
+### Email Service (SMTP → SES Migration Plan)
+
+**⚠️ IMPORTANT: Current SMTP setup is TEMPORARY**
+
+**Current State (Temporary):**
+- Using PrivateEmail SMTP (mail.privateemail.com:587)
+- Credentials: `info@paiss.me` / stored in `/opt/secrets/` on EC2
+- **Why temporary:** External dependency, not AWS-native, less scalable
+
+**Migration Plan (After AWS Account Verification):**
+1. **Request SES Production Access:**
+   - AWS Console → SES → Request production access
+   - Current state: Sandbox mode (only verified emails)
+   - Production: Send to any email address
+
+2. **Verify Sender Domain:**
+   ```bash
+   # Generate DKIM records
+   aws ses verify-domain-identity --domain filter-ical.de --region eu-north-1
+
+   # Add DNS records (via Namecheap script or Route53)
+   # - TXT record for domain verification
+   # - CNAME records for DKIM signing
+   ```
+
+3. **Update Backend Configuration:**
+   ```bash
+   # On EC2, edit backend/.env.staging and backend/.env.production
+   # Replace SMTP_* variables with SES configuration:
+
+   # Remove:
+   SMTP_HOST=mail.privateemail.com
+   SMTP_PORT=587
+   SMTP_USERNAME=info@paiss.me
+   SMTP_PASSWORD=***
+
+   # Add:
+   AWS_SES_REGION=eu-north-1
+   AWS_SES_FROM_EMAIL=noreply@filter-ical.de
+   # No credentials needed - uses EC2 IAM role
+   ```
+
+4. **Update IAM Role:**
+   ```bash
+   # Add SES permissions to FilterIcalEC2SSMRole
+   aws iam attach-role-policy \
+     --role-name FilterIcalEC2SSMRole \
+     --policy-arn arn:aws:iam::aws:policy/AmazonSESFullAccess
+   ```
+
+5. **Update Backend Code:**
+   - Modify `backend/app/services/email.py` to use boto3 SES client
+   - Keep SMTP as fallback for local development
+
+6. **Test & Deploy:**
+   ```bash
+   # Test in staging first
+   make deploy-staging
+
+   # Verify emails are sent
+   # Check SES console for delivery metrics
+
+   # Deploy to production
+   make deploy-production
+   ```
+
+**SES Benefits:**
+- ✅ Native AWS integration (IAM-based auth, no passwords)
+- ✅ Better deliverability (AWS IP reputation)
+- ✅ Scalable (50,000 emails/day free tier)
+- ✅ Built-in bounce/complaint handling
+- ✅ Email analytics and monitoring
+- ✅ Cost-effective ($0.10 per 1,000 emails after free tier)
+
+**Timeline:**
+- **Now:** SMTP working (production ready)
+- **After AWS verification:** Request SES production access (~24-48 hours)
+- **After SES approval:** Migrate to SES (~1 hour implementation)
+
+**References:**
+- [AWS SES Documentation](https://docs.aws.amazon.com/ses/)
+- [SES Python SDK (boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ses.html)
+
 ### SSM-Based Deployment Architecture
 **CRITICAL:** filter-ical uses SSM (AWS Systems Manager) for deployment.
 
@@ -201,3 +284,108 @@ alembic upgrade head
 - Manual database schema changes
 
 **PURPOSE:** This architecture ensures 100% testability, zero frontend coupling, fearless refactoring, and production reliability.
+
+---
+
+## 🚀 DEPLOYMENT READINESS CHECKLIST
+
+### Current Status (2025-10-27)
+
+**✅ Ready & Working:**
+- [x] EC2 instance configured (t4g.micro ARM64, 13.50.144.0)
+- [x] Docker Buildx v0.17.1 installed (ARM64 compatible)
+- [x] GitHub deploy key configured
+- [x] Environment files created and configured
+- [x] SMTP credentials configured (temporary)
+- [x] PostgreSQL + Redis running (both staging & production)
+- [x] Backend APIs deployed and healthy:
+  - Production: http://api.filter-ical.de/health (port 3000)
+  - Staging: http://api-staging.filter-ical.de/health (port 3001)
+- [x] DNS records configured in Route53:
+  - filter-ical.de → 13.50.144.0
+  - api.filter-ical.de → 13.50.144.0
+  - staging.filter-ical.de → S3 (will become CloudFront)
+  - api-staging.filter-ical.de → 13.50.144.0
+- [x] SST configuration complete
+- [x] Docker Compose project isolation (staging/production can coexist)
+
+**⏳ Blocked by AWS Account Verification:**
+- [ ] CloudFront distribution creation
+- [ ] API Gateway deployment
+- [ ] ACM SSL certificates
+- [ ] Frontend deployment (staging & production)
+- [ ] HTTPS for APIs
+
+**🔜 Post-Verification Tasks:**
+1. Deploy staging frontend: `AWS_PROFILE=filter-ical npx sst deploy --stage staging`
+2. Deploy production frontend: `AWS_PROFILE=filter-ical npx sst deploy --stage production`
+3. Request SES production access
+4. Migrate SMTP → SES
+5. Enable Brotli compression (optional, after CloudFront)
+
+### Post-Verification Deployment Commands
+
+Once AWS account verification completes, run these commands in order:
+
+```bash
+# 1. Deploy staging (test first)
+cd /Users/martijn/Documents/Projects/filter-ical
+export AWS_PROFILE=filter-ical
+npx sst deploy --stage staging
+
+# Expected output:
+# ✓ Complete
+#   Frontend: https://staging.filter-ical.de
+#   API: https://api-staging.filter-ical.de
+
+# 2. Test staging
+curl https://staging.filter-ical.de
+curl https://api-staging.filter-ical.de/health
+
+# 3. Deploy production (if staging works)
+npx sst deploy --stage production
+
+# Expected output:
+# ✓ Complete
+#   Frontend: https://filter-ical.de
+#   API: https://api.filter-ical.de
+
+# 4. Test production
+curl https://filter-ical.de
+curl https://api.filter-ical.de/health
+
+# 5. Verify DNS propagation (may take 5-10 minutes)
+dig filter-ical.de CNAME
+dig api.filter-ical.de CNAME
+```
+
+### Monitoring After Deployment
+
+```bash
+# Open SST console for monitoring
+npx sst console
+
+# Check CloudFront distribution status
+aws cloudfront list-distributions --query 'DistributionList.Items[*].[Id,DomainName,Status]' --output table
+
+# Check backend health
+curl https://api.filter-ical.de/health
+curl https://api-staging.filter-ical.de/health
+
+# Check CloudWatch logs (if issues)
+aws logs tail /aws/lambda/filter-ical --follow
+```
+
+### Rollback Plan (If Needed)
+
+```bash
+# Remove staging deployment
+npx sst remove --stage staging
+
+# Remove production deployment (DANGEROUS - only if critical issue)
+npx sst remove --stage production
+
+# Backend rollback (revert to previous git commit)
+git revert HEAD
+make deploy-production
+```
