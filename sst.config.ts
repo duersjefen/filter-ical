@@ -16,10 +16,32 @@ export default $config({
     };
   },
   async run() {
-    // Backend API URL (EC2 instance - already deployed)
-    const backendUrl = $app.stage === "production"
-      ? "https://api.filter-ical.de"
-      : "https://api-staging.filter-ical.de";
+    // EC2 Backend Instance (manually managed)
+    const ec2IpAddress = "13.50.144.0";
+    const productionPort = 3000;
+    const stagingPort = 3001;
+
+    // Backend API (CloudFront in front of EC2 for SSL)
+    const apiDistribution = new sst.aws.Router("FilterIcalApi", {
+      domain: $app.stage === "production"
+        ? {
+            name: "api.filter-ical.de",
+            dns: sst.aws.dns()
+          }
+        : {
+            name: "api-staging.filter-ical.de",
+            dns: sst.aws.dns()
+          },
+      routes: {
+        "/*": {
+          url: $app.stage === "production"
+            ? `http://${ec2IpAddress}:${productionPort}`
+            : `http://${ec2IpAddress}:${stagingPort}`
+        }
+      }
+    });
+
+    const backendUrl = apiDistribution.url;
 
     // Frontend (Vue 3 SPA)
     const frontend = new sst.aws.StaticSite("FilterIcalFrontend", {
@@ -45,7 +67,7 @@ export default $config({
 
     return {
       frontend: frontend.url,
-      backendUrl: backendUrl
+      api: backendUrl
     };
   },
 });
