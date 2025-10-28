@@ -70,6 +70,94 @@ make restart-production    # Restart production containers (after .env changes)
 
 ---
 
+## ✅ POST-DEPLOYMENT VERIFICATION
+
+**MANDATORY after EVERY `sst deploy` or `make sst-deploy-*` command.**
+
+SST deployments can fail silently with misconfigured CloudFront origins. Always verify:
+
+### Quick Verification Commands
+
+```bash
+# Get CloudFront distribution ID (from SST output or AWS Console)
+export AWS_PROFILE=student  # Currently using student account temporarily
+export DIST_ID=E2YPMLA94M2AIL  # Production CloudFront distribution
+
+# 1. Verify CloudFront origin (CRITICAL)
+aws cloudfront get-distribution-config --id $DIST_ID \
+  --query 'DistributionConfig.Origins.Items[0].DomainName' \
+  --output text
+
+# Expected: filter-ical-production-filtericalfrontendassetsbucket-cfufmfon.s3.eu-north-1.amazonaws.com
+# ❌ FAIL: placeholder.sst.dev → Run fix script immediately
+
+# 2. Test live site
+curl -I https://filter-ical.de
+
+# Expected: HTTP/2 200
+# ❌ FAIL: HTTP 403 Access Denied → CloudFront origin misconfigured
+
+# 3. Verify Origin Access Control
+aws cloudfront get-distribution-config --id $DIST_ID \
+  --query 'DistributionConfig.Origins.Items[0].OriginAccessControlId' \
+  --output text
+
+# Expected: E1O74KYH85SN4C (or similar OAC ID)
+# ❌ FAIL: Empty string → S3 bucket not accessible to CloudFront
+```
+
+### Automated Fix (If Verification Fails)
+
+```bash
+# Run automated fix script (installed at ~/.scripts/fix_sst_cloudfront.sh)
+~/.scripts/fix_sst_cloudfront.sh \
+  E2YPMLA94M2AIL \
+  filter-ical-production-filtericalfrontendassetsbucket-cfufmfon \
+  student \
+  eu-north-1 \
+  310829530903
+
+# Script will:
+# 1. Detect placeholder origin
+# 2. Create Origin Access Control (OAC)
+# 3. Update CloudFront with correct S3 origin
+# 4. Update S3 bucket policy
+# 5. Wait for deployment (5-15 minutes)
+```
+
+### Filter-iCal Specific Values
+
+**Production (Currently on Student Account):**
+- CloudFront Distribution ID: `E2YPMLA94M2AIL`
+- S3 Bucket: `filter-ical-production-filtericalfrontendassetsbucket-cfufmfon`
+- Region: `eu-north-1` (Stockholm)
+- AWS Profile: `student` (temporary, will migrate to `filter-ical` after verification)
+- AWS Account ID: `310829530903`
+- OAC ID: `E1O74KYH85SN4C`
+- Custom Domain: `filter-ical.de`
+- CloudFront URL: `d1muqpyoeowt1o.cloudfront.net`
+
+**After AWS Account Verification (Future):**
+- AWS Profile: `filter-ical`
+- AWS Account ID: `165046687980`
+- All other values will be regenerated during migration
+
+### Deployment Checklist
+
+**Before declaring SST deployment successful:**
+
+- [ ] CloudFront origin points to S3 bucket (not `placeholder.sst.dev`)
+- [ ] Origin Access Control (OAC) configured
+- [ ] S3 bucket policy allows CloudFront access
+- [ ] Live site returns HTTP 200
+- [ ] Site content loads correctly (check HTML source)
+- [ ] Backend API accessible (check VITE_API_BASE_URL)
+- [ ] CloudFront distribution status: `Deployed`
+
+**If ANY check fails → Run fix script before proceeding.**
+
+---
+
 ## 🚢 INFRASTRUCTURE
 
 ### Environment Stages

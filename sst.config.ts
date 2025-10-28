@@ -19,9 +19,10 @@ export default $config({
   async run() {
     // Backend API on EC2 (filter-ical account)
     // Using existing DNS records that point to EC2 directly
+    // HTTPS configured with Let's Encrypt
     const backendUrl = $app.stage === "production"
-      ? "http://api.filter-ical.de"
-      : "http://api-staging.filter-ical.de";
+      ? "https://api.filter-ical.de"
+      : "https://api-staging.filter-ical.de";
 
     // Frontend (Vue 3 SPA)
     // PHASE 1: Deploy without custom domain (will add DNS in Phase 2)
