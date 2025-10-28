@@ -287,6 +287,83 @@ alembic upgrade head
 
 ---
 
+## ⚠️ DEPLOYMENT BEST PRACTICES
+
+**CRITICAL: Always follow these steps before ANY deployment**
+
+### Pre-Deployment Checklist
+
+**1. Plan the Deployment (5-10 minutes)**
+- [ ] Write down exactly what will change
+- [ ] Identify all affected services (frontend, backend, database, DNS)
+- [ ] Document rollback procedure BEFORE deploying
+- [ ] Verify you have the right AWS profile set
+- [ ] Check if DNS changes are needed
+
+**2. Review Configuration (5 minutes)**
+- [ ] Read the relevant config files (`sst.config.ts`, `docker-compose.yml`, `.env` files)
+- [ ] Verify domain names are correct
+- [ ] Check CORS settings will allow the new setup
+- [ ] Confirm ports and networking are correct
+
+**3. Dry Run / Sanity Check (2 minutes)**
+- [ ] Review the exact commands you'll run
+- [ ] Verify AWS credentials are correct (`aws sts get-caller-identity`)
+- [ ] Check current deployment status
+- [ ] Ensure tests pass (`make test`)
+
+**4. Execute Deployment (varies)**
+- [ ] Run commands one at a time (not all at once)
+- [ ] Read the output carefully after each command
+- [ ] If anything looks wrong, STOP and investigate
+- [ ] Take notes of any IDs, URLs, or values you'll need
+
+**5. Post-Deployment Verification (5 minutes)**
+- [ ] Test the deployed service manually
+- [ ] Check health endpoints
+- [ ] Verify DNS propagation (if DNS was changed)
+- [ ] Monitor logs for errors
+- [ ] Test cross-service communication (e.g., frontend → backend)
+
+**6. Document Changes**
+- [ ] Update CLAUDE.md with any new infrastructure details
+- [ ] Note any manual steps that were required
+- [ ] Document any issues encountered and how they were resolved
+
+### Deployment Anti-Patterns (Never Do This)
+
+❌ **Running commands without understanding them**
+- Always read the config files first
+- Understand what each command will do
+
+❌ **Deploying to production first**
+- Always deploy to staging first
+- Test thoroughly before production
+
+❌ **Changing multiple things at once**
+- Make one change at a time
+- Deploy, test, then proceed
+
+❌ **Skipping the rollback plan**
+- Always have a way to undo changes
+- Test rollback procedure before deploying
+
+❌ **Ignoring errors or warnings**
+- Every error means something
+- Investigate before proceeding
+
+### Emergency Rollback Procedures
+
+If a deployment goes wrong:
+
+1. **Stay calm** - Most issues are recoverable
+2. **Stop the deployment** - Don't make it worse
+3. **Assess the damage** - What's broken? What's still working?
+4. **Roll back** - Use the rollback plan you prepared
+5. **Investigate** - What went wrong? How can we prevent it?
+
+---
+
 ## 🚀 DEPLOYMENT READINESS CHECKLIST
 
 ### Current Status (2025-10-27)
