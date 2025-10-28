@@ -70,6 +70,94 @@ make restart-production    # Restart production containers (after .env changes)
 
 ---
 
+## ✅ POST-DEPLOYMENT VERIFICATION
+
+**MANDATORY after EVERY `sst deploy` or `make sst-deploy-*` command.**
+
+SST deployments can fail silently with misconfigured CloudFront origins. Always verify:
+
+### Quick Verification Commands
+
+```bash
+# Get CloudFront distribution ID (from SST output or AWS Console)
+export AWS_PROFILE=student  # Currently using student account temporarily
+export DIST_ID=E2YPMLA94M2AIL  # Production CloudFront distribution
+
+# 1. Verify CloudFront origin (CRITICAL)
+aws cloudfront get-distribution-config --id $DIST_ID \
+  --query 'DistributionConfig.Origins.Items[0].DomainName' \
+  --output text
+
+# Expected: filter-ical-production-filtericalfrontendassetsbucket-cfufmfon.s3.eu-north-1.amazonaws.com
+# ❌ FAIL: placeholder.sst.dev → Run fix script immediately
+
+# 2. Test live site
+curl -I https://filter-ical.de
+
+# Expected: HTTP/2 200
+# ❌ FAIL: HTTP 403 Access Denied → CloudFront origin misconfigured
+
+# 3. Verify Origin Access Control
+aws cloudfront get-distribution-config --id $DIST_ID \
+  --query 'DistributionConfig.Origins.Items[0].OriginAccessControlId' \
+  --output text
+
+# Expected: E1O74KYH85SN4C (or similar OAC ID)
+# ❌ FAIL: Empty string → S3 bucket not accessible to CloudFront
+```
+
+### Automated Fix (If Verification Fails)
+
+```bash
+# Run automated fix script (installed at ~/.scripts/fix_sst_cloudfront.sh)
+~/.scripts/fix_sst_cloudfront.sh \
+  E2YPMLA94M2AIL \
+  filter-ical-production-filtericalfrontendassetsbucket-cfufmfon \
+  student \
+  eu-north-1 \
+  310829530903
+
+# Script will:
+# 1. Detect placeholder origin
+# 2. Create Origin Access Control (OAC)
+# 3. Update CloudFront with correct S3 origin
+# 4. Update S3 bucket policy
+# 5. Wait for deployment (5-15 minutes)
+```
+
+### Filter-iCal Specific Values
+
+**Production (Currently on Student Account):**
+- CloudFront Distribution ID: `E2YPMLA94M2AIL`
+- S3 Bucket: `filter-ical-production-filtericalfrontendassetsbucket-cfufmfon`
+- Region: `eu-north-1` (Stockholm)
+- AWS Profile: `student` (temporary, will migrate to `filter-ical` after verification)
+- AWS Account ID: `310829530903`
+- OAC ID: `E1O74KYH85SN4C`
+- Custom Domain: `filter-ical.de`
+- CloudFront URL: `d1muqpyoeowt1o.cloudfront.net`
+
+**After AWS Account Verification (Future):**
+- AWS Profile: `filter-ical`
+- AWS Account ID: `165046687980`
+- All other values will be regenerated during migration
+
+### Deployment Checklist
+
+**Before declaring SST deployment successful:**
+
+- [ ] CloudFront origin points to S3 bucket (not `placeholder.sst.dev`)
+- [ ] Origin Access Control (OAC) configured
+- [ ] S3 bucket policy allows CloudFront access
+- [ ] Live site returns HTTP 200
+- [ ] Site content loads correctly (check HTML source)
+- [ ] Backend API accessible (check VITE_API_BASE_URL)
+- [ ] CloudFront distribution status: `Deployed`
+
+**If ANY check fails → Run fix script before proceeding.**
+
+---
+
 ## 🚢 INFRASTRUCTURE
 
 ### Environment Stages
@@ -287,9 +375,93 @@ alembic upgrade head
 
 ---
 
+## ⚠️ DEPLOYMENT BEST PRACTICES
+
+**CRITICAL: Always follow these steps before ANY deployment**
+
+### Pre-Deployment Checklist
+
+**1. Plan the Deployment (5-10 minutes)**
+- [ ] Write down exactly what will change
+- [ ] Identify all affected services (frontend, backend, database, DNS)
+- [ ] Document rollback procedure BEFORE deploying
+- [ ] Verify you have the right AWS profile set
+- [ ] Check if DNS changes are needed
+
+**2. Review Configuration (5 minutes)**
+- [ ] Read the relevant config files (`sst.config.ts`, `docker-compose.yml`, `.env` files)
+- [ ] Verify domain names are correct
+- [ ] Check CORS settings will allow the new setup
+- [ ] Confirm ports and networking are correct
+
+**3. Dry Run / Sanity Check (2 minutes)**
+- [ ] Review the exact commands you'll run
+- [ ] Verify AWS credentials are correct (`aws sts get-caller-identity`)
+- [ ] Check current deployment status
+- [ ] Ensure tests pass (`make test`)
+
+**4. Execute Deployment (varies)**
+- [ ] Run commands one at a time (not all at once)
+- [ ] Read the output carefully after each command
+- [ ] If anything looks wrong, STOP and investigate
+- [ ] Take notes of any IDs, URLs, or values you'll need
+
+**5. Post-Deployment Verification (5 minutes)**
+- [ ] Test the deployed service manually
+- [ ] Check health endpoints
+- [ ] Verify DNS propagation (if DNS was changed)
+- [ ] Monitor logs for errors
+- [ ] Test cross-service communication (e.g., frontend → backend)
+
+**6. Document Changes**
+- [ ] Update CLAUDE.md with any new infrastructure details
+- [ ] Note any manual steps that were required
+- [ ] Document any issues encountered and how they were resolved
+
+### Deployment Anti-Patterns (Never Do This)
+
+❌ **Running commands without understanding them**
+- Always read the config files first
+- Understand what each command will do
+
+❌ **Deploying to production first**
+- Always deploy to staging first
+- Test thoroughly before production
+
+❌ **Changing multiple things at once**
+- Make one change at a time
+- Deploy, test, then proceed
+
+❌ **Skipping the rollback plan**
+- Always have a way to undo changes
+- Test rollback procedure before deploying
+
+❌ **Ignoring errors or warnings**
+- Every error means something
+- Investigate before proceeding
+
+### Emergency Rollback Procedures
+
+If a deployment goes wrong:
+
+1. **Stay calm** - Most issues are recoverable
+2. **Stop the deployment** - Don't make it worse
+3. **Assess the damage** - What's broken? What's still working?
+4. **Roll back** - Use the rollback plan you prepared
+5. **Investigate** - What went wrong? How can we prevent it?
+
+---
+
 ## 🚀 DEPLOYMENT READINESS CHECKLIST
 
-### Current Status (2025-10-27)
+### Current Status (2025-10-28)
+
+**🎉 LIVE & WORKING:**
+- [x] Frontend deployed to student account (TEMPORARY)
+  - URL: https://filter-ical.de
+  - CloudFront Distribution: E2YPMLA94M2AIL (student account)
+  - SSL Certificate: ACM in us-east-1 (student account)
+  - **NOTE:** Will migrate to filter-ical account after verification
 
 **✅ Ready & Working:**
 - [x] EC2 instance configured (t4g.micro ARM64, 13.50.144.0)
@@ -316,12 +488,30 @@ alembic upgrade head
 - [ ] Frontend deployment (staging & production)
 - [ ] HTTPS for APIs
 
-**🔜 Post-Verification Tasks:**
-1. Deploy staging frontend: `AWS_PROFILE=filter-ical npx sst deploy --stage staging`
-2. Deploy production frontend: `AWS_PROFILE=filter-ical npx sst deploy --stage production`
-3. Request SES production access
-4. Migrate SMTP → SES
-5. Enable Brotli compression (optional, after CloudFront)
+**🔜 Post-Verification Tasks (Migrate to filter-ical Account):**
+
+**After AWS verification completes:**
+1. **Deploy to filter-ical account:**
+   ```bash
+   # Update sst.config.ts profile: student → filter-ical
+   # Update sst.config.ts: add domain configuration back
+   AWS_PROFILE=filter-ical npx sst deploy --stage production
+   ```
+
+2. **Update Route53 DNS:**
+   - Point filter-ical.de to new CloudFront (filter-ical account)
+   - Remove ACM validation records (student account)
+
+3. **Clean up student account:**
+   ```bash
+   AWS_PROFILE=student npx sst remove --stage production
+   AWS_PROFILE=student aws acm delete-certificate --certificate-arn [ARN]
+   ```
+
+4. **Additional tasks:**
+   - Request SES production access
+   - Migrate SMTP → SES
+   - Enable Brotli compression (optional)
 
 ### Post-Verification Deployment Commands
 

@@ -7,43 +7,27 @@ export default $config({
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
       providers: {
-        // Using NEW filter-ical AWS account (165046687980)
+        // TEMPORARY: Using student AWS account (310829530903) until filter-ical verification completes
+        // TODO: Switch back to "filter-ical" profile after AWS account verification
         aws: {
           region: "eu-north-1",
-          profile: "filter-ical"
+          profile: "student"
         }
       }
     };
   },
   async run() {
-    // EC2 Backend Instance (manually managed)
-    const ec2IpAddress = "13.50.144.0";
-    const productionPort = 3000;
-    const stagingPort = 3001;
-
-    // Backend API (CloudFront in front of EC2 for SSL)
-    const apiDistribution = new sst.aws.Router("FilterIcalApi", {
-      domain: $app.stage === "production"
-        ? {
-            name: "api.filter-ical.de",
-            dns: sst.aws.dns()
-          }
-        : {
-            name: "api-staging.filter-ical.de",
-            dns: sst.aws.dns()
-          },
-      routes: {
-        "/*": {
-          url: $app.stage === "production"
-            ? `http://${ec2IpAddress}:${productionPort}`
-            : `http://${ec2IpAddress}:${stagingPort}`
-        }
-      }
-    });
-
-    const backendUrl = apiDistribution.url;
+    // Backend API configuration
+    // - dev stage: Local backend on localhost (for sst dev)
+    // - staging: EC2 staging backend with HTTPS
+    // - production: EC2 production backend with HTTPS
+    const backendUrl =
+      $app.stage === "production" ? "https://api.filter-ical.de" :
+      $app.stage === "staging" ? "https://api-staging.filter-ical.de" :
+      "http://localhost:3000"; // dev stage uses local backend
 
     // Frontend (Vue 3 SPA)
+    // PHASE 1: Deploy without custom domain (will add DNS in Phase 2)
     const frontend = new sst.aws.StaticSite("FilterIcalFrontend", {
       path: "frontend",
       build: {
@@ -53,15 +37,8 @@ export default $config({
       environment: {
         VITE_API_BASE_URL: backendUrl
       },
-      domain: $app.stage === "production"
-        ? {
-            name: "filter-ical.de",
-            dns: sst.aws.dns()
-          }
-        : {
-            name: "staging.filter-ical.de",
-            dns: sst.aws.dns()
-          },
+      // Domain configuration removed for Phase 1 deployment
+      // Will add CNAME manually in Route53 after testing CloudFront URL
       errorPage: "redirect_to_index"
     });
 
