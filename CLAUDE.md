@@ -366,7 +366,14 @@ If a deployment goes wrong:
 
 ## 🚀 DEPLOYMENT READINESS CHECKLIST
 
-### Current Status (2025-10-27)
+### Current Status (2025-10-28)
+
+**🎉 LIVE & WORKING:**
+- [x] Frontend deployed to student account (TEMPORARY)
+  - URL: https://filter-ical.de
+  - CloudFront Distribution: E2YPMLA94M2AIL (student account)
+  - SSL Certificate: ACM in us-east-1 (student account)
+  - **NOTE:** Will migrate to filter-ical account after verification
 
 **✅ Ready & Working:**
 - [x] EC2 instance configured (t4g.micro ARM64, 13.50.144.0)
@@ -393,12 +400,30 @@ If a deployment goes wrong:
 - [ ] Frontend deployment (staging & production)
 - [ ] HTTPS for APIs
 
-**🔜 Post-Verification Tasks:**
-1. Deploy staging frontend: `AWS_PROFILE=filter-ical npx sst deploy --stage staging`
-2. Deploy production frontend: `AWS_PROFILE=filter-ical npx sst deploy --stage production`
-3. Request SES production access
-4. Migrate SMTP → SES
-5. Enable Brotli compression (optional, after CloudFront)
+**🔜 Post-Verification Tasks (Migrate to filter-ical Account):**
+
+**After AWS verification completes:**
+1. **Deploy to filter-ical account:**
+   ```bash
+   # Update sst.config.ts profile: student → filter-ical
+   # Update sst.config.ts: add domain configuration back
+   AWS_PROFILE=filter-ical npx sst deploy --stage production
+   ```
+
+2. **Update Route53 DNS:**
+   - Point filter-ical.de to new CloudFront (filter-ical account)
+   - Remove ACM validation records (student account)
+
+3. **Clean up student account:**
+   ```bash
+   AWS_PROFILE=student npx sst remove --stage production
+   AWS_PROFILE=student aws acm delete-certificate --certificate-arn [ARN]
+   ```
+
+4. **Additional tasks:**
+   - Request SES production access
+   - Migrate SMTP → SES
+   - Enable Brotli compression (optional)
 
 ### Post-Verification Deployment Commands
 
