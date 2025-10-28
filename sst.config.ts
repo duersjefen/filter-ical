@@ -17,12 +17,14 @@ export default $config({
     };
   },
   async run() {
-    // Backend API on EC2 (filter-ical account)
-    // Using existing DNS records that point to EC2 directly
-    // HTTPS configured with Let's Encrypt
-    const backendUrl = $app.stage === "production"
-      ? "https://api.filter-ical.de"
-      : "https://api-staging.filter-ical.de";
+    // Backend API configuration
+    // - dev stage: Local backend on localhost (for sst dev)
+    // - staging: EC2 staging backend with HTTPS
+    // - production: EC2 production backend with HTTPS
+    const backendUrl =
+      $app.stage === "production" ? "https://api.filter-ical.de" :
+      $app.stage === "staging" ? "https://api-staging.filter-ical.de" :
+      "http://localhost:3000"; // dev stage uses local backend
 
     // Frontend (Vue 3 SPA)
     // PHASE 1: Deploy without custom domain (will add DNS in Phase 2)
