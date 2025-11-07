@@ -91,7 +91,7 @@ export default $config({
           ? ["https://filter-ical.de", "https://www.filter-ical.de"]
           : $app.stage === "staging"
           ? ["https://staging.filter-ical.de"]
-          : ["*"],
+          : ["http://localhost:5173", "http://localhost:8000"],  // Dev: specific origins (not wildcard)
         allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language", "X-Requested-With"],
         allowCredentials: true,
