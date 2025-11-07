@@ -4,8 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "npm run setup && sst dev --stage staging",
-    "setup": "bash scripts/ensure-backend.sh",
+    "dev": "sst dev --stage staging",
     "console": "sst console",
     "types": "sst types"
   },
