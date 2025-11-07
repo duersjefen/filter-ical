@@ -149,7 +149,7 @@ export default $config({
 
       // Dev mode configuration (runs Vite dev server locally)
       dev: {
-        command: "pnpm run dev",
+        command: "pnpm exec vite",
         directory: "frontend",
         url: "http://localhost:5173"
       }
