@@ -48,7 +48,7 @@ export default $config({
     const backendFunction = new sst.aws.Function("FilterIcalBackendApi", {
       vpc,
       handler: "backend/lambda_api.handler",
-      runtime: "python3.13",
+      runtime: "python3.12",  // Changed from 3.13 (better SST support)
       timeout: "30 seconds",
       memory: "512 MB",
 
@@ -72,13 +72,8 @@ export default $config({
       },
 
       // Python build configuration
-      python: {
-        container: true,  // Use Docker container for dependencies
-      },
-
-      // Dev mode: Run Lambda locally (no dev block = Lambda runtime simulation)
-      // This tests the actual Lambda handler (Mangum) with API Gateway simulation
-      // Tradeoff: Slower iteration (~10-30s rebuilds) vs production parity
+      // Note: No container build needed for Python 3.12 (has native support in SST)
+      // Container builds can cause "RangeError: Invalid string length" in SST v3
     });
 
     // 4. API Gateway with custom domain (wraps Lambda function)
@@ -106,7 +101,7 @@ export default $config({
     const syncFunction = new sst.aws.Function("FilterIcalSyncTask", {
       vpc,
       handler: "backend/lambda_sync.handler",
-      runtime: "python3.13",
+      runtime: "python3.12",  // Changed from 3.13 (better SST support)
       timeout: "5 minutes",  // Longer timeout for sync operations
       memory: "512 MB",
 
@@ -124,10 +119,6 @@ export default $config({
         SMTP_PORT: new sst.Secret("SmtpPort").value,
         SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
         SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
-      },
-
-      python: {
-        container: true,
       },
     });
 
