@@ -4,6 +4,7 @@ python-multipart==0.0.18
 uvicorn[standard]==0.32.1
 pydantic==2.10.3
 pydantic-settings==2.7.0
+mangum==0.19.0  # AWS Lambda adapter for FastAPI
 
 # Database
 sqlalchemy==2.0.36

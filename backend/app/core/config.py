@@ -37,9 +37,12 @@ class Settings(BaseSettings):
     _allowed_origins: List[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
     
     # Background job settings
-    sync_interval_minutes: int = 5
+    sync_interval_minutes: int = 30  # Lambda EventBridge schedule (was 5 for ECS)
     enable_background_tasks: bool = True
     dev_sync_interval_minutes: int = 2  # Faster feedback in development
+
+    # Lambda execution context
+    is_lambda: bool = False  # Set to True via IS_LAMBDA env var
     
     # Demo data settings
     auto_seed_demo_data: bool = True  # Auto-seed in development
@@ -146,9 +149,15 @@ class Settings(BaseSettings):
     
     @property
     def should_enable_background_tasks(self) -> bool:
-        """Check if background tasks should be enabled."""
-        if self.is_testing:
-            return False  # Never in testing
+        """
+        Check if background tasks should be enabled.
+
+        Background tasks (APScheduler) are disabled when:
+        - Running in testing environment
+        - Running in Lambda (uses EventBridge instead)
+        """
+        if self.is_testing or self.is_lambda:
+            return False  # Never in testing or Lambda
         return self.enable_background_tasks
     
     @property

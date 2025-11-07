@@ -34,10 +34,11 @@ Filter-iCal allows users to:
 - Vue DevTools integration
 
 **Infrastructure**
-- AWS EC2 (eu-north-1)
-- Docker containerization
-- Nginx reverse proxy with Let's Encrypt SSL
-- SSM-based deployment (builds on server)
+- AWS Lambda (Python 3.13, serverless compute)
+- AWS RDS PostgreSQL (t4g.micro, Single-AZ)
+- CloudFront + S3 (frontend hosting)
+- EventBridge (scheduled calendar sync every 30 min)
+- SST v3 (infrastructure as code)
 
 ---
 
@@ -88,16 +89,11 @@ make test                  # Run unit tests
 make test-all              # Run complete test suite
 make preview               # Build and test production frontend locally
 
-# SST Deployment (CloudFront + S3)
-make sst-deploy-staging        # Deploy frontend to staging.filter-ical.de
-make sst-deploy-production     # Deploy frontend to filter-ical.de
-make sst-remove-dev            # Remove dev stage AWS resources
-make sst-console               # Open SST console (monitoring, logs)
-
-# Legacy Deployment (SSM-based EC2)
-make deploy-staging        # Deploy to staging
-make deploy-production     # Deploy to production (requires approval)
-make status                # Check deployment status
+# SST Deployment (Full Stack: Lambda + RDS + S3)
+npx sst deploy --stage staging        # Deploy full stack to staging.filter-ical.de
+npx sst deploy --stage production     # Deploy full stack to filter-ical.de
+npx sst remove --stage dev            # Remove dev stage AWS resources
+npx sst console                       # Open SST console (monitoring, logs)
 
 # Database
 make reset-db              # Reset local database
@@ -166,60 +162,57 @@ filter-ical/
 
 | Environment | URL | Database | AWS Resources | Trigger |
 |-------------|-----|----------|---------------|---------|
-| **Dev** | http://localhost:8000 | `filterical_development` | Isolated CloudFormation stacks | `make dev` |
-| **Staging** | https://staging.filter-ical.de | `filterical_staging` | Staging CloudFront distribution | `make sst-deploy-staging` |
-| **Production** | https://filter-ical.de | `filterical_production` | Production CloudFront distribution | `make sst-deploy-production` |
+| **Dev** | http://localhost:8000 | `filterical_development` | Isolated CloudFormation stacks | `npm run dev` |
+| **Staging** | https://staging.filter-ical.de | RDS staging | Lambda + RDS + CloudFront | `npx sst deploy --stage staging` |
+| **Production** | https://filter-ical.de | RDS production | Lambda + RDS + CloudFront | `npx sst deploy --stage production` |
 
-**Note**: Each stage has completely isolated AWS resources (separate CloudFormation stacks, S3 buckets, CloudFront distributions).
+**Note**: Each stage has completely isolated AWS resources (separate Lambda functions, RDS instances, CloudFormation stacks).
 
 ### Deployment Workflow
 
 ```bash
 # 1. Develop locally
-make dev
+npm run dev  # SST dev mode with hot reload
 
 # 2. Run tests
-make test
+cd backend && pytest tests/ -m unit -v
 
 # 3. Commit changes
 git add .
 git commit -m "Add feature X"
-git push origin main  # Optional: backup to GitHub
+git push
 
-# 4. Deploy to staging via SSM (builds on server)
-make deploy-staging
+# 4. Deploy to staging (full stack: Lambda + RDS + S3)
+npx sst deploy --stage staging
 
-# 5. Verify on staging
-curl https://staging.filter-ical.de/health
+# 5. Run migrations
+npx sst shell --stage staging --command "cd backend && alembic upgrade head"
 
-# 6. Deploy to production via SSM
-make deploy-production
+# 6. Verify on staging
+curl https://api-staging.filter-ical.de/health
+
+# 7. Deploy to production
+npx sst deploy --stage production
+npx sst shell --stage production --command "cd backend && alembic upgrade head"
 ```
 
 ### Prerequisites for Deployment
 
-1. **EC2 Instance**: Running Amazon Linux 2023 in eu-north-1
-2. **AWS CLI**: Configured with SSM permissions
-3. **Instance ID**: Set in `.env.ec2` (copy from `.env.ec2.example`)
-
-```bash
-# Create .env.ec2 file
-cp .env.ec2.example .env.ec2
-# Edit and add your EC2_INSTANCE_ID
-```
+1. **AWS CLI**: Configured with `filter-ical` profile
+2. **AWS Region**: eu-north-1 (Stockholm)
+3. **Node.js**: 20+ (for SST)
+4. **Secrets**: Set via `npx sst secret set` (see CLAUDE.md)
 
 ### Infrastructure
 
-**AWS EC2**: eu-north-1
-- **OS**: Amazon Linux 2023
-- **Services**: Docker, nginx, certbot
-- **Deployment**: SSM (AWS Systems Manager)
+**AWS Lambda + RDS**: eu-north-1
+- **Backend**: Lambda Python 3.13 (FastAPI + Mangum)
+- **Sync Task**: Lambda (EventBridge, every 30 min)
+- **Database**: RDS PostgreSQL 16 (t4g.micro)
+- **Frontend**: CloudFront + S3 (Vue 3 SPA)
+- **Infrastructure**: SST v3 (TypeScript)
 
-**SSM-Based Deployment**:
-- Builds Docker images on server (no registry needed)
-- Connects via AWS Systems Manager (no SSH)
-- Automatic database migrations
-- Zero-downtime container updates
+**Cost**: ~$17/month (Lambda free tier + RDS $12 + CloudFront $2 + Secrets $2.40)
 
 ---
 
