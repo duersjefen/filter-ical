@@ -45,7 +45,7 @@ export default $config({
     });
 
     // 3. Backend API Lambda Function (FastAPI with Mangum)
-    const api = new sst.aws.Function("FilterIcalBackendApi", {
+    const backendFunction = new sst.aws.Function("FilterIcalBackendApi", {
       vpc,
       handler: "backend/lambda_api.handler",
       runtime: "python3.13",
@@ -75,9 +75,6 @@ export default $config({
       },
 
       // Python build configuration
-      nodejs: {
-        install: [],
-      },
       python: {
         container: true,  // Use Docker container for dependencies
       },
@@ -88,23 +85,28 @@ export default $config({
         directory: "backend",
         url: "http://localhost:3000"
       },
+    });
 
-      // API Gateway integration
-      url: {
-        cors: {
-          allowOrigins: ["*"],
-          allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-          allowHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language", "X-Requested-With"],
-        },
+    // 4. API Gateway with custom domain (wraps Lambda function)
+    const api = new sst.aws.ApiGatewayV2("FilterIcalApi", {
+      domain: $dev ? undefined : ($app.stage === "production"
+        ? "api.filter-ical.de"
+        : `api-${$app.stage}.filter-ical.de`),
+      cors: {
+        allowOrigins: $app.stage === "production"
+          ? ["https://filter-ical.de", "https://www.filter-ical.de"]
+          : $app.stage === "staging"
+          ? ["https://staging.filter-ical.de"]
+          : ["*"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language", "X-Requested-With"],
+        allowCredentials: true,
       },
     });
 
-    // 4. Configure custom domain for API
-    if (!$dev) {
-      api.domain = $app.stage === "production"
-        ? "api.filter-ical.de"
-        : `api-${$app.stage}.filter-ical.de`;
-    }
+    // Route all requests to backend Lambda
+    api.route("ANY /{proxy+}", backendFunction.arn);
+    api.route("ANY /", backendFunction.arn);
 
     // 5. Scheduled Sync Lambda Function
     const syncFunction = new sst.aws.Function("FilterIcalSyncTask", {
@@ -140,9 +142,7 @@ export default $config({
     if (!$dev) {
       new sst.aws.Cron("FilterIcalSyncScheduler", {
         schedule: "rate(30 minutes)",
-        job: {
-          function: syncFunction,
-        },
+        job: syncFunction,
       });
     }
 
@@ -158,9 +158,9 @@ export default $config({
         VITE_API_BASE_URL: $dev ? "http://localhost:3000" : api.url
       },
       // Custom domain for frontend (Route53 auto-managed by SST)
-      domain: $app.stage === "production"
+      domain: $dev ? undefined : ($app.stage === "production"
         ? "filter-ical.de"
-        : `${$app.stage}.filter-ical.de`,
+        : `${$app.stage}.filter-ical.de`),
       errorPage: "redirect_to_index",
 
       // Dev mode configuration (runs Vite dev server locally)

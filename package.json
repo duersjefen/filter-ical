@@ -4,11 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run setup && sst dev --stage staging",
     "setup": "bash scripts/ensure-backend.sh",
     "console": "sst console",
-    "types": "sst types",
-    "sst:dev": "npm run setup && sst dev --stage staging"
+    "types": "sst types"
   },
   "devDependencies": {
     "@duersjefen/deploy-kit": "^2.10.14",
