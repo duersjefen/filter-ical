@@ -1,0 +1,14 @@
+# Ignore Python virtual environment (thousands of files cause watcher to crash)
+backend/venv/**
+
+# Ignore node_modules
+frontend/node_modules/**
+
+# Ignore build artifacts
+frontend/dist/**
+.sst/**
+.open-next/**
+
+# Ignore test artifacts
+frontend/playwright-report/**
+backend/.pytest_cache/**

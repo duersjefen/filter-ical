@@ -4,18 +4,14 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "sst dev --stage dev",
-    "build": "sst build",
-    "deploy": "sst deploy",
-    "deploy:staging": "sst deploy --stage staging",
-    "deploy:prod": "sst deploy --stage production",
-    "remove": "sst remove",
-    "remove:dev": "sst remove --stage dev",
-    "remove:staging": "sst remove --stage staging",
+    "dev": "next dev",
+    "setup": "bash scripts/ensure-backend.sh",
     "console": "sst console",
-    "types": "sst types"
+    "types": "sst types",
+    "sst:dev": "npm run setup && sst dev --stage staging"
   },
   "devDependencies": {
+    "@duersjefen/deploy-kit": "^2.10.14",
     "sst": "^3.4.1",
     "typescript": "^5.7.3"
   }

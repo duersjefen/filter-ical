@@ -6,7 +6,22 @@ class Resource:
     class App:
         name: str
         stage: str
+    class FilterIcalBackend:
+        service: str
+        type: str
+    class FilterIcalBackendApi:
+        type: str
+        url: str
+    class FilterIcalDB:
+        database: str
+        host: str
+        password: str
+        port: float
+        type: str
+        username: str
     class FilterIcalFrontend:
         type: str
         url: str
+    class FilterIcalVpc:
+        type: str
 

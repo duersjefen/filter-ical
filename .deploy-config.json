@@ -1,0 +1,61 @@
+{
+  "projectName": "filter-ical",
+  "displayName": "Filter-iCal - Calendar Filtering Service",
+  "infrastructure": "custom",
+  "database": "postgresql",
+  "stages": [
+    "staging",
+    "production"
+  ],
+  "mainDomain": "filter-ical.de",
+  "awsProfile": "filter-ical",
+  "requireCleanGit": true,
+  "runTestsBeforeDeploy": true,
+  "stageConfig": {
+    "staging": {
+      "domain": "staging.filter-ical.de",
+      "apiDomain": "api-staging.filter-ical.de",
+      "requiresConfirmation": false,
+      "awsRegion": "eu-north-1",
+      "sstStageName": "staging"
+    },
+    "production": {
+      "domain": "filter-ical.de",
+      "apiDomain": "api.filter-ical.de",
+      "requiresConfirmation": true,
+      "awsRegion": "eu-north-1",
+      "sstStageName": "production"
+    }
+  },
+  "healthChecks": [
+    {
+      "url": "https://staging.filter-ical.de",
+      "expectedStatus": 200,
+      "timeout": 10000,
+      "name": "Frontend (Staging)"
+    },
+    {
+      "url": "https://api-staging.filter-ical.de/health",
+      "expectedStatus": 200,
+      "timeout": 10000,
+      "name": "Backend API (Staging)"
+    },
+    {
+      "url": "https://filter-ical.de",
+      "expectedStatus": 200,
+      "timeout": 10000,
+      "name": "Frontend (Production)"
+    },
+    {
+      "url": "https://api.filter-ical.de/health",
+      "expectedStatus": 200,
+      "timeout": 10000,
+      "name": "Backend API (Production)"
+    }
+  ],
+  "hooks": {
+    "preDev": "bash scripts/ensure-backend.sh",
+    "preDeploy": "cd frontend && npm run build",
+    "postDeploy": "echo '✅ Deployment complete! Run health checks: dk health'"
+  }
+}

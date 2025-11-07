@@ -111,3 +111,4 @@ infrastructure/secrets/
 .open-next/
 .sst-outputs/
 sst-env.d.ts
+.serena/
