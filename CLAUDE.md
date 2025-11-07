@@ -1,11 +1,11 @@
 # CLAUDE.md - Filter iCal Project Instructions
 
-Production-ready Python + Vue 3 **full serverless** web application with ECS Fargate + RDS PostgreSQL.
+Production-ready Python + Vue 3 **full serverless** web application with AWS Lambda + RDS PostgreSQL.
 
-**Architecture:** CloudFront + S3 (frontend) + ECS Fargate (backend) + RDS PostgreSQL (database)
-**Deployment:** Via deploy-kit (`dk deploy staging`, `dk deploy production`)
-**Cost:** ~$23/month (Fargate $9 + RDS $12 + CloudFront $2)
-**Updated:** 2025-11-06
+**Architecture:** CloudFront + S3 (frontend) + AWS Lambda (backend) + RDS PostgreSQL (database)
+**Deployment:** Via SST (`npx sst deploy --stage staging/production`)
+**Cost:** ~$14/month (Lambda $0 + RDS $12 + CloudFront $2) - 42% savings vs ECS
+**Updated:** 2025-11-07
 
 ---
 
@@ -31,10 +31,10 @@ Production-ready Python + Vue 3 **full serverless** web application with ECS Far
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Backend (FastAPI)                                          │
-│  ECS Fargate (0.25 vCPU, 0.5 GB)                           │
+│  Backend (FastAPI + Mangum)                                 │
+│  AWS Lambda (Python 3.13, 512 MB)                           │
 │  api.filter-ical.de                                         │
-│  Auto-scaling: 1-4 containers                               │
+│  Auto-scaling: 0-1000 concurrent executions                 │
 └─────────────────────────────────────────────────────────────┘
                             │
                             ▼
@@ -44,15 +44,23 @@ Production-ready Python + Vue 3 **full serverless** web application with ECS Far
 │  Private VPC subnet                                         │
 │  Automated backups (7-day retention)                        │
 └─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  Scheduled Sync Task (EventBridge)                          │
+│  AWS Lambda (Python 3.13, 512 MB, 5 min timeout)            │
+│  Runs every 30 minutes                                      │
+│  Syncs calendars, applies rules, warms cache                │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 **Key Features:**
-- ✅ Zero server maintenance (no SSH, no OS updates)
+- ✅ Zero server maintenance (no Docker, no containers to manage)
 - ✅ Automated database backups (daily, point-in-time recovery)
-- ✅ Auto-scaling backend (handles traffic spikes)
-- ✅ Single deployment command (`dk deploy production`)
+- ✅ True auto-scaling (0 to 1000 concurrent executions)
+- ✅ Pay-per-use pricing (within free tier for typical usage)
 - ✅ CloudWatch logs & monitoring (built-in)
 - ✅ Private VPC networking (secure database access)
+- ✅ 42% cost reduction vs ECS Fargate
 
 **What Happened to Redis?**
 - Removed! App has graceful degradation built-in (`backend/app/core/redis.py`)
@@ -109,21 +117,23 @@ npx sst secret set SmtpUsername "info@paiss.me" --stage staging
 npx sst secret set SmtpPassword "your-password" --stage staging
 
 # Deploy (runs tests, builds, deploys, health checks)
-dk deploy staging          # Deploy to staging.filter-ical.de
-dk deploy production       # Deploy to filter-ical.de (requires confirmation)
+npx sst deploy --stage staging          # Deploy to staging.filter-ical.de
+npx sst deploy --stage production       # Deploy to filter-ical.de
 
 # After deployment, run database migrations:
 npx sst shell --stage staging --command "cd backend && alembic upgrade head"
 npx sst shell --stage production --command "cd backend && alembic upgrade head"
 
 # Verify deployment:
-dk health                  # Run all health checks
-dk status                  # Check deployment status
+curl https://api-staging.filter-ical.de/health    # Should return 200
+curl https://api.filter-ical.de/health            # Should return 200
 
 # Monitor & Debug:
 npx sst console            # Open SST console (resources, logs, metrics)
-AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-staging --follow
-AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-production --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalBackendApi-staging --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalBackendApi-production --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalSyncTask-staging --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalSyncTask-production --follow
 
 # Database access:
 npx sst shell --stage staging      # Shell with staging DATABASE_URL
@@ -153,12 +163,18 @@ npx sst remove --stage production   # Delete production stack
 ##
 
 # Monthly (eu-north-1):
-#   ECS Fargate:   $9.00   (0.25 vCPU, 0.5 GB, always-on)
+#   Lambda API:    $0.00   (within free tier: 1M requests, 400K GB-seconds)
+#   Lambda Sync:   $0.00   (1,440 invocations/month, within free tier)
+#   EventBridge:   $0.00   (1,440 schedule invocations, negligible)
 #   RDS t4g.micro: $12.41  (Single-AZ, 20 GB GP3)
 #   CloudFront+S3: $2.00   (frontend hosting)
 #   Secrets:       $2.40   (6 secrets × $0.40)
 #   ─────────────────────
-#   Total:         ~$23/month
+#   Total:         ~$17/month (26% savings vs ECS)
+#
+# Note: Lambda free tier = 400,000 GB-seconds/month
+#   API Lambda (512 MB): ~1,000 requests at 200ms = 100 GB-seconds ✅ Free
+#   Sync Lambda (512 MB): 1,440 × 30s = 21,600 GB-seconds ✅ Free
 
 ##
 ## 🔐 AWS Configuration
@@ -193,15 +209,15 @@ node ~/.scripts/namecheap.js list filter-ical.de  # See current NS records
 - **Secrets:** AWS Secrets Manager (auto-loaded)
 - **Benefits:** Test with real data, no local database setup, faster iteration
 
-### Production Stack (Fargate + RDS + Route53)
+### Production Stack (Lambda + RDS + Route53)
 
 **Architecture:**
 ```
-Frontend (Vue 3 SPA)           Backend (FastAPI)           Database (PostgreSQL 16)
-CloudFront + S3                ECS Fargate                 RDS t4g.micro
+Frontend (Vue 3 SPA)           Backend (FastAPI + Mangum)  Database (PostgreSQL 16)
+CloudFront + S3                AWS Lambda                  RDS t4g.micro
 filter-ical.de          →      api.filter-ical.de    →     Private VPC
-                               0.25 vCPU, 0.5 GB           Single-AZ, 20GB
-                               Auto-scaling: 1-4            Automated backups
+                               Python 3.13, 512 MB         Single-AZ, 20GB
+                               Auto-scaling: 0-1000         Automated backups
 ```
 
 **Domains:**
@@ -214,16 +230,18 @@ filter-ical.de          →      api.filter-ical.de    →     Private VPC
 - Region: eu-north-1 (Stockholm)
 - Profile: filter-ical
 - DNS: FilterIcalDns (Route53 hosted zone for filter-ical.de)
-- VPC: FilterIcalVpc (managed NAT for Fargate)
-- Database: FilterIcalDB (PostgreSQL 16.3, RDS)
-- Backend: FilterIcalBackend (ECS Fargate Service)
+- VPC: FilterIcalVpc (required for RDS access)
+- Database: FilterIcalDB (PostgreSQL 16.10, RDS)
+- Backend API: FilterIcalBackendApi (Lambda Function)
+- Sync Task: FilterIcalSyncTask (Lambda Function, EventBridge scheduled)
 - Frontend: FilterIcalFrontend (CloudFront + S3)
 
 **Cost Breakdown:**
-- Fargate: ~$9/month (0.25 vCPU + 0.5 GB)
+- Lambda: ~$0/month (within free tier)
 - RDS: ~$12/month (t4g.micro Single-AZ)
 - CloudFront + S3: ~$2/month
-- **Total: ~$23/month**
+- Secrets: ~$2.40/month
+- **Total: ~$17/month (26% savings vs ECS)**
 
 ### Deployment Verification
 
@@ -238,8 +256,8 @@ curl -I https://filter-ical.de              # Should return 200
 curl -I https://staging.filter-ical.de
 
 # 3. Check CloudWatch logs if issues
-AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-production --follow
-AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-staging --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalBackendApi-production --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalSyncTask-production --follow
 ```
 
 ### Environment Configuration
