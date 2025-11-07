@@ -34,19 +34,21 @@ export default $config({
     };
   },
   async run() {
-    // 1. VPC (required for RDS and Lambda)
-    const vpc = new sst.aws.Vpc("FilterIcalVpc");
+    // 1. VPC (required for RDS and Lambda in deployed stages, not needed in dev mode)
+    const vpc = $dev ? undefined : new sst.aws.Vpc("FilterIcalVpc");
 
     // 2. PostgreSQL Database (RDS)
+    // In dev mode, this uses the DATABASE_URL from AWS Secrets Manager
+    // In deployed mode, this creates a new RDS instance in the VPC
     const database = new sst.aws.Postgres("FilterIcalDB", {
-      vpc,
+      ...(vpc ? { vpc } : {}),
       instance: "t4g.micro",
       version: "16.10",
     });
 
     // 3. Backend API Lambda Function (FastAPI with Mangum)
     const backendFunction = new sst.aws.Function("FilterIcalBackendApi", {
-      vpc,
+      ...(vpc ? { vpc } : {}),
       handler: "backend/lambda_api.handler",
       runtime: "python3.12",  // Changed from 3.13 (better SST support)
       timeout: "30 seconds",
@@ -99,7 +101,7 @@ export default $config({
 
     // 5. Scheduled Sync Lambda Function
     const syncFunction = new sst.aws.Function("FilterIcalSyncTask", {
-      vpc,
+      ...(vpc ? { vpc } : {}),
       handler: "backend/lambda_sync.handler",
       runtime: "python3.12",  // Changed from 3.13 (better SST support)
       timeout: "5 minutes",  // Longer timeout for sync operations
