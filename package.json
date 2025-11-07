@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@duersjefen/deploy-kit": "^2.10.14",
-    "sst": "^3.4.1",
+    "sst": "^3.17.23",
     "typescript": "^5.7.3"
   }
 }
