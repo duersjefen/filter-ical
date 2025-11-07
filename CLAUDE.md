@@ -1,18 +1,63 @@
 # CLAUDE.md - Filter iCal Project Instructions
 
-Production-ready Python + Vue 3 web application with comprehensive TDD workflow and language-independent CI/CD.
+Production-ready Python + Vue 3 **full serverless** web application with ECS Fargate + RDS PostgreSQL.
+
+**Architecture:** CloudFront + S3 (frontend) + ECS Fargate (backend) + RDS PostgreSQL (database)
+**Deployment:** Via deploy-kit (`dk deploy staging`, `dk deploy production`)
+**Cost:** ~$23/month (Fargate $9 + RDS $12 + CloudFront $2)
+**Updated:** 2025-11-06
 
 ---
 
 ## 🔗 DOCUMENTATION HIERARCHY
 
 **Global principles (TDD, architecture, critical behaviors):**
-→ `/Users/martijn/Documents/Projects/CLAUDE.md`
+→ `~/.claude/CLAUDE.md`
 
-**Platform infrastructure (nginx, SSL, deployment):**
-→ `/Users/martijn/Documents/Projects/multi-tenant-platform/CLAUDE.md`
+**This file:** Filter-iCal specific configuration and deployment details only
 
-**This file:** Filter-iCal specific configuration and deployment details only.
+---
+
+## 🏗️ ARCHITECTURE OVERVIEW
+
+### Full Serverless Stack (Current)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Frontend (Vue 3 SPA)                                       │
+│  CloudFront + S3                                            │
+│  filter-ical.de                                             │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Backend (FastAPI)                                          │
+│  ECS Fargate (0.25 vCPU, 0.5 GB)                           │
+│  api.filter-ical.de                                         │
+│  Auto-scaling: 1-4 containers                               │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Database (PostgreSQL 16)                                   │
+│  RDS t4g.micro (Single-AZ)                                  │
+│  Private VPC subnet                                         │
+│  Automated backups (7-day retention)                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Features:**
+- ✅ Zero server maintenance (no SSH, no OS updates)
+- ✅ Automated database backups (daily, point-in-time recovery)
+- ✅ Auto-scaling backend (handles traffic spikes)
+- ✅ Single deployment command (`dk deploy production`)
+- ✅ CloudWatch logs & monitoring (built-in)
+- ✅ Private VPC networking (secure database access)
+
+**What Happened to Redis?**
+- Removed! App has graceful degradation built-in (`backend/app/core/redis.py`)
+- Caching is optional (performance optimization only)
+- App works perfectly without Redis (slightly slower repeated queries)
 
 ---
 
@@ -20,316 +65,212 @@ Production-ready Python + Vue 3 web application with comprehensive TDD workflow 
 
 ### Quick Reference
 ```bash
-# Development
-make dev                   # Start PostgreSQL + backend + frontend (dev stage)
-make stop                  # Stop database (ports auto-increment if in use)
-make health                # Check service status
-make reset-db              # Reset local database
+##
+## 🚀 Local Development
+##
 
-# Testing
-make test                  # Run unit tests
-make test-all              # Run complete test suite (unit + integration + E2E)
-make preview               # Build and preview production frontend locally (port 4173)
-                          # CRITICAL: Test production builds before deploying
-                          # Catches Vite optimization issues that don't appear in dev mode
+# Start development (connects to staging RDS)
+npm run dev  # Runs "sst dev --stage staging"
 
-# SST Deployment (CloudFront + S3)
-make sst-deploy-staging        # Deploy frontend to staging.filter-ical.de
-make sst-deploy-production     # Deploy frontend to filter-ical.de
-make sst-remove-dev            # Remove dev stage resources
-make sst-remove-staging        # Remove staging stage resources
-make sst-console               # Open SST console (monitoring, logs)
+# This automatically:
+# - Connects to staging RDS database (real data!)
+# - Loads secrets from AWS Secrets Manager
+# - Hot-reloads backend + frontend on code changes
+# - Simulates CloudFront + S3 locally
 
-# Legacy EC2 Deployment (SSM-Based)
-make deploy-staging        # Push → test → deploy to staging (auto health check)
-make deploy-production     # Push → test → deploy to production (auto health check)
-SKIP_PUSH=1 make deploy-staging    # Deploy without pushing to GitHub
-SKIP_TESTS=1 make deploy-staging   # Emergency deploy (skip tests, still pushes)
-make logs-staging          # View staging logs (if deployment fails)
-make logs-production       # View production logs (if deployment fails)
-make status                # Check deployment status
+# URLs:
+# Frontend: http://localhost:8000
+# Backend:  http://localhost:3000
+# API Docs: http://localhost:3000/docs
+# Database: Staging RDS (auto-connected)
 
-# Environment Management (EC2 only)
-make edit-env-staging      # SSH to EC2 to edit staging .env files
-make edit-env-production   # SSH to EC2 to edit production .env files
-make restart-staging       # Restart staging containers (after .env changes)
-make restart-production    # Restart production containers (after .env changes)
+##
+## 🧪 Testing
+##
 
-# Local Development URLs (auto-increments if ports in use)
-# Frontend:  http://localhost:8000 (or 8001, 8002 if port in use)
-# Backend:   http://localhost:3000 (or 3001, 3002 if port in use)
-# API Docs:  http://localhost:3000/docs
-# Database:  localhost:5432 (PostgreSQL in Docker)
+# Backend tests
+cd backend && . venv/bin/activate && pytest tests/ -m unit -v
 
-# NEVER use manual server commands - always use Makefile
-# NOTE: Servers have hot-reloading - no restart needed for code changes
-# NOTE: Multiple dev instances can run simultaneously (auto port increment)
-# IMPORTANT: make dev is usually already running in a separate terminal
-#            Do NOT run make dev unless explicitly requested by user
+# Frontend build test (catches Vue compilation errors)
+cd frontend && npm run build
+
+# Frontend preview (test production build)
+cd frontend && npm run preview  # http://localhost:4173
+
+##
+## 🚀 Deployment (Use deploy-kit "dk" command)
+##
+
+# One-time setup (before first deployment):
+npx sst secret set JwtSecretKey "$(openssl rand -base64 32)" --stage staging
+npx sst secret set SmtpHost "mail.privateemail.com" --stage staging
+npx sst secret set SmtpPort "587" --stage staging
+npx sst secret set SmtpUsername "info@paiss.me" --stage staging
+npx sst secret set SmtpPassword "your-password" --stage staging
+
+# Deploy (runs tests, builds, deploys, health checks)
+dk deploy staging          # Deploy to staging.filter-ical.de
+dk deploy production       # Deploy to filter-ical.de (requires confirmation)
+
+# After deployment, run database migrations:
+npx sst shell --stage staging --command "cd backend && alembic upgrade head"
+npx sst shell --stage production --command "cd backend && alembic upgrade head"
+
+# Verify deployment:
+dk health                  # Run all health checks
+dk status                  # Check deployment status
+
+# Monitor & Debug:
+npx sst console            # Open SST console (resources, logs, metrics)
+AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-staging --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-production --follow
+
+# Database access:
+npx sst shell --stage staging      # Shell with staging DATABASE_URL
+npx sst shell --stage production   # Shell with production DATABASE_URL
+# Inside shell: psql $DATABASE_URL
+
+# Cleanup (DESTRUCTIVE!):
+npx sst remove --stage staging      # Delete staging CloudFormation stack
+npx sst remove --stage production   # Delete production stack
+
+##
+## 📊 Deployment URLs
+##
+
+# Staging:
+#   Frontend: https://staging.filter-ical.de
+#   Backend:  https://api-staging.filter-ical.de
+#   Docs:     https://api-staging.filter-ical.de/docs
+
+# Production:
+#   Frontend: https://filter-ical.de
+#   Backend:  https://api.filter-ical.de
+#   Docs:     https://api.filter-ical.de/docs
+
+##
+## 💰 Infrastructure Cost
+##
+
+# Monthly (eu-north-1):
+#   ECS Fargate:   $9.00   (0.25 vCPU, 0.5 GB, always-on)
+#   RDS t4g.micro: $12.41  (Single-AZ, 20 GB GP3)
+#   CloudFront+S3: $2.00   (frontend hosting)
+#   Secrets:       $2.40   (6 secrets × $0.40)
+#   ─────────────────────
+#   Total:         ~$23/month
+
+##
+## 🔐 AWS Configuration
+##
+
+# AWS Profile: filter-ical
+# AWS Region:  eu-north-1 (Stockholm)
+# AWS Account: 165046687980
+
+##
+## 🌐 DNS (Route53)
+##
+
+# After first deployment, SST outputs Route53 nameservers
+# Update domain registrar (Namecheap) to use these nameservers:
+dk deploy staging  # See output: dnsNameservers = ["ns-xxx.awsdns-xx.com", ...]
+
+# Update Namecheap:
+node ~/.scripts/namecheap.js list filter-ical.de  # See current NS records
+# Then update nameservers at Namecheap dashboard or via script
 ```
-
----
-
-## ✅ POST-DEPLOYMENT VERIFICATION
-
-**MANDATORY after EVERY `sst deploy` or `make sst-deploy-*` command.**
-
-SST deployments can fail silently with misconfigured CloudFront origins. Always verify:
-
-### Quick Verification Commands
-
-```bash
-# Get CloudFront distribution ID (from SST output or AWS Console)
-export AWS_PROFILE=student  # Currently using student account temporarily
-export DIST_ID=E2YPMLA94M2AIL  # Production CloudFront distribution
-
-# 1. Verify CloudFront origin (CRITICAL)
-aws cloudfront get-distribution-config --id $DIST_ID \
-  --query 'DistributionConfig.Origins.Items[0].DomainName' \
-  --output text
-
-# Expected: filter-ical-production-filtericalfrontendassetsbucket-cfufmfon.s3.eu-north-1.amazonaws.com
-# ❌ FAIL: placeholder.sst.dev → Run fix script immediately
-
-# 2. Test live site
-curl -I https://filter-ical.de
-
-# Expected: HTTP/2 200
-# ❌ FAIL: HTTP 403 Access Denied → CloudFront origin misconfigured
-
-# 3. Verify Origin Access Control
-aws cloudfront get-distribution-config --id $DIST_ID \
-  --query 'DistributionConfig.Origins.Items[0].OriginAccessControlId' \
-  --output text
-
-# Expected: E1O74KYH85SN4C (or similar OAC ID)
-# ❌ FAIL: Empty string → S3 bucket not accessible to CloudFront
-```
-
-### Automated Fix (If Verification Fails)
-
-```bash
-# Run automated fix script (installed at ~/.scripts/fix_sst_cloudfront.sh)
-~/.scripts/fix_sst_cloudfront.sh \
-  E2YPMLA94M2AIL \
-  filter-ical-production-filtericalfrontendassetsbucket-cfufmfon \
-  student \
-  eu-north-1 \
-  310829530903
-
-# Script will:
-# 1. Detect placeholder origin
-# 2. Create Origin Access Control (OAC)
-# 3. Update CloudFront with correct S3 origin
-# 4. Update S3 bucket policy
-# 5. Wait for deployment (5-15 minutes)
-```
-
-### Filter-iCal Specific Values
-
-**Production (Currently on Student Account):**
-- CloudFront Distribution ID: `E2YPMLA94M2AIL`
-- S3 Bucket: `filter-ical-production-filtericalfrontendassetsbucket-cfufmfon`
-- Region: `eu-north-1` (Stockholm)
-- AWS Profile: `student` (temporary, will migrate to `filter-ical` after verification)
-- AWS Account ID: `310829530903`
-- OAC ID: `E1O74KYH85SN4C`
-- Custom Domain: `filter-ical.de`
-- CloudFront URL: `d1muqpyoeowt1o.cloudfront.net`
-
-**After AWS Account Verification (Future):**
-- AWS Profile: `filter-ical`
-- AWS Account ID: `165046687980`
-- All other values will be regenerated during migration
-
-### Deployment Checklist
-
-**Before declaring SST deployment successful:**
-
-- [ ] CloudFront origin points to S3 bucket (not `placeholder.sst.dev`)
-- [ ] Origin Access Control (OAC) configured
-- [ ] S3 bucket policy allows CloudFront access
-- [ ] Live site returns HTTP 200
-- [ ] Site content loads correctly (check HTML source)
-- [ ] Backend API accessible (check VITE_API_BASE_URL)
-- [ ] CloudFront distribution status: `Deployed`
-
-**If ANY check fails → Run fix script before proceeding.**
-
----
 
 ## 🚢 INFRASTRUCTURE
 
-### Environment Stages
+### Local Development
 
-**Three isolated AWS environments:**
+**SST Dev Mode (connects to staging RDS)**
+- **Command:** `npm run dev` (runs `sst dev --stage staging`)
+- **Backend:** Uvicorn on `localhost:3000` (hot reload)
+- **Frontend:** Vite on `localhost:8000` (hot reload)
+- **Database:** Staging RDS (auto-connected via SST)
+- **Secrets:** AWS Secrets Manager (auto-loaded)
+- **Benefits:** Test with real data, no local database setup, faster iteration
 
-1. **Dev (local + AWS):**
-   - Local backend/frontend with isolated AWS resources
-   - Stage: `dev` (SST creates separate CloudFormation stacks)
-   - Purpose: Individual developer testing with real AWS services
-   - Domain: None (CloudFront distribution created but not domain-mapped)
-   - Cleanup: `make sst-remove-dev` (deletes all dev AWS resources)
+### Production Stack (Fargate + RDS + Route53)
 
-2. **Staging:**
-   - Pre-production testing environment
-   - Stage: `staging`
-   - Domain: `staging.filter-ical.de`
-   - Purpose: Integration testing before production
-
-3. **Production:**
-   - Live production environment
-   - Stage: `production`
-   - Domain: `filter-ical.de`
-   - Purpose: Live application serving users
-
-**Port Auto-Detection:**
-- SST/Vite automatically increment ports if default ports are in use
-- Multiple dev instances can run simultaneously (3000→3001→3002, 8000→8001→8002)
-- No need to kill existing processes - just start another instance
-
-### Local Development (macOS)
-- **Backend:** Uvicorn on `localhost:3000` (hot reload, auto-increments if port in use)
-- **Frontend:** Vite on `localhost:8000` (hot reload, auto-increments if port in use)
-- **Database:** PostgreSQL in Docker on `localhost:5432`
-  - Container: `filter-ical-postgres-dev`
-  - Database: `filterical_development`
-  - Managed by: `docker-compose.dev.yml`
-
-### Production Stack (SST CloudFront Deployment)
-- **Backend:** Python FastAPI + Uvicorn on EC2 (filter-ical AWS account)
-  - EC2: `i-041f562bf5f9642e1` (t4g.micro ARM, 13.50.144.0)
-  - Staging: port 3001, Production: port 3000
-  - PostgreSQL + Redis in Docker
-- **Frontend:** Vue 3 SPA on CloudFront + S3
-  - Staging: `staging.filter-ical.de` (pending CloudFront verification)
-  - Production: `filter-ical.de` (pending CloudFront verification)
-- **AWS Account:** filter-ical (165046687980)
-- **Region:** eu-north-1 (Stockholm)
-
-**CloudFront Status:**
-- ✅ CloudFront API verified and accessible
-- ⏳ Account verification pending for distribution creation
-- 📋 AWS Support ticket submitted
-- 🚀 Ready to deploy once verification completes: `AWS_PROFILE=filter-ical npx sst deploy --stage staging`
-
-### Email Service (SMTP → SES Migration Plan)
-
-**⚠️ IMPORTANT: Current SMTP setup is TEMPORARY**
-
-**Current State (Temporary):**
-- Using PrivateEmail SMTP (mail.privateemail.com:587)
-- Credentials: `info@paiss.me` / stored in `/opt/secrets/` on EC2
-- **Why temporary:** External dependency, not AWS-native, less scalable
-
-**Migration Plan (After AWS Account Verification):**
-1. **Request SES Production Access:**
-   - AWS Console → SES → Request production access
-   - Current state: Sandbox mode (only verified emails)
-   - Production: Send to any email address
-
-2. **Verify Sender Domain:**
-   ```bash
-   # Generate DKIM records
-   aws ses verify-domain-identity --domain filter-ical.de --region eu-north-1
-
-   # Add DNS records (via Namecheap script or Route53)
-   # - TXT record for domain verification
-   # - CNAME records for DKIM signing
-   ```
-
-3. **Update Backend Configuration:**
-   ```bash
-   # On EC2, edit backend/.env.staging and backend/.env.production
-   # Replace SMTP_* variables with SES configuration:
-
-   # Remove:
-   SMTP_HOST=mail.privateemail.com
-   SMTP_PORT=587
-   SMTP_USERNAME=info@paiss.me
-   SMTP_PASSWORD=***
-
-   # Add:
-   AWS_SES_REGION=eu-north-1
-   AWS_SES_FROM_EMAIL=noreply@filter-ical.de
-   # No credentials needed - uses EC2 IAM role
-   ```
-
-4. **Update IAM Role:**
-   ```bash
-   # Add SES permissions to FilterIcalEC2SSMRole
-   aws iam attach-role-policy \
-     --role-name FilterIcalEC2SSMRole \
-     --policy-arn arn:aws:iam::aws:policy/AmazonSESFullAccess
-   ```
-
-5. **Update Backend Code:**
-   - Modify `backend/app/services/email.py` to use boto3 SES client
-   - Keep SMTP as fallback for local development
-
-6. **Test & Deploy:**
-   ```bash
-   # Test in staging first
-   make deploy-staging
-
-   # Verify emails are sent
-   # Check SES console for delivery metrics
-
-   # Deploy to production
-   make deploy-production
-   ```
-
-**SES Benefits:**
-- ✅ Native AWS integration (IAM-based auth, no passwords)
-- ✅ Better deliverability (AWS IP reputation)
-- ✅ Scalable (50,000 emails/day free tier)
-- ✅ Built-in bounce/complaint handling
-- ✅ Email analytics and monitoring
-- ✅ Cost-effective ($0.10 per 1,000 emails after free tier)
-
-**Timeline:**
-- **Now:** SMTP working (production ready)
-- **After AWS verification:** Request SES production access (~24-48 hours)
-- **After SES approval:** Migrate to SES (~1 hour implementation)
-
-**References:**
-- [AWS SES Documentation](https://docs.aws.amazon.com/ses/)
-- [SES Python SDK (boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ses.html)
-
-### SSM-Based Deployment Architecture
-**CRITICAL:** filter-ical uses SSM (AWS Systems Manager) for deployment.
-
-**How It Works:**
-1. `make deploy-staging` → Tests pass → Push to GitHub → SSM connects to EC2
-2. EC2 pulls code, builds Docker images, starts containers (2-5 min)
-3. Containers join `platform` Docker network with DNS resolution
-
-**Key Files:**
-- Application: `backend/`, `frontend/`
-- Deployment: `deploy.sh`, `docker-compose.yml`, `Makefile`
-- Platform nginx: `../multi-tenant-platform/platform/nginx/sites/filter-ical.conf`
-- EC2 instance ID: `.env.ec2` (gitignored)
-
-### Environment Configuration (Per-Component Pattern)
-
-**Structure:**
+**Architecture:**
 ```
-backend/.env.development    # Local: DB, SMTP, secrets (backend only)
-frontend/.env.development   # Local: VITE_API_BASE_URL (frontend only)
-backend/.env.staging        # EC2: Backend config (created manually)
-frontend/.env.staging       # EC2: Frontend config (created manually)
-backend/.env.production     # EC2: Backend config (created manually)
-frontend/.env.production    # EC2: Frontend config (created manually)
+Frontend (Vue 3 SPA)           Backend (FastAPI)           Database (PostgreSQL 16)
+CloudFront + S3                ECS Fargate                 RDS t4g.micro
+filter-ical.de          →      api.filter-ical.de    →     Private VPC
+                               0.25 vCPU, 0.5 GB           Single-AZ, 20GB
+                               Auto-scaling: 1-4            Automated backups
 ```
 
-**Security:** Frontend never receives backend secrets (DB, SMTP, JWT keys).
+**Domains:**
+- Production Frontend: https://filter-ical.de
+- Production Backend: https://api.filter-ical.de
+- Staging Frontend: https://staging.filter-ical.de
+- Staging Backend: https://api-staging.filter-ical.de
 
-**Changing .env on EC2:**
-1. Backend config: `make edit-env-staging` → edit `backend/.env.staging` → `make restart-staging`
-2. Frontend config: Edit `frontend/.env.staging` → **MUST REBUILD**: `docker-compose build frontend && docker-compose up -d`
-   - VITE_* vars are baked into the build, restart alone won't work
+**AWS Resources:**
+- Region: eu-north-1 (Stockholm)
+- Profile: filter-ical
+- DNS: FilterIcalDns (Route53 hosted zone for filter-ical.de)
+- VPC: FilterIcalVpc (managed NAT for Fargate)
+- Database: FilterIcalDB (PostgreSQL 16.3, RDS)
+- Backend: FilterIcalBackend (ECS Fargate Service)
+- Frontend: FilterIcalFrontend (CloudFront + S3)
 
-**Initial setup:** Run `./scripts/setup-remote-env.sh` once, then SSH to update placeholders.
+**Cost Breakdown:**
+- Fargate: ~$9/month (0.25 vCPU + 0.5 GB)
+- RDS: ~$12/month (t4g.micro Single-AZ)
+- CloudFront + S3: ~$2/month
+- **Total: ~$23/month**
+
+### Deployment Verification
+
+**After deployment, verify:**
+```bash
+# 1. Check health endpoints
+curl https://api.filter-ical.de/health      # Should return 200
+curl https://api-staging.filter-ical.de/health
+
+# 2. Test frontend loads
+curl -I https://filter-ical.de              # Should return 200
+curl -I https://staging.filter-ical.de
+
+# 3. Check CloudWatch logs if issues
+AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-production --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-staging --follow
+```
+
+### Environment Configuration
+
+**SST manages environment-specific secrets:**
+```bash
+# Set secrets per stage (one-time setup)
+npx sst secret set JwtSecretKey "your-secret" --stage staging
+npx sst secret set SmtpHost "mail.privateemail.com" --stage staging
+npx sst secret set SmtpPort "587" --stage staging
+npx sst secret set SmtpUsername "info@paiss.me" --stage staging
+npx sst secret set SmtpPassword "your-password" --stage staging
+
+# List secrets
+npx sst secret list --stage staging
+
+# Remove secret (if needed)
+npx sst secret remove JwtSecretKey --stage staging
+```
+
+**Security:**
+- Secrets stored in AWS Secrets Manager (encrypted at rest)
+- SST automatically injects secrets into Fargate containers
+- Frontend NEVER receives backend secrets (DB, SMTP, JWT)
+- Database credentials auto-generated by RDS (no manual setup)
+- Frontend config (VITE_API_BASE_URL) injected at build time by SST
+
+**No Manual Configuration Needed:**
+- RDS connection: SST auto-links database to backend
+- Backend URL: SST auto-injects into frontend build
+- All secrets: Managed via `npx sst secret` commands
 
 ### Database Migrations
 **MANDATORY: Use Alembic for all schema changes**
@@ -355,16 +296,14 @@ alembic upgrade head
 ## 📋 DEVELOPMENT RULES
 
 **✅ ALWAYS:**
-- Use Makefile commands for servers (`make dev`, not manual npm/uvicorn)
 - Write OpenAPI specs before implementation
-- Pure functions in `/data/` and `/composables/` directories  
+- Pure functions in `/data/` and `/composables/` directories
 - Contract tests for API validation
 - Headless E2E tests only
 - Alembic for database changes
-- Run `make test` and commit after completing features/fixes
+- Run tests before committing
 
 **❌ NEVER:**
-- Manual server startup or non-standard ports
 - Implementation before OpenAPI specification
 - Classes for business logic (functions only)
 - Side effects in pure function directories
@@ -373,209 +312,82 @@ alembic upgrade head
 
 **PURPOSE:** This architecture ensures 100% testability, zero frontend coupling, fearless refactoring, and production reliability.
 
----
+## 🚀 DEPLOYMENT WORKFLOW
 
-## ⚠️ DEPLOYMENT BEST PRACTICES
+### First-Time Setup (One-Time Only)
 
-**CRITICAL: Always follow these steps before ANY deployment**
-
-### Pre-Deployment Checklist
-
-**1. Plan the Deployment (5-10 minutes)**
-- [ ] Write down exactly what will change
-- [ ] Identify all affected services (frontend, backend, database, DNS)
-- [ ] Document rollback procedure BEFORE deploying
-- [ ] Verify you have the right AWS profile set
-- [ ] Check if DNS changes are needed
-
-**2. Review Configuration (5 minutes)**
-- [ ] Read the relevant config files (`sst.config.ts`, `docker-compose.yml`, `.env` files)
-- [ ] Verify domain names are correct
-- [ ] Check CORS settings will allow the new setup
-- [ ] Confirm ports and networking are correct
-
-**3. Dry Run / Sanity Check (2 minutes)**
-- [ ] Review the exact commands you'll run
-- [ ] Verify AWS credentials are correct (`aws sts get-caller-identity`)
-- [ ] Check current deployment status
-- [ ] Ensure tests pass (`make test`)
-
-**4. Execute Deployment (varies)**
-- [ ] Run commands one at a time (not all at once)
-- [ ] Read the output carefully after each command
-- [ ] If anything looks wrong, STOP and investigate
-- [ ] Take notes of any IDs, URLs, or values you'll need
-
-**5. Post-Deployment Verification (5 minutes)**
-- [ ] Test the deployed service manually
-- [ ] Check health endpoints
-- [ ] Verify DNS propagation (if DNS was changed)
-- [ ] Monitor logs for errors
-- [ ] Test cross-service communication (e.g., frontend → backend)
-
-**6. Document Changes**
-- [ ] Update CLAUDE.md with any new infrastructure details
-- [ ] Note any manual steps that were required
-- [ ] Document any issues encountered and how they were resolved
-
-### Deployment Anti-Patterns (Never Do This)
-
-❌ **Running commands without understanding them**
-- Always read the config files first
-- Understand what each command will do
-
-❌ **Deploying to production first**
-- Always deploy to staging first
-- Test thoroughly before production
-
-❌ **Changing multiple things at once**
-- Make one change at a time
-- Deploy, test, then proceed
-
-❌ **Skipping the rollback plan**
-- Always have a way to undo changes
-- Test rollback procedure before deploying
-
-❌ **Ignoring errors or warnings**
-- Every error means something
-- Investigate before proceeding
-
-### Emergency Rollback Procedures
-
-If a deployment goes wrong:
-
-1. **Stay calm** - Most issues are recoverable
-2. **Stop the deployment** - Don't make it worse
-3. **Assess the damage** - What's broken? What's still working?
-4. **Roll back** - Use the rollback plan you prepared
-5. **Investigate** - What went wrong? How can we prevent it?
-
----
-
-## 🚀 DEPLOYMENT READINESS CHECKLIST
-
-### Current Status (2025-10-28)
-
-**🎉 LIVE & WORKING:**
-- [x] Frontend deployed to student account (TEMPORARY)
-  - URL: https://filter-ical.de
-  - CloudFront Distribution: E2YPMLA94M2AIL (student account)
-  - SSL Certificate: ACM in us-east-1 (student account)
-  - **NOTE:** Will migrate to filter-ical account after verification
-
-**✅ Ready & Working:**
-- [x] EC2 instance configured (t4g.micro ARM64, 13.50.144.0)
-- [x] Docker Buildx v0.17.1 installed (ARM64 compatible)
-- [x] GitHub deploy key configured
-- [x] Environment files created and configured
-- [x] SMTP credentials configured (temporary)
-- [x] PostgreSQL + Redis running (both staging & production)
-- [x] Backend APIs deployed and healthy:
-  - Production: http://api.filter-ical.de/health (port 3000)
-  - Staging: http://api-staging.filter-ical.de/health (port 3001)
-- [x] DNS records configured in Route53:
-  - filter-ical.de → 13.50.144.0
-  - api.filter-ical.de → 13.50.144.0
-  - staging.filter-ical.de → S3 (will become CloudFront)
-  - api-staging.filter-ical.de → 13.50.144.0
-- [x] SST configuration complete
-- [x] Docker Compose project isolation (staging/production can coexist)
-
-**⏳ Blocked by AWS Account Verification:**
-- [ ] CloudFront distribution creation
-- [ ] API Gateway deployment
-- [ ] ACM SSL certificates
-- [ ] Frontend deployment (staging & production)
-- [ ] HTTPS for APIs
-
-**🔜 Post-Verification Tasks (Migrate to filter-ical Account):**
-
-**After AWS verification completes:**
-1. **Deploy to filter-ical account:**
-   ```bash
-   # Update sst.config.ts profile: student → filter-ical
-   # Update sst.config.ts: add domain configuration back
-   AWS_PROFILE=filter-ical npx sst deploy --stage production
-   ```
-
-2. **Update Route53 DNS:**
-   - Point filter-ical.de to new CloudFront (filter-ical account)
-   - Remove ACM validation records (student account)
-
-3. **Clean up student account:**
-   ```bash
-   AWS_PROFILE=student npx sst remove --stage production
-   AWS_PROFILE=student aws acm delete-certificate --certificate-arn [ARN]
-   ```
-
-4. **Additional tasks:**
-   - Request SES production access
-   - Migrate SMTP → SES
-   - Enable Brotli compression (optional)
-
-### Post-Verification Deployment Commands
-
-Once AWS account verification completes, run these commands in order:
-
+**1. Set AWS Secrets:**
 ```bash
-# 1. Deploy staging (test first)
-cd /Users/martijn/Documents/Projects/filter-ical
-export AWS_PROFILE=filter-ical
-npx sst deploy --stage staging
+# Set secrets for staging
+npx sst secret set JwtSecretKey "$(openssl rand -base64 32)" --stage staging
+npx sst secret set SmtpHost "mail.privateemail.com" --stage staging
+npx sst secret set SmtpPort "587" --stage staging
+npx sst secret set SmtpUsername "info@paiss.me" --stage staging
+npx sst secret set SmtpPassword "your-password" --stage staging
 
-# Expected output:
-# ✓ Complete
-#   Frontend: https://staging.filter-ical.de
-#   API: https://api-staging.filter-ical.de
-
-# 2. Test staging
-curl https://staging.filter-ical.de
-curl https://api-staging.filter-ical.de/health
-
-# 3. Deploy production (if staging works)
-npx sst deploy --stage production
-
-# Expected output:
-# ✓ Complete
-#   Frontend: https://filter-ical.de
-#   API: https://api.filter-ical.de
-
-# 4. Test production
-curl https://filter-ical.de
-curl https://api.filter-ical.de/health
-
-# 5. Verify DNS propagation (may take 5-10 minutes)
-dig filter-ical.de CNAME
-dig api.filter-ical.de CNAME
+# Repeat for production with DIFFERENT secrets
+npx sst secret set JwtSecretKey "$(openssl rand -base64 32)" --stage production
+npx sst secret set SmtpHost "mail.privateemail.com" --stage production
+npx sst secret set SmtpPort "587" --stage production
+npx sst secret set SmtpUsername "info@paiss.me" --stage production
+npx sst secret set SmtpPassword "your-password" --stage production
 ```
 
-### Monitoring After Deployment
+### Deployment Commands
+
+**Deploy to staging:**
+```bash
+dk deploy staging            # Run tests → Deploy → Health check
+# Output: https://staging.filter-ical.de
+#         https://api-staging.filter-ical.de
+#         dnsNameservers: ["ns-xxx.awsdns-xx.com", ...]
+```
+
+**Update DNS (first deployment only):**
+- Copy nameservers from SST output
+- Update domain registrar (Namecheap) to use Route53 nameservers
+- DNS propagation: 5-60 minutes
+
+**Run database migrations:**
+```bash
+npx sst shell --stage staging --command "cd backend && alembic upgrade head"
+```
+
+**Deploy to production:**
+```bash
+dk deploy production         # Requires "yes" confirmation
+# Output: https://filter-ical.de
+#         https://api.filter-ical.de
+```
+
+### Monitoring & Debugging
 
 ```bash
-# Open SST console for monitoring
+# Check health
+dk health                    # Run all health checks
+dk status                    # Check deployment status
+
+# View logs
+AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-staging --follow
+AWS_PROFILE=filter-ical aws logs tail /aws/ecs/filter-ical-backend-production --follow
+
+# SST console (resources, metrics, logs)
 npx sst console
 
-# Check CloudFront distribution status
-aws cloudfront list-distributions --query 'DistributionList.Items[*].[Id,DomainName,Status]' --output table
-
-# Check backend health
-curl https://api.filter-ical.de/health
-curl https://api-staging.filter-ical.de/health
-
-# Check CloudWatch logs (if issues)
-aws logs tail /aws/lambda/filter-ical --follow
+# Database access
+npx sst shell --stage staging       # Shell with DATABASE_URL set
+npx sst shell --stage production
+# Inside shell: psql $DATABASE_URL
 ```
 
-### Rollback Plan (If Needed)
+### Rollback
 
 ```bash
-# Remove staging deployment
-npx sst remove --stage staging
-
-# Remove production deployment (DANGEROUS - only if critical issue)
-npx sst remove --stage production
-
-# Backend rollback (revert to previous git commit)
+# Code rollback
 git revert HEAD
-make deploy-production
+dk deploy staging
+
+# Full teardown (DESTRUCTIVE!)
+npx sst remove --stage staging      # Deletes CloudFormation stack
+npx sst remove --stage production   # Deletes all AWS resources
 ```

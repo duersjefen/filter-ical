@@ -452,6 +452,11 @@ const getFullExportUrl = (calendar) => {
     console.warn('Calendar object missing export_url:', calendar)
     return ''
   }
+  // If export_url is already an absolute URL, return it as-is
+  if (calendar.export_url.startsWith('http://') || calendar.export_url.startsWith('https://')) {
+    return calendar.export_url
+  }
+  // Otherwise, prepend the current origin (for backward compatibility with relative URLs)
   return `${window.location.origin}${calendar.export_url}`
 }
 

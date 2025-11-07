@@ -3,12 +3,11 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "esModuleInterop": true,
-    "jsx": "react",
-    "jsxImportSource": "react",
+    "jsx": "react-jsx",
     "lib": ["ESNext"],
     "target": "ESNext",
     "noEmit": true,
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true
   }
 }

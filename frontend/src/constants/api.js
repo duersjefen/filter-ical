@@ -40,7 +40,7 @@ export const API_ENDPOINTS = {
   DOMAIN_UNASSIGN_EVENT: (domain) => `/api/domains/${domain}/unassign-event`,
 
   // Dynamic iCal Export
-  ICAL_EXPORT: (uuid) => `/ical/${uuid}.ics`,
+  ICAL_EXPORT: (uuid) => `${API_BASE_URL}/ical/${uuid}.ics`,
 }
 
 export const HTTP_STATUS = {
