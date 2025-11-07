@@ -5,8 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "sst dev --stage staging",
+    "setup": "bash scripts/ensure-backend.sh",
     "console": "sst console",
-    "types": "sst types"
+    "types": "sst types",
+    "sst:dev": "npm run setup && sst dev --stage staging"
   },
   "devDependencies": {
     "@duersjefen/deploy-kit": "^2.10.14",
