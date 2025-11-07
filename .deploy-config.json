@@ -54,7 +54,6 @@
     }
   ],
   "hooks": {
-    "preDev": "bash scripts/ensure-backend.sh",
     "preDeploy": "cd frontend && npm run build",
     "postDeploy": "echo '✅ Deployment complete! Run health checks: dk health'"
   }
