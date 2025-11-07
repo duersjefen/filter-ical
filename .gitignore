@@ -99,7 +99,7 @@ backend/test_*.db
 *.dev-calendars.local
 
 # Claude Code local settings
-.claude/
+# .claude/ # Commented by dk ccw - .claude/ should be tracked for CCW config
 .claude/settings.local.json
 
 # Production deployment artifacts
