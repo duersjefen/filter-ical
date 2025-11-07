@@ -134,7 +134,7 @@ export default $config({
     const frontend = new sst.aws.StaticSite("FilterIcalFrontend", {
       path: "frontend",
       build: {
-        command: "npm run build",
+        command: "pnpm run build",
         output: "dist"
       },
       environment: {
@@ -149,7 +149,7 @@ export default $config({
 
       // Dev mode configuration (runs Vite dev server locally)
       dev: {
-        command: "npm run dev",
+        command: "pnpm run dev",
         directory: "frontend",
         url: "http://localhost:5173"
       }
