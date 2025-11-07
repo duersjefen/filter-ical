@@ -58,20 +58,17 @@ export default $config({
       // Environment variables
       environment: {
         // Stage
-        ENVIRONMENT: $app.stage,
+        ENVIRONMENT: $dev ? "development" : $app.stage,
 
-        // Lambda execution context flag
+        // Lambda execution context flag (always true for Lambda dev mode)
         IS_LAMBDA: "true",
 
-        // Dev mode: Secrets from backend/.env.development (no AWS needed, works offline)
-        // Deployed: Secrets from AWS Secrets Manager (secure, audited, managed)
-        ...($dev ? {} : {
-          JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
-          SMTP_HOST: new sst.Secret("SmtpHost").value,
-          SMTP_PORT: new sst.Secret("SmtpPort").value,
-          SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
-          SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
-        }),
+        // Secrets from AWS Secrets Manager (used in both dev and deployed)
+        JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
+        SMTP_HOST: new sst.Secret("SmtpHost").value,
+        SMTP_PORT: new sst.Secret("SmtpPort").value,
+        SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
+        SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
       },
 
       // Python build configuration
@@ -79,12 +76,9 @@ export default $config({
         container: true,  // Use Docker container for dependencies
       },
 
-      // Dev mode configuration (runs backend locally)
-      dev: {
-        command: ". venv/bin/activate && uvicorn app.main:app --reload --host 0.0.0.0 --port 3000",
-        directory: "backend",
-        url: "http://localhost:3000"
-      },
+      // Dev mode: Run Lambda locally (no dev block = Lambda runtime simulation)
+      // This tests the actual Lambda handler (Mangum) with API Gateway simulation
+      // Tradeoff: Slower iteration (~10-30s rebuilds) vs production parity
     });
 
     // 4. API Gateway with custom domain (wraps Lambda function)
@@ -121,16 +115,15 @@ export default $config({
 
       // Environment variables
       environment: {
-        ENVIRONMENT: $app.stage,
+        ENVIRONMENT: $dev ? "development" : $app.stage,
         IS_LAMBDA: "true",
 
-        ...($dev ? {} : {
-          JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
-          SMTP_HOST: new sst.Secret("SmtpHost").value,
-          SMTP_PORT: new sst.Secret("SmtpPort").value,
-          SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
-          SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
-        }),
+        // Secrets from AWS Secrets Manager
+        JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
+        SMTP_HOST: new sst.Secret("SmtpHost").value,
+        SMTP_PORT: new sst.Secret("SmtpPort").value,
+        SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
+        SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
       },
 
       python: {
