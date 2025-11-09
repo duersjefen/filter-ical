@@ -71,6 +71,8 @@ export default $config({
         SMTP_PORT: new sst.Secret("SmtpPort").value,
         SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
         SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
+        ADMIN_EMAIL: new sst.Secret("AdminEmail").value,
+        ADMIN_PASSWORD: new sst.Secret("AdminPassword").value,
       },
 
       // Python build configuration
@@ -121,6 +123,8 @@ export default $config({
         SMTP_PORT: new sst.Secret("SmtpPort").value,
         SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
         SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
+        ADMIN_EMAIL: new sst.Secret("AdminEmail").value,
+        ADMIN_PASSWORD: new sst.Secret("AdminPassword").value,
       },
     });
 
