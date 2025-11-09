@@ -3,6 +3,7 @@
   "displayName": "Filter-iCal - Calendar Filtering Service",
   "infrastructure": "custom",
   "database": "postgresql",
+  "devStage": "staging",
   "stages": [
     "staging",
     "production"
