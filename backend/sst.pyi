@@ -6,40 +6,4 @@ class Resource:
     class App:
         name: str
         stage: str
-    class FilterIcalApi:
-        type: str
-        url: str
-    class FilterIcalBackend:
-        service: str
-        type: str
-    class FilterIcalBackendApi:
-        name: str
-        type: str
-    class FilterIcalDB:
-        database: str
-        host: str
-        password: str
-        port: float
-        type: str
-        username: str
-    class FilterIcalFrontend:
-        type: str
-        url: str
-    class FilterIcalVpc:
-        type: str
-    class JwtSecretKey:
-        type: str
-        value: str
-    class SmtpHost:
-        type: str
-        value: str
-    class SmtpPassword:
-        type: str
-        value: str
-    class SmtpPort:
-        type: str
-        value: str
-    class SmtpUsername:
-        type: str
-        value: str
 

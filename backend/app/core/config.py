@@ -76,9 +76,8 @@ class Settings(BaseSettings):
     openapi_spec_path: Path = base_dir / "openapi.yaml"
 
     class Config:
-        # Default to backend/.env.development for local development
-        # Production will override via environment variables
-        env_file = str(Path(__file__).parent.parent.parent / ".env.development")
+        # All configuration comes from environment variables (SST secrets)
+        # No .env files needed - SST injects secrets automatically
         case_sensitive = False
         extra = "ignore"  # Ignore extra env vars
     

@@ -1,0 +1,18 @@
+# Lambda container for scheduled sync task
+# This runs the sync handler directly (no web server needed)
+
+FROM public.ecr.aws/lambda/python:3.12
+
+# Set working directory
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY app/ ./app/
+COPY domains/ ./domains/
+
+# Set the Lambda handler (points to app.lambda_sync.handler function)
+CMD ["app.lambda_sync.handler"]

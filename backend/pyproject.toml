@@ -26,6 +26,9 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
 ]
 
+[tool.setuptools]
+py-modules = ["lambda_handler", "lambda_sync"]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["app*", "domains*"]
