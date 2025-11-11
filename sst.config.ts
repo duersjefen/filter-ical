@@ -35,8 +35,10 @@ export default $config({
   },
   async run() {
     // 1. VPC (required for RDS - needed in all modes)
-    // Note: SST automatically reuses existing VPC when running 'sst dev --stage staging'
-    const vpc = new sst.aws.Vpc("FilterIcalVpc");
+    // Using custom CIDR to avoid conflicts with orphaned VPC
+    const vpc = new sst.aws.Vpc("FilterIcalVpc", {
+      cidr: "10.1.0.0/16"  // Changed from default 10.0.0.0/16 to avoid conflict
+    });
 
     // 2. PostgreSQL Database (RDS)
     // SST automatically reuses existing RDS when running 'sst dev --stage staging'
@@ -49,8 +51,8 @@ export default $config({
     // 3. Backend API Lambda Function (FastAPI with Mangum)
     const backendFunction = new sst.aws.Function("FilterIcalBackendApi", {
       vpc,
-      handler: "backend/lambda_api.handler",
-      runtime: "python3.12",  // Changed from 3.13 (better SST support)
+      handler: "backend/app/lambda_handler.handler",
+      runtime: "python3.12",
       timeout: "30 seconds",
       memory: "512 MB",
 
@@ -104,8 +106,8 @@ export default $config({
     // 5. Scheduled Sync Lambda Function
     const syncFunction = new sst.aws.Function("FilterIcalSyncTask", {
       vpc,
-      handler: "backend/lambda_sync.handler",
-      runtime: "python3.12",  // Changed from 3.13 (better SST support)
+      handler: "backend/app/lambda_sync.handler",
+      runtime: "python3.12",
       timeout: "5 minutes",  // Longer timeout for sync operations
       memory: "512 MB",
 
@@ -129,16 +131,15 @@ export default $config({
     });
 
     // 6. EventBridge Scheduler (runs every 30 minutes)
-    if (!$dev) {
-      new sst.aws.Cron("FilterIcalSyncScheduler", {
-        schedule: "rate(30 minutes)",
-        job: syncFunction,
-      });
-    }
+    // Note: Disabled in dev mode to avoid unnecessary Lambda invocations
+    // const syncScheduler = !$dev && new sst.aws.Cron("FilterIcalSyncScheduler", {
+    //   schedule: "rate(30 minutes)",
+    //   job: syncFunction,
+    // });
 
     // 6. Frontend (Vue 3 SPA on CloudFront + S3)
     const frontend = new sst.aws.StaticSite("FilterIcalFrontend", {
-      path: "frontend",
+      path: ".",  // Frontend files are in root directory (src/, public/, vite.config.mjs)
       build: {
         command: "pnpm run build",
         output: "dist"
