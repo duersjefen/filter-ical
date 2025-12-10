@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # Database settings
     database_url: str = "sqlite:///./data/icalviewer.db"
     test_database_url: str = "sqlite:///./data/test_icalviewer.db"
+
+    # DynamoDB settings (for serverless deployment)
+    use_dynamodb: bool = False  # Set via USE_DYNAMODB env var
+    dynamodb_table_name: str = "filter-ical-table"  # Set via DYNAMODB_TABLE_NAME env var
     
     # Server settings  
     host: str = "0.0.0.0"

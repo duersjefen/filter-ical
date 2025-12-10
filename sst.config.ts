@@ -1,22 +1,24 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
 /**
- * Filter-iCal SST Configuration - Full Serverless Architecture
+ * Filter-iCal SST Configuration - True Serverless Architecture
  *
  * Stack:
  * - Frontend: Vue 3 SPA on CloudFront + S3
- * - Backend: FastAPI on AWS Lambda (Python 3.13)
+ * - Backend: FastAPI on AWS Lambda (Python 3.11)
  * - API: API Gateway HTTP API (direct Lambda integration)
- * - Database: PostgreSQL on RDS (t4g.micro, Single-AZ)
+ * - Database: DynamoDB (on-demand, serverless)
  * - Scheduler: EventBridge (30-minute interval for calendar sync)
  *
  * Cost (eu-north-1):
  * - Lambda: $0/month (within free tier)
- * - RDS t4g.micro: $12.41/month
+ * - DynamoDB: $0/month (on-demand, free tier)
  * - API Gateway: $0/month (within free tier)
- * - CloudFront + S3: $2/month
- * - EventBridge: $0.00/month (negligible)
- * Total: ~$14/month (42% savings vs ECS)
+ * - CloudFront + S3: ~$2/month
+ * - Secrets: ~$1/month
+ * Total: ~$3/month
+ *
+ * NO VPC required - Lambda can reach DynamoDB and SES directly.
  */
 
 export default $config({
@@ -28,59 +30,58 @@ export default $config({
       providers: {
         aws: {
           region: "eu-north-1",
-          profile: "filter-ical"  // Single AWS account - CloudFront now verified!
+          profile: "filter-ical"
         }
       }
     };
   },
   async run() {
-    // 1. VPC (required for RDS - needed in all modes)
-    // Using custom CIDR to avoid conflicts with orphaned VPC
-    // NAT required for Lambda to reach SES (internet access)
-    const vpc = new sst.aws.Vpc("FilterIcalVpc", {
-      cidr: "10.1.0.0/16",  // Changed from default 10.0.0.0/16 to avoid conflict
-      nat: "ec2"  // EC2 NAT instance (cheaper than managed NAT gateway)
+    // 1. DynamoDB Table (single-table design)
+    const table = new sst.aws.Dynamo("FilterIcalTable", {
+      fields: {
+        PK: "string",  // Partition key: DOMAIN#key, FILTER#uuid, ADMIN#email
+        SK: "string",  // Sort key: METADATA, EVENT#date#uid, etc.
+        link_uuid: "string",  // For filter UUID lookups (GSI)
+      },
+      primaryIndex: { hashKey: "PK", rangeKey: "SK" },
+      globalIndexes: {
+        // GSI for looking up filters by link_uuid
+        LinkUuidIndex: { hashKey: "link_uuid" },
+      },
+      // On-demand billing (pay per request, $0 at low volume)
+      billing: "on-demand",
     });
 
-    // 2. PostgreSQL Database (RDS)
-    // SST automatically reuses existing RDS when running 'sst dev --stage staging'
-    const database = new sst.aws.Postgres("FilterIcalDB", {
-      vpc,
-      instance: "t4g.micro",
-      version: "16.10",
-    });
-
-    // 3. Backend API Lambda Function (FastAPI with Mangum)
+    // 2. Backend API Lambda Function (FastAPI with Mangum)
+    // NO VPC - can reach DynamoDB and SES directly via public endpoints
     const backendFunction = new sst.aws.Function("FilterIcalBackendApi", {
-      vpc,
-      handler: "lambda_handler.handler",
+      handler: "backend.lambda_handler.handler",
       runtime: "python3.11",
-      architecture: "x86_64",  // x86_64 has better pre-built wheel availability
+      architecture: "x86_64",
       timeout: "30 seconds",
       memory: "512 MB",
 
-      // Force Docker container build for Linux-compatible binaries
+      // Docker build for Linux-compatible binaries
       python: {
         container: true,
       },
 
-      // Link to database (automatically injects DATABASE_URL)
-      link: [database],
+      // Link to DynamoDB table
+      link: [table],
 
       // Environment variables
       environment: {
-        // Add filter_ical and filter_ical/backend to Python path
-        // The package is at /var/task/filter_ical/ and uses 'from app.xxx' imports
-        PYTHONPATH: "/var/task/filter_ical:/var/task/filter_ical/backend:/var/task",
+        PYTHONPATH: "/var/task",
 
-        // Database connection (SST link provides properties, we construct URL)
-        DATABASE_URL: $interpolate`postgresql://${database.username}:${database.password}@${database.host}:${database.port}/${database.database}`,
+        // DynamoDB table name (SST link provides this)
+        DYNAMODB_TABLE_NAME: table.name,
 
         // Stage
         ENVIRONMENT: $dev ? "development" : $app.stage,
-
-        // Lambda execution context flag (always true for Lambda dev mode)
         IS_LAMBDA: "true",
+
+        // Use DynamoDB instead of SQL
+        USE_DYNAMODB: "true",
 
         // Secrets from AWS Secrets Manager
         JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
@@ -88,7 +89,7 @@ export default $config({
         ADMIN_PASSWORD: new sst.Secret("AdminPassword").value,
       },
 
-      // SES permissions for sending emails
+      // Permissions: SES for emails, DynamoDB via link
       permissions: [
         {
           actions: ["ses:SendEmail", "ses:SendRawEmail"],
@@ -97,7 +98,7 @@ export default $config({
       ],
     });
 
-    // 4. API Gateway with custom domain (wraps Lambda function)
+    // 3. API Gateway with custom domain
     const api = new sst.aws.ApiGatewayV2("FilterIcalApi", {
       domain: $dev ? undefined : ($app.stage === "production"
         ? "api.filter-ical.de"
@@ -107,7 +108,7 @@ export default $config({
           ? ["https://filter-ical.de", "https://www.filter-ical.de"]
           : $app.stage === "staging"
           ? ["https://staging.filter-ical.de"]
-          : ["http://localhost:5173", "http://localhost:8000"],  // Dev: specific origins (not wildcard)
+          : ["http://localhost:5173", "http://localhost:8000"],
         allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language", "X-Requested-With"],
         allowCredentials: true,
@@ -118,41 +119,31 @@ export default $config({
     api.route("ANY /{proxy+}", backendFunction.arn);
     api.route("ANY /", backendFunction.arn);
 
-    // 5. Scheduled Sync Lambda Function
+    // 4. Scheduled Sync Lambda Function
     const syncFunction = new sst.aws.Function("FilterIcalSyncTask", {
-      vpc,
-      handler: "lambda_sync.handler",
+      handler: "backend.lambda_sync.handler",
       runtime: "python3.11",
-      architecture: "x86_64",  // x86_64 has better pre-built wheel availability
-      timeout: "5 minutes",  // Longer timeout for sync operations
+      architecture: "x86_64",
+      timeout: "5 minutes",
       memory: "512 MB",
 
-      // Force Docker container build for Linux-compatible binaries
       python: {
         container: true,
       },
 
-      // Link to database
-      link: [database],
+      link: [table],
 
-      // Environment variables
       environment: {
-        // Add filter_ical and filter_ical/backend to Python path
-        PYTHONPATH: "/var/task/filter_ical:/var/task/filter_ical/backend:/var/task",
-
-        // Database connection (SST link provides properties, we construct URL)
-        DATABASE_URL: $interpolate`postgresql://${database.username}:${database.password}@${database.host}:${database.port}/${database.database}`,
-
+        PYTHONPATH: "/var/task",
+        DYNAMODB_TABLE_NAME: table.name,
         ENVIRONMENT: $dev ? "development" : $app.stage,
         IS_LAMBDA: "true",
-
-        // Secrets from AWS Secrets Manager
+        USE_DYNAMODB: "true",
         JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
         ADMIN_EMAIL: new sst.Secret("AdminEmail").value,
         ADMIN_PASSWORD: new sst.Secret("AdminPassword").value,
       },
 
-      // SES permissions for sending emails
       permissions: [
         {
           actions: ["ses:SendEmail", "ses:SendRawEmail"],
@@ -161,8 +152,8 @@ export default $config({
       ],
     });
 
-    // 6. EventBridge Scheduler (runs every 30 minutes)
-    // Note: Disabled in dev mode to avoid unnecessary Lambda invocations
+    // 5. EventBridge Scheduler (runs every 30 minutes)
+    // Disabled for now - uncomment when ready
     // const syncScheduler = !$dev && new sst.aws.Cron("FilterIcalSyncScheduler", {
     //   schedule: "rate(30 minutes)",
     //   job: syncFunction,
@@ -170,22 +161,19 @@ export default $config({
 
     // 6. Frontend (Vue 3 SPA on CloudFront + S3)
     const frontend = new sst.aws.StaticSite("FilterIcalFrontend", {
-      path: ".",  // Frontend files are in root directory (src/, public/, vite.config.mjs)
+      path: ".",
       build: {
         command: "pnpm run build",
         output: "dist"
       },
       environment: {
-        // In dev mode: talk to local backend, in deployed: use API Gateway
         VITE_API_BASE_URL: $dev ? "http://localhost:3000" : api.url
       },
-      // Custom domain for frontend (Route53 auto-managed by SST)
       domain: $dev ? undefined : ($app.stage === "production"
         ? "filter-ical.de"
         : `${$app.stage}.filter-ical.de`),
       errorPage: "redirect_to_index",
 
-      // Dev mode configuration (runs Vite dev server locally)
       dev: {
         command: "pnpm run dev",
         url: "http://localhost:8000"
@@ -195,9 +183,7 @@ export default $config({
     return {
       frontend: frontend.url,
       api: api.url || "http://localhost:3000",
-      database: database.host,
-      databasePort: database.port,
-      databaseName: database.database,
+      table: table.name,
       syncFunction: syncFunction.arn,
     };
   },
