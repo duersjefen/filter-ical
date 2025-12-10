@@ -36,8 +36,10 @@ export default $config({
   async run() {
     // 1. VPC (required for RDS - needed in all modes)
     // Using custom CIDR to avoid conflicts with orphaned VPC
+    // NAT required for Lambda to reach SES (internet access)
     const vpc = new sst.aws.Vpc("FilterIcalVpc", {
-      cidr: "10.1.0.0/16"  // Changed from default 10.0.0.0/16 to avoid conflict
+      cidr: "10.1.0.0/16",  // Changed from default 10.0.0.0/16 to avoid conflict
+      nat: "ec2"  // EC2 NAT instance (cheaper than managed NAT gateway)
     });
 
     // 2. PostgreSQL Database (RDS)
@@ -51,35 +53,48 @@ export default $config({
     // 3. Backend API Lambda Function (FastAPI with Mangum)
     const backendFunction = new sst.aws.Function("FilterIcalBackendApi", {
       vpc,
-      handler: "backend/app/lambda_handler.handler",
-      runtime: "python3.12",
+      handler: "lambda_handler.handler",
+      runtime: "python3.11",
+      architecture: "x86_64",  // x86_64 has better pre-built wheel availability
       timeout: "30 seconds",
       memory: "512 MB",
+
+      // Force Docker container build for Linux-compatible binaries
+      python: {
+        container: true,
+      },
 
       // Link to database (automatically injects DATABASE_URL)
       link: [database],
 
       // Environment variables
       environment: {
+        // Add filter_ical and filter_ical/backend to Python path
+        // The package is at /var/task/filter_ical/ and uses 'from app.xxx' imports
+        PYTHONPATH: "/var/task/filter_ical:/var/task/filter_ical/backend:/var/task",
+
+        // Database connection (SST link provides properties, we construct URL)
+        DATABASE_URL: $interpolate`postgresql://${database.username}:${database.password}@${database.host}:${database.port}/${database.database}`,
+
         // Stage
         ENVIRONMENT: $dev ? "development" : $app.stage,
 
         // Lambda execution context flag (always true for Lambda dev mode)
         IS_LAMBDA: "true",
 
-        // Secrets from AWS Secrets Manager (used in both dev and deployed)
+        // Secrets from AWS Secrets Manager
         JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
-        SMTP_HOST: new sst.Secret("SmtpHost").value,
-        SMTP_PORT: new sst.Secret("SmtpPort").value,
-        SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
-        SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
         ADMIN_EMAIL: new sst.Secret("AdminEmail").value,
         ADMIN_PASSWORD: new sst.Secret("AdminPassword").value,
       },
 
-      // Python build configuration
-      // Note: No container build needed for Python 3.12 (has native support in SST)
-      // Container builds can cause "RangeError: Invalid string length" in SST v3
+      // SES permissions for sending emails
+      permissions: [
+        {
+          actions: ["ses:SendEmail", "ses:SendRawEmail"],
+          resources: ["arn:aws:ses:eu-north-1:*:identity/*"]
+        }
+      ],
     });
 
     // 4. API Gateway with custom domain (wraps Lambda function)
@@ -106,28 +121,44 @@ export default $config({
     // 5. Scheduled Sync Lambda Function
     const syncFunction = new sst.aws.Function("FilterIcalSyncTask", {
       vpc,
-      handler: "backend/app/lambda_sync.handler",
-      runtime: "python3.12",
+      handler: "lambda_sync.handler",
+      runtime: "python3.11",
+      architecture: "x86_64",  // x86_64 has better pre-built wheel availability
       timeout: "5 minutes",  // Longer timeout for sync operations
       memory: "512 MB",
+
+      // Force Docker container build for Linux-compatible binaries
+      python: {
+        container: true,
+      },
 
       // Link to database
       link: [database],
 
       // Environment variables
       environment: {
+        // Add filter_ical and filter_ical/backend to Python path
+        PYTHONPATH: "/var/task/filter_ical:/var/task/filter_ical/backend:/var/task",
+
+        // Database connection (SST link provides properties, we construct URL)
+        DATABASE_URL: $interpolate`postgresql://${database.username}:${database.password}@${database.host}:${database.port}/${database.database}`,
+
         ENVIRONMENT: $dev ? "development" : $app.stage,
         IS_LAMBDA: "true",
 
         // Secrets from AWS Secrets Manager
         JWT_SECRET_KEY: new sst.Secret("JwtSecretKey").value,
-        SMTP_HOST: new sst.Secret("SmtpHost").value,
-        SMTP_PORT: new sst.Secret("SmtpPort").value,
-        SMTP_USERNAME: new sst.Secret("SmtpUsername").value,
-        SMTP_PASSWORD: new sst.Secret("SmtpPassword").value,
         ADMIN_EMAIL: new sst.Secret("AdminEmail").value,
         ADMIN_PASSWORD: new sst.Secret("AdminPassword").value,
       },
+
+      // SES permissions for sending emails
+      permissions: [
+        {
+          actions: ["ses:SendEmail", "ses:SendRawEmail"],
+          resources: ["arn:aws:ses:eu-north-1:*:identity/*"]
+        }
+      ],
     });
 
     // 6. EventBridge Scheduler (runs every 30 minutes)

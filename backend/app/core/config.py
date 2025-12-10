@@ -62,12 +62,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-me-in-production-use-strong-random-key"  # Override via JWT_SECRET_KEY env var
     jwt_algorithm: str = "HS256"  # HMAC-SHA256
 
-    # Email settings (for domain request notifications)
-    smtp_host: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    smtp_username: str = ""  # Set via SMTP_USERNAME env var
-    smtp_password: str = ""  # Set via SMTP_PASSWORD env var
-    smtp_from_email: str = "noreply@filter-ical.de"
+    # Email settings (AWS SES)
+    ses_from_email: str = "noreply@filter-ical.de"
+    ses_region: str = "eu-north-1"
     admin_email: str = ""  # Set via ADMIN_EMAIL env var (info@paiss.me) - receives domain requests & password resets
     
     # Paths

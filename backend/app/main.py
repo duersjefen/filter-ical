@@ -61,9 +61,17 @@ async def lifespan(app: FastAPI):
         print("✅ JWT secret key validated")
 
     # Database migrations are managed by Alembic
-    # Run migrations via: make migrate-up (dev) or deploy.sh (production)
-    # Base.metadata.create_all(bind=engine)  # Disabled - using Alembic migrations
-    print("✅ Using Alembic for database migrations")
+    # In Lambda, create tables if they don't exist (simpler than running alembic)
+    if settings.is_lambda:
+        try:
+            # Import all models to ensure they're registered with Base
+            from . import models  # noqa: F401
+            Base.metadata.create_all(bind=engine)
+            print("✅ Database tables ensured (Lambda auto-create)")
+        except Exception as e:
+            print(f"⚠️ Database setup warning: {e}")
+    else:
+        print("✅ Using Alembic for database migrations (run manually in dev)")
     
     # Ensure domain calendars exist (from domains.yaml configuration)
     from .services.domain_service import load_domains_config, ensure_domain_calendar_exists

@@ -13,10 +13,10 @@ import asyncio
 from typing import Dict, Any, List
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.core.database import get_db
-from app.services.cache_service import warm_domain_cache
-from app.services.domain_service import (
+from .core.config import settings
+from .core.database import get_db
+from .services.cache_service import warm_domain_cache
+from .services.domain_service import (
     ensure_domain_calendar_exists,
     load_domains_config,
     auto_assign_events_with_rules
