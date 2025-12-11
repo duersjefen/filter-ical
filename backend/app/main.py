@@ -24,9 +24,14 @@ from .core.request_size_limiter import RequestSizeLimiter
 from .core.content_type_validator import ContentTypeValidator
 
 # Only import SQLAlchemy components if not using DynamoDB
+print(f"🔧 Main: Checking DynamoDB mode, use_dynamodb={settings.use_dynamodb}")
 if not settings.use_dynamodb:
+    print("🔧 Main: Loading SQLAlchemy components...")
     from .core.database import Base, engine
     from .core.scheduler import start_scheduler, stop_scheduler
+    print("🔧 Main: SQLAlchemy components loaded")
+else:
+    print("🔧 Main: DynamoDB mode - skipping SQLAlchemy imports")
 
 
 def load_openapi_spec() -> Optional[Dict[str, Any]]:
