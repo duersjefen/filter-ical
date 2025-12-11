@@ -258,6 +258,14 @@ AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalBackendA
 AWS_PROFILE=filter-ical aws logs tail /aws/lambda/filter-ical-FilterIcalSyncTask-production --follow
 ```
 
+### Troubleshooting
+
+**`RangeError: Invalid string length` during deploy:**
+- **Almost always caused by missing secrets** - check secrets FIRST
+- Run `npx sst secret list --stage <stage>` to verify all secrets are set
+- This is a Pulumi display bug that masks the real error (missing secrets)
+- Lambda functions may still update despite this error - always verify with health checks
+
 ### Environment Configuration
 
 **SST manages environment-specific secrets:**
