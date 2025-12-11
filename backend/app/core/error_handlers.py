@@ -18,7 +18,7 @@ from functools import wraps
 from typing import Optional
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
-from ..models.problem_details import ProblemDetail
+from .problem_details import ProblemDetail
 from .error_types import ErrorType, get_error_type_from_message
 
 

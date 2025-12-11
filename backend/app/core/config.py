@@ -194,9 +194,6 @@ class Settings(BaseSettings):
 # Global settings instance
 settings = Settings()
 
-# Debug: Print DynamoDB mode status
-print(f"🔧 Config loaded: USE_DYNAMODB={settings.use_dynamodb}, env={os.environ.get('USE_DYNAMODB', 'NOT_SET')}")
-
 
 def get_database_url() -> str:
     """Get appropriate database URL based on environment."""
