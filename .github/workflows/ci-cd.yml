@@ -136,7 +136,9 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          pnpm install
+          cd frontend && pnpm install
 
       - name: Cache SST platform
         uses: actions/cache@v4
@@ -200,7 +202,9 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          pnpm install
+          cd frontend && pnpm install
 
       - name: Cache SST platform
         uses: actions/cache@v4
