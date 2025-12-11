@@ -6,14 +6,16 @@ Supports both HTTP Basic Auth (legacy) and JWT tokens.
 
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from sqlalchemy.orm import Session
 import jwt
 
 from .config import settings
-from .database import get_db
+
+# Only import for type checking - actual imports are lazy to support DynamoDB mode
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 security = HTTPBasic()
 
@@ -232,13 +234,20 @@ def require_user_auth(authorization: Optional[str] = Header(None)) -> int:
         )
 
 # =============================================================================
-# Domain Verification Dependency
+# Domain Verification Dependency (SQLAlchemy mode only)
 # =============================================================================
+# NOTE: This function is only used by SQLAlchemy routers, which only load
+# when settings.use_dynamodb is False. The lazy import pattern ensures
+# no SQLAlchemy imports happen when using DynamoDB mode.
 
-async def get_verified_domain(
-    domain: str,
-    db: Session = Depends(get_db)
-):
+
+def _lazy_get_db():
+    """Lazy import wrapper for get_db - only called when actually used."""
+    from .database import get_db
+    yield from get_db()
+
+
+async def get_verified_domain(domain: str, db=Depends(_lazy_get_db)):
     """
     FastAPI dependency: Verify domain exists and return domain object.
 
@@ -252,7 +261,7 @@ async def get_verified_domain(
 
     Args:
         domain: Domain key from URL path parameter
-        db: Database session (injected)
+        db: Database session (injected lazily)
 
     Returns:
         Domain object from database
