@@ -29,7 +29,8 @@ export default $config({
       providers: {
         aws: {
           region: "eu-north-1",
-          profile: "filter-ical"
+          // Use profile locally, env vars in CI
+          ...(process.env.CI ? {} : { profile: "filter-ical" })
         }
       }
     };
