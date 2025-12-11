@@ -31,7 +31,7 @@ Usage:
 
 from typing import Optional, Any
 from dataclasses import dataclass
-from ..models.problem_details import ProblemDetail, create_problem_detail
+from .problem_details import ProblemDetail, create_problem_detail
 
 
 # Base URL for error type documentation
