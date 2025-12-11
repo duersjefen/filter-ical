@@ -9,7 +9,7 @@ APScheduler is automatically disabled via IS_LAMBDA environment variable.
 """
 
 from mangum import Mangum
-from app.main import app
+from .app.main import app
 
 # Create Lambda handler using Mangum
 # Mangum automatically converts API Gateway events to ASGI format

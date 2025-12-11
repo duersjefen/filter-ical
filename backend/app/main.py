@@ -4,7 +4,8 @@ Main FastAPI application with contract-first development.
 This follows the architectural principle from CLAUDE.md:
 "OpenAPI specifications are immutable contracts that enable unlimited backend refactoring freedom"
 
-Integrated with Docker workflow for rapid development.
+Supports both SQLAlchemy (legacy) and DynamoDB (serverless) backends.
+Set USE_DYNAMODB=true to use DynamoDB mode.
 """
 
 import yaml
@@ -17,12 +18,15 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
-from .core.database import Base, engine
-from .core.scheduler import start_scheduler, stop_scheduler
 from .core.rate_limit import limiter
 from .core.error_handlers import http_exception_handler
 from .core.request_size_limiter import RequestSizeLimiter
 from .core.content_type_validator import ContentTypeValidator
+
+# Only import SQLAlchemy components if not using DynamoDB
+if not settings.use_dynamodb:
+    from .core.database import Base, engine
+    from .core.scheduler import start_scheduler, stop_scheduler
 
 
 def load_openapi_spec() -> Optional[Dict[str, Any]]:
@@ -45,6 +49,7 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Starting Filter iCal...")
     print(f"🌍 Environment: {settings.environment.value}")
+    print(f"💾 Database: {'DynamoDB' if settings.use_dynamodb else 'SQLAlchemy'}")
     print("📋 Contract-first development active")
 
     # Security validation - ensure JWT secret is configured properly in all environments except testing
@@ -60,14 +65,39 @@ async def lifespan(app: FastAPI):
             )
         print("✅ JWT secret key validated")
 
+    # DynamoDB mode - simpler startup
+    if settings.use_dynamodb:
+        print(f"📦 DynamoDB table: {settings.dynamodb_table_name}")
+        # Verify DynamoDB connection
+        try:
+            from .db import get_table
+            table = get_table()
+            # Simple check - will fail if table doesn't exist
+            print(f"✅ DynamoDB table connected: {table.name}")
+        except Exception as e:
+            print(f"⚠️ DynamoDB connection warning: {e}")
+
+        yield
+        print("🛑 Shutting down Filter iCal")
+        return
+
+    # SQLAlchemy mode - existing initialization
     # Database migrations are managed by Alembic
-    # Run migrations via: make migrate-up (dev) or deploy.sh (production)
-    # Base.metadata.create_all(bind=engine)  # Disabled - using Alembic migrations
-    print("✅ Using Alembic for database migrations")
-    
+    # In Lambda, create tables if they don't exist (simpler than running alembic)
+    if settings.is_lambda:
+        try:
+            # Import all models to ensure they're registered with Base
+            from . import models  # noqa: F401
+            Base.metadata.create_all(bind=engine)
+            print("✅ Database tables ensured (Lambda auto-create)")
+        except Exception as e:
+            print(f"⚠️ Database setup warning: {e}")
+    else:
+        print("✅ Using Alembic for database migrations (run manually in dev)")
+
     # Ensure domain calendars exist (from domains.yaml configuration)
     from .services.domain_service import load_domains_config, ensure_domain_calendar_exists
-    
+
     try:
         success, domains_config, error = load_domains_config(settings.domains_config_path)
         if success and domains_config:
@@ -90,7 +120,7 @@ async def lifespan(app: FastAPI):
                 session.close()
     except Exception as e:
         print(f"⚠️ Domain calendar setup warning: {e}")
-    
+
     # Seed domain configurations from YAML files (seed-if-empty, runs in all environments)
     if settings.should_auto_seed_empty_domains:
         print("🌱 Auto-seeding empty domains from YAML configurations...")
@@ -141,16 +171,16 @@ async def lifespan(app: FastAPI):
 
         except Exception as e:
             print(f"⚠️ Domain YAML seeding warning: {e}")
-    
+
     # Start background scheduler for domain calendar sync (configurable)
     if settings.should_enable_background_tasks:
         print(f"⏰ Starting background scheduler (sync every {settings.actual_sync_interval_minutes} minutes)")
         start_scheduler()
     else:
         print("⏰ Background tasks disabled (testing environment)")
-    
+
     yield
-    
+
     # Shutdown
     if settings.should_enable_background_tasks:
         stop_scheduler()
@@ -217,33 +247,40 @@ def create_application() -> FastAPI:
         app.openapi = custom_openapi
         print("📋 Contract loaded: OpenAPI specification overrides auto-generation")
     
-    # Import and include routers
-    from .routers import (
-        calendars, domains, ical_export, test, filters, domain_requests, admin,
-        domain_auth, app_settings, users, auth, ical,
-        domain_events, domain_groups, domain_assignment_rules, domain_filters,
-        domain_config, domain_backups, domain_admins, contact
-    )
-    app.include_router(calendars.router, prefix="/api/calendars", tags=["calendars"])
-    app.include_router(domains.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(domain_events.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(domain_groups.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(domain_assignment_rules.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(domain_filters.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(domain_config.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(domain_backups.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(domain_admins.router, prefix="/api/domains", tags=["domains"])
-    app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
-    app.include_router(ical.router, prefix="/api", tags=["ical"])
-    app.include_router(filters.router, prefix="/api/filters", tags=["filters"])
-    app.include_router(test.router, prefix="/test", tags=["test"])
-    app.include_router(domain_requests.router, prefix="/api", tags=["domain-requests"])
-    app.include_router(admin.router, prefix="/api", tags=["admin"])
-    app.include_router(domain_auth.router, tags=["domain-auth"])
-    app.include_router(app_settings.router, tags=["app-settings"])
-    app.include_router(users.router, tags=["users"])
-    app.include_router(auth.router, tags=["auth"])
-    app.include_router(contact.router, prefix="/api", tags=["contact"])
+    # Import and include routers based on database mode
+    if settings.use_dynamodb:
+        # DynamoDB mode - minimal routers for serverless testing
+        from .routers_dynamodb import admin as admin_ddb
+        app.include_router(admin_ddb.router, prefix="/api", tags=["admin"])
+        print("📌 Using DynamoDB routers (minimal mode)")
+    else:
+        # SQLAlchemy mode - full feature set
+        from .routers import (
+            calendars, domains, ical_export, test, filters, domain_requests, admin,
+            domain_auth, app_settings, users, auth, ical,
+            domain_events, domain_groups, domain_assignment_rules, domain_filters,
+            domain_config, domain_backups, domain_admins, contact
+        )
+        app.include_router(calendars.router, prefix="/api/calendars", tags=["calendars"])
+        app.include_router(domains.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_events.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_groups.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_assignment_rules.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_filters.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_config.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_backups.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_admins.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(ical_export.router, prefix="/ical", tags=["ical_export"])
+        app.include_router(ical.router, prefix="/api", tags=["ical"])
+        app.include_router(filters.router, prefix="/api/filters", tags=["filters"])
+        app.include_router(test.router, prefix="/test", tags=["test"])
+        app.include_router(domain_requests.router, prefix="/api", tags=["domain-requests"])
+        app.include_router(admin.router, prefix="/api", tags=["admin"])
+        app.include_router(domain_auth.router, tags=["domain-auth"])
+        app.include_router(app_settings.router, tags=["app-settings"])
+        app.include_router(users.router, tags=["users"])
+        app.include_router(auth.router, tags=["auth"])
+        app.include_router(contact.router, prefix="/api", tags=["contact"])
     
     # Health check endpoint
     @app.get("/health")
