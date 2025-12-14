@@ -249,10 +249,31 @@ def create_application() -> FastAPI:
     
     # Import and include routers based on database mode
     if settings.use_dynamodb:
-        # DynamoDB mode - minimal routers for serverless testing
-        from .routers_dynamodb import admin as admin_ddb
+        # DynamoDB mode - full serverless backend
+        from .routers_dynamodb import (
+            admin as admin_ddb,
+            domains as domains_ddb,
+            domain_events as domain_events_ddb,
+            domain_groups as domain_groups_ddb,
+            domain_filters as domain_filters_ddb,
+            domain_auth as domain_auth_ddb,
+            domain_assignments as domain_assignments_ddb,
+            admin_domains as admin_domains_ddb,
+            ical_export as ical_export_ddb,
+        )
+        # Admin routes
         app.include_router(admin_ddb.router, prefix="/api", tags=["admin"])
-        print("📌 Using DynamoDB routers (minimal mode)")
+        app.include_router(admin_domains_ddb.router, prefix="/api", tags=["admin"])
+        # Public domain routes
+        app.include_router(domains_ddb.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_events_ddb.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_groups_ddb.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_filters_ddb.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_auth_ddb.router, prefix="/api/domains", tags=["domains"])
+        app.include_router(domain_assignments_ddb.router, prefix="/api/domains", tags=["domains"])
+        # iCal export
+        app.include_router(ical_export_ddb.router, prefix="/ical", tags=["ical_export"])
+        print("📌 Using DynamoDB routers (full serverless mode)")
     else:
         # SQLAlchemy mode - full feature set
         from .routers import (
