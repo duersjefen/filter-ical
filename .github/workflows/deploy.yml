@@ -80,14 +80,18 @@ jobs:
           python --version
           echo "=== uv version ==="
           uv --version
-          echo "=== pyproject.toml ==="
+          echo "=== Root pyproject.toml ==="
           cat pyproject.toml
-          echo "=== uv.lock header ==="
+          echo "=== Root uv.lock header ==="
           head -30 uv.lock
-          echo "=== Testing uv export ==="
+          echo "=== backend/pyproject.toml ==="
+          cat backend/pyproject.toml
+          echo "=== backend/uv.lock header ==="
+          head -30 backend/uv.lock 2>/dev/null || echo "No backend/uv.lock"
+          echo "=== Testing uv export from root ==="
           uv export --frozen 2>&1 | head -50 || true
-          echo "=== Testing uv export with flags ==="
-          uv export --frozen --no-dev --no-editable 2>&1 | head -50 || true
+          echo "=== Testing uv export from backend ==="
+          cd backend && uv export --frozen 2>&1 | head -50 || true
 
       - name: Deploy
         run: npx sst deploy --stage ${{ github.event.inputs.stage || 'staging' }}
