@@ -1,13 +1,8 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "backend"
+name = "filter-ical-backend"
 version = "1.0.1"
-description = "Contract-first Filter iCal with FastAPI"
-authors = [{name = "Filter iCal Team"}]
-license = {text = "MIT"}
+description = "Filter iCal Backend"
+requires-python = "==3.12.*"
 dependencies = [
     "fastapi>=0.104.1",
     "uvicorn>=0.24.0",
@@ -22,23 +17,6 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "boto3>=1.35.0",
     "mangum>=0.19.0",
-]
-
-[tool.setuptools.packages.find]
-where = [".."]
-include = ["backend", "backend.*"]
-exclude = ["backend.tests*", "backend.alembic*"]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.3",
-    "pytest-asyncio>=0.21.1",
-    "pytest-cov>=4.1.0",
-    "black>=23.11.0",
-    "isort>=5.12.0",
-    "flake8>=6.1.0",
-    "mypy>=1.7.1",
-    "openapi-core>=0.18.2",
 ]
 
 [tool.black]
