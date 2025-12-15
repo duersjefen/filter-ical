@@ -86,7 +86,6 @@ export default $config({
       permissions: sharedPermissions,
       copyFiles: [
         { from: "backend", to: "backend" },
-        { from: "handler.py", to: "handler.py" },
       ],
       python: {
         container: true,  // Build in Docker for Amazon Linux compatibility
@@ -125,7 +124,6 @@ export default $config({
       permissions: sharedPermissions,
       copyFiles: [
         { from: "backend", to: "backend" },
-        { from: "sync_handler.py", to: "sync_handler.py" },
       ],
       python: {
         container: true,  // Build in Docker for Amazon Linux compatibility
