@@ -74,26 +74,11 @@ jobs:
         run: npx sst unlock --stage ${{ github.event.inputs.stage || 'staging' }}
         continue-on-error: true
 
-      - name: Debug uv export
-        run: |
-          echo "=== Python version ==="
-          python --version
-          echo "=== uv version ==="
-          uv --version
-          echo "=== Root pyproject.toml ==="
-          cat pyproject.toml
-          echo "=== Root uv.lock header ==="
-          head -30 uv.lock
-          echo "=== backend/pyproject.toml ==="
-          cat backend/pyproject.toml
-          echo "=== backend/uv.lock header ==="
-          head -30 backend/uv.lock 2>/dev/null || echo "No backend/uv.lock"
-          echo "=== Testing uv export from root ==="
-          uv export --frozen 2>&1 | head -50 || true
-          echo "=== Testing uv export from backend ==="
-          cd backend && uv export --frozen 2>&1 | head -50 || true
-
       - name: Deploy
+        # continue-on-error due to Pulumi display bug (RangeError: Invalid string length)
+        # The deploy often succeeds but the output formatting fails
+        # Health check below verifies actual deployment success
+        continue-on-error: true
         run: npx sst deploy --stage ${{ github.event.inputs.stage || 'staging' }}
         env:
           SST_BUILD_CONCURRENCY_SITE: 2
@@ -104,7 +89,7 @@ jobs:
           sleep 10
           STAGE="${{ github.event.inputs.stage || 'staging' }}"
           if [ "$STAGE" = "production" ]; then
-            curl -f https://api.filter-ical.de/health || echo "Health check failed"
+            curl -f https://api.filter-ical.de/health
           else
-            curl -f https://api-staging.filter-ical.de/health || echo "Health check failed"
+            curl -f https://api-staging.filter-ical.de/health
           fi
