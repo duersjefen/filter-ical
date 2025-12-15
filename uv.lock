@@ -202,7 +202,7 @@ requires-dist = [
 [[package]]
 name = "filter-ical-backend"
 version = "1.0.1"
-source = { virtual = "backend" }
+source = { editable = "backend" }
 dependencies = [
     { name = "boto3" },
     { name = "fastapi" },
