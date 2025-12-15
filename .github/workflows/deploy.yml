@@ -74,6 +74,21 @@ jobs:
         run: npx sst unlock --stage ${{ github.event.inputs.stage || 'staging' }}
         continue-on-error: true
 
+      - name: Debug uv export
+        run: |
+          echo "=== Python version ==="
+          python --version
+          echo "=== uv version ==="
+          uv --version
+          echo "=== pyproject.toml ==="
+          cat pyproject.toml
+          echo "=== uv.lock header ==="
+          head -30 uv.lock
+          echo "=== Testing uv export ==="
+          uv export --frozen 2>&1 | head -50 || true
+          echo "=== Testing uv export with flags ==="
+          uv export --frozen --no-dev --no-editable 2>&1 | head -50 || true
+
       - name: Deploy
         run: npx sst deploy --stage ${{ github.event.inputs.stage || 'staging' }}
         env:
