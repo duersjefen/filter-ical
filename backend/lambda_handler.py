@@ -8,8 +8,14 @@ The lifespan is enabled to run startup logic (database seeding, domain setup).
 APScheduler is automatically disabled via IS_LAMBDA environment variable.
 """
 
+import sys
+import os
+
+# Add backend directory to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from mangum import Mangum
-from .app.main import app
+from app.main import app
 
 # Create Lambda handler using Mangum
 # Mangum automatically converts API Gateway events to ASGI format
