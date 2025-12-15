@@ -76,7 +76,7 @@ export default $config({
 
     // 2. Backend API Lambda Function
     const backendFunction = new sst.aws.Function("FilterIcalBackendApi", {
-      handler: "backend/app/lambda_handler.handler",
+      handler: "backend/lambda_handler.handler",
       runtime: "python3.12",
       architecture: "x86_64",
       timeout: "30 seconds",
@@ -114,7 +114,7 @@ export default $config({
 
     // 4. Scheduled Sync Lambda Function
     const syncFunction = new sst.aws.Function("FilterIcalSyncTask", {
-      handler: "backend/app/lambda_sync.handler",
+      handler: "backend/lambda_sync.handler",
       runtime: "python3.12",
       architecture: "x86_64",
       timeout: "5 minutes",
