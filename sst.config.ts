@@ -87,9 +87,7 @@ export default $config({
       copyFiles: [
         { from: "backend", to: "backend" },
       ],
-      python: {
-        container: true,  // Build in Docker for Amazon Linux compatibility
-      }
+      // Container mode disabled - use standard Python packaging
     });
 
     // 3. API Gateway with custom domain
@@ -125,9 +123,7 @@ export default $config({
       copyFiles: [
         { from: "backend", to: "backend" },
       ],
-      python: {
-        container: true,  // Build in Docker for Amazon Linux compatibility
-      }
+      // Container mode disabled - use standard Python packaging
     });
 
     // 5. EventBridge Schedule (runs every 30 minutes)
