@@ -187,7 +187,7 @@ wheels = [
 [[package]]
 name = "filter-ical"
 version = "1.0.1"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "boto3" },
     { name = "fastapi" },
