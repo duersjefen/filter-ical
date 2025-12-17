@@ -235,6 +235,42 @@ class Filter(BaseModel):
         )
 
 
+class AppSettings(BaseModel):
+    """
+    Global application settings (singleton).
+
+    Controls UI features like footer visibility and domain request form.
+    """
+    # Key: APP_SETTINGS#global / METADATA
+    footer_visibility: str = "everywhere"  # 'everywhere', 'admin_only', 'nowhere'
+    show_domain_request: bool = True
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    def to_dynamo_item(self) -> dict:
+        """Convert to DynamoDB item format."""
+        return {
+            "PK": "APP_SETTINGS#global",
+            "SK": "METADATA",
+            "footer_visibility": self.footer_visibility,
+            "show_domain_request": self.show_domain_request,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+    @classmethod
+    def from_dynamo_item(cls, item: dict) -> "AppSettings":
+        """Create from DynamoDB item."""
+        return cls(
+            footer_visibility=item.get("footer_visibility", "everywhere"),
+            show_domain_request=item.get("show_domain_request", True),
+            created_at=datetime.fromisoformat(item["created_at"]) if item.get("created_at") else datetime.utcnow(),
+            updated_at=datetime.fromisoformat(item["updated_at"]) if item.get("updated_at") else datetime.utcnow(),
+        )
+
+
 class Admin(BaseModel):
     """
     Admin user for the application.

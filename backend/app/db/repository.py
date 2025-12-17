@@ -24,7 +24,7 @@ from .dynamodb import (
     metadata_sk,
     event_sk,
 )
-from .models import Domain, Event, Filter, Admin, DomainGroup, AssignmentRule
+from .models import Domain, Event, Filter, Admin, DomainGroup, AssignmentRule, AppSettings
 
 
 class Repository:
@@ -340,6 +340,45 @@ class Repository:
         admin.reset_token = None
         admin.reset_token_expires = None
         return self.save_admin(admin)
+
+    # =========================================================================
+    # App Settings operations (singleton)
+    # =========================================================================
+
+    def get_app_settings(self) -> AppSettings:
+        """
+        Get application settings (singleton).
+
+        If no settings exist, creates and saves default settings.
+        """
+        item = get_item("APP_SETTINGS#global", metadata_sk())
+        if item:
+            return AppSettings.from_dynamo_item(item)
+
+        # Create default settings
+        settings = AppSettings()
+        return self.save_app_settings(settings)
+
+    def save_app_settings(self, settings: AppSettings) -> AppSettings:
+        """Save application settings."""
+        settings.updated_at = datetime.utcnow()
+        put_item(settings.to_dynamo_item())
+        return settings
+
+    def update_app_settings(
+        self,
+        footer_visibility: Optional[str] = None,
+        show_domain_request: Optional[bool] = None
+    ) -> AppSettings:
+        """Update specific app settings fields."""
+        settings = self.get_app_settings()
+
+        if footer_visibility is not None:
+            settings.footer_visibility = footer_visibility
+        if show_domain_request is not None:
+            settings.show_domain_request = show_domain_request
+
+        return self.save_app_settings(settings)
 
 
 # Singleton instance for convenience

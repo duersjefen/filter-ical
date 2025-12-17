@@ -260,6 +260,7 @@ def create_application() -> FastAPI:
             domain_assignments as domain_assignments_ddb,
             admin_domains as admin_domains_ddb,
             ical_export as ical_export_ddb,
+            app_settings as app_settings_ddb,
         )
         # Admin routes
         app.include_router(admin_ddb.router, prefix="/api", tags=["admin"])
@@ -273,6 +274,8 @@ def create_application() -> FastAPI:
         app.include_router(domain_assignments_ddb.router, prefix="/api/domains", tags=["domains"])
         # iCal export
         app.include_router(ical_export_ddb.router, prefix="/ical", tags=["ical_export"])
+        # App settings (public endpoint for UI configuration)
+        app.include_router(app_settings_ddb.router, tags=["app-settings"])
         print("📌 Using DynamoDB routers (full serverless mode)")
     else:
         # SQLAlchemy mode - full feature set
