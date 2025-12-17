@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_AUTH_TOKEN }}
 
       # Python backend
       - name: Setup Python
@@ -71,5 +71,4 @@ jobs:
       - name: Enable auto-merge
         run: gh pr merge ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --squash --auto
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+          GH_TOKEN: ${{ secrets.GH_AUTH_TOKEN }}
