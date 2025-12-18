@@ -79,6 +79,17 @@ class Domain(BaseModel):
 
     def to_dynamo_item(self) -> dict:
         """Convert to DynamoDB item format."""
+        # Serialize groups with ISO datetime strings
+        groups_serialized = []
+        for g in self.groups:
+            group_dict = g.model_dump()
+            # Convert datetime fields to ISO strings
+            if isinstance(group_dict.get("created_at"), datetime):
+                group_dict["created_at"] = group_dict["created_at"].isoformat()
+            if isinstance(group_dict.get("updated_at"), datetime):
+                group_dict["updated_at"] = group_dict["updated_at"].isoformat()
+            groups_serialized.append(group_dict)
+
         return {
             "PK": f"DOMAIN#{self.domain_key}",
             "SK": "METADATA",
@@ -88,7 +99,7 @@ class Domain(BaseModel):
             "status": self.status,
             "admin_password_hash": self.admin_password_hash,
             "user_password_hash": self.user_password_hash,
-            "groups": [g.model_dump() for g in self.groups],
+            "groups": groups_serialized,
             "recurring_assignments": self.recurring_assignments,
             "owner_id": self.owner_id,
             "created_at": self.created_at.isoformat(),
