@@ -25,7 +25,7 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-@router.get("/api/domains/{domain}/auth/status")
+@router.get("/{domain}/auth/status")
 async def get_auth_status(domain: str):
     """Get authentication status for a domain."""
     domain_obj = await get_verified_domain_ddb(domain)
@@ -36,7 +36,7 @@ async def get_auth_status(domain: str):
     }
 
 
-@router.post("/api/domains/{domain}/auth/verify-admin")
+@router.post("/{domain}/auth/verify-admin")
 async def verify_admin_password(domain: str, data: dict = Body(...)):
     """Verify admin password for a domain."""
     domain_obj = await get_verified_domain_ddb(domain)
@@ -52,7 +52,7 @@ async def verify_admin_password(domain: str, data: dict = Body(...)):
     return {"success": True, "message": "Admin password verified"}
 
 
-@router.post("/api/domains/{domain}/auth/verify-user")
+@router.post("/{domain}/auth/verify-user")
 async def verify_user_password(domain: str, data: dict = Body(...)):
     """Verify user password for a domain."""
     domain_obj = await get_verified_domain_ddb(domain)
@@ -69,7 +69,7 @@ async def verify_user_password(domain: str, data: dict = Body(...)):
     return {"success": True, "message": "User password verified"}
 
 
-@router.patch("/api/domains/{domain}/auth/set-admin-password")
+@router.patch("/{domain}/auth/set-admin-password")
 async def set_admin_password(domain: str, data: dict = Body(...)):
     """Set or update admin password for a domain."""
     domain_obj = await get_verified_domain_ddb(domain)
@@ -87,7 +87,7 @@ async def set_admin_password(domain: str, data: dict = Body(...)):
     return {"success": True, "message": "Admin password updated"}
 
 
-@router.patch("/api/domains/{domain}/auth/set-user-password")
+@router.patch("/{domain}/auth/set-user-password")
 async def set_user_password(domain: str, data: dict = Body(...)):
     """Set or update user password for a domain."""
     domain_obj = await get_verified_domain_ddb(domain)
