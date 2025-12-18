@@ -282,6 +282,73 @@ class AppSettings(BaseModel):
         )
 
 
+class DomainRequest(BaseModel):
+    """
+    Domain request for users to submit custom domain calendar requests.
+
+    Stored with PK: DOMAIN_REQUEST#{request_id}
+    """
+    # Key fields
+    request_id: str  # UUID for PK
+
+    # Request data
+    requester_email: str
+    requester_name: Optional[str] = None
+    requested_domain_key: str
+    calendar_url: str
+    description: str
+    default_password_hash: Optional[str] = None
+    user_password_hash: Optional[str] = None
+
+    # Status tracking
+    status: str = "pending"  # 'pending', 'approved', 'rejected'
+    rejection_reason: Optional[str] = None
+    approved_domain_key: Optional[str] = None  # Final domain key if different from requested
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    reviewed_at: Optional[datetime] = None
+
+    def to_dynamo_item(self) -> dict:
+        """Convert to DynamoDB item format."""
+        return {
+            "PK": f"DOMAIN_REQUEST#{self.request_id}",
+            "SK": "METADATA",
+            "request_id": self.request_id,
+            "requester_email": self.requester_email,
+            "requester_name": self.requester_name,
+            "requested_domain_key": self.requested_domain_key,
+            "calendar_url": self.calendar_url,
+            "description": self.description,
+            "default_password_hash": self.default_password_hash,
+            "user_password_hash": self.user_password_hash,
+            "status": self.status,
+            "rejection_reason": self.rejection_reason,
+            "approved_domain_key": self.approved_domain_key,
+            "created_at": self.created_at.isoformat(),
+            "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
+        }
+
+    @classmethod
+    def from_dynamo_item(cls, item: dict) -> "DomainRequest":
+        """Create from DynamoDB item."""
+        return cls(
+            request_id=item["request_id"],
+            requester_email=item["requester_email"],
+            requester_name=item.get("requester_name"),
+            requested_domain_key=item["requested_domain_key"],
+            calendar_url=item["calendar_url"],
+            description=item["description"],
+            default_password_hash=item.get("default_password_hash"),
+            user_password_hash=item.get("user_password_hash"),
+            status=item.get("status", "pending"),
+            rejection_reason=item.get("rejection_reason"),
+            approved_domain_key=item.get("approved_domain_key"),
+            created_at=datetime.fromisoformat(item["created_at"]) if item.get("created_at") else datetime.utcnow(),
+            reviewed_at=datetime.fromisoformat(item["reviewed_at"]) if item.get("reviewed_at") else None,
+        )
+
+
 class Admin(BaseModel):
     """
     Admin user for the application.
