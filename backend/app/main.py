@@ -259,12 +259,14 @@ def create_application() -> FastAPI:
             domain_auth as domain_auth_ddb,
             domain_assignments as domain_assignments_ddb,
             admin_domains as admin_domains_ddb,
+            admin_domain_configs as admin_domain_configs_ddb,
             ical_export as ical_export_ddb,
             app_settings as app_settings_ddb,
         )
         # Admin routes
         app.include_router(admin_ddb.router, prefix="/api", tags=["admin"])
         app.include_router(admin_domains_ddb.router, prefix="/api", tags=["admin"])
+        app.include_router(admin_domain_configs_ddb.router, prefix="/api", tags=["admin"])
         # Public domain routes
         app.include_router(domains_ddb.router, prefix="/api/domains", tags=["domains"])
         app.include_router(domain_events_ddb.router, prefix="/api/domains", tags=["domains"])
