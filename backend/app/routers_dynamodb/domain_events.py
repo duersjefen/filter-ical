@@ -18,7 +18,8 @@ async def get_domain_events(domain: str):
     """
     Get events for domain calendar grouped by title.
 
-    Returns events with their group assignments.
+    Returns events with their group assignments in the format expected by frontend:
+    {groups: [{id, name, recurring_events: [{title, event_count, events}]}]}
     """
     domain_obj = await get_verified_domain_ddb(domain)
     repo = get_repo()
@@ -34,22 +35,16 @@ async def get_domain_events(domain: str):
     for event in events:
         events_by_title[event.title].append(event)
 
-    # Build response with group assignments
-    recurring_events = []
-    for title, title_events in events_by_title.items():
-        # Get group assignment for this title
-        group_id = domain_obj.recurring_assignments.get(title)
-        group_name = None
-        if group_id and group_id in groups_by_id:
-            group_name = groups_by_id[group_id].name
-
+    # Build recurring events structure for each title
+    def build_recurring_event(title: str, title_events: list) -> dict:
+        """Build a recurring event structure."""
         # Sort events by start time
         title_events.sort(key=lambda e: e.start_time)
 
         # Build event instances
-        instances = []
+        event_instances = []
         for event in title_events:
-            instances.append({
+            event_instances.append({
                 "uid": event.uid,
                 "start_time": event.start_time.isoformat(),
                 "end_time": event.end_time.isoformat() if event.end_time else None,
@@ -57,23 +52,64 @@ async def get_domain_events(domain: str):
                 "location": event.location
             })
 
-        recurring_events.append({
+        return {
             "title": title,
-            "group_id": group_id,
-            "group_name": group_name,
             "event_count": len(title_events),
-            "instances": instances
-        })
+            "events": event_instances
+        }
 
-    # Sort by title
-    recurring_events.sort(key=lambda e: e["title"])
+    # Group recurring events by their assigned group
+    group_recurring_events = defaultdict(list)
+    ungrouped_events = []
 
-    return {
-        "domain_key": domain,
-        "groups": [{"id": g.id, "name": g.name} for g in domain_obj.groups],
-        "recurring_events": recurring_events,
-        "total_events": len(events)
-    }
+    for title, title_events in events_by_title.items():
+        recurring_event = build_recurring_event(title, title_events)
+        group_id = domain_obj.recurring_assignments.get(title)
+
+        if group_id and group_id in groups_by_id:
+            group_recurring_events[group_id].append(recurring_event)
+        else:
+            ungrouped_events.append(recurring_event)
+
+    # Build groups response with nested recurring_events
+    groups_with_events = []
+    for group in domain_obj.groups:
+        recurring_events = group_recurring_events.get(group.id, [])
+        # Sort by title
+        recurring_events.sort(key=lambda e: e["title"])
+
+        # Only include groups that have events
+        if recurring_events:
+            groups_with_events.append({
+                "id": group.id,
+                "name": group.name,
+                "recurring_events": recurring_events
+            })
+
+    # Add auto-groups for ungrouped events if any
+    if ungrouped_events:
+        # Sort ungrouped events
+        ungrouped_events.sort(key=lambda e: e["title"])
+
+        # Split into recurring and unique events
+        recurring_ungrouped = [e for e in ungrouped_events if e["event_count"] > 1]
+        unique_ungrouped = [e for e in ungrouped_events if e["event_count"] == 1]
+
+        if recurring_ungrouped:
+            groups_with_events.append({
+                "id": -1,  # Auto-group ID
+                "name": "📅 Other Recurring Events",
+                "recurring_events": recurring_ungrouped
+            })
+
+        if unique_ungrouped:
+            groups_with_events.append({
+                "id": -2,  # Auto-group ID
+                "name": "🎯 Special Events",
+                "recurring_events": unique_ungrouped
+            })
+
+    return {"groups": groups_with_events}
 
 
 @router.get("/{domain}/recurring-events")
