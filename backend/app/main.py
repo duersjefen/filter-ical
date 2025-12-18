@@ -263,11 +263,14 @@ def create_application() -> FastAPI:
             ical_export as ical_export_ddb,
             app_settings as app_settings_ddb,
             filters as filters_ddb,
+            domain_requests as domain_requests_ddb,
+            admin_domain_requests as admin_domain_requests_ddb,
         )
         # Admin routes
         app.include_router(admin_ddb.router, prefix="/api", tags=["admin"])
         app.include_router(admin_domains_ddb.router, prefix="/api", tags=["admin"])
         app.include_router(admin_domain_configs_ddb.router, prefix="/api", tags=["admin"])
+        app.include_router(admin_domain_requests_ddb.router, prefix="/api", tags=["admin"])
         # Public domain routes
         app.include_router(domains_ddb.router, prefix="/api/domains", tags=["domains"])
         app.include_router(domain_events_ddb.router, prefix="/api/domains", tags=["domains"])
@@ -281,6 +284,8 @@ def create_application() -> FastAPI:
         app.include_router(app_settings_ddb.router, tags=["app-settings"])
         # User filters (returns empty for anonymous - user auth not yet implemented)
         app.include_router(filters_ddb.router, prefix="/api/filters", tags=["filters"])
+        # Domain requests (for users to request new domains)
+        app.include_router(domain_requests_ddb.router, prefix="/api/domain-requests", tags=["domain-requests"])
         print("📌 Using DynamoDB routers (full serverless mode)")
     else:
         # SQLAlchemy mode - full feature set

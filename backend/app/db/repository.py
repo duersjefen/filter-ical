@@ -24,7 +24,7 @@ from .dynamodb import (
     metadata_sk,
     event_sk,
 )
-from .models import Domain, Event, Filter, Admin, DomainGroup, AssignmentRule, AppSettings
+from .models import Domain, Event, Filter, Admin, DomainGroup, AssignmentRule, AppSettings, DomainRequest
 
 
 class Repository:
@@ -379,6 +379,103 @@ class Repository:
             settings.show_domain_request = show_domain_request
 
         return self.save_app_settings(settings)
+
+    # =========================================================================
+    # Domain Request operations
+    # =========================================================================
+
+    def create_domain_request(
+        self,
+        requester_email: str,
+        requested_domain_key: str,
+        calendar_url: str,
+        description: str,
+        default_password_hash: Optional[str] = None,
+        user_password_hash: Optional[str] = None,
+        requester_name: Optional[str] = None
+    ) -> DomainRequest:
+        """Create a new domain request."""
+        request_id = str(uuid_lib.uuid4())
+        request = DomainRequest(
+            request_id=request_id,
+            requester_email=requester_email,
+            requester_name=requester_name,
+            requested_domain_key=requested_domain_key,
+            calendar_url=calendar_url,
+            description=description,
+            default_password_hash=default_password_hash,
+            user_password_hash=user_password_hash,
+            status="pending"
+        )
+        put_item(request.to_dynamo_item())
+        return request
+
+    def get_domain_request(self, request_id: str) -> Optional[DomainRequest]:
+        """Get domain request by ID."""
+        item = get_item(f"DOMAIN_REQUEST#{request_id}", metadata_sk())
+        if not item:
+            return None
+        return DomainRequest.from_dynamo_item(item)
+
+    def list_domain_requests(self, status: Optional[str] = None) -> list[DomainRequest]:
+        """List all domain requests, optionally filtered by status."""
+        from .dynamodb import get_table
+        table = get_table()
+
+        if status:
+            response = table.scan(
+                FilterExpression="begins_with(PK, :pk) AND SK = :sk AND #s = :status",
+                ExpressionAttributeNames={"#s": "status"},
+                ExpressionAttributeValues={
+                    ":pk": "DOMAIN_REQUEST#",
+                    ":sk": "METADATA",
+                    ":status": status
+                }
+            )
+        else:
+            response = table.scan(
+                FilterExpression="begins_with(PK, :pk) AND SK = :sk",
+                ExpressionAttributeValues={":pk": "DOMAIN_REQUEST#", ":sk": "METADATA"}
+            )
+
+        requests = [DomainRequest.from_dynamo_item(item) for item in response.get("Items", [])]
+        # Sort by created_at descending (newest first)
+        requests.sort(key=lambda r: r.created_at, reverse=True)
+        return requests
+
+    def update_domain_request_status(
+        self,
+        request_id: str,
+        status: str,
+        rejection_reason: Optional[str] = None,
+        approved_domain_key: Optional[str] = None
+    ) -> Optional[DomainRequest]:
+        """Update domain request status (approve/reject)."""
+        request = self.get_domain_request(request_id)
+        if not request:
+            return None
+
+        request.status = status
+        request.reviewed_at = datetime.utcnow()
+        if rejection_reason:
+            request.rejection_reason = rejection_reason
+        if approved_domain_key:
+            request.approved_domain_key = approved_domain_key
+
+        put_item(request.to_dynamo_item())
+        return request
+
+    def delete_domain_request(self, request_id: str) -> bool:
+        """Delete a domain request."""
+        return delete_item(f"DOMAIN_REQUEST#{request_id}", metadata_sk())
+
+    def get_pending_request_for_domain_key(self, domain_key: str) -> Optional[DomainRequest]:
+        """Check if there's a pending request for a domain key."""
+        requests = self.list_domain_requests(status="pending")
+        for req in requests:
+            if req.requested_domain_key == domain_key:
+                return req
+        return None
 
 
 # Singleton instance for convenience
