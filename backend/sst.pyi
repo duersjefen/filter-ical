@@ -18,7 +18,14 @@ class Resource:
     class FilterIcalBackendApi:
         name: str
         type: str
-    class FilterIcalBackendApiV2:
+    class FilterIcalDB:
+        database: str
+        host: str
+        password: str
+        port: float
+        type: str
+        username: str
+    class FilterIcalDatabase:
         name: str
         type: str
     class FilterIcalFrontend:
@@ -27,13 +34,24 @@ class Resource:
     class FilterIcalSyncTask:
         name: str
         type: str
-    class FilterIcalSyncTaskV2:
-        name: str
-        type: str
     class FilterIcalTable:
         name: str
         type: str
+    class FilterIcalVpc:
+        type: str
     class JwtSecretKey:
+        type: str
+        value: str
+    class SmtpHost:
+        type: str
+        value: str
+    class SmtpPassword:
+        type: str
+        value: str
+    class SmtpPort:
+        type: str
+        value: str
+    class SmtpUsername:
         type: str
         value: str
 
