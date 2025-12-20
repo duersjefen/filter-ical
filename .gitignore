@@ -112,3 +112,4 @@ infrastructure/secrets/
 .sst-outputs/
 sst-env.d.ts
 .serena/
+.playwright-mcp/
